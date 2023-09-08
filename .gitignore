@@ -1,0 +1,23 @@
+# HOL stuff
+*Script
+*Theory.sig
+*Theory.sml
+*Theory.dat
+*.uo
+*.ui
+*.o
+.HOLMK
+.hollogs
+
+# Generated assembly
+*.S
+
+# Emacs backup files
+*~
+
+# Vim swap files
+*.swp
+
+# Build artefacts
+hol/functional/compiler_asm.s
+hol/functional/compiler_prog.txt

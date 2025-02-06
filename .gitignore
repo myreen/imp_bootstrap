@@ -21,3 +21,6 @@
 # Build artefacts
 hol/functional/compiler_asm.s
 hol/functional/compiler_prog.txt
+
+# hol-vscode
+.hol-vscode

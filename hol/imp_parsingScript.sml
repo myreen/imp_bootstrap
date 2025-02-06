@@ -108,15 +108,17 @@ Termination
 End
 
 Inductive balanced:
-  balanced [] ∧
-  (∀x. x ≠ ParenOpen ∧ x ≠ ParenClose ⇒ balanced [x]) ∧
+[~nil:]
+  balanced []
+[~single:]
+  (∀x. x ≠ ParenOpen ∧ x ≠ ParenClose ⇒ balanced [x])
 [~append:]
-  (∀xs ys. balanced xs ∧ balanced ys ⇒ balanced (xs ++ ys)) ∧
+  (∀xs ys. balanced xs ∧ balanced ys ⇒ balanced (xs ++ ys))
 [~paren:]
   (∀xs. balanced xs ⇒ balanced ([ParenOpen] ++ xs ++ [ParenClose]))
 End
 
-Theorem find_end_lemma:
+(* Theorem find_end_lemma:
   ∀xs ys d acc.
     balanced xs ⇒
     find_end (xs ++ ys) d acc = find_end ys d (REVERSE xs ++ acc)
@@ -205,7 +207,7 @@ Definition c2t_def:
   c2t [Alloc v e]   = [Ident v; Keyword Equal; Keyword Alloc] ++ e2t e ++ [Semicolon]
 Termination
   WF_REL_TAC ‘measure $ list_size cmd_size’
-End
+End *)
 
 (*
 

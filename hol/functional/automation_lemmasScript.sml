@@ -649,7 +649,7 @@ Termination
   \\ rw [] \\ fs [] \\ res_tac \\ fs []
 End
 
-Theorem exp_def[simp] = exp_def |> REWRITE_RULE [GSYM map_def]
+Theorem exp_def[simp,allow_rebind] = exp_def |> REWRITE_RULE [GSYM map_def]
                                 |> CONV_RULE (DEPTH_CONV ETA_CONV);
 
 Theorem auto_exp_cons = prove_cons exp_def;

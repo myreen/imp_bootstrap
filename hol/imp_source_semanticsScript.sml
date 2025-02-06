@@ -246,7 +246,7 @@ Definition put_char_def[simp]:
                    else stop Crash s
 End
 
-Definition next_def:
+Definition next_def[allow_rebind]:
   next l =
     case LHD l of
     | NONE   => Word (n2w (2 ** 32 - 1)) (* EOF *)
@@ -412,8 +412,8 @@ Proof
   Cases_on ‘eval_cmd xs s’ \\ imp_res_tac eval_cmd_clock \\ fs [fix_def]
 QED
 
-Theorem eval_cmd_def = REWRITE_RULE [fix_eval] eval_cmd_def;
-Theorem eval_cmd_ind = REWRITE_RULE [fix_eval] eval_cmd_ind;
+Theorem eval_cmd_def[allow_rebind] = REWRITE_RULE [fix_eval] eval_cmd_def;
+Theorem eval_cmd_ind[allow_rebind] = REWRITE_RULE [fix_eval] eval_cmd_ind;
 
 Theorem eval_cmd_thm:
   eval_cmd [] = cont () ∧

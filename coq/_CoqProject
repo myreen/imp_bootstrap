@@ -1,0 +1,3 @@
+-R theories ImpBootstrap
+theories
+-arg -w -arg -notation-overridden

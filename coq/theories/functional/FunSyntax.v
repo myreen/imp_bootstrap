@@ -3,11 +3,6 @@ Import ListNotations.
 
 Module FunSyntax.
 
-(* 
-TODO(kπ)
-- word64 in Coq?
-*)
-
 Notation name := nat.
 
 Inductive op : Type :=
@@ -39,5 +34,15 @@ Inductive dec : Type :=
 (* an expression to evaluate *)
 Inductive prog : Type :=
   | Program (defs : list dec) (main : exp).
+
+Definition get_main (p : prog) : exp :=
+  match p with
+  | Program _ main => main
+  end.
+
+Definition get_defs (p : prog) : list dec :=
+  match p with
+  | Program defs _ => defs
+  end.
 
 End FunSyntax.

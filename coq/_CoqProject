@@ -1,3 +1,4 @@
--R theories ImpBootstrap
+-Q ../../coqutil/src/coqutil coqutil
+-Q theories impboot
 theories
 -arg -w -arg -notation-overridden

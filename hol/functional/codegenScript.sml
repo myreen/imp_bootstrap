@@ -53,7 +53,7 @@ Overload AllocLoc[inferior] = “7:num”;
        vs - a model of the stack: the ith element is SOME v if the value
             of source variable v is at stack index i; positions containing
             NONE do not correspond to a source-level variable; this information
-            is used by when compiling Var (in the c_var function)
+            is used when compiling Var (in the c_var function)
        fs - an a-list with locations for all the function locations,
             compilation of Call (in c_exp) uses this information
 *)
@@ -188,12 +188,12 @@ End
 Definition c_call_def:
   c_call t vs target xs (c,l) =
     let ys = c_pops xs vs in
-      if t then
-        (Append c (Append (List ys)
-          (List [Add_RSP (LENGTH vs); Jump Always target])), l + LENGTH ys + 2)
-      else
-        let cs = align (even_len vs) [Call target] in
-          (Append c (Append (List ys) (List cs)), l + LENGTH ys + LENGTH cs)
+    if t then
+      (Append c (Append (List ys)
+        (List [Add_RSP (LENGTH vs); Jump Always target])), l + LENGTH ys + 2)
+    else
+      let cs = align (even_len vs) [Call target] in
+        (Append c (Append (List ys) (List cs)), l + LENGTH ys + LENGTH cs)
 End
 
 Definition lookup_def:
@@ -313,6 +313,10 @@ Definition name2str_def:
     if n = 0 then acc else name2str (n DIV 256) (CHR (n MOD 256) :: acc)
 End
 
+(* Goes through the declarations and:
+- appends a comment with the function name
+- compiles the function
+*)
 Definition c_decs_def:
   c_decs l fs [] = (List [],[],l) ∧
   c_decs l fs (d::ds) =

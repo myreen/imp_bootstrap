@@ -1,18 +1,16 @@
 Require Import Coq.Lists.List.
 Import ListNotations.
+Require Import coqutil.Word.Naive.
+Require Import coqutil.Word.Properties.
+Require Import impboot.utils.Words64Naive.
 
 Module ImpSyntax.
 
 Notation name := nat.
 
-(* 
-TODO(kπ)
-- word64 in Coq?
-*)
-
 Inductive exp : Type :=
 | Var (n: name)             (*  variable             *)
-| Const (n: nat)            (*  word constant        *)
+| Const (n: word64)         (*  word constant        *)
 | Add (e1: exp) (e2: exp)   (*  word addition        *)
 | Sub (e1: exp) (e2: exp)   (*  word subtraction     *)
 | Div (e1: exp) (e2: exp)   (*  word division        *)

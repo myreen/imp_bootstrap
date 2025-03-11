@@ -2,15 +2,16 @@ Require Import Coq.Lists.List.
 Require Import Coq.Strings.Ascii.
 Import ListNotations.
 Require Import impboot.functional.FunSyntax.
-Require Import impboot.functional.FunValues.
 Import Nat.
-
-Module FunSemantics.
 
 Notation num := nat.
 Notation name := nat.
 Notation char := ascii.
 Notation llist := list.
+
+Inductive Value :=
+  | Pair (v1 v2 : Value)
+  | Num (n : nat).
 
 Inductive err : Type :=
   | TimeOut
@@ -78,9 +79,11 @@ Definition take_branch (test : FunSyntax.test) (vs : list Value) (s : state) : r
   | _, _ => fail s
   end.
 
-Definition empty_env : name -> option Value := fun _ => None.
+Notation env := (name -> option Value).
 
-Fixpoint make_env (keys : list name) (values : list Value) (acc : name -> option Value) : name -> option Value :=
+Definition empty_env : env := fun _ => None.
+
+Fixpoint make_env (keys : list name) (values : list Value) (acc : env) : env :=
   match keys, values with
   | [], [] => acc
   | k :: ks, v :: vs => make_env ks vs (fun x => if x =? k then Some v else acc x)
@@ -93,7 +96,7 @@ Fixpoint lookup_fun (n : name) (fs : list FunSyntax.dec) : option (list name * F
   | FunSyntax.Defun k ps body :: rest => if k =? n then Some (ps, body) else lookup_fun n rest
   end.
 
-Definition env_and_body (n : name) (args : list Value) (s : state) : option ((name -> option Value) * FunSyntax.exp) :=
+Definition env_and_body (n : name) (args : list Value) (s : state) : option (env * FunSyntax.exp) :=
   match lookup_fun n s.(funs) with
   | None => None
   | Some (params, body) => if length params =? length args then Some (make_env params args empty_env, body) else None
@@ -103,7 +106,7 @@ Definition init_state (inp : llist char) (funs : list FunSyntax.dec) : state :=
   {| funs := funs; clock := 0; input := inp; output := [] |}.
 
 (* TODO(kπ) Double check this *)
-Inductive Eval : (name -> option Value) -> list FunSyntax.exp -> state -> list Value -> state -> Prop :=
+Inductive Eval : env -> list FunSyntax.exp -> state -> list Value -> state -> Prop :=
   | Eval_Const : forall env n s,
       Eval env [FunSyntax.Const n] s [Num n] s
   | Eval_Var : forall env n v s,
@@ -133,11 +136,9 @@ Inductive Eval : (name -> option Value) -> list FunSyntax.exp -> state -> list V
       Eval new_env [body] s2 [v] s3 ->
       Eval env [FunSyntax.Call fname xs] s1 [v] s3.
 
+Notation "env '|-' es '/' s1 '-->' vs '/' s2" := (Eval env es s1 vs s2) (at level 40, es at next level, s1 at next level, vs at next level, s2 at next level).
+
 Definition prog_terminates (input : llist char) (p : FunSyntax.prog) (out : list char) : Prop :=
   exists s r,
-    Eval empty_env
-      [get_main p]
-      (init_state input (get_defs p)) r s /\
+    empty_env |- [get_main p] / (init_state input (get_defs p)) --> r / s /\
         out = s.(output).
-
-End FunSemantics.

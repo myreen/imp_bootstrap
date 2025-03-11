@@ -1,10 +1,7 @@
 Require Import Coq.Lists.List.
 Import ListNotations.
+Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
-Require Import coqutil.Word.Properties.
-Require Import impboot.utils.Words64Naive.
-
-Module ImpSyntax.
 
 Notation name := nat.
 
@@ -43,5 +40,3 @@ Inductive func : Type :=
 
 Inductive prog : Type :=
 | Program (funcs: list func). (* a complete program is a list of function definitions *)
-
-End ImpSyntax.

@@ -6,9 +6,11 @@ Require Import coqutil.Word.Bitwidth.
 
 Local Open Scope Z_scope.
 
-(* TODO(kπ) *)
-(* #[global] Instance word4: word.word 4 := Naive.word 4.
+Definition word4 := word 64.
 
-#[global] Instance Words4Naive: Bitwidth 4 := {|
+#[global] Instance word4_instance: word.word 4 := Naive.word 4.
+
+(* TODO(kπ) *)
+(* #[global] Instance Words4Naive: Bitwidth 4 := {|
   width_cases := or_intror eq_refl;
 |}. *)

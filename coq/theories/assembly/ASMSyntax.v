@@ -1,13 +1,11 @@
 Require Import Coq.Lists.List.
 Require Import Coq.Strings.String.
 Import ListNotations.
+Require Import coqutil.Word.Interface.
+Require Import coqutil.Word.Naive.
 
-(* TODO(kπ) word64 – values in the langauge – arith operations (same as in
-impsyntax) *)
 (* TODO(kπ) word4 – constant offset in store/load – is it enough to just be able
 to convert it to word64? *)
-(* RISC-V spec in coq or bedrock2 – next week *)
-Notation word64 := nat. (* TODO(kπ) *)
 Notation word4 := nat. (* TODO(kπ) *)
 
 Inductive reg :=
@@ -69,12 +67,6 @@ Definition reg2str (r : reg) (s: string) : string :=
   | R15 => "%r15"
   | RDX => "%rdx"
   end ++ s.
-
-(* TODO(kπ) *)
-Definition num2str (n : nat) (s : string) : string. Admitted.
-
-(* TODO(kπ) asm2str defs *)
-
 
 (* TODO(kπ) *)
 Definition asm2str (a : asm) : string := "".

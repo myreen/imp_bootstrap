@@ -1,0 +1,21 @@
+{
+  "editor.tabSize": 2,
+  "editor.insertSpaces": true,
+
+  "files.trimTrailingWhitespace": true,
+
+  "search.exclude": {
+    "**/*.vo": true,
+    "**/*.vok": true,
+    "**/*.vos": true,
+    "**/*.glob": true,
+    "**/*.aux": true,
+  },
+  "files.watcherExclude": {
+    "**/*.vo": true,
+    "**/*.vok": true,
+    "**/*.vos": true,
+    "**/*.glob": true,
+    "**/*.aux": true,
+  }
+}

@@ -7,10 +7,11 @@ Require Import String.
 Require Import Nat.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.imperative.ImpSyntax.
+Require Import coqutil.Word.Interface.
+Require Import coqutil.Word.Naive.
+Require Import ZArith.
 
-Module ImpToASMCodegen.
-
-(* 
+(*
 For now simplify:
 - no list (Append | List)
 *)
@@ -24,17 +25,16 @@ TODO(kπ):
 Notation v_stack := (list (option nat)).
 Notation f_lookup := (list (name * nat)).
 
-(* TODO(kπ) This isn't probably needed in full, since it does some list initialization *)
 (* Generates the initialization code for execution *)
 Definition init (k : nat) : asm :=
   [
-    (*  0 *) ASMSyntax.Const RAX 0;
-    (*  1 *) ASMSyntax.Const R12 16;
-    (*  2 *) ASMSyntax.Const R13 (2^63 - 1);
+    (*  0 *) ASMSyntax.Const RAX (word.of_Z 0);
+    (*  1 *) ASMSyntax.Const R12 (word.of_Z 16);
+    (*  2 *) ASMSyntax.Const R13 (word.of_Z (2^63 - 1));
     (* jump to main function *)
     (*  3 *) ASMSyntax.Call k;
     (* return to exit 0 *)
-    (*  4 *) ASMSyntax.Const RDI 0;
+    (*  4 *) ASMSyntax.Const RDI (word.of_Z 0);
     (*  5 *) ASMSyntax.Exit;
     (* alloc routine starts here: *)
     (*  6 *) ASMSyntax.Comment "malloc";
@@ -47,7 +47,7 @@ Definition init (k : nat) : asm :=
     (* give up: *)
     (* 13 *) ASMSyntax.Comment "exit 1";
     (* 14 *) ASMSyntax.Push R15;
-    (* 15 *) ASMSyntax.Const RDI 1;
+    (* 15 *) ASMSyntax.Const RDI (word.of_Z 1);
     (* 16 *) ASMSyntax.Exit
   ].
 
@@ -66,8 +66,8 @@ Fixpoint even_len {A} (xs : list A) : bool :=
 Definition give_up (b : bool) : nat := if b then 14 else 15.
 
 (* Compiles a constant value into assembly instructions *)
-Definition c_const (n : nat) (l : nat) (vs : v_stack) : asm * nat :=
-  if ((2^63) - 1) <? n then
+Definition c_const (n : word64) (l : nat) (vs : v_stack) : asm * nat :=
+  if word.ltu (word.of_Z ((2^63) - 1)) n then
     ([Jump Always (give_up (even_len vs))], l+1)
   else
     ([ASMSyntax.Push RAX; ASMSyntax.Const RAX n], l+2).
@@ -117,7 +117,7 @@ Definition c_sub (l : nat) : asm :=
 Definition c_div : asm :=
   [ ASMSyntax.Mov RDI RAX;
     ASMSyntax.Pop RAX;
-    ASMSyntax.Const RDX 0;
+    ASMSyntax.Const RDX (word.of_Z 0);
     ASMSyntax.Div RDI ].
 
 Definition c_alloc (vs : v_stack) : asm :=
@@ -134,7 +134,7 @@ Definition c_read (vs : v_stack) (l : nat) : (asm * nat) :=
   (align (even_len vs) [ASMSyntax.Push RAX; ASMSyntax.GetChar], l+2).
 
 Definition c_write (vs : v_stack) (l : nat) : (asm * nat) :=
-  (align (even_len vs) [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX 0], l+3).
+  (align (even_len vs) [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z 0)], l+3).
 
 (*
   input : RAX, top_of_stack
@@ -247,7 +247,7 @@ Definition c_pops (xs : list exp) (vs : v_stack) : asm :=
   | _ => [Jump Always (give_up (xorb (negb (even_len xs)) (even_len vs)))]
   end.
 
-(** Builds an environment list by prepending each name wrapped in [Some], 
+(** Builds an environment list by prepending each name wrapped in [Some],
   resulting in the reversed list of names *)
 Fixpoint call_env (xs: list name) (acc: v_stack): v_stack :=
   match xs with
@@ -277,74 +277,85 @@ Definition c_call (vs : v_stack) (target : nat)
   (ys ++ cs, l + List.length ys + List.length cs).
 
 Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
-  (vs : v_stack) {measure c} : (asm * nat * v_stack) :=
-  match c with
-  | Assign n e =>
-    let '(c1, l1) := c_exp e l vs in
-    let '(c2, l2, vs') := c_assign n l1 vs in
-    (c1 ++ c2, l2, vs')
-  | Update a e e' =>
-    let '(asm1, l1) := c_exp a l vs in
-    let '(asm2, l2) := c_exp e l1 vs in
-    let '(asm3, l3) := c_exp e' l2 (None :: vs) in
-    let asm4 := c_store in
-    (asm1 ++ asm2 ++ asm3 ++ asm4, l3 + List.length asm4, vs)
-  | If t c1 c2 =>
-    (* l jumps to start (t) *)
-    (* (l + 1) jumps to c1 *)
-    (* (l + 2) jumps to c2 *)
-    let '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
-    let '(asm2, l2, vs') := c_cmds c1 l1 fs vs in
-    let '(asm3, l3, vs'') := c_cmds c2 l2 fs vs' in
-    let jump_to_start := [ASMSyntax.Jump Always (l + 3)] in
-    let jump_to_c1 := [ASMSyntax.Jump Always l1] in
-    let jump_to_c2 := [ASMSyntax.Jump Always l2] in
-    (jump_to_start ++ jump_to_c1 ++ jump_to_c2 ++ asm1 ++ asm2 ++ asm3, l3, vs'')
-  | While t c1 =>
-    (* l jumps to t *)
-    (* (l + 1) jumps to c1 *)
-    (* (l + 2) jumps to end *)
-    let '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
-    let '(asm2, l2, vs') := c_cmds c1 l1 fs vs in
-    let jump_to_cond := [ASMSyntax.Jump Always (l + 3)] in
-    let jump_to_c1 := [ASMSyntax.Jump Always l1] in
-    let jump_to_end := [ASMSyntax.Jump Always l2] in
-    (jump_to_cond ++ jump_to_c1 ++ jump_to_end ++ asm1 ++ asm2 ++ jump_to_cond, l2, vs')
-  | Call n f es =>
-    let target := lookup f fs in
-    let '(asms, l1) := c_exps es l vs in
-    let '(asm1, l2) := c_call vs target es l1 in
-    let '(asm2, l3) := c_var n l2 vs in
-    (asms ++ asm1 ++ asm2, l3, vs)
-  | Return e =>
-    let '(asm1, l1) := c_exp e l vs in
-    let '(asm2, l2) := make_ret vs l1 in
-    (asm1 ++ asm2, l2, vs)
-  | Alloc n e =>
-    let '(asm1, l1) := c_exp e l vs in
-    let asm2 := c_alloc vs in
-    let '(asm3, l3, vs') := c_assign n l1 vs in
-    (asm1 ++ asm2 ++ asm3, l3, vs')
-  | GetChar n =>
-    let '(asm1, l1) := c_read vs l in
-    let '(asm2, l2, vs') := c_assign n l1 vs in
-    (asm1 ++ asm2, l2, vs')
-  | PutChar e =>
-    let '(asm1, l1) := c_exp e l vs in
-    let '(asm2, l2) := c_write vs l1 in
-    (asm1 ++ asm2, l2, vs)
-  | Abort =>
-    ([Jump Always (give_up (even_len vs))], l+1, vs)
+  (vs : v_stack) (ck: nat) {measure ck} : (asm * nat * v_stack * nat) :=
+  match ck with
+  | 0 => ([], l, vs, 0)
+  | S ck =>
+    match c with
+    | Assign n e =>
+      let '(c1, l1) := c_exp e l vs in
+      let '(c2, l2, vs') := c_assign n l1 vs in
+      (c1 ++ c2, l2, vs', ck)
+    | Update a e e' =>
+      let '(asm1, l1) := c_exp a l vs in
+      let '(asm2, l2) := c_exp e l1 vs in
+      let '(asm3, l3) := c_exp e' l2 (None :: vs) in
+      let asm4 := c_store in
+      (asm1 ++ asm2 ++ asm3 ++ asm4, l3 + List.length asm4, vs, ck)
+    | If t c1 c2 =>
+      (* l jumps to start (t) *)
+      (* (l + 1) jumps to c1 *)
+      (* (l + 2) jumps to c2 *)
+      let '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
+      let '(asm2, l2, vs', ck1) := c_cmds c1 l1 fs vs (ck-1) in
+      let '(asm3, l3, vs'', ck2) := c_cmds c2 l2 fs vs' (ck1-1) in
+      let jump_to_start := [ASMSyntax.Jump Always (l + 3)] in
+      let jump_to_c1 := [ASMSyntax.Jump Always l1] in
+      let jump_to_c2 := [ASMSyntax.Jump Always l2] in
+      let asmres := jump_to_start ++ jump_to_c1 ++ jump_to_c2 ++ asm1 ++ asm2 ++ asm3 in
+      (asmres, l3, vs'', ck2)
+    | While tst c1 =>
+      (* l jumps to tst *)
+      (* (l + 1) jumps to c1 *)
+      (* (l + 2) jumps to end *)
+      let '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
+      let '(asm2, l2, vs', ck1) := c_cmds c1 l1 fs vs (ck-1) in
+      (* l2 jumps to tst *)
+      let jump_to_tst := [ASMSyntax.Jump Always (l + 3)] in
+      let jump_to_c1 := [ASMSyntax.Jump Always l1] in
+      let jump_to_end := [ASMSyntax.Jump Always (l2+1)] in
+      let asmres := jump_to_tst ++ jump_to_c1 ++ jump_to_end ++ asm1 ++ asm2 ++ jump_to_tst in
+      (asmres, l2+1, vs', ck1)
+    | Call n f es =>
+      let target := lookup f fs in
+      let '(asms, l1) := c_exps es l vs in
+      let '(asm1, l2) := c_call vs target es l1 in
+      let '(asm2, l3) := c_var n l2 vs in
+      (asms ++ asm1 ++ asm2, l3, vs, ck)
+    | Return e =>
+      let '(asm1, l1) := c_exp e l vs in
+      let '(asm2, l2) := make_ret vs l1 in
+      (asm1 ++ asm2, l2, vs, ck)
+    | Alloc n e =>
+      let '(asm1, l1) := c_exp e l vs in
+      let asm2 := c_alloc vs in
+      let '(asm3, l3, vs') := c_assign n l1 vs in
+      (asm1 ++ asm2 ++ asm3, l3, vs', ck)
+    | GetChar n =>
+      let '(asm1, l1) := c_read vs l in
+      let '(asm2, l2, vs') := c_assign n l1 vs in
+      (asm1 ++ asm2, l2, vs', ck)
+    | PutChar e =>
+      let '(asm1, l1) := c_exp e l vs in
+      let '(asm2, l2) := c_write vs l1 in
+      (asm1 ++ asm2, l2, vs, ck)
+    | Abort =>
+      ([Jump Always (give_up (even_len vs))], l+1, vs, ck)
+    end
   end
 with
   c_cmds (cs : list cmd) (l : nat) (fs : f_lookup)
-  (vs : v_stack) : (asm * nat * v_stack) :=
-  match cs with
-  | [] => ([], l, vs)
-  | c :: cs' =>
-      let '(c1, l1, vs') := c_cmd c l fs vs in
-      let '(c2, l2, vs'') := c_cmds cs' l1 fs vs' in
-      (c1 ++ c2, l2, vs'')
+  (vs : v_stack) (ck : nat) {measure ck} : (asm * nat * v_stack * nat) :=
+  match ck with
+  | 0 => ([], l, vs, 0) (* Base case: prevent infinite recursion *)
+  | S ck =>
+    match cs with
+    | [] => ([], l, vs, ck)
+    | c :: cs' =>
+        let '(c1, l1, vs', ck1) := c_cmd c l fs vs ck in
+        let '(c2, l2, vs'', ck2) := c_cmds cs' l1 fs vs' ck1 in
+        (c1 ++ c2, l2, vs'', ck2)
+    end
   end.
 
 (** Compiles a single function definition into assembly code. *)
@@ -381,5 +392,3 @@ Definition codegen (prog : Prog) : asm :=
   (* TODO(kπ) pick main from fs? *)
   let (c, _, _) := c_decs init_l fs (funs ++ [(0, [], main)]) in
   (init (k + 1)) ++ c.
-
-End ImpToASMCodegen.

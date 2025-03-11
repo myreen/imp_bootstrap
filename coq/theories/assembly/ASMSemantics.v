@@ -1,16 +1,15 @@
 Require Import Nat.
 Require Import Coq.Lists.List.
 Require Import Coq.Strings.String.
+Require Import Coq.Strings.Ascii.
 Import ListNotations.
 Require Import impboot.assembly.ASMSyntax.
+Require Import coqutil.Word.Interface.
+Require Import coqutil.Word.Naive.
+Require Import ZArith.
 
-Notation word64 := nat. (* TODO(kπ) *)
-Notation char := word64. (* TODO(kπ) *)
+Notation char := ascii. (* TODO(kπ) double check with Clement *)
 Notation llist := list. (* TODO(kπ) *)
-
-Definition char_eq_dec : forall x y : char, {x = y} + {x <> y}.
-  decide equality.
-Defined.
 
 Inductive word_or_ret :=
 | Word : word64 -> word_or_ret
@@ -89,7 +88,7 @@ Definition write_mem (a : word64) (w : word64) (s : state) : option state :=
               pc := s.(pc);
               regs := s.(regs);
               stack := s.(stack);
-              memory := fun a' => if char_eq_dec a a' then Some (Some w) else s.(memory) a';
+              memory := fun a' => if word.eqb a a' then Some (Some w) else s.(memory) a';
               input := s.(input);
               output := s.(output) |}
   | _ => None
@@ -115,7 +114,7 @@ Definition set_pc (n : nat) (s : state) : state :=
 
 Inductive s_or_h :=
   | State : state -> s_or_h
-  | Halt : word64 -> (llist char) -> s_or_h. (* llist char => string *)
+  | Halt : word64 -> string -> s_or_h.
 
 Inductive take_branch : cond -> state -> bool -> Prop :=
   | take_branch_always : forall s,
@@ -123,18 +122,18 @@ Inductive take_branch : cond -> state -> bool -> Prop :=
   | take_branch_less : forall s r1 r2 w1 w2,
       s.(regs) r1 = Some w1 ->
       s.(regs) r2 = Some w2 ->
-      take_branch (Less r1 r2) s (w1 <? w2)
+      take_branch (Less r1 r2) s (word.ltu w1 w2)
   | take_branch_equal : forall s r1 r2 w1 w2,
       s.(regs) r1 = Some w1 ->
       s.(regs) r2 = Some w2 ->
-      take_branch (Equal r1 r2) s (w1 =? w2).
+      take_branch (Equal r1 r2) s (word.eqb w1 w2).
 
-Definition EOF_CONST : word64 := 0xFFFFFFFF.
+Definition EOF_CONST : word64 := word.of_Z (0xFFFFFFFF : Z).
 
 Definition read_char (input : llist char) : (word64 * llist char) :=
   match input with
   | nil => (EOF_CONST, input)
-  | c :: cs => (c, cs)
+  | c :: cs => (word.of_Z (Z.of_nat (nat_of_ascii c)), cs)
   end.
 
 Inductive step : s_or_h -> s_or_h -> Prop :=
@@ -149,20 +148,20 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
       fetch s = Some (Add r1 r2) ->
       s.(regs) r1 = Some w1 ->
       s.(regs) r2 = Some w2 ->
-      step (State s) (State (write_reg r1 (w1 + w2) (inc s)))
+      step (State s) (State (write_reg r1 (word.add w1 w2) (inc s)))
   | step_sub : forall s r1 r2 w1 w2,
       fetch s = Some (Sub r1 r2) ->
       s.(regs) r1 = Some w1 ->
       s.(regs) r2 = Some w2 ->
-      step (State s) (State (write_reg r1 (w1 - w2) (inc s)))
+      step (State s) (State (write_reg r1 (word.sub w1 w2) (inc s)))
   | step_div : forall s r w1 w2,
       fetch s = Some (Div r) ->
-      w2 <> 0 ->
-      s.(regs) RDX = Some 0 ->
+      w2 <> (word.of_Z 0) ->
+      s.(regs) RDX = Some (word.of_Z 0) ->
       s.(regs) RAX = Some w1 ->
       s.(regs) r = Some w2 ->
-      step (State s) (State (write_reg RAX (w1 / w2)
-                            (write_reg RDX (w1 mod w2)
+      step (State s) (State (write_reg RAX (word.divu w1 w2)
+                            (write_reg RDX (word.modu w1 w2)
                               (inc s))))
   | step_jump : forall s cond n yes,
       fetch s = Some (Jump cond n) ->
@@ -197,12 +196,12 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
       fetch s = Some (Store src ra imm) ->
       s.(regs) ra = Some wa ->
       s.(regs) src = Some w ->
-      write_mem (wa + imm) w s = Some s' -> (* TODO(kπ) w2w imm *)
+      write_mem (word.add wa (word.of_Z (Z_of_nat imm))) w s = Some s' -> (* TODO(kπ) w2w imm *)
       step (State s) (State (inc s'))
   | step_load : forall s dst ra imm wa w,
       fetch s = Some (Load dst ra imm) ->
       s.(regs) ra = Some wa ->
-      read_mem (wa + imm) s = Some w -> (* TODO(kπ) w2w imm *)
+      read_mem (word.add wa (word.of_Z (Z_of_nat imm))) s = Some w -> (* TODO(kπ) w2w imm *)
       step (State s) (State (write_reg dst w (inc s)))
   | step_get_char : forall s c rest,
       fetch s = Some GetChar ->
@@ -215,13 +214,13 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
   | step_put_char : forall s n,
       fetch s = Some PutChar ->
       s.(regs) ARG_REG = Some n ->
-      n < 256 ->
+      Z.lt (word.unsigned n) (256 : Z) ->
       (List.length s.(stack)) mod 2 = 0 ->
       step (State s)
            (State (unset_regs [RET_REG; ARG_REG; RDX]
-                     (inc (put_char n s))))
+                     (inc (put_char (ascii_of_nat (Z.to_nat (word.unsigned n))) s))))
   | step_exit : forall s exit_code,
       fetch s = Some Exit ->
       s.(regs) ARG_REG = Some exit_code ->
       (List.length s.(stack)) mod 2 = 0 ->
-      step (State s) (Halt exit_code s.(output)).
+      step (State s) (Halt exit_code (string_of_list_ascii s.(output))).

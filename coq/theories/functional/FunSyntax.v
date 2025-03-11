@@ -1,8 +1,6 @@
 Require Import Coq.Lists.List.
 Import ListNotations.
 
-Module FunSyntax.
-
 Notation name := nat.
 
 Inductive op : Type :=
@@ -44,5 +42,3 @@ Definition get_defs (p : prog) : list dec :=
   match p with
   | Program defs _ => defs
   end.
-
-End FunSyntax.

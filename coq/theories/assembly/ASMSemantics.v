@@ -7,9 +7,7 @@ Require Import impboot.assembly.ASMSyntax.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
 Require Import ZArith.
-
-Notation char := ascii. (* TODO(kπ) double check with Clement *)
-Notation llist := list. (* TODO(kπ) *)
+Require Import impboot.utils.Llist.
 
 Inductive word_or_ret :=
 | Word : word64 -> word_or_ret
@@ -21,8 +19,8 @@ Record state := mkState {
   regs : reg -> option word64;
   stack : list word_or_ret;
   memory : word64 -> option (option word64);
-  input : llist char;  (* input can be an infinite stream *)
-  output : list char    (* at each point output must be finite *)
+  input : llist ascii;  (* input can be an infinite stream *)
+  output : list ascii    (* at each point output must be finite *)
 }.
 
 Fixpoint lookup {A} (n : nat) (xs : list A) : option A :=
@@ -66,7 +64,7 @@ Fixpoint unset_regs (rs : list reg) (s : state) : state :=
       unset_regs rs' s'
   end.
 
-Definition put_char (c : char) (s : state) : state :=
+Definition put_ascii (c : ascii) (s : state) : state :=
   {| instructions := s.(instructions);
      pc := s.(pc);
      regs := s.(regs);
@@ -130,10 +128,10 @@ Inductive take_branch : cond -> state -> bool -> Prop :=
 
 Definition EOF_CONST : word64 := word.of_Z (0xFFFFFFFF : Z).
 
-Definition read_char (input : llist char) : (word64 * llist char) :=
+Definition read_ascii (input : llist ascii) : (word64 * llist ascii) :=
   match input with
-  | nil => (EOF_CONST, input)
-  | c :: cs => (word.of_Z (Z.of_nat (nat_of_ascii c)), cs)
+  | lnil => (EOF_CONST, input)
+  | lcons c cs => (word.of_Z (Z.of_nat (nat_of_ascii c)), cs)
   end.
 
 Inductive step : s_or_h -> s_or_h -> Prop :=
@@ -196,29 +194,29 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
       fetch s = Some (Store src ra imm) ->
       s.(regs) ra = Some wa ->
       s.(regs) src = Some w ->
-      write_mem (word.add wa (word.of_Z (Z_of_nat imm))) w s = Some s' -> (* TODO(kπ) w2w imm *)
+      write_mem (word.add wa (word.of_Z (word.unsigned imm))) w s = Some s' ->
       step (State s) (State (inc s'))
   | step_load : forall s dst ra imm wa w,
       fetch s = Some (Load dst ra imm) ->
       s.(regs) ra = Some wa ->
-      read_mem (word.add wa (word.of_Z (Z_of_nat imm))) s = Some w -> (* TODO(kπ) w2w imm *)
+      read_mem (word.add wa (word.of_Z (word.unsigned imm))) s = Some w ->
       step (State s) (State (write_reg dst w (inc s)))
-  | step_get_char : forall s c rest,
+  | step_get_ascii : forall s c rest,
       fetch s = Some GetChar ->
-      read_char s.(input) = (c, rest) ->
+      read_ascii s.(input) = (c, rest) ->
       (List.length s.(stack)) mod 2 = 0 ->
       step (State s)
            (State (write_reg RET_REG c
                      (unset_regs [ARG_REG; RDX]
                         (inc (mkState s.(instructions) s.(pc) s.(regs) s.(stack) s.(memory) rest s.(output))))))
-  | step_put_char : forall s n,
+  | step_put_ascii : forall s n,
       fetch s = Some PutChar ->
       s.(regs) ARG_REG = Some n ->
       Z.lt (word.unsigned n) (256 : Z) ->
       (List.length s.(stack)) mod 2 = 0 ->
       step (State s)
            (State (unset_regs [RET_REG; ARG_REG; RDX]
-                     (inc (put_char (ascii_of_nat (Z.to_nat (word.unsigned n))) s))))
+                     (inc (put_ascii (ascii_of_nat (Z.to_nat (word.unsigned n))) s))))
   | step_exit : forall s exit_code,
       fetch s = Some Exit ->
       s.(regs) ARG_REG = Some exit_code ->

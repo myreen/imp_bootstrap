@@ -1,12 +1,9 @@
 Require Import Coq.Lists.List.
 Require Import Coq.Strings.String.
 Import ListNotations.
+Require Import impboot.utils.Words4Naive.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
-
-(* TODO(kπ) word4 – constant offset in store/load – is it enough to just be able
-to convert it to word64? *)
-Notation word4 := nat. (* TODO(kπ) *)
 
 Inductive reg :=
 | RAX (* ret val *)

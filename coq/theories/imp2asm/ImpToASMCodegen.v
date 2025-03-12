@@ -13,6 +13,7 @@ Require Import coqutil.Word.Naive.
 Require Import ZArith.
 
 (*
+TODO(kπ)
 For now simplify:
 - no list (Append | List)
 *)
@@ -127,7 +128,7 @@ Definition c_alloc (vs : v_stack) : asm :=
   else [Pop RDI; ASMSyntax.Call AllocLoc].
 
 (* TODO(kπ) investigate this - why do we need an even(?) stack for read/call/etc? *)
-(* TODO(ask Magnus?) *)
+(* TODO(ask Magnus) *)
 Definition align (b : bool) (cs : asm) : asm :=
   if b then [Push RAX] ++ cs ++ [Pop RDI] else cs.
 
@@ -146,7 +147,7 @@ Definition c_write (vs : v_stack) (l : nat) : (asm * nat) :=
 Definition c_load : asm :=
   [ ASMSyntax.Pop RDI;
     ASMSyntax.Add RDI RAX;
-    ASMSyntax.Load RAX RDI 0 ].
+    ASMSyntax.Load RAX RDI (word.of_Z 0) ].
 
 (*
   input : RAX, top_of_stack, snd_top_of_stack
@@ -156,7 +157,7 @@ Definition c_store : asm :=
   [ ASMSyntax.Pop RDI;
     ASMSyntax.Pop RDX;
     ASMSyntax.Add RDI RDX;
-    ASMSyntax.Store RAX RDI 0 ].
+    ASMSyntax.Store RAX RDI (word.of_Z 0) ].
 
 Fixpoint c_exp (e : exp) (l : nat) (vs : v_stack) : asm * nat :=
   match e with
@@ -360,14 +361,14 @@ Definition c_fundef (fundef : func) (l: nat) (fs: list (name * nat))
   let '(asm1, l1, vs1) := c_cmds body l0 fs vs0 ck in
   (asm0 ++ asm1, l1).
 
-(* TODO(kπ) termination is unobvious to Coq, super unimportant function *)
+(* TODO(kπ) termination is unobvious to Coq, super unimportant function, hacked for now *)
 (* Converts a numeric name to a string representation *)
-Fixpoint name2str (n : nat) (acc : string) : string :=
+Definition name2str (n : nat) (acc : string) : string :=
   (* if n =? 0 then
     acc
   else
     name2str (n / 256) (String (ascii_of_nat (n mod 256)) acc). *)
-  String (ascii_of_nat (n mod 256))  acc. (* TODO(kπ) last letter, should be full work, but termination *)
+  String (ascii_of_nat (n mod 256)) acc.
 
 (* Compiles a list of function declarations into assembly instructions *)
 Fixpoint c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm * list (name * nat) * nat) :=

@@ -3,11 +3,9 @@ Require Import Coq.Strings.Ascii.
 Import ListNotations.
 Require Import impboot.functional.FunSyntax.
 Import Nat.
+Require Import impboot.utils.Llist.
 
 Notation name := nat.
-
-Notation char := ascii. (* TODO(kπ) double check *)
-Notation llist := list. (* TODO(kπ) *)
 
 Inductive Value :=
   | Pair (v1 v2 : Value)
@@ -25,17 +23,17 @@ Arguments result : clear implicits.
 Record state := mkState {
   funs : list FunSyntax.dec;
   clock : nat;
-  input : llist char;
-  output : list char
+  input : llist ascii;
+  output : list ascii
 }.
 
-Definition set_input (s : state) (inp : llist char) : state :=
+Definition set_input (s : state) (inp : llist ascii) : state :=
   {| funs := s.(funs);
      clock := s.(clock);
      input := inp;
      output := s.(output) |}.
 
-Definition set_output (s : state) (out : list char) : state :=
+Definition set_output (s : state) (out : list ascii) : state :=
   {| funs := s.(funs);
      clock := s.(clock);
      input := s.(input);
@@ -49,8 +47,8 @@ Definition fail {A} (s : state) : result A * state :=
 
 Definition next (s : state) : Value * state :=
   match s.(input) with
-  | [] => (Num (2 ^ 32 - 1), s) (* EOF *)
-  | c :: cs => (Num (nat_of_ascii c), set_input s cs)
+  | lnil => (Num (2 ^ 32 - 1), s) (* EOF *)
+  | lcons c cs => (Num (nat_of_ascii c), set_input s cs)
   end.
 
 Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Value * state :=
@@ -64,8 +62,7 @@ Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Val
   | FunSyntax.Tail, [Pair x y] => return_ y s
   | FunSyntax.Read, [] =>
       let (v, s') := next s in
-      return_ v (set_input s' (List.tail s'.(input)))
-      (* TODO(kπ) LTL (lazy tail) – (s with input := case LTL s.input of NONE => s.input | SOME t => t) *)
+      return_ v (set_input s' (ltail s'.(input)))
   | FunSyntax.Write, [Num n] =>
       if n <? 256 then return_ (Num 0) (set_output s (s.(output) ++ [ascii_of_nat n]))
       else fail s
@@ -103,45 +100,45 @@ Definition env_and_body (n : name) (args : list Value) (s : state) : option (env
   | Some (params, body) => if length params =? length args then Some (make_env params args empty_env, body) else None
   end.
 
-Definition init_state (inp : llist char) (funs : list FunSyntax.dec) : state :=
+Definition init_state (inp : llist ascii) (funs : list FunSyntax.dec) : state :=
   {| funs := funs; clock := 0; input := inp; output := [] |}.
+
+Reserved Notation "env '|-' es '/' s1 '-->' vs '/' s2" (at level 40, es at next level, s1 at next level, vs at next level, s2 at next level).
 
 (* TODO(ask Magnus) why he likes using `list of exp`, instead of exp *)
 (* TODO(kπ) Double check this *)
 Inductive Eval : env -> list FunSyntax.exp -> state -> list Value -> state -> Prop :=
   | Eval_Const : forall env n s,
-      Eval env [FunSyntax.Const n] s [Num n] s
+      env |- [FunSyntax.Const n] / s --> [Num n] / s
   | Eval_Var : forall env n v s,
-      env n = Some v -> Eval env [FunSyntax.Var n] s [v] s
+      env n = Some v -> env |- [FunSyntax.Var n] / s --> [v] / s
   | Eval_Nil : forall env s,
-      Eval env [] s [] s
+      env |- [] / s --> [] / s
   | Eval_Cons : forall env x v y xs vs s1 s2 s3,
-      Eval env [x] s1 [v] s2 ->
-      Eval env (y :: xs) s2 vs s3 ->
-      Eval env (x :: y :: xs) s1 (v :: vs) s3
+      env |- [x] / s1 --> [v] / s2 ->
+      env |- (y :: xs) / s2 --> vs / s3 ->
+      env |- (x :: y :: xs) / s1 --> (v :: vs) / s3
   | Eval_Op : forall env xs s1 vs s2 f v s3,
-      Eval env xs s1 vs s2 ->
+      env |- xs / s1 --> vs / s2 ->
       eval_op f vs s2 = (Res v, s3) ->
-      Eval env [FunSyntax.Op f xs] s1 [v] s3
+      env |- [FunSyntax.Op f xs] / s1 --> [v] / s3
   | Eval_Let : forall env x y s1 v1 s2 n s3 v2,
-      Eval env [x] s1 [v1] s2 ->
-      Eval (fun k => if k =? n then Some v1 else env k) [y] s2 [v2] s3 ->
-      Eval env [FunSyntax.Let n x y] s1 [v2] s3
+      env |- [x] / s1 --> [v1] / s2 ->
+      (fun k => if k =? n then Some v1 else env k) |- [y] / s2 --> [v2] / s3 ->
+      env |- [FunSyntax.Let n x y] / s1 --> [v2] / s3
   | Eval_If : forall env xs s1 vs s2 test b y z v s3,
-      Eval env xs s1 vs s2 ->
+      env |- xs / s1 --> vs / s2 ->
       take_branch test vs s2 = (Res b, s2) ->
-      Eval env [if b then y else z] s2 [v] s3 ->
-      Eval env [FunSyntax.If test xs y z] s1 [v] s3
+      env |- [if b then y else z] / s2 --> [v] / s3 ->
+      env |- [FunSyntax.If test xs y z] / s1 --> [v] / s3
   | Eval_Call : forall env xs s1 vs s2 fname v s3 new_env body,
-      Eval env xs s1 vs s2 ->
+      env |- xs / s1 --> vs / s2 ->
       env_and_body fname vs s2 = Some (new_env, body) ->
-      Eval new_env [body] s2 [v] s3 ->
-      Eval env [FunSyntax.Call fname xs] s1 [v] s3.
+      new_env |- [body] / s2 --> [v] / s3 ->
+      env |- [FunSyntax.Call fname xs] / s1 --> [v] / s3
+where "env '|-' es '/' s1 '-->' vs '/' s2" := (Eval env es s1 vs s2).
 
-(* TODO(kπ) Declare Notation *)
-Notation "env '|-' es '/' s1 '-->' vs '/' s2" := (Eval env es s1 vs s2) (at level 40, es at next level, s1 at next level, vs at next level, s2 at next level).
-
-Definition prog_terminates (input : llist char) (p : FunSyntax.prog) (out : list char) : Prop :=
+Definition prog_terminates (input : llist ascii) (p : FunSyntax.prog) (out : list ascii) : Prop :=
   exists s r,
     empty_env |- [get_main p] / (init_state input (get_defs p)) --> r / s /\
         out = s.(output).

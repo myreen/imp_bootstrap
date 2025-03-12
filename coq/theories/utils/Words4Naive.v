@@ -6,11 +6,16 @@ Require Import coqutil.Word.Bitwidth.
 
 Local Open Scope Z_scope.
 
-Definition word4 := word 64.
-
 #[global] Instance word4_instance: word.word 4 := Naive.word 4.
 
-(* TODO(kπ) *)
-(* #[global] Instance Words4Naive: Bitwidth 4 := {|
-  width_cases := or_intror eq_refl;
-|}. *)
+Definition word width: word.word width :=
+  gen_word width (default_special_case_handlers width).
+Definition ok width: 0 < width -> word.ok (word width) :=
+  gen_ok width (default_special_case_handlers width).
+
+Notation word4 := (word 4).
+#[global] Instance word4_ok : word.ok word4 := ok 4 eq_refl.
+Add Ring wring8 : (Properties.word.ring_theory (word := word4))
+      (preprocess [autorewrite with rew_word_morphism],
+       morphism (Properties.word.ring_morph (word := word4)),
+       constants [Properties.word_cst]).

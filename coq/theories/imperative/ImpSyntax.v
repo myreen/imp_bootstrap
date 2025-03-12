@@ -40,3 +40,13 @@ Inductive func : Type :=
 
 Inductive prog : Type :=
 | Program (funcs: list func). (* a complete program is a list of function definitions *)
+
+Definition get_funcs (p: prog) : list func :=
+  match p with
+  | Program funcs => funcs
+  end.
+
+Definition name_of_func (f: func) : name :=
+  match f with
+  | Func n _ _ => n
+  end.

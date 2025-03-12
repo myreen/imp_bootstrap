@@ -1,6 +1,7 @@
 Require Import Coq.Lists.List.
 Import ListNotations.
 Require Import Coq.Strings.String.
+Require Import Coq.Strings.Ascii.
 Require Import Coq.Numbers.DecimalString.
 Require Import Coq.Bool.Bool.
 Require Import String.
@@ -277,118 +278,120 @@ Definition c_call (vs : v_stack) (target : nat)
   (ys ++ cs, l + List.length ys + List.length cs).
 
 Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
-  (vs : v_stack) (ck: nat) {measure ck} : (asm * nat * v_stack * nat) :=
+  (vs : v_stack) (ck: nat) {struct ck} : (asm * nat * v_stack) :=
   match ck with
-  | 0 => ([], l, vs, 0)
-  | S ck =>
+  | 0 => ([], l, vs)
+  | S ck' =>
     match c with
     | Assign n e =>
       let '(c1, l1) := c_exp e l vs in
       let '(c2, l2, vs') := c_assign n l1 vs in
-      (c1 ++ c2, l2, vs', ck)
+      (c1 ++ c2, l2, vs')
     | Update a e e' =>
       let '(asm1, l1) := c_exp a l vs in
       let '(asm2, l2) := c_exp e l1 vs in
       let '(asm3, l3) := c_exp e' l2 (None :: vs) in
       let asm4 := c_store in
-      (asm1 ++ asm2 ++ asm3 ++ asm4, l3 + List.length asm4, vs, ck)
+      (asm1 ++ asm2 ++ asm3 ++ asm4, l3 + List.length asm4, vs)
     | If t c1 c2 =>
-      (* l jumps to start (t) *)
-      (* (l + 1) jumps to c1 *)
-      (* (l + 2) jumps to c2 *)
       let '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
-      let '(asm2, l2, vs', ck1) := c_cmds c1 l1 fs vs (ck-1) in
-      let '(asm3, l3, vs'', ck2) := c_cmds c2 l2 fs vs' (ck1-1) in
+      let '(asm2, l2, vs') := c_cmds c1 l1 fs vs ck' in
+      let '(asm3, l3, vs'') := c_cmds c2 l2 fs vs' ck' in
       let jump_to_start := [ASMSyntax.Jump Always (l + 3)] in
       let jump_to_c1 := [ASMSyntax.Jump Always l1] in
       let jump_to_c2 := [ASMSyntax.Jump Always l2] in
       let asmres := jump_to_start ++ jump_to_c1 ++ jump_to_c2 ++ asm1 ++ asm2 ++ asm3 in
-      (asmres, l3, vs'', ck2)
+      (asmres, l3, vs'')
     | While tst c1 =>
-      (* l jumps to tst *)
-      (* (l + 1) jumps to c1 *)
-      (* (l + 2) jumps to end *)
       let '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
-      let '(asm2, l2, vs', ck1) := c_cmds c1 l1 fs vs (ck-1) in
-      (* l2 jumps to tst *)
+      let '(asm2, l2, vs') := c_cmds c1 l1 fs vs ck' in
       let jump_to_tst := [ASMSyntax.Jump Always (l + 3)] in
       let jump_to_c1 := [ASMSyntax.Jump Always l1] in
       let jump_to_end := [ASMSyntax.Jump Always (l2+1)] in
       let asmres := jump_to_tst ++ jump_to_c1 ++ jump_to_end ++ asm1 ++ asm2 ++ jump_to_tst in
-      (asmres, l2+1, vs', ck1)
+      (asmres, l2+1, vs')
     | Call n f es =>
       let target := lookup f fs in
       let '(asms, l1) := c_exps es l vs in
       let '(asm1, l2) := c_call vs target es l1 in
       let '(asm2, l3) := c_var n l2 vs in
-      (asms ++ asm1 ++ asm2, l3, vs, ck)
+      (asms ++ asm1 ++ asm2, l3, vs)
     | Return e =>
       let '(asm1, l1) := c_exp e l vs in
       let '(asm2, l2) := make_ret vs l1 in
-      (asm1 ++ asm2, l2, vs, ck)
+      (asm1 ++ asm2, l2, vs)
     | Alloc n e =>
       let '(asm1, l1) := c_exp e l vs in
       let asm2 := c_alloc vs in
       let '(asm3, l3, vs') := c_assign n l1 vs in
-      (asm1 ++ asm2 ++ asm3, l3, vs', ck)
+      (asm1 ++ asm2 ++ asm3, l3, vs')
     | GetChar n =>
       let '(asm1, l1) := c_read vs l in
       let '(asm2, l2, vs') := c_assign n l1 vs in
-      (asm1 ++ asm2, l2, vs', ck)
+      (asm1 ++ asm2, l2, vs')
     | PutChar e =>
       let '(asm1, l1) := c_exp e l vs in
       let '(asm2, l2) := c_write vs l1 in
-      (asm1 ++ asm2, l2, vs, ck)
+      (asm1 ++ asm2, l2, vs)
     | Abort =>
-      ([Jump Always (give_up (even_len vs))], l+1, vs, ck)
+      ([Jump Always (give_up (even_len vs))], l+1, vs)
     end
   end
 with
   c_cmds (cs : list cmd) (l : nat) (fs : f_lookup)
-  (vs : v_stack) (ck : nat) {measure ck} : (asm * nat * v_stack * nat) :=
+  (vs : v_stack) (ck : nat) {struct ck} : (asm * nat * v_stack) :=
   match ck with
-  | 0 => ([], l, vs, 0) (* Base case: prevent infinite recursion *)
-  | S ck =>
+  | 0 => ([], l, vs)
+  | S ck' =>
     match cs with
-    | [] => ([], l, vs, ck)
+    | [] => ([], l, vs)
     | c :: cs' =>
-        let '(c1, l1, vs', ck1) := c_cmd c l fs vs ck in
-        let '(c2, l2, vs'', ck2) := c_cmds cs' l1 fs vs' ck1 in
-        (c1 ++ c2, l2, vs'', ck2)
+        let '(c1, l1, vs') := c_cmd c l fs vs ck' in
+        let '(c2, l2, vs'') := c_cmds cs' l1 fs vs' ck' in
+        (c1 ++ c2, l2, vs'')
     end
   end.
 
 (** Compiles a single function definition into assembly code. *)
-Definition c_defun (l: nat)
-  (fs: list (name * nat))
-  (fundef : func): (nat * asm) :=
+Definition c_fundef (fundef : func) (l: nat) (fs: list (name * nat))
+  (ck : nat): (asm * nat) :=
   let '(Func n vs body) := fundef in
-  let '(c0, vs0, l0) := c_pushes l vs in
-  let '(c1, l1) := c_cmds T l0 vs0 fs body in
-  (c0 ++ c1, l1).
+  let '(asm0, vs0, l0) := c_pushes vs l in
+  let '(asm1, l1, vs1) := c_cmds body l0 fs vs0 ck in
+  (asm0 ++ asm1, l1).
 
+(* TODO(kπ) termination is unobvious to Coq, super unimportant function *)
 (* Converts a numeric name to a string representation *)
 Fixpoint name2str (n : nat) (acc : string) : string :=
-  if n =? 0 then acc else name2str (n / 256) (String (ascii_of_nat (n mod 256)) acc).
+  (* if n =? 0 then
+    acc
+  else
+    name2str (n / 256) (String (ascii_of_nat (n mod 256)) acc). *)
+  String (ascii_of_nat (n mod 256))  acc. (* TODO(kπ) last letter, should be full work, but termination *)
 
 (* Compiles a list of function declarations into assembly instructions *)
-Fixpoint c_decs (l : nat)
-  (fs : f_lookup) (ds : list func) : asm * list (name * nat) * nat :=
+Fixpoint c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm * list (name * nat) * nat) :=
   match ds with
-  | [] => (List [], [], l)
+  | [] => ([], [], l)
   | d :: ds' =>
-      let fname := name_of d in
-      let comment := List [Comment (name2str fname "")] in
-      let (c1, l1) := c_defun (l + 1) fs d in
-      let (c2, fs', l2) := c_decs true l1 fs ds' in
-      (Append comment (Append c1 c2), (fname, l + 1) :: fs', l2)
+      let fname := name_of_func d in
+      let comment := [Comment (name2str fname "")] in
+      let '(c1, l1) := c_fundef d (l + 1) fs 0 in
+      let '(c2, fs', l2) := c_fundefs ds' l1 fs in
+      (comment ++ c1 ++ c2, (fname, l + 1) :: fs', l2)
+  end.
+
+Fixpoint lookup_main (fs : list (name * nat)) : nat :=
+  match fs with
+  | [] => 0
+  | (f_name, f_line) :: xs => if Nat.eqb f_name 0 then f_line else lookup_main xs
   end.
 
 (* Generates the complete assembly code for a given program *)
-Definition codegen (prog : Prog) : asm :=
-  let '(funs) := prog in
-  let init_l := length (init 0) in
-  let (_, fs, k) := c_decs init_l [] funs in
-  (* TODO(kπ) pick main from fs? *)
-  let (c, _, _) := c_decs init_l fs (funs ++ [(0, [], main)]) in
-  (init (k + 1)) ++ c.
+Definition codegen (prog : prog) : asm :=
+  let funs := get_funcs prog in
+  let init_l := List.length (init 0) in
+  let '(_, fs, _) := c_fundefs funs init_l [] in
+  let '(asm1, _, _) := c_fundefs funs init_l fs in
+  let main_l := lookup_main fs in
+  (init main_l) ++ asm1.

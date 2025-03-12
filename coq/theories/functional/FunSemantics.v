@@ -4,10 +4,10 @@ Import ListNotations.
 Require Import impboot.functional.FunSyntax.
 Import Nat.
 
-Notation num := nat.
 Notation name := nat.
-Notation char := ascii.
-Notation llist := list.
+
+Notation char := ascii. (* TODO(kπ) double check *)
+Notation llist := list. (* TODO(kπ) *)
 
 Inductive Value :=
   | Pair (v1 v2 : Value)
@@ -24,7 +24,7 @@ Arguments result : clear implicits.
 
 Record state := mkState {
   funs : list FunSyntax.dec;
-  clock : num;
+  clock : nat;
   input : llist char;
   output : list char
 }.
@@ -64,7 +64,8 @@ Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Val
   | FunSyntax.Tail, [Pair x y] => return_ y s
   | FunSyntax.Read, [] =>
       let (v, s') := next s in
-      return_ v s' (* TODO(kπ) LTL? – (s with input := case LTL s.input of NONE => s.input | SOME t => t) *)
+      return_ v (set_input s' (List.tail s'.(input)))
+      (* TODO(kπ) LTL (lazy tail) – (s with input := case LTL s.input of NONE => s.input | SOME t => t) *)
   | FunSyntax.Write, [Num n] =>
       if n <? 256 then return_ (Num 0) (set_output s (s.(output) ++ [ascii_of_nat n]))
       else fail s
@@ -105,6 +106,7 @@ Definition env_and_body (n : name) (args : list Value) (s : state) : option (env
 Definition init_state (inp : llist char) (funs : list FunSyntax.dec) : state :=
   {| funs := funs; clock := 0; input := inp; output := [] |}.
 
+(* TODO(ask Magnus) why he likes using `list of exp`, instead of exp *)
 (* TODO(kπ) Double check this *)
 Inductive Eval : env -> list FunSyntax.exp -> state -> list Value -> state -> Prop :=
   | Eval_Const : forall env n s,
@@ -136,6 +138,7 @@ Inductive Eval : env -> list FunSyntax.exp -> state -> list Value -> state -> Pr
       Eval new_env [body] s2 [v] s3 ->
       Eval env [FunSyntax.Call fname xs] s1 [v] s3.
 
+(* TODO(kπ) Declare Notation *)
 Notation "env '|-' es '/' s1 '-->' vs '/' s2" := (Eval env es s1 vs s2) (at level 40, es at next level, s1 at next level, vs at next level, s2 at next level).
 
 Definition prog_terminates (input : llist char) (p : FunSyntax.prog) (out : list char) : Prop :=

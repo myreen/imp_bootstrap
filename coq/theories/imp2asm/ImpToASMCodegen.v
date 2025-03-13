@@ -62,7 +62,7 @@ Fixpoint even_len {A} (xs : list A) : bool :=
   end.
 
 (* jump label for failure cases
-  b – also push R15 before exiting give_up
+  if b is true – also push R15 before exiting give_up
 *)
 Definition give_up (b : bool) : nat := if b then 14 else 15.
 
@@ -126,10 +126,13 @@ Definition c_alloc (vs : v_stack) : asm_appl :=
   then List [Load_RSP RDI 0; ASMSyntax.Call AllocLoc; Pop RDI]
   else List [Pop RDI; ASMSyntax.Call AllocLoc].
 
-(* TODO(kπ) investigate this - why do we need an even(?) stack for read/call/etc? *)
-(* TODO(ask Magnus) *)
-Definition align (b : bool) (cs : asm_appl) : asm_appl :=
-  if b then (List [Push RAX]) +++ cs +++ (List [Pop RDI]) else cs.
+(* Some aasmbly languages and architectures (including x86_64) require alignint
+the stack to 16-bytes before function calls. If `vs` is even – we have to push
+something to the stack before calling any function. (the first value from the stack is kept in RAX,
+so the actual stack size is odd then)
+*)
+Definition align (needs_alignment : bool) (asm1 : asm_appl) : asm_appl :=
+  if needs_alignment then (List [Push RAX]) +++ asm1 +++ (List [Pop RDI]) else asm1.
 
 Definition c_read (vs : v_stack) (l : nat) : (asm_appl * nat) :=
   (align (even_len vs) (List [ASMSyntax.Push RAX; ASMSyntax.GetChar]), l+2).
@@ -235,7 +238,8 @@ Fixpoint lookup (n : nat) (fs : f_lookup) : nat :=
 Definition make_ret (vs : v_stack) (l : nat) : asm_appl * nat :=
   (List [Add_RSP (List.length vs); Ret], l + 2).
 
-(* Generates assembly instruction to pop a list of variables from the stack *)
+(* Store the variables from the stack in the registers, so that they can be
+passed to the function call *)
 Definition c_pops (xs : list exp) (vs : v_stack) : asm_appl :=
   let k := List.length xs in
   match k with
@@ -248,19 +252,18 @@ Definition c_pops (xs : list exp) (vs : v_stack) : asm_appl :=
   | _ => List [Jump Always (give_up (xorb (negb (even_len xs)) (even_len vs)))]
   end.
 
-(** Builds an environment list by prepending each name wrapped in [Some],
-  resulting in the reversed list of names *)
-Fixpoint call_env (xs: list name) (acc: v_stack): v_stack :=
+(** Builds a stack representation for parameters of a function *)
+Fixpoint call_v_stack (xs: list name) (acc: v_stack): v_stack :=
   match xs with
   | [] => acc
-  | x :: xs' => call_env xs' (Some x :: acc)
+  | x :: xs' => call_v_stack xs' (Some x :: acc)
   end.
 
-(** Generates assembly instructions to push a list of variables onto the stack *)
+(** Push a list of variables onto the stack *)
 Definition c_pushes (v_names: list name) (l : nat):
   (asm_appl * v_stack * nat) :=
-  let k: nat := List.length v_names in
-  let e := call_env v_names [] in
+  let k := List.length v_names in
+  let e := call_v_stack v_names [] in
   match k with
   | 0 => (List [], [None], l)
   | 1 => (List [], e, l)
@@ -270,12 +273,12 @@ Definition c_pushes (v_names: list name) (l : nat):
   | _ => (List [Push RBP; Push RBX; Push RDX; Push RDI], e, l + 4)
   end.
 
-(* TODO(kπ) check this carefully and add docstring *)
+(* Call the given function, passing the arguments in registers*)
 Definition c_call (vs : v_stack) (target : nat)
   (xs : list exp) (l : nat) : asm_appl * nat :=
-  let ys := c_pops xs vs in
-  let cs := align (even_len vs) (List [ASMSyntax.Call target]) in
-  (ys +++ cs, l + app_list_length ys + app_list_length cs).
+  let asm_pops := c_pops xs vs in
+  let asm1 := align (even_len vs) (List [ASMSyntax.Call target]) in
+  (asm_pops +++ asm1, l + app_list_length asm_pops + app_list_length asm1).
 
 Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   (vs : v_stack) (ck: nat) {struct ck} : (asm_appl * nat * v_stack) :=
@@ -353,7 +356,7 @@ with
   end.
 
 (** Compiles a single function definition into assembly code. *)
-Definition c_fundef (fundef : func) (l: nat) (fs: list (name * nat))
+Definition c_fundef (fundef : func) (l: nat) (fs: f_lookup)
   (ck : nat): (asm_appl * nat) :=
   let '(Func n v_names body) := fundef in
   let '(asm0, vs0, l0) := c_pushes v_names l in
@@ -362,11 +365,13 @@ Definition c_fundef (fundef : func) (l: nat) (fs: list (name * nat))
 
 (* TODO(kπ) termination is unobvious to Coq, super unimportant function, hacked for now *)
 (* Converts a numeric name to a string representation *)
-Definition name2str (n : nat) (acc : string) : string :=
-  (* if n =? 0 then
+Fail Fixpoint name2str (n : nat) (acc : string) : string :=
+  if n =? 0 then
     acc
   else
-    name2str (n / 256) (String (ascii_of_nat (n mod 256)) acc). *)
+    name2str (n / 256) (String (ascii_of_nat (n mod 256)) acc).
+
+Definition name2str (n : nat) (acc : string) : string :=
   String (ascii_of_nat (n mod 256)) acc.
 
 (* Compiles a list of function declarations into assembly instructions *)

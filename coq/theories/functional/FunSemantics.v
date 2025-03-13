@@ -108,34 +108,39 @@ Reserved Notation "env '|-' es '/' s1 '-->' vs '/' s2" (at level 40, es at next 
 (* TODO(ask Magnus) why he likes using `list of exp`, instead of exp *)
 Inductive Eval : env -> list FunSyntax.exp -> state -> list Value -> state -> Prop :=
   | Eval_Nil : forall env s,
-      env |- [] / s --> [] / s
+    env |- [] / s --> [] / s
   | Eval_Cons : forall env exp1 v exp2 exps vs s1 s2 s3,
-      env |- [exp1] / s1 --> [v] / s2 ->
-      env |- (exp2 :: exps) / s2 --> vs / s3 ->
-      env |- (exp1 :: exp2 :: exps) / s1 --> (v :: vs) / s3
+    forall
+      (EVAL_HEAD : env |- [exp1] / s1 --> [v] / s2)
+      (EVAL_TAIL : env |- (exp2 :: exps) / s2 --> vs / s3),
+    env |- (exp1 :: exp2 :: exps) / s1 --> (v :: vs) / s3
   | Eval_Const : forall env n s,
-      env |- [FunSyntax.Const n] / s --> [Num n] / s
+    env |- [FunSyntax.Const n] / s --> [Num n] / s
   | Eval_Var : forall env n v s,
-      env n = Some v ->
-      env |- [FunSyntax.Var n] / s --> [v] / s
+    env n = Some v ->
+    env |- [FunSyntax.Var n] / s --> [v] / s
   | Eval_Op : forall env exps s1 vs s2 op v s3,
-      env |- exps / s1 --> vs / s2 ->
-      eval_op op vs s2 = (Res v, s3) ->
-      env |- [FunSyntax.Op op exps] / s1 --> [v] / s3
+    forall
+      (EVAL_ARGS : env |- exps / s1 --> vs / s2)
+      (EVAL_OP : eval_op op vs s2 = (Res v, s3)),
+    env |- [FunSyntax.Op op exps] / s1 --> [v] / s3
   | Eval_Let : forall env exp1 exp2 s1 v1 s2 n s3 v2,
-      env |- [exp1] / s1 --> [v1] / s2 ->
-      (fun k => if k =? n then Some v1 else env k) |- [exp2] / s2 --> [v2] / s3 ->
-      env |- [FunSyntax.Let n exp1 exp2] / s1 --> [v2] / s3
+    forall
+      (EVAL_RHS : env |- [exp1] / s1 --> [v1] / s2)
+      (EVAL_RES : (fun k => if k =? n then Some v1 else env k) |- [exp2] / s2 --> [v2] / s3),
+    env |- [FunSyntax.Let n exp1 exp2] / s1 --> [v2] / s3
   | Eval_If : forall env exps s1 vs s2 test b expt expf v s3,
-      env |- exps / s1 --> vs / s2 ->
-      take_branch test vs s2 = (Res b, s2) ->
-      env |- [if b then expt else expf] / s2 --> [v] / s3 ->
-      env |- [FunSyntax.If test exps expt expf] / s1 --> [v] / s3
+    forall
+      (EVAL_COND : env |- exps / s1 --> vs / s2)
+      (TAKE_BRANCH : take_branch test vs s2 = (Res b, s2))
+      (EVAL_RES : env |- [if b then expt else expf] / s2 --> [v] / s3),
+    env |- [FunSyntax.If test exps expt expf] / s1 --> [v] / s3
   | Eval_Call : forall env exps s1 vs s2 fname v s3 new_env body,
-      env |- exps / s1 --> vs / s2 ->
-      env_and_body fname vs s2 = Some (new_env, body) ->
-      new_env |- [body] / s2 --> [v] / s3 ->
-      env |- [FunSyntax.Call fname exps] / s1 --> [v] / s3
+    forall
+      (EVAL_ARGS : env |- exps / s1 --> vs / s2)
+      (ENV_BODY : env_and_body fname vs s2 = Some (new_env, body))
+      (EVAL_BODY : new_env |- [body] / s2 --> [v] / s3),
+    env |- [FunSyntax.Call fname exps] / s1 --> [v] / s3
 where "env '|-' es '/' s1 '-->' vs '/' s2" := (Eval env es s1 vs s2).
 
 Definition prog_terminates (input : llist ascii) (p : FunSyntax.prog) (out : list ascii) : Prop :=

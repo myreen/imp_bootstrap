@@ -111,20 +111,22 @@ Definition set_pc (n : nat) (s : state) : state :=
      output := s.(output) |}.
 
 Inductive s_or_h :=
-  | State : state -> s_or_h
-  | Halt : word64 -> string -> s_or_h.
+| State : state -> s_or_h
+| Halt : word64 -> string -> s_or_h.
 
 Inductive take_branch : cond -> state -> bool -> Prop :=
-  | take_branch_always : forall s,
-      take_branch Always s true
-  | take_branch_less : forall s r1 r2 w1 w2,
-      s.(regs) r1 = Some w1 ->
-      s.(regs) r2 = Some w2 ->
-      take_branch (Less r1 r2) s (word.ltu w1 w2)
-  | take_branch_equal : forall s r1 r2 w1 w2,
-      s.(regs) r1 = Some w1 ->
-      s.(regs) r2 = Some w2 ->
-      take_branch (Equal r1 r2) s (word.eqb w1 w2).
+| take_branch_always : forall (s : state),
+  take_branch Always s true
+| take_branch_less : forall (s : state) (r1 r2 : reg) (w1 w2 : word64),
+  forall
+  (REG_LOOKUP_LEFT : s.(regs) r1 = Some w1)
+  (REG_LOOKUP_RIGHT : s.(regs) r2 = Some w2),
+  take_branch (Less r1 r2) s (word.ltu w1 w2)
+| take_branch_equal : forall (s : state) (r1 r2 : reg) (w1 w2 : word64),
+  forall
+  (REG_LOOKUP_LEFT : s.(regs) r1 = Some w1)
+  (REG_LOOKUP_RIGHT : s.(regs) r2 = Some w2),
+  take_branch (Equal r1 r2) s (word.eqb w1 w2).
 
 Definition EOF_CONST : word64 := word.of_Z (0xFFFFFFFF : Z).
 
@@ -135,90 +137,90 @@ Definition read_ascii (input : llist ascii) : (word64 * llist ascii) :=
   end.
 
 Inductive step : s_or_h -> s_or_h -> Prop :=
-  | step_const : forall s r w,
-      fetch s = Some (Const r w) ->
-      step (State s) (State (write_reg r w (inc s)))
-  | step_mov : forall s r1 r2 w,
-      fetch s = Some (Mov r1 r2) ->
-      s.(regs) r2 = Some w ->
-      step (State s) (State (write_reg r1 w (inc s)))
-  | step_add : forall s r1 r2 w1 w2,
-      fetch s = Some (Add r1 r2) ->
-      s.(regs) r1 = Some w1 ->
-      s.(regs) r2 = Some w2 ->
-      step (State s) (State (write_reg r1 (word.add w1 w2) (inc s)))
-  | step_sub : forall s r1 r2 w1 w2,
-      fetch s = Some (Sub r1 r2) ->
-      s.(regs) r1 = Some w1 ->
-      s.(regs) r2 = Some w2 ->
-      step (State s) (State (write_reg r1 (word.sub w1 w2) (inc s)))
-  | step_div : forall s r w1 w2,
-      fetch s = Some (Div r) ->
-      w2 <> (word.of_Z 0) ->
-      s.(regs) RDX = Some (word.of_Z 0) ->
-      s.(regs) RAX = Some w1 ->
-      s.(regs) r = Some w2 ->
-      step (State s) (State (write_reg RAX (word.divu w1 w2)
-                            (write_reg RDX (word.modu w1 w2)
-                              (inc s))))
-  | step_jump : forall s cond n yes,
-      fetch s = Some (Jump cond n) ->
-      take_branch cond s yes ->
-      step (State s) (State (set_pc (if yes then n else (s.(pc) + 1)) s))
-  | step_call : forall s n,
-      fetch s = Some (Call n) ->
-      step (State s) (State (set_pc n
-                      (set_stack (RetAddr (s.(pc)+1) :: s.(stack)) s)))
-  | step_ret : forall s n rest,
-      fetch s = Some Ret ->
-      s.(stack) = RetAddr n :: rest ->
-      step (State s) (State (set_pc n (set_stack rest s)))
-  | step_pop : forall s r w rest,
-      fetch s = Some (Pop r) ->
-      s.(stack) = Word w :: rest ->
-      step (State s) (State (set_stack rest (write_reg r w (inc s))))
-  | step_push : forall s r w,
-      fetch s = Some (Push r) ->
-      s.(regs) r = Some w ->
-      step (State s) (State (set_stack (Word w :: s.(stack)) (inc s)))
-  | step_load_rsp : forall s r w offset,
-      fetch s = Some (Load_RSP r offset) ->
-      offset < List.length s.(stack) ->
-      nth_error s.(stack) offset = Some (Word w) ->
-      step (State s) (State (write_reg r w (inc s)))
-  | step_add_rsp : forall s xs ys,
-      fetch s = Some (Add_RSP (List.length xs)) ->
-      s.(stack) = xs ++ ys ->
-      step (State s) (State (set_stack ys (inc s)))
-  | step_store : forall s src ra imm wa w s',
-      fetch s = Some (Store src ra imm) ->
-      s.(regs) ra = Some wa ->
-      s.(regs) src = Some w ->
-      write_mem (word.add wa (word.of_Z (word.unsigned imm))) w s = Some s' ->
-      step (State s) (State (inc s'))
-  | step_load : forall s dst ra imm wa w,
-      fetch s = Some (Load dst ra imm) ->
-      s.(regs) ra = Some wa ->
-      read_mem (word.add wa (word.of_Z (word.unsigned imm))) s = Some w ->
-      step (State s) (State (write_reg dst w (inc s)))
-  | step_get_ascii : forall s c rest,
-      fetch s = Some GetChar ->
-      read_ascii s.(input) = (c, rest) ->
-      (List.length s.(stack)) mod 2 = 0 ->
-      step (State s)
-           (State (write_reg RET_REG c
-                     (unset_regs [ARG_REG; RDX]
-                        (inc (mkState s.(instructions) s.(pc) s.(regs) s.(stack) s.(memory) rest s.(output))))))
-  | step_put_ascii : forall s n,
-      fetch s = Some PutChar ->
-      s.(regs) ARG_REG = Some n ->
-      Z.lt (word.unsigned n) (256 : Z) ->
-      (List.length s.(stack)) mod 2 = 0 ->
-      step (State s)
-           (State (unset_regs [RET_REG; ARG_REG; RDX]
-                     (inc (put_ascii (ascii_of_nat (Z.to_nat (word.unsigned n))) s))))
-  | step_exit : forall s exit_code,
-      fetch s = Some Exit ->
-      s.(regs) ARG_REG = Some exit_code ->
-      (List.length s.(stack)) mod 2 = 0 ->
-      step (State s) (Halt exit_code (string_of_list_ascii s.(output))).
+| step_const : forall s r w,
+    fetch s = Some (Const r w) ->
+    step (State s) (State (write_reg r w (inc s)))
+| step_mov : forall s r1 r2 w,
+    fetch s = Some (Mov r1 r2) ->
+    s.(regs) r2 = Some w ->
+    step (State s) (State (write_reg r1 w (inc s)))
+| step_add : forall s r1 r2 w1 w2,
+    fetch s = Some (Add r1 r2) ->
+    s.(regs) r1 = Some w1 ->
+    s.(regs) r2 = Some w2 ->
+    step (State s) (State (write_reg r1 (word.add w1 w2) (inc s)))
+| step_sub : forall s r1 r2 w1 w2,
+    fetch s = Some (Sub r1 r2) ->
+    s.(regs) r1 = Some w1 ->
+    s.(regs) r2 = Some w2 ->
+    step (State s) (State (write_reg r1 (word.sub w1 w2) (inc s)))
+| step_div : forall s r w1 w2,
+    fetch s = Some (Div r) ->
+    w2 <> (word.of_Z 0) ->
+    s.(regs) RDX = Some (word.of_Z 0) ->
+    s.(regs) RAX = Some w1 ->
+    s.(regs) r = Some w2 ->
+    step (State s) (State (write_reg RAX (word.divu w1 w2)
+                          (write_reg RDX (word.modu w1 w2)
+                            (inc s))))
+| step_jump : forall s cond n yes,
+    fetch s = Some (Jump cond n) ->
+    take_branch cond s yes ->
+    step (State s) (State (set_pc (if yes then n else (s.(pc) + 1)) s))
+| step_call : forall s n,
+    fetch s = Some (Call n) ->
+    step (State s) (State (set_pc n
+                    (set_stack (RetAddr (s.(pc)+1) :: s.(stack)) s)))
+| step_ret : forall s n rest,
+    fetch s = Some Ret ->
+    s.(stack) = RetAddr n :: rest ->
+    step (State s) (State (set_pc n (set_stack rest s)))
+| step_pop : forall s r w rest,
+    fetch s = Some (Pop r) ->
+    s.(stack) = Word w :: rest ->
+    step (State s) (State (set_stack rest (write_reg r w (inc s))))
+| step_push : forall s r w,
+    fetch s = Some (Push r) ->
+    s.(regs) r = Some w ->
+    step (State s) (State (set_stack (Word w :: s.(stack)) (inc s)))
+| step_load_rsp : forall s r w offset,
+    fetch s = Some (Load_RSP r offset) ->
+    offset < List.length s.(stack) ->
+    nth_error s.(stack) offset = Some (Word w) ->
+    step (State s) (State (write_reg r w (inc s)))
+| step_add_rsp : forall s xs ys,
+    fetch s = Some (Add_RSP (List.length xs)) ->
+    s.(stack) = xs ++ ys ->
+    step (State s) (State (set_stack ys (inc s)))
+| step_store : forall s src ra imm wa w s',
+    fetch s = Some (Store src ra imm) ->
+    s.(regs) ra = Some wa ->
+    s.(regs) src = Some w ->
+    write_mem (word.add wa (word.of_Z (word.unsigned imm))) w s = Some s' ->
+    step (State s) (State (inc s'))
+| step_load : forall s dst ra imm wa w,
+    fetch s = Some (Load dst ra imm) ->
+    s.(regs) ra = Some wa ->
+    read_mem (word.add wa (word.of_Z (word.unsigned imm))) s = Some w ->
+    step (State s) (State (write_reg dst w (inc s)))
+| step_get_ascii : forall s c rest,
+    fetch s = Some GetChar ->
+    read_ascii s.(input) = (c, rest) ->
+    (List.length s.(stack)) mod 2 = 0 ->
+    step (State s)
+          (State (write_reg RET_REG c
+                    (unset_regs [ARG_REG; RDX]
+                      (inc (mkState s.(instructions) s.(pc) s.(regs) s.(stack) s.(memory) rest s.(output))))))
+| step_put_ascii : forall s n,
+    fetch s = Some PutChar ->
+    s.(regs) ARG_REG = Some n ->
+    Z.lt (word.unsigned n) (256 : Z) ->
+    (List.length s.(stack)) mod 2 = 0 ->
+    step (State s)
+          (State (unset_regs [RET_REG; ARG_REG; RDX]
+                    (inc (put_ascii (ascii_of_nat (Z.to_nat (word.unsigned n))) s))))
+| step_exit : forall s exit_code,
+    fetch s = Some Exit ->
+    s.(regs) ARG_REG = Some exit_code ->
+    (List.length s.(stack)) mod 2 = 0 ->
+    step (State s) (Halt exit_code (string_of_list_ascii s.(output))).

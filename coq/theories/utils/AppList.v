@@ -1,6 +1,6 @@
 Inductive app_list {A : Type} : Type :=
-  | List : list A -> app_list
-  | Append : app_list -> app_list -> app_list.
+| List : list A -> app_list
+| Append : app_list -> app_list -> app_list.
 Arguments app_list : clear implicits.
 
 Declare Scope app_list_scope.

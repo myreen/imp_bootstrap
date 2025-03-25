@@ -11,13 +11,10 @@ Inductive reg :=
 | RBX | RBP | R12 | R13 | R14 | R15 (* callee saved *)
 | RDX. (* caller saved, i.e. gets clobbered by external calls *)
 
+Scheme Equality for reg.
+
 Notation ARG_REG := RDI.
 Notation RET_REG := RAX.
-
-(* TODO(kπ) How do you do equality? *)
-Definition reg_eq_dec : forall x y : reg, {x = y} + {x <> y}.
-  decide equality.
-Defined.
 
 Inductive cond :=
 | Always

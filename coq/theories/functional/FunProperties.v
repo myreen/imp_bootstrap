@@ -1,11 +1,12 @@
 Require Import Coq.Lists.List.
 Require Import Coq.Strings.Ascii.
 Import ListNotations.
-Require Import impboot.functional.FunSyntax.
 Import Nat.
-Require Import impboot.utils.Llist.
+Require Import Arith Lia.
+Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunValues.
+Require Import impboot.utils.Llist.
 
 (* What do I induct on here? induction e just gives me IH for singleton lists *)
 (* Lemma Eval_deterministic_single : forall e s env a1 a2,
@@ -228,3 +229,13 @@ Proof.
   destruct Eval_eq; cleanup.
   eapply H6; eauto.
 Qed.
+
+Fixpoint free_vars (e : exp) : list name :=
+  match e with
+  | Const _ => []
+  | Var n => [n]
+  | Op _ xs => flat_map free_vars xs
+  | Let n x y => free_vars x ++ remove Nat.eq_dec n (free_vars y)
+  | If _ xs y z => flat_map free_vars xs ++ free_vars y ++ free_vars z
+  | Call _ xs => flat_map free_vars xs
+  end.

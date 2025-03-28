@@ -13,8 +13,11 @@ Inductive Value :=
 Definition value_name (s : list ascii) : nat :=
   fold_right (fun c acc => (nat_of_ascii c) * 256 + acc) 0 s.
 
-Definition value_list (xs : list Value) : Value :=
+Definition value_list_of_values (xs : list Value) : Value :=
   fold_right (fun x acc => Pair x acc) (Num 0) xs.
+
+Definition value_list {A : Type} (f : A -> Value) (xs : list A) : Value :=
+  value_list_of_values (List.map (fun x => f x) xs).
 
 Definition value_less (v1 v2 : Value) : bool :=
   match v1, v2 with
@@ -59,17 +62,17 @@ Definition value_bool (b : bool) : Value :=
   if b then Num 1 else Num 0.
 
 Definition value_map (f : Value -> Value) (xs : list Value) : Value :=
-  value_list (List.map f xs).
+  value_list f xs.
 
-Definition value_pair (f g : Value -> Value) (p : Value * Value) : Value :=
+Definition value_pair {A B : Type} (f : A -> Value) (g : B -> Value) (p : A * B) : Value :=
   match p with
   | (x, y) => Pair (f x) (g y)
   end.
 
-Definition value_option (f : Value -> Value) (o : option Value) : Value :=
+Definition value_option {A : Type} (f : A -> Value) (o : option A) : Value :=
   match o with
-  | None => value_list []
-  | Some x => value_list [f x]
+  | None => value_list f []
+  | Some x => value_list f [x]
   end.
 
 Definition value_char (c : ascii) : Value :=

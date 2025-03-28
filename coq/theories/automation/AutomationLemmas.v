@@ -244,5 +244,110 @@ Proof.
   end.
 Qed.
 
+(* list *)
+
+
+Theorem auto_list_nil : forall {A : Type} env s (a : A -> Value),
+  env |- ([Const 0], s) ---> ([value_list a []], s).
+Proof.
+  intros; econstructor.
+Qed.
+
+Theorem auto_list_cons : forall {A : Type} b0 b1 env s x1 x2 (a : A -> Value) x xs,
+  (b0 -> env |- ([x1], s) ---> ([a x], s)) ->
+  (b1 -> env |- ([x2], s) ---> ([value_list a xs], s)) ->
+  (b0 /\ b1 ->
+    env |- ([Op Cons [x1; x2]], s) ---> ([value_list a (x :: xs)], s)).
+Proof.
+  intros; destruct H1.
+  repeat econstructor; eauto.
+Qed.
+
+Definition list_CASE {A B : Type} (v0 : list A) (v1 : B) (v2 : A -> list A -> B) : B :=
+  match v0 with
+  | [] => v1
+  | x :: xs => v2 x xs
+  end.
+
+(* Do we need this? We don't have list_CASE in Coq *)
+(* Theorem auto_list_case : forall {A B : Type}
+    b0 b1 b2 env s x0 x1 x2 n1 n2 v0 v1 v2 (a : A -> Value) (b : B -> Value),
+  (b0 -> env |- ([x0], s) ---> ([value_list a v0], s)) ->
+  (b1 -> env |- ([x1], s) ---> ([b v1], s)) ->
+  (forall y1 y2,
+      b2 y1 y2 ->
+      (Env.insert (value_name n2, value_list a y2)
+        (Env.insert (value_name n1, a y1) env)) |- ([x2], s) ---> ([b (v2 y1 y2)], s)) ->
+  NoDup ([value_name n1] ++ free_vars x0) ->
+  b0 /\ (v0 = [] -> b1) /\ (forall y1 y2, v0 = y1 :: y2 -> b2 y1 y2) ->
+  env |- ([If Equal [x0; Const 0] x1
+            (Let (value_name n1) (Op Head [x0])
+              (Let (value_name n2) (Op Tail [x0]) x2))], s) ---> ([b (list_CASE v0 v1 v2)], s).
+Proof.
+  intros.
+  destruct H3 as [Hb0 [Hb1 Hb2]].
+  apply H in Hb0.
+  destruct v0 as [|y1 y2].
+  - apply H0 in Hb1.
+    Eval_eq.
+  - apply H1 in Hb2; eauto.
+    Eval_eq.
+Qed. *)
+
+(* option *)
+
+Theorem auto_option_none : forall {A : Type} env s (a : A -> Value),
+  env |- ([Const 0], s) ---> ([value_option a None], s).
+Proof.
+  intros; econstructor.
+Qed.
+
+Theorem auto_option_some : forall {A : Type} b0 env s x1 (a : A -> Value) x,
+  (b0 -> env |- ([x1], s) ---> ([a x], s)) ->
+  (b0 ->
+    env |- ([Op Cons [x1; Const 0]], s) ---> ([value_option a (Some x)], s)).
+Proof.
+  intros. apply H in X.
+  repeat econstructor; eauto.
+Qed.
+
+(* Do we need option_CASE? *)
+
+(* pair *)
+
+Theorem auto_pair_fst : forall {A B : Type} b0 env s x1 (a : A -> Value) (b : B -> Value) x,
+  (b0 -> env |- ([x1], s) ---> ([value_pair a b x], s)) ->
+  (b0 -> env |- ([Op Head [x1]], s) ---> ([a (fst x)], s)).
+Proof.
+  intros. apply H in X.
+  destruct x; simpl in *.
+  repeat econstructor; eauto.
+Qed.
+
+Theorem auto_pair_snd : forall {A B : Type} b0 env s x1 (a : A -> Value) (b : B -> Value) x,
+  (b0 -> env |- ([x1], s) ---> ([value_pair a b x], s)) ->
+  (b0 -> env |- ([Op Tail [x1]], s) ---> ([b (snd x)], s)).
+Proof.
+  intros.
+  apply H in X.
+  destruct x; simpl in *.
+  repeat econstructor; eauto.
+Qed.
+
+Theorem auto_pair_cons : forall {A B : Type} b0 b1 env s x1 x2 (a : A -> Value) (b : B -> Value) x y,
+  (b0 -> env |- ([x1], s) ---> ([a x], s)) ->
+  (b1 -> env |- ([x2], s) ---> ([b y], s)) ->
+  (b0 /\ b1 ->
+    env |- ([Op Cons [x1; x2]], s) ---> ([value_pair a b (x, y)], s)).
+Proof.
+  intros.
+  destruct H1.
+  repeat econstructor; eauto.
+Qed.
+
+(* Do we need pair_CASE? *)
+
+
+
 (* TODO(kπ) continue *)
 

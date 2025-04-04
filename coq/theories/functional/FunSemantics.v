@@ -1,10 +1,7 @@
-Require Import Coq.Lists.List.
-Require Import Coq.Strings.Ascii.
-Import ListNotations.
+From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunValues.
 Require Import impboot.functional.FunEnv.
-Import Nat.
 Require Import impboot.utils.Llist.
 
 Module Env := FunEnv.
@@ -91,7 +88,7 @@ Fixpoint lookup_fun (n : name) (fs : list FunSyntax.dec) : option (list name * F
 Definition env_and_body (n : name) (args : list Value) (s : state) : option (Env.env * FunSyntax.exp) :=
   match lookup_fun n s.(funs) with
   | None => None
-  | Some (params, body) => if length params =? length args then Some (make_env params args Env.empty, body) else None
+  | Some (params, body) => if List.length params =? List.length args then Some (make_env params args Env.empty, body) else None
   end.
 
 Definition init_state (inp : llist ascii) (funs : list FunSyntax.dec) : state :=

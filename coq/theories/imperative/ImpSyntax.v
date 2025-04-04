@@ -1,5 +1,4 @@
-Require Import Coq.Lists.List.
-Import ListNotations.
+From impboot Require Import utils.Core.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
 
@@ -37,6 +36,11 @@ Inductive cmd : Type :=
 
 Inductive func : Type :=
 | Func (n: name) (params: list name) (body: list cmd). (* func name, formal params, body *)
+
+Definition func_CASE {A} (f: func) (fcase: name -> list name -> list cmd -> A) : A :=
+  match f with
+  | Func n params body => fcase n params body
+  end.
 
 Inductive prog : Type :=
 | Program (funcs: list func). (* a complete program is a list of function definitions *)

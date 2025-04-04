@@ -1,8 +1,4 @@
-Require Import Coq.Lists.List.
-Require Import Coq.Strings.Ascii.
-Import ListNotations.
-Import Nat.
-Require Import Arith Lia.
+From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunValues.

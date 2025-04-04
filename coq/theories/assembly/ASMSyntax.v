@@ -1,6 +1,4 @@
-Require Import Coq.Lists.List.
-Require Import Coq.Strings.String.
-Import ListNotations.
+From impboot Require Import utils.Core.
 Require Import impboot.utils.Words4Naive.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.

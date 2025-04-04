@@ -2,9 +2,7 @@ Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunProperties.
 Require Import impboot.functional.FunValues.
-Require Import Coq.Lists.List.
-Import ListNotations.
-Require Import Lia Nat Arith.
+From impboot Require Import utils.Core.
 
 Create HintDb automation.
 
@@ -60,23 +58,24 @@ Proof.
   - inversion H2; subst; econstructor; eauto.
 Qed.
 
-Theorem auto_let : forall {A : Type} {B : Type}
-    b1 b2 (a : A -> Value) (b : B -> Value) env x1 y1 s1 s2 s3 v1 let_n f,
-  (b1 -> env |- ([x1], s1) ---> ([a v1], s2)) ->
-  (forall v1, b2 v1 -> (Env.insert ((value_name let_n), a v1) env) |- ([y1], s2) ---> ([b (f v1)], s3)) ->
+(* TODO(kπ) letd? *)
+Theorem auto_let : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
+    b1 b2 env x1 y1 s1 s2 s3 v1 let_n f,
+  (b1 -> env |- ([x1], s1) ---> ([ra.(refine) v1], s2)) ->
+  (forall v1, b2 v1 -> (Env.insert ((value_name let_n), ra.(refine) v1) env) |- ([y1], s2) ---> ([rb.(refine) (f v1)], s3)) ->
   (b1 /\ b2 v1 ->
-    env |- ([Let (value_name let_n) x1 y1], s1) ---> ([b (f v1)], s3)).
+    env |- ([Let (value_name let_n) x1 y1], s1) ---> ([rb.(refine) (f v1)], s3)).
 Proof.
   intros.
   destruct H1.
   eapply Eval_Let; eauto.
 Qed.
 
-Theorem auto_otherwise : forall {A : Type}
-    b1 (a : A -> Value) env s x1 v1,
-  (b1 -> env |- ([x1], s) ---> ([a v1], s)) ->
+Theorem auto_otherwise : forall {A} `{ra : Refinable A}
+    b1 env s x1 v1,
+  (b1 -> env |- ([x1], s) ---> ([refine v1], s)) ->
   (b1 ->
-    env |- ([If Less [Const 0; Const 1] x1 (Const 0)], s) ---> ([a (value_otherwise v1)], s)).
+    env |- ([If Less [Const 0; Const 1] x1 (Const 0)], s) ---> ([refine (value_otherwise v1)], s)).
 Proof.
   intros.
   apply H in X.
@@ -86,14 +85,14 @@ Qed.
 (* bool *)
 
 Theorem auto_bool_F : forall env s,
-  env |- ([Const 0], s) ---> ([value_bool false], s).
+  env |- ([Const 0], s) ---> ([refine false], s).
 Proof.
   intros. apply Eval_Const.
 Qed.
 Hint Resolve auto_bool_F : automation.
 
 Theorem auto_bool_T : forall env s,
-  env |- ([Const 1], s) ---> ([value_bool true], s).
+  env |- ([Const 1], s) ---> ([refine true], s).
 Proof.
   intros. apply Eval_Const.
 Qed.
@@ -109,8 +108,8 @@ Ltac Eval_eq :=
   end.
 
 Theorem auto_bool_not : forall env s x1 b,
-  env |- ([x1], s) ---> ([value_bool b], s) ->
-  env |- ([Op Sub [Const 1; x1]], s) ---> ([value_bool (negb b)], s).
+  env |- ([x1], s) ---> ([refine b], s) ->
+  env |- ([Op Sub [Const 1; x1]], s) ---> ([refine (negb b)], s).
 Proof.
   intros env s x1 b H.
   Eval_eq.
@@ -119,38 +118,38 @@ Qed.
 Hint Resolve auto_bool_not : automation.
 
 Theorem auto_bool_and : forall env s x1 x2 bA bB,
-  env |- ([x1], s) ---> ([value_bool bA], s) ->
-  env |- ([x2], s) ---> ([value_bool bB], s) ->
-  env |- ([Op Sub [Op FunSyntax.Add [x1; x2]; Const 1]], s) ---> ([value_bool (andb bA bB)], s).
+  env |- ([x1], s) ---> ([refine bA], s) ->
+  env |- ([x2], s) ---> ([refine bB], s) ->
+  env |- ([Op Sub [Op FunSyntax.Add [x1; x2]; Const 1]], s) ---> ([refine (andb bA bB)], s).
 Proof.
   intros env s x1 x2 bA bB H1 H2.
-  destruct (value_bool bA) eqn:HbA; destruct (value_bool bB) eqn:HbB; simpl in *.
-  all: unfold value_bool in *; simpl in *; destruct bA; destruct bB; inversion HbA; inversion HbB; subst.
+  destruct (refine bA) eqn:HbA; destruct (refine bB) eqn:HbB; simpl in *.
+  all: unfold refine in *; simpl in *; destruct bA; destruct bB; inversion HbA; inversion HbB; subst.
   all: Eval_eq.
 Qed.
 Hint Resolve auto_bool_and : automation.
 
 Theorem auto_bool_iff : forall env s x1 x2 bA bB,
-  env |- ([x1], s) ---> ([value_bool bA], s) ->
-  env |- ([x2], s) ---> ([value_bool bB], s) ->
-  env |- ([If Equal [x1; x2] (Const 1) (Const 0)], s) ---> ([value_bool (Bool.eqb bA bB)], s).
+  env |- ([x1], s) ---> ([refine bA], s) ->
+  env |- ([x2], s) ---> ([refine bB], s) ->
+  env |- ([If Equal [x1; x2] (Const 1) (Const 0)], s) ---> ([refine (Bool.eqb bA bB)], s).
 Proof.
   intros env s x1 x2 bA bB H1 H2.
-  destruct (value_bool bA) eqn:HbA; destruct (value_bool bB) eqn:HbB; simpl in *.
-  all: unfold value_bool in *; simpl in *; destruct bA; destruct bB; inversion HbA; inversion HbB; subst.
+  destruct (refine bA) eqn:HbA; destruct (refine bB) eqn:HbB; simpl in *.
+  all: unfold refine in *; simpl in *; destruct bA; destruct bB; inversion HbA; inversion HbB; subst.
   all: Eval_eq.
 Qed.
 Hint Resolve auto_bool_iff : automation.
 
-Theorem last_bool_if : forall env s x_g x_t x_f b t f,
-  env |- ([x_g], s) ---> ([value_bool b], s) ->
+Theorem last_bool_if : forall env s x_g x_t x_f (b : bool) t f,
+  env |- ([x_g], s) ---> ([refine b], s) ->
   env |- ([x_t], s) ---> ([t], s) ->
   env |- ([x_f], s) ---> ([f], s) ->
   env |- ([If Equal [x_g; Const 1] x_t x_f], s) ---> ([if b then t else f], s).
 Proof.
   intros env s x_g x_t x_f b t f H1 H2 H3.
-  destruct (value_bool b) eqn:Hb; simpl in *.
-  all: unfold value_bool in *; simpl in *; destruct b; inversion Hb; subst.
+  destruct (refine b) eqn:Hb; simpl in *.
+  all: unfold refine in *; simpl in *; destruct b; inversion Hb; subst.
   all: Eval_eq.
 Qed.
 Hint Resolve last_bool_if : automation.
@@ -202,7 +201,7 @@ Proof.
   rewrite <- Nat.eqb_neq in *; simpl; rewrite H3; unfold return_; reflexivity.
 Qed.
 
-Theorem auto_num_if_eq : forall {A : Type}
+Theorem auto_num_if_eq : forall {A}
     b0 b1 b2 b3 env s x1 x2 y z n1 n2 t f (a : A -> Value),
   (b0 -> env |- ([x1], s) ---> ([Num n1], s)) ->
   (b1 -> env |- ([x2], s) ---> ([Num n2], s)) ->
@@ -223,7 +222,7 @@ Proof.
   end.
 Qed.
 
-Theorem auto_num_if_less : forall {A : Type}
+Theorem auto_num_if_less : forall {A}
     b0 b1 b2 b3 env s x1 x2 y z n1 n2 t f (a : A -> Value),
   (b0 -> env |- ([x1], s) ---> ([Num n1], s)) ->
   (b1 -> env |- ([x2], s) ---> ([Num n2], s)) ->
@@ -246,31 +245,28 @@ Qed.
 
 (* list *)
 
-
-Theorem auto_list_nil : forall {A : Type} env s (a : A -> Value),
-  env |- ([Const 0], s) ---> ([value_list a []], s).
+Theorem auto_list_nil : forall env s,
+  env |- ([Const 0], s) ---> ([refine []], s).
 Proof.
   intros; econstructor.
 Qed.
 
-Theorem auto_list_cons : forall {A : Type} b0 b1 env s x1 x2 (a : A -> Value) x xs,
-  (b0 -> env |- ([x1], s) ---> ([a x], s)) ->
-  (b1 -> env |- ([x2], s) ---> ([value_list a xs], s)) ->
+Theorem auto_list_cons : forall {A} `{Refinable A} b0 b1 env s x1 x2 x xs,
+  (b0 -> env |- ([x1], s) ---> ([refine x], s)) ->
+  (b1 -> env |- ([x2], s) ---> ([refine xs], s)) ->
   (b0 /\ b1 ->
-    env |- ([Op Cons [x1; x2]], s) ---> ([value_list a (x :: xs)], s)).
+    env |- ([Op Cons [x1; x2]], s) ---> ([refine (x :: xs)], s)).
 Proof.
-  intros; destruct H1.
+  intros.
+  match goal with
+  | H : ?b0 /\ ?b1 |- _ =>
+    destruct H
+  end.
   repeat econstructor; eauto.
 Qed.
 
-Definition list_CASE {A B : Type} (v0 : list A) (v1 : B) (v2 : A -> list A -> B) : B :=
-  match v0 with
-  | [] => v1
-  | x :: xs => v2 x xs
-  end.
-
 (* Do we need this? We don't have list_CASE in Coq *)
-(* Theorem auto_list_case : forall {A B : Type}
+(* Theorem auto_list_case : forall {A B}
     b0 b1 b2 env s x0 x1 x2 n1 n2 v0 v1 v2 (a : A -> Value) (b : B -> Value),
   (b0 -> env |- ([x0], s) ---> ([value_list a v0], s)) ->
   (b1 -> env |- ([x1], s) ---> ([b v1], s)) ->
@@ -296,58 +292,72 @@ Qed. *)
 
 (* option *)
 
-Theorem auto_option_none : forall {A : Type} env s (a : A -> Value),
-  env |- ([Const 0], s) ---> ([value_option a None], s).
+Theorem auto_option_none : forall {A} `{Refinable A} env s,
+  env |- ([Const 0], s) ---> ([refine None], s).
 Proof.
   intros; econstructor.
 Qed.
 
-Theorem auto_option_some : forall {A : Type} b0 env s x1 (a : A -> Value) x,
-  (b0 -> env |- ([x1], s) ---> ([a x], s)) ->
+Theorem auto_option_some : forall {A} `{Refinable A} b0 env s x1 x,
+  (b0 -> env |- ([x1], s) ---> ([refine x], s)) ->
   (b0 ->
-    env |- ([Op Cons [x1; Const 0]], s) ---> ([value_option a (Some x)], s)).
+    env |- ([Op Cons [x1; Const 0]], s) ---> ([refine (Some x)], s)).
 Proof.
-  intros. apply H in X.
+  intros.
+  match goal with
+  | H : ?b0 -> _ , X : ?b0 |- _ =>
+    apply H in X
+  end.
   repeat econstructor; eauto.
 Qed.
 
 (* Do we need option_CASE? *)
+(* TODO(kπ) option_CASE theorem *)
 
 (* pair *)
 
-Theorem auto_pair_fst : forall {A B : Type} b0 env s x1 (a : A -> Value) (b : B -> Value) x,
-  (b0 -> env |- ([x1], s) ---> ([value_pair a b x], s)) ->
-  (b0 -> env |- ([Op Head [x1]], s) ---> ([a (fst x)], s)).
-Proof.
-  intros. apply H in X.
-  destruct x; simpl in *.
-  repeat econstructor; eauto.
-Qed.
-
-Theorem auto_pair_snd : forall {A B : Type} b0 env s x1 (a : A -> Value) (b : B -> Value) x,
-  (b0 -> env |- ([x1], s) ---> ([value_pair a b x], s)) ->
-  (b0 -> env |- ([Op Tail [x1]], s) ---> ([b (snd x)], s)).
+Theorem auto_pair_fst : forall {A B} `{Refinable A} `{Refinable B} b0 env s x1 (x : A * B),
+  (b0 -> env |- ([x1], s) ---> ([refine x], s)) ->
+  (b0 -> env |- ([Op Head [x1]], s) ---> ([refine (fst x)], s)).
 Proof.
   intros.
-  apply H in X.
+  match goal with
+  | H : ?b0 -> _ , X : ?b0 |- _ =>
+    apply H in X
+  end.
   destruct x; simpl in *.
   repeat econstructor; eauto.
 Qed.
 
-Theorem auto_pair_cons : forall {A B : Type} b0 b1 env s x1 x2 (a : A -> Value) (b : B -> Value) x y,
-  (b0 -> env |- ([x1], s) ---> ([a x], s)) ->
-  (b1 -> env |- ([x2], s) ---> ([b y], s)) ->
+Theorem auto_pair_snd : forall {A B} `{Refinable A} `{Refinable B} b0 env s x1 (x : A * B),
+  (b0 -> env |- ([x1], s) ---> ([refine x], s)) ->
+  (b0 -> env |- ([Op Tail [x1]], s) ---> ([refine (snd x)], s)).
+Proof.
+  intros.
+  match goal with
+  | H : ?b0 -> _ , X : ?b0 |- _ =>
+    apply H in X
+  end.
+  destruct x; simpl in *.
+  repeat econstructor; eauto.
+Qed.
+
+Theorem auto_pair_cons : forall {A B} `{Refinable A} `{Refinable B} b0 b1 env s x1 x2 (x : A) (y : B),
+  (b0 -> env |- ([x1], s) ---> ([refine x], s)) ->
+  (b1 -> env |- ([x2], s) ---> ([refine y], s)) ->
   (b0 /\ b1 ->
-    env |- ([Op Cons [x1; x2]], s) ---> ([value_pair a b (x, y)], s)).
+    env |- ([Op Cons [x1; x2]], s) ---> ([refine (x, y)], s)).
 Proof.
   intros.
-  destruct H1.
+  match goal with
+  | H : ?b0 /\ ?b1 |- _ =>
+    destruct H
+  end.
   repeat econstructor; eauto.
 Qed.
 
 (* Do we need pair_CASE? *)
-
-
+(* TODO(kπ) option_CASE theorem *)
 
 (* TODO(kπ) continue *)
 

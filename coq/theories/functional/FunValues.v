@@ -1,8 +1,5 @@
-Require Import Coq.Lists.List.
-Require Import Coq.Strings.Ascii.
-Require Import Coq.Arith.PeanoNat.
+From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
-Import ListNotations.
 
 Notation name := nat.
 
@@ -10,14 +7,20 @@ Inductive Value :=
   | Pair (v1 v2 : Value)
   | Num (n : nat).
 
+Class Refinable (A : Type) :=
+  { refine : A -> Value }.
+
+Global Instance Refinable_nat : Refinable nat :=
+  { refine := Num }.
+
 Definition value_name (s : list ascii) : nat :=
   fold_right (fun c acc => (nat_of_ascii c) * 256 + acc) 0 s.
 
 Definition value_list_of_values (xs : list Value) : Value :=
   fold_right (fun x acc => Pair x acc) (Num 0) xs.
 
-Definition value_list {A : Type} (f : A -> Value) (xs : list A) : Value :=
-  value_list_of_values (List.map (fun x => f x) xs).
+Global Instance Refinable_list {A : Type} `{Refinable A} : Refinable (list A) :=
+  { refine l := value_list_of_values (List.map refine l) }.
 
 Definition value_less (v1 v2 : Value) : bool :=
   match v1, v2 with
@@ -58,25 +61,21 @@ Definition value_tail (v : Value) : Value :=
 Definition value_cons (x y : Value) : Value :=
   Pair x y.
 
-Definition value_bool (b : bool) : Value :=
-  if b then Num 1 else Num 0.
+Global Instance Refinable_bool : Refinable bool :=
+  { refine b := if b then Num 1 else Num 0 }.
 
-Definition value_map (f : Value -> Value) (xs : list Value) : Value :=
-  value_list f xs.
+Global Instance Refinable_pair {A B : Type} `{Refinable A} `{Refinable B} : Refinable (A * B) :=
+  { refine p := Pair (refine (fst p)) (refine (snd p)) }.
 
-Definition value_pair {A B : Type} (f : A -> Value) (g : B -> Value) (p : A * B) : Value :=
-  match p with
-  | (x, y) => Pair (f x) (g y)
-  end.
+Global Instance Refinable_option {A : Type} `{Refinable (list A)} : Refinable (option A) :=
+  { refine o :=
+    match o with
+    | None => refine []
+    | Some x => refine [x]
+    end }.
 
-Definition value_option {A : Type} (f : A -> Value) (o : option A) : Value :=
-  match o with
-  | None => value_list f []
-  | Some x => value_list f [x]
-  end.
-
-Definition value_char (c : ascii) : Value :=
-  Num (nat_of_ascii c).
+Global Instance Refinable_char : Refinable ascii :=
+  { refine c := Num (nat_of_ascii c) }.
 
 Definition value_isNum (v : Value) : bool :=
   match v with
@@ -100,7 +99,7 @@ Definition value_el3 (v : Value) : Value :=
   value_el2 (value_tail v).
 
 Theorem isNum_bool : forall b,
-  value_isNum (value_bool b) = true.
+  value_isNum (refine b) = true.
 Proof.
   intros. destruct b; reflexivity.
 Qed.

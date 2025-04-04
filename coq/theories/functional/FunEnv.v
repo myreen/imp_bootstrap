@@ -1,6 +1,6 @@
 Require Import Coq.Logic.FunctionalExtensionality.
+From impboot Require Import utils.Core.
 Require Import impboot.functional.FunValues.
-Require Import Arith Lia Nat.
 
 Module Type FunEnvT.
   Parameter env : Type.

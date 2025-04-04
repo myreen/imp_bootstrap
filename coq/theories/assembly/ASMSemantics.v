@@ -1,13 +1,9 @@
-Require Import Nat.
-Require Import Coq.Lists.List.
-Require Import Coq.Strings.String.
-Require Import Coq.Strings.Ascii.
-Import ListNotations.
+From impboot Require Import
+  utils.Core
+  utils.Llist.
 Require Import impboot.assembly.ASMSyntax.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
-Require Import ZArith.
-Require Import impboot.utils.Llist.
 
 Inductive word_or_ret :=
 | Word : word64 -> word_or_ret

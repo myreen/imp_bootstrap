@@ -1,7 +1,7 @@
 From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
 
-Notation name := nat.
+Notation name := nat (only parsing).
 
 Inductive Value :=
   | Pair (v1 v2 : Value)

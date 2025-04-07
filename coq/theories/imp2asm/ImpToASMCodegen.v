@@ -49,10 +49,8 @@ Definition AllocLoc : nat := 7.
 
 (* Checks if a list has an even length *)
 Fixpoint even_len {A} (xs : list A) : bool :=
-  match xs with
-  | [] => true
-  | _ :: ys => negb (even_len ys)
-  end.
+  list_CASE xs true
+    (fun _ ys => negb (even_len ys)).
 
 (* jump label for failure cases
   if b is true – also push R15 before exiting give_up
@@ -68,11 +66,11 @@ Definition c_const (n : word64) (l : nat) (vs : v_stack) : asm_appl * nat :=
 
 (* Finds the index of a variable in a stack representation *)
 Fixpoint find (n : name) (k : nat) (vs : v_stack) : nat :=
-  match vs with
-  | [] => k
-  | None :: xs => find n (k+1) xs
-  | Some v :: xs => if Nat.eqb v n then k else find n (k+1) xs
-  end.
+  list_CASE vs k (fun x xs =>
+    option_CASE x
+      (find n (k+1) xs)
+      (fun v => if Nat.eqb v n then k else find n (k+1) xs)
+  ).
 
 (* lookup variable with name `n`, based on stack `vs` *)
 Definition c_var (n : name) (l : nat) (vs : v_stack) : asm_appl * nat :=
@@ -234,16 +232,14 @@ Definition make_ret (vs : v_stack) (l : nat) : asm_appl * nat :=
 (* Store the variables from the stack in the registers, so that they can be
 passed to the function call *)
 Definition c_pops (xs : list exp) (vs : v_stack) : asm_appl :=
-  let k := List.length xs in
-  match k with
-  | 0 => List [Push RAX]
-  | 1 => List []
-  | 2 => List [Pop RDI]
-  | 3 => List [Pop RDI; Pop RDX]
-  | 4 => List [Pop RDI; Pop RDX; Pop RBX]
-  | 5 => List [Pop RDI; Pop RDX; Pop RBX; Pop RBP]
-  | _ => List [Jump Always (give_up (xorb (negb (even_len xs)) (even_len vs)))]
-  end.
+  letd k := List.length xs in
+  if k =? 0 then List [Push RAX] else
+  if k =? 1 then List [] else
+  if k =? 2 then List [Pop RDI] else
+  if k =? 3 then List [Pop RDI; Pop RDX] else
+  if k =? 4 then List [Pop RDI; Pop RDX; Pop RBX] else
+  if k =? 5 then List [Pop RDI; Pop RDX; Pop RBX; Pop RBP] else
+  List [Jump Always (give_up (xorb (negb (even_len xs)) (even_len vs)))].
 
 (** Builds a stack representation for parameters of a function *)
 Fixpoint call_v_stack (xs: list name) (acc: v_stack): v_stack :=
@@ -254,16 +250,14 @@ Fixpoint call_v_stack (xs: list name) (acc: v_stack): v_stack :=
 
 (** Push a list of variables onto the stack *)
 Definition c_pushes (v_names: list name) (l : nat): (asm_appl * v_stack * nat) :=
-  let k := List.length v_names in
-  let e := call_v_stack v_names [] in
-  match k with
-  | 0 => (List [], [None], l)
-  | 1 => (List [], e, l)
-  | 2 => (List [Push RDI], e, l + 1)
-  | 3 => (List [Push RDX; Push RDI], e, l + 2)
-  | 4 => (List [Push RBX; Push RDX; Push RDI], e, l + 3)
-  | _ => (List [Push RBP; Push RBX; Push RDX; Push RDI], e, l + 4)
-  end.
+  letd k := List.length v_names in
+  letd e := call_v_stack v_names [] in
+  if k =? 0 then (List [], [None], l) else
+  if k =? 1 then (List [], e, l) else
+  if k =? 2 then (List [Push RDI], e, l + 1) else
+  if k =? 3 then (List [Push RDX; Push RDI], e, l + 2) else
+  if k =? 4 then (List [Push RBX; Push RDX; Push RDI], e, l + 3) else
+  (List [Push RBP; Push RBX; Push RDX; Push RDI], e, l + 4).
 
 (* Call the given function, passing the arguments in registers*)
 Definition c_call (vs : v_stack) (target : nat)

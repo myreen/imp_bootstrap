@@ -1,7 +1,7 @@
 Require Import Coq.Lists.List.
 Import ListNotations.
 
-Notation name := nat.
+Notation name := nat (only parsing).
 
 Inductive op : Type :=
 | Add

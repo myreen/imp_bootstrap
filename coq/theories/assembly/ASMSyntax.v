@@ -9,10 +9,24 @@ Inductive reg :=
 | RBX | RBP | R12 | R13 | R14 | R15 (* callee saved *)
 | RDX. (* caller saved, i.e. gets clobbered by external calls *)
 
-Scheme Equality for reg.
-
 Notation ARG_REG := RDI.
 Notation RET_REG := RAX.
+
+Scheme Equality for reg.
+
+Definition reg_CASE {A} (r : reg)
+  (rax : A) (rdi : A) (rbx : A) (rbp : A) (r12 : A) (r13 : A) (r14 : A) (r15 : A) (rdx : A) : A :=
+  match r with
+  | RAX => rax
+  | RDI => rdi
+  | RBX => rbx
+  | RBP => rbp
+  | R12 => r12
+  | R13 => r13
+  | R14 => r14
+  | R15 => r15
+  | RDX => rdx
+  end.
 
 Inductive cond :=
 | Always

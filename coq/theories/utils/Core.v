@@ -17,26 +17,24 @@ From coqutil Require Import dlet.
 (* d/let *)
 
 Notation "'letd' x := e1 'in' e2" :=
-  (dlet e1 (fun x => e2))
+  ((fun x => e2) e1)
   (at level 200).
 
 Notation
   "'letd' ''(' x , y ')' := val 'in' body" :=
-(dlet val
-    (fun v =>
-       let x := fst v in
-       let y := snd v in
-       body))
+((fun v =>
+    let x := fst v in
+    let y := snd v in
+    body) val)
 (at level 200, only parsing).
 
 Notation
   "'letd' ''(' x , y , z ')' := val 'in' body" :=
-(dlet val
-    (fun v =>
-       let x := fst (fst v) in
-       let y := snd (fst v) in
-       let z := snd v in
-       body))
+((fun v =>
+    let x := fst (fst v) in
+    let y := snd (fst v) in
+    let z := snd v in
+    body) val)
 (at level 200, only parsing).
 
 (* CASE *)
@@ -56,4 +54,10 @@ Definition option_CASE {A B} (o : option A) (fnone : B) (fsome : A -> B) : B :=
 Definition pair_CASE {A1 A2 B} (p : A1 * A2) (f: A1 -> A2 -> B) : B :=
   match p with
   | (x, y) => f x y
+  end.
+
+Definition nat_CASE {A} (n : nat) (f0 : A) (fS : nat -> A) : A :=
+  match n with
+  | 0 => f0
+  | S n' => fS n'
   end.

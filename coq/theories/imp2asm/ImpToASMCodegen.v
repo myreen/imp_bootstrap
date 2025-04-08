@@ -49,7 +49,10 @@ Definition AllocLoc : nat := 7.
 
 (* Checks if a list has an even length *)
 Fixpoint even_len {A} (xs : list A) : bool :=
-  list_CASE xs true
+  list_CASE xs
+    (* nil *)
+    true
+    (* :: *)
     (fun _ ys => negb (even_len ys)).
 
 (* jump label for failure cases
@@ -66,11 +69,17 @@ Definition c_const (n : word64) (l : nat) (vs : v_stack) : asm_appl * nat :=
 
 (* Finds the index of a variable in a stack representation *)
 Fixpoint find (n : name) (k : nat) (vs : v_stack) : nat :=
-  list_CASE vs k (fun x xs =>
-    option_CASE x
-      (find n (k+1) xs)
-      (fun v => if Nat.eqb v n then k else find n (k+1) xs)
-  ).
+  list_CASE vs
+    (* nil *)
+    k
+    (* :: *)
+    (fun x xs =>
+      option_CASE x
+        (* none *)
+        (find n (k+1) xs)
+        (* some *)
+        (fun v => if Nat.eqb v n then k else find n (k+1) xs)
+    ).
 
 (* lookup variable with name `n`, based on stack `vs` *)
 Definition c_var (n : name) (l : nat) (vs : v_stack) : asm_appl * nat :=
@@ -153,77 +162,90 @@ Definition c_store : asm_appl :=
     ASMSyntax.Store RAX RDI (word.of_Z 0) ].
 
 Fixpoint c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
-  match e with
-  | Var n => c_var n l vs
-  | Const n => c_const n l vs
-  | Add e1 e2 =>
+  exp_CASE e
+  (* Var *)
+  (fun n => c_var n l vs)
+  (* Const *)
+  (fun n => c_const n l vs)
+  (* Add *)
+  (fun e1 e2 =>
     letd '(asm1, l1) := c_exp e1 l vs in
     letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
     letd c_add_asm := c_add vs in
-    (asm1 +++ asm2 +++ c_add_asm, l2 + app_list_length c_add_asm)
-  | Sub e1 e2 =>
+    (asm1 +++ asm2 +++ c_add_asm, l2 + app_list_length c_add_asm))
+  (* Sub *)
+  (fun e1 e2 =>
     letd '(asm1, l1) := c_exp e1 l vs in
     letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
     letd c_sub_asm := c_sub l2 in
-    (asm1 +++ asm2 +++ c_sub_asm, l2 + app_list_length c_sub_asm)
-  | Div e1 e2 =>
+    (asm1 +++ asm2 +++ c_sub_asm, l2 + app_list_length c_sub_asm))
+  (* Div *)
+  (fun e1 e2 =>
     letd '(asm1, l1) := c_exp e1 l vs in
     letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
-    (asm1 +++ asm2 +++ c_div, l2 + app_list_length c_div)
-  | Read e1 e2 =>
+    (asm1 +++ asm2 +++ c_div, l2 + app_list_length c_div))
+  (* Read *)
+  (fun e1 e2 =>
     letd '(asm1, l1) := c_exp e1 l vs in
     letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
-    (asm1 +++ asm2 +++ c_load, l2 + app_list_length c_load)
-  end.
+    (asm1 +++ asm2 +++ c_load, l2 + app_list_length c_load)).
 
 Fixpoint c_exps (es: list exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
-  match es with
-  | [] => (List [], l)
-  | e :: es' =>
-    letd '(asm1, l1) := c_exp e l vs in
-    letd '(asm2, l2) := c_exps es' l1 vs in
-    (asm1 +++ asm2, l2)
-  end.
+  list_CASE es
+    (* [] *)
+    (List [], l)
+    (* :: *)
+    (fun e es' =>
+      letd '(asm1, l1) := c_exp e l vs in
+      letd '(asm2, l2) := c_exps es' l1 vs in
+      (asm1 +++ asm2, l2)).
 
 (*
   RDI `cmp` RBX
 *)
 Definition c_cmp (c : cmp) : cond :=
-  match c with
-  | Less => ASMSyntax.Less RDI RBX
-  | Equal => ASMSyntax.Equal RDI RBX
-  end.
+  cmp_CASE c
+    (* Less *)
+    (ASMSyntax.Less RDI RBX)
+    (* Equal *)
+    (ASMSyntax.Equal RDI RBX).
 
 Fixpoint c_test_jump (t : test) (pos_label : nat) (neg_label : nat)
   (l : nat) (vs : v_stack) : asm_appl * nat :=
-  match t with
-  | Test c e1 e2 =>
-    letd '(asm1, l1) := c_exp e1 l vs in
-    letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
-    letd c_cmp_asm := List [ASMSyntax.Jump (c_cmp c) pos_label] in
-    (asm1 +++ asm2 +++ c_cmp_asm, l2 + app_list_length c_cmp_asm)
-  | And t1 t2 =>
-    letd '(asm1, l1) := c_test_jump t1 (l + 1) neg_label (l + 2) vs in
-    letd '(asm2, l2) := c_test_jump t2 pos_label neg_label l1 vs in
-    letd jump_to_start := List [ASMSyntax.Jump Always (l + 2)] in
-    letd jump_to_t2 := List [ASMSyntax.Jump Always l1] in (* l1 is the start of t2*)
-    (jump_to_start +++ jump_to_t2 +++ asm1 +++ asm2, l2)
-  | Or t1 t2 =>
-    letd '(asm1, l1) := c_test_jump t1 pos_label (l + 1) (l + 2) vs in
-    letd '(asm2, l2) := c_test_jump t2 pos_label neg_label l1 vs in
-    letd jump_to_start := List [ASMSyntax.Jump Always (l + 2)] in
-    letd jump_to_t2 := List [ASMSyntax.Jump Always l1] in (* l1 is the start of t2*)
-    (jump_to_start +++ jump_to_t2 +++ asm1 +++ asm2, l2)
-  | Not t =>
-    c_test_jump t neg_label pos_label l vs
-  end.
+  test_CASE t
+    (* Test *)
+    (fun c e1 e2 =>
+      letd '(asm1, l1) := c_exp e1 l vs in
+      letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
+      letd c_cmp_asm := List [ASMSyntax.Jump (c_cmp c) pos_label] in
+      (asm1 +++ asm2 +++ c_cmp_asm, l2 + app_list_length c_cmp_asm))
+    (* And *)
+    (fun t1 t2 =>
+      letd '(asm1, l1) := c_test_jump t1 (l + 1) neg_label (l + 2) vs in
+      letd '(asm2, l2) := c_test_jump t2 pos_label neg_label l1 vs in
+      letd jump_to_start := List [ASMSyntax.Jump Always (l + 2)] in
+      letd jump_to_t2 := List [ASMSyntax.Jump Always l1] in (* l1 is the start of t2*)
+      (jump_to_start +++ jump_to_t2 +++ asm1 +++ asm2, l2))
+    (* Or *)
+    (fun t1 t2 =>
+      letd '(asm1, l1) := c_test_jump t1 pos_label (l + 1) (l + 2) vs in
+      letd '(asm2, l2) := c_test_jump t2 pos_label neg_label l1 vs in
+      letd jump_to_start := List [ASMSyntax.Jump Always (l + 2)] in
+      letd jump_to_t2 := List [ASMSyntax.Jump Always l1] in (* l1 is the start of t2*)
+      (jump_to_start +++ jump_to_t2 +++ asm1 +++ asm2, l2))
+    (* Not *)
+    (fun t =>
+      c_test_jump t neg_label pos_label l vs).
 
 (* Looks up a function name in a list of function addresses *)
 Fixpoint lookup (n : nat) (fs : f_lookup) : nat :=
-  match fs with
-  | [] => 0
-  | (x, y) :: xs => if Nat.eqb x n then y else lookup n xs
-  end.
+  list_CASE fs
+    (* [] *)
+    0
+    (* :: *)
+    (fun xy xs =>
+      letd '(x, y) := xy in
+      if Nat.eqb x n then y else lookup n xs).
 
 (* Drop the current stack frame - elements corresponding to `vs` *)
 Definition make_ret (vs : v_stack) (l : nat) : asm_appl * nat :=
@@ -243,10 +265,11 @@ Definition c_pops (xs : list exp) (vs : v_stack) : asm_appl :=
 
 (** Builds a stack representation for parameters of a function *)
 Fixpoint call_v_stack (xs: list name) (acc: v_stack): v_stack :=
-  match xs with
-  | [] => acc
-  | x :: xs' => call_v_stack xs' (Some x :: acc)
-  end.
+  list_CASE xs
+    (* [] *)
+    acc
+    (* :: *)
+    (fun x xs' => call_v_stack xs' (Some x :: acc)).
 
 (** Push a list of variables onto the stack *)
 Definition c_pushes (v_names: list name) (l : nat): (asm_appl * v_stack * nat) :=
@@ -268,87 +291,101 @@ Definition c_call (vs : v_stack) (target : nat)
 
 Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   (vs : v_stack) (ck: nat) {struct ck} : (asm_appl * nat * v_stack) :=
-  match ck with
-  | 0 => (List [], l, vs)
-  | S ck' =>
-    match c with
-    | Assign n e =>
-      letd '(c1, l1) := c_exp e l vs in
-      letd '(c2, l2, vs') := c_assign n l1 vs in
-      (c1 +++ c2, l2, vs')
-    | Update a e e' =>
-      letd '(asm1, l1) := c_exp a l vs in
-      letd '(asm2, l2) := c_exp e l1 vs in
-      letd '(asm3, l3) := c_exp e' l2 (None :: vs) in
-      letd asm4 := c_store in
-      (asm1 +++ asm2 +++ asm3 +++ asm4, l3 + app_list_length asm4, vs)
-    | If t c1 c2 =>
-      letd '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
-      letd '(asm2, l2, vs') := c_cmds c1 l1 fs vs ck' in
-      letd '(asm3, l3, vs'') := c_cmds c2 l2 fs vs' ck' in
-      letd jump_to_start := List[ASMSyntax.Jump Always (l + 3)] in
-      letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
-      letd jump_to_c2 := List [ASMSyntax.Jump Always l2] in
-      letd asmres := jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ asm3 in
-      (asmres, l3, vs'')
-    | While tst c1 =>
-      letd '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
-      letd '(asm2, l2, vs') := c_cmds c1 l1 fs vs ck' in
-      letd jump_to_tst := List [ASMSyntax.Jump Always (l + 3)] in
-      letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
-      letd jump_to_end := List [ASMSyntax.Jump Always (l2+1)] in
-      letd asmres := jump_to_tst +++ jump_to_c1 +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_tst in
-      (asmres, l2+1, vs')
-    | Call n f es =>
-      letd target := lookup f fs in
-      letd '(asms, l1) := c_exps es l vs in
-      letd '(asm1, l2) := c_call vs target es l1 in
-      letd '(asm2, l3) := c_var n l2 vs in
-      (asms +++ asm1 +++ asm2, l3, vs)
-    | Return e =>
-      letd '(asm1, l1) := c_exp e l vs in
-      letd '(asm2, l2) := make_ret vs l1 in
-      (asm1 +++ asm2, l2, vs)
-    | Alloc n e =>
-      letd '(asm1, l1) := c_exp e l vs in
-      letd asm2 := c_alloc vs in
-      letd '(asm3, l3, vs') := c_assign n l1 vs in
-      (asm1 +++ asm2 +++ asm3, l3, vs')
-    | GetChar n =>
-      letd '(asm1, l1) := c_read vs l in
-      letd '(asm2, l2, vs') := c_assign n l1 vs in
-      (asm1 +++ asm2, l2, vs')
-    | PutChar e =>
-      letd '(asm1, l1) := c_exp e l vs in
-      letd '(asm2, l2) := c_write vs l1 in
-      (asm1 +++ asm2, l2, vs)
-    | Abort =>
-      (List [Jump Always (give_up (even_len vs))], l+1, vs)
-    end
-  end
+  nat_CASE ck
+    (* 0 *)
+    (List [], l, vs)
+    (* S *)
+    (fun ck' =>
+      cmd_CASE c
+      (* Assign *)
+      (fun n e =>
+        letd '(c1, l1) := c_exp e l vs in
+        letd '(c2, l2, vs') := c_assign n l1 vs in
+        (c1 +++ c2, l2, vs'))
+      (* Update *)
+      (fun a e e' =>
+        letd '(asm1, l1) := c_exp a l vs in
+        letd '(asm2, l2) := c_exp e l1 vs in
+        letd '(asm3, l3) := c_exp e' l2 (None :: vs) in
+        letd asm4 := c_store in
+        (asm1 +++ asm2 +++ asm3 +++ asm4, l3 + app_list_length asm4, vs))
+      (* If *)
+      (fun t c1 c2 =>
+        letd '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
+        letd '(asm2, l2, vs') := c_cmds c1 l1 fs vs ck' in
+        letd '(asm3, l3, vs'') := c_cmds c2 l2 fs vs' ck' in
+        letd jump_to_start := List[ASMSyntax.Jump Always (l + 3)] in
+        letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
+        letd jump_to_c2 := List [ASMSyntax.Jump Always l2] in
+        letd asmres := jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ asm3 in
+        (asmres, l3, vs''))
+      (* While *)
+      (fun tst c1 =>
+        letd '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
+        letd '(asm2, l2, vs') := c_cmds c1 l1 fs vs ck' in
+        letd jump_to_tst := List [ASMSyntax.Jump Always (l + 3)] in
+        letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
+        letd jump_to_end := List [ASMSyntax.Jump Always (l2+1)] in
+        letd asmres := jump_to_tst +++ jump_to_c1 +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_tst in
+        (asmres, l2+1, vs'))
+      (* Call *)
+      (fun n f es =>
+        letd target := lookup f fs in
+        letd '(asms, l1) := c_exps es l vs in
+        letd '(asm1, l2) := c_call vs target es l1 in
+        letd '(asm2, l3) := c_var n l2 vs in
+        (asms +++ asm1 +++ asm2, l3, vs))
+      (* Return *)
+      (fun e =>
+        letd '(asm1, l1) := c_exp e l vs in
+        letd '(asm2, l2) := make_ret vs l1 in
+        (asm1 +++ asm2, l2, vs))
+      (* Alloc *)
+      (fun n e =>
+        letd '(asm1, l1) := c_exp e l vs in
+        letd asm2 := c_alloc vs in
+        letd '(asm3, l3, vs') := c_assign n l1 vs in
+        (asm1 +++ asm2 +++ asm3, l3, vs'))
+      (* GetChar *)
+      (fun n =>
+        letd '(asm1, l1) := c_read vs l in
+        letd '(asm2, l2, vs') := c_assign n l1 vs in
+        (asm1 +++ asm2, l2, vs'))
+      (* PutChar *)
+      (fun e =>
+        letd '(asm1, l1) := c_exp e l vs in
+        letd '(asm2, l2) := c_write vs l1 in
+        (asm1 +++ asm2, l2, vs))
+      (* Abort *)
+        (List [Jump Always (give_up (even_len vs))], l+1, vs)
+      )
 with
   c_cmds (cs : list cmd) (l : nat) (fs : f_lookup)
     (vs : v_stack) (ck : nat) {struct ck} : (asm_appl * nat * v_stack) :=
-  match ck with
-  | 0 => (List [], l, vs)
-  | S ck' =>
-    match cs with
-    | [] => (List [], l, vs)
-    | c :: cs' =>
-        letd '(c1, l1, vs') := c_cmd c l fs vs ck' in
-        letd '(c2, l2, vs'') := c_cmds cs' l1 fs vs' ck' in
-        (c1 +++ c2, l2, vs'')
-    end
-  end.
+  nat_CASE ck
+    (* 0 *)
+    (List [], l, vs)
+    (* S *)
+    (fun ck' =>
+      list_CASE cs
+        (* [] *)
+        (List [], l, vs)
+        (* :: *)
+        (fun c cs' =>
+            letd '(c1, l1, vs') := c_cmd c l fs vs ck' in
+            letd '(c2, l2, vs'') := c_cmds cs' l1 fs vs' ck' in
+            (c1 +++ c2, l2, vs''))
+    ).
 
 (** Compiles a single function definition into assembly code. *)
 Definition c_fundef (fundef : func) (l: nat) (fs: f_lookup)
     (ck : nat): (asm_appl * nat) :=
-  func_CASE fundef (fun n v_names body =>
-    letd '(asm0, vs0, l0) := c_pushes v_names l in
-    letd '(asm1, l1, vs1) := c_cmds body l0 fs vs0 ck in
-    (asm0 +++ asm1, l1)
-  ).
+  func_CASE fundef
+    (fun n v_names body =>
+      letd '(asm0, vs0, l0) := c_pushes v_names l in
+      letd '(asm1, l1, vs1) := c_cmds body l0 fs vs0 ck in
+      (asm0 +++ asm1, l1)
+    ).
 
 (* TODO(kπ) termination is unobvious to Coq, super unimportant function, hacked for now *)
 (* Converts a numeric name to a string representation *)
@@ -363,21 +400,26 @@ Definition name2str (n : nat) (acc : string) : string :=
 
 (* Compiles a list of function declarations into assembly instructions *)
 Fixpoint c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm_appl * list (name * nat) * nat) :=
-  match ds with
-  | [] => (List [], [], l)
-  | d :: ds' =>
+  list_CASE ds
+    (* [] *)
+    (List [], fs, l)
+    (* :: *)
+    (fun d ds' =>
       letd fname := name_of_func d in
       letd comment := List [Comment (name2str fname "")] in
       letd '(c1, l1) := c_fundef d (l + 1) fs 0 in
       letd '(c2, fs', l2) := c_fundefs ds' l1 fs in
       (comment +++ c1 +++ c2, (fname, l + 1) :: fs', l2)
-  end.
+    ).
 
 Fixpoint lookup_main (fs : list (name * nat)) : nat :=
-  match fs with
-  | [] => 0
-  | (f_name, f_line) :: xs => if Nat.eqb f_name 0 then f_line else lookup_main xs
-  end.
+  list_CASE fs
+    (* [] *)
+    0
+    (* :: *)
+    (fun f xs =>
+      letd '(f_name, f_line) := f in
+      if Nat.eqb f_name 0 then f_line else lookup_main xs).
 
 (* Generates the complete assembly code for a given program *)
 Definition codegen (prog : prog) : asm :=

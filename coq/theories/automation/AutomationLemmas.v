@@ -265,30 +265,32 @@ Proof.
   repeat econstructor; eauto.
 Qed.
 
-(* Do we need this? We don't have list_CASE in Coq *)
-(* Theorem auto_list_case : forall {A B}
-    b0 b1 b2 env s x0 x1 x2 n1 n2 v0 v1 v2 (a : A -> Value) (b : B -> Value),
-  (b0 -> env |- ([x0], s) ---> ([value_list a v0], s)) ->
-  (b1 -> env |- ([x1], s) ---> ([b v1], s)) ->
+(* TODO(kπ) check this. *)
+Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
+    b0 b1 b2 env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2,
+  (b0 -> env |- ([x0], s) ---> ([refine v0], s)) ->
+  (b1 -> env |- ([x1], s) ---> ([rb.(refine) v1], s)) ->
   (forall y1 y2,
       b2 y1 y2 ->
-      (Env.insert (value_name n2, value_list a y2)
-        (Env.insert (value_name n1, a y1) env)) |- ([x2], s) ---> ([b (v2 y1 y2)], s)) ->
+      (Env.insert (value_name n2, refine y2)
+        (Env.insert (value_name n1, ra.(refine) y1) env)) |- ([x2], s) ---> ([rb.(refine) (v2 y1 y2)], s)) ->
   NoDup ([value_name n1] ++ free_vars x0) ->
   b0 /\ (v0 = [] -> b1) /\ (forall y1 y2, v0 = y1 :: y2 -> b2 y1 y2) ->
   env |- ([If Equal [x0; Const 0] x1
             (Let (value_name n1) (Op Head [x0])
-              (Let (value_name n2) (Op Tail [x0]) x2))], s) ---> ([b (list_CASE v0 v1 v2)], s).
+              (Let (value_name n2) (Op Tail [x0]) x2))], s) ---> ([rb.(refine) (list_CASE v0 v1 v2)], s).
 Proof.
   intros.
   destruct H3 as [Hb0 [Hb1 Hb2]].
   apply H in Hb0.
   destruct v0 as [|y1 y2].
-  - apply H0 in Hb1.
+  - apply H0 in Hb1; try reflexivity.
     Eval_eq.
-  - apply H1 in Hb2; eauto.
+  - eapply H1 in Hb2; eauto.
     Eval_eq.
-Qed. *)
+    + admit.
+    + admit.
+Admitted.
 
 (* option *)
 

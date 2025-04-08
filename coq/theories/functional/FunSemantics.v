@@ -75,7 +75,7 @@ Definition take_branch (test : FunSyntax.test) (vs : list Value) (s : state) : r
 Fixpoint make_env (keys : list name) (values : list Value) (acc : Env.env) : Env.env :=
   match keys, values with
   | [], [] => acc
-  | k :: ks, v :: vs => make_env ks vs (Env.insert (k, v) acc)
+  | k :: ks, v :: vs => make_env ks vs (Env.insert (k, Some v) acc)
   | _, _ => acc
   end.
 
@@ -109,7 +109,7 @@ Inductive eval : Env.env -> list FunSyntax.exp -> state -> list Value -> state -
   env |- ([FunSyntax.Const n],  s) ---> ([Num n],  s)
 | Eval_Var : forall env n v s,
   forall
-  (EVN_LOOKUP : Env.lookup env n = Some v),
+  (ENV_LOOKUP : Env.lookup env n = Some v),
   env |- ([FunSyntax.Var n],  s) ---> ([v],  s)
 | Eval_Op : forall env exps s1 vs s2 op v s3,
   forall
@@ -119,7 +119,7 @@ Inductive eval : Env.env -> list FunSyntax.exp -> state -> list Value -> state -
 | Eval_Let : forall env exp1 exp2 s1 v1 s2 n s3 v2,
   forall
     (EVAL_RHS : env |- ([exp1],  s1) ---> ([v1],  s2))
-    (EVAL_RES : (Env.insert (n, v1) env) |- ([exp2],  s2) ---> ([v2],  s3)),
+    (EVAL_RES : (Env.insert (n, Some v1) env) |- ([exp2],  s2) ---> ([v2],  s3)),
   env |- ([FunSyntax.Let n exp1 exp2],  s1) ---> ([v2],  s3)
 | Eval_If : forall env exps s1 vs s2 test b expt expf v s3,
   forall

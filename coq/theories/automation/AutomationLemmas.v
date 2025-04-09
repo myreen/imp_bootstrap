@@ -62,7 +62,7 @@ Qed.
 Theorem auto_let : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
     b1 b2 env x1 y1 s1 s2 s3 v1 let_n f,
   (b1 -> env |- ([x1], s1) ---> ([ra.(refine) v1], s2)) ->
-  (forall v1, b2 v1 -> (Env.insert ((value_name let_n), ra.(refine) v1) env) |- ([y1], s2) ---> ([rb.(refine) (f v1)], s3)) ->
+  (forall v1, b2 v1 -> (Env.insert ((value_name let_n), Some (ra.(refine) v1)) env) |- ([y1], s2) ---> ([rb.(refine) (f v1)], s3)) ->
   (b1 /\ b2 v1 ->
     env |- ([Let (value_name let_n) x1 y1], s1) ---> ([rb.(refine) (f v1)], s3)).
 Proof.
@@ -272,25 +272,27 @@ Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
   (b1 -> env |- ([x1], s) ---> ([rb.(refine) v1], s)) ->
   (forall y1 y2,
       b2 y1 y2 ->
-      (Env.insert (value_name n2, refine y2)
-        (Env.insert (value_name n1, ra.(refine) y1) env)) |- ([x2], s) ---> ([rb.(refine) (v2 y1 y2)], s)) ->
+      (Env.insert (value_name n2, Some (refine y2))
+        (Env.insert (value_name n1, Some (ra.(refine) y1)) env)) |- ([x2], s) ---> ([rb.(refine) (v2 y1 y2)], s)) ->
   NoDup ([value_name n1] ++ free_vars x0) ->
   b0 /\ (v0 = [] -> b1) /\ (forall y1 y2, v0 = y1 :: y2 -> b2 y1 y2) ->
   env |- ([If Equal [x0; Const 0] x1
             (Let (value_name n1) (Op Head [x0])
-              (Let (value_name n2) (Op Tail [x0]) x2))], s) ---> ([rb.(refine) (list_CASE v0 v1 v2)], s).
+              (Let (value_name n2) (Op Tail [x0]) x2))], s) --->
+         ([rb.(refine) (list_CASE v0 v1 v2)], s).
 Proof.
   intros.
   destruct H3 as [Hb0 [Hb1 Hb2]].
-  apply H in Hb0.
   destruct v0 as [|y1 y2].
   - apply H0 in Hb1; try reflexivity.
     Eval_eq.
   - eapply H1 in Hb2; eauto.
+    simpl in *.
+    rewrite NoDup_cons_iff in *; destruct H2.
     Eval_eq.
-    + admit.
-    + admit.
-Admitted.
+    + rewrite remove_env_update; eauto.
+    + simpl; unfold return_; reflexivity.
+Qed.
 
 (* option *)
 
@@ -313,8 +315,25 @@ Proof.
   repeat econstructor; eauto.
 Qed.
 
-(* Do we need option_CASE? *)
-(* TODO(kπ) option_CASE theorem *)
+Theorem auto_option_case : forall {A B} `{Refinable A} `{rb : Refinable B} (v0 : option A) b0 b1 b2 env s x0 x1 x2 n v1 v2,
+  (b0 -> env |- ([x0],s) ---> ([refine v0],s)) ->
+  (b1 -> env |- ([x1],s) ---> ([rb.(refine) v1],s)) ->
+  (forall y1, b2 y1 ->
+    (Env.insert (value_name n, Some (refine y1)) env) |- ([x2],s) ---> ([rb.(refine) (v2 y1)],s)) ->
+  b0 /\ (v0 = None -> b1) /\ (forall y1, v0 = Some y1 -> b2 y1) ->
+  env |- ([If Equal [x0; Const 0] x1
+            (Let (value_name n) (Op Head [x0]) x2)], s) --->
+         ([rb.(refine) (option_CASE v0 v1 v2)], s).
+Proof.
+  intros.
+  destruct H3 as [Hb0 [Hb1 Hb2]].
+  destruct v0 as [y1|]; simpl in *.
+  - specialize (Hb2 y1).
+    apply H2 in Hb2; try reflexivity.
+    Eval_eq.
+  - apply H1 in Hb1; try reflexivity.
+    Eval_eq.
+Qed.
 
 (* pair *)
 
@@ -358,8 +377,32 @@ Proof.
   repeat econstructor; eauto.
 Qed.
 
-(* Do we need pair_CASE? *)
-(* TODO(kπ) option_CASE theorem *)
+Theorem auto_pair_case : forall {A1 A2 B} `{ra1 : Refinable A1} `{ra2 : Refinable A2} `{rb : Refinable B}
+    b0 b1 env s x0 x1 n1 n2 (v0 : A1 * A2) v1,
+  (b0 -> env |- ([x0], s) ---> ([refine v0], s)) ->
+  (forall y1 y2,
+      b1 y1 y2 ->
+      (Env.insert (value_name n2, Some (ra2.(refine) y2))
+        (Env.insert (value_name n1, Some (ra1.(refine) y1)) env)) |- ([x1], s) --->
+      ([rb.(refine) (v1 y1 y2)], s)) ->
+  NoDup ([value_name n1] ++ [value_name n2] ++ free_vars x0) ->
+  b0 /\ (forall y1 y2, v0 = (y1, y2) -> b1 y1 y2) ->
+  env |- ([Let (value_name n1) (Op Head [x0])
+            (Let (value_name n2) (Op Tail [x0]) x1)], s) --->
+  ([rb.(refine) (pair_CASE v0 v1)], s).
+Proof.
+  intros.
+  destruct H2 as [Hb0 Hb1].
+  destruct v0 as [y1 y2]; simpl in *.
+  specialize (Hb1 y1 y2).
+  apply H0 in Hb1; try reflexivity.
+  Eval_eq.
+  - eapply H in Hb0; try reflexivity.
+    repeat rewrite NoDup_cons_iff in *; destruct H1; destruct H2.
+    rewrite not_in_cons in *; destruct H1.
+    rewrite remove_env_update; eauto.
+  - simpl; unfold return_; reflexivity.
+Qed.
 
 (* TODO(kπ) continue *)
 

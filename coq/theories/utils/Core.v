@@ -22,20 +22,20 @@ Notation "'letd' x := e1 'in' e2" :=
 
 Notation
   "'letd' ''(' x , y ')' := val 'in' body" :=
-((fun v =>
-    let x := fst v in
-    let y := snd v in
-    body) val)
-(at level 200, only parsing).
+  ((fun v =>
+      let x := fst v in
+      let y := snd v in
+      body) val)
+  (at level 200, only parsing).
 
 Notation
   "'letd' ''(' x , y , z ')' := val 'in' body" :=
-((fun v =>
-    let x := fst (fst v) in
-    let y := snd (fst v) in
-    let z := snd v in
-    body) val)
-(at level 200, only parsing).
+  ((fun v =>
+      let x := fst (fst v) in
+      let y := snd (fst v) in
+      let z := snd v in
+      body) val)
+  (at level 200, only parsing).
 
 (* CASE *)
 

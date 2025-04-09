@@ -6,8 +6,9 @@ Module Type FunEnvT.
   Parameter env : Type.
   Parameter empty : env.
   Parameter lookup : env -> name -> option Value.
-  Parameter insert_some : name * Value -> env -> env.
   Parameter insert : name * option Value -> env -> env.
+  Definition insert_some (p : name * Value) (v : env) : env :=
+    insert (fst p, Some (snd p)) v.
   Parameter remove : name -> env -> env.
 
   Axiom lookup_insert_eq : forall v x n,
@@ -39,10 +40,10 @@ Module FunEnv : FunEnvT.
   Definition env := name -> option Value.
   Definition empty : env := fun _ => None.
   Definition lookup (v : env) (x : name) : option Value := v x.
-  Definition insert_some (p : name * Value) (v : env) : env :=
-    fun x => if x =? fst p then Some (snd p) else v x.
   Definition insert (p : name * option Value) (v : env) : env :=
     fun x => if x =? fst p then (snd p) else v x.
+  Definition insert_some (p : name * Value) (v : env) : env :=
+    insert (fst p, Some (snd p)) v.
   Definition remove (x : name) (v : env) : env :=
     fun y => if x =? y then None else v y.
 

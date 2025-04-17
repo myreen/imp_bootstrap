@@ -6,8 +6,8 @@ Require Import impboot.utils.Llist.
 
 (* What do I induct on here? induction e just gives me IH for singleton lists *)
 (* Lemma Eval_deterministic_single : forall e s env a1 a2,
-  env |- ([e], s) ---> a1 ->
-  env |- ([e], s) ---> a2 ->
+  env |-- ([e], s) ---> a1 ->
+  env |-- ([e], s) ---> a2 ->
   a1 = a2.
 Proof.
   intros e s env a1 a2 H1 H2.
@@ -22,9 +22,9 @@ TODO(kπ):
 *)
 
 Lemma Eval_deterministic : forall e s env a1v a1s,
-  env |- (e, s) ---> (a1v, a1s) ->
+  env |-- (e, s) ---> (a1v, a1s) ->
   forall a2v a2s,
-    env |- (e, s) ---> (a2v, a2s) ->
+    env |-- (e, s) ---> (a2v, a2s) ->
     (a1v, a1s) = (a2v, a2s).
 Proof.
   induction 1; inversion 1; simpl in *; subst; try congruence.
@@ -63,9 +63,9 @@ Ltac cleanup :=
   end.
 
 Lemma Call_eq: forall fname xs s1 env a1v a1s,
-  env |- ([Call fname xs], s1) ---> (a1v, a1s) <->
+  env |-- ([Call fname xs], s1) ---> (a1v, a1s) <->
   exists vs s2 v s3,
-    env |- (xs, s1) ---> (vs, s2) /\
+    env |-- (xs, s1) ---> (vs, s2) /\
     eval_app fname vs s2 (v, s3) /\ (a1v, a1s) = ([v],s3).
 Proof.
   repeat split; intros; try inversion H; subst; try constructor.
@@ -87,40 +87,40 @@ Proof.
 Qed.
 
 Theorem Eval_eq :
-  (forall s env a1vs a1s, env |- ([], s) ---> (a1vs, a1s) <-> (a1vs, a1s) = ([], s)) /\
+  (forall s env a1vs a1s, env |-- ([], s) ---> (a1vs, a1s) <-> (a1vs, a1s) = ([], s)) /\
   (forall y xs x s1 env a1vs a1s,
-     env |- (x :: y :: xs, s1) ---> (a1vs, a1s) <->
+     env |-- (x :: y :: xs, s1) ---> (a1vs, a1s) <->
      exists v vs s2 s3,
        (a1vs, a1s) = (v::vs, s3) /\
-       (env |- ([x], s1) ---> ([v], s2)) /\
-       (env |- (y :: xs, s2) ---> (vs, s3))) /\
-  (forall v s env a1vs a1s, env |- ([Const v], s) ---> (a1vs, a1s) <-> (a1vs, a1s) = ([Num v], s)) /\
+       (env |-- ([x], s1) ---> ([v], s2)) /\
+       (env |-- (y :: xs, s2) ---> (vs, s3))) /\
+  (forall v s env a1vs a1s, env |-- ([Const v], s) ---> (a1vs, a1s) <-> (a1vs, a1s) = ([Num v], s)) /\
   (forall s n env a1vs a1s,
-     env |- ([Var n], s) ---> (a1vs, a1s) <->
+     env |-- ([Var n], s) ---> (a1vs, a1s) <->
      exists v, (a1vs, a1s) = ([v], s) /\ Env.lookup env n = Some v) /\
   (forall xs s1 f env a1vs a1s,
-     env |- ([Op f xs], s1) ---> (a1vs, a1s) <->
+     env |-- ([Op f xs], s1) ---> (a1vs, a1s) <->
      exists vs s2 s3 v,
        (a1vs, a1s) = ([v], s3) /\
-       env |- (xs, s1) ---> (vs, s2) /\
+       env |-- (xs, s1) ---> (vs, s2) /\
        eval_op f vs s2 = (Res v, s3)) /\
   (forall y x s1 n env a1vs a1s,
-     env |- ([Let n x y], s1) ---> (a1vs, a1s) <->
+     env |-- ([Let n x y], s1) ---> (a1vs, a1s) <->
      exists v1 s2 s3 v2,
        (a1vs, a1s) = ([v2], s3) /\
-       env |- ([x], s1) ---> ([v1], s2) /\
-       (Env.insert (n, Some v1) env) |- ([y], s2) ---> ([v2], s3)) /\
+       env |-- ([x], s1) ---> ([v1], s2) /\
+       (Env.insert (n, Some v1) env) |-- ([y], s2) ---> ([v2], s3)) /\
   (forall z y xs test s1 env a1vs a1s,
-     env |- ([If test xs y z], s1) ---> (a1vs, a1s) <->
+     env |-- ([If test xs y z], s1) ---> (a1vs, a1s) <->
      exists vs s2 b v s3,
        (a1vs, a1s) = ([v], s3) /\
-       env |- (xs, s1) ---> (vs, s2) /\
+       env |-- (xs, s1) ---> (vs, s2) /\
        take_branch test vs s2 = (Res b, s2) /\
-       env |- ([if b then y else z], s2) ---> ([v], s3)) /\
+       env |-- ([if b then y else z], s2) ---> ([v], s3)) /\
   (forall xs s1 fname env a1vs a1s,
-     env |- ([Call fname xs], s1) ---> (a1vs, a1s) <->
+     env |-- ([Call fname xs], s1) ---> (a1vs, a1s) <->
      exists vs s2 v s3,
-       env |- (xs, s1) ---> (vs, s2) /\
+       env |-- (xs, s1) ---> (vs, s2) /\
        eval_app fname vs s2 (v, s3) /\
        (a1vs, a1s) = ([v], s3)).
 Proof.
@@ -150,31 +150,31 @@ Proof.
     eexists x, x0, x1, x2; eauto.
 Qed.
 
-Lemma Eval_eq_Nil : forall s env a1v a1s, env |- ([], s) ---> (a1v, a1s) <-> (a1v, a1s) = ([], s).
+Lemma Eval_eq_Nil : forall s env a1v a1s, env |-- ([], s) ---> (a1v, a1s) <-> (a1v, a1s) = ([], s).
 Proof.
   destruct Eval_eq; eauto.
 Qed.
 
 Lemma Eval_eq_Cons : forall y xs x s1 env a1v a1s,
-  env |- (x :: y :: xs, s1) ---> (a1v, a1s) <->
+  env |-- (x :: y :: xs, s1) ---> (a1v, a1s) <->
   exists v vs s2 s3,
     (a1v, a1s) = (v::vs, s3) /\
-    (env |- ([x], s1) ---> ([v], s2)) /\
-    (env |- (y :: xs, s2) ---> (vs, s3)).
+    (env |-- ([x], s1) ---> ([v], s2)) /\
+    (env |-- (y :: xs, s2) ---> (vs, s3)).
 Proof.
   destruct Eval_eq; cleanup.
   eapply H0; eauto.
 Qed.
 
 Lemma Eval_eq_Const : forall v s env a1v a1s,
-  env |- ([Const v], s) ---> (a1v, a1s) <-> (a1v, a1s) = ([Num v], s).
+  env |-- ([Const v], s) ---> (a1v, a1s) <-> (a1v, a1s) = ([Num v], s).
 Proof.
   destruct Eval_eq; cleanup.
   eapply H1; eauto.
 Qed.
 
 Lemma Eval_eq_Var : forall s n env a1v a1s,
-  env |- ([Var n], s) ---> (a1v, a1s) <->
+  env |-- ([Var n], s) ---> (a1v, a1s) <->
   exists v, (a1v, a1s) = ([v], s) /\ Env.lookup env n = Some v.
 Proof.
   destruct Eval_eq; cleanup.
@@ -182,10 +182,10 @@ Proof.
 Qed.
 
 Lemma Eval_eq_Op : forall xs s1 f env a1v a1s,
-  env |- ([Op f xs], s1) ---> (a1v, a1s) <->
+  env |-- ([Op f xs], s1) ---> (a1v, a1s) <->
   exists vs s2 s3 v,
     (a1v, a1s) = ([v], s3) /\
-    env |- (xs, s1) ---> (vs, s2) /\
+    env |-- (xs, s1) ---> (vs, s2) /\
     eval_op f vs s2 = (Res v, s3).
 Proof.
   destruct Eval_eq; cleanup.
@@ -193,32 +193,32 @@ Proof.
 Qed.
 
 Lemma Eval_eq_Let : forall y x s1 n env a1v a1s,
-  env |- ([Let n x y], s1) ---> (a1v, a1s) <->
+  env |-- ([Let n x y], s1) ---> (a1v, a1s) <->
   exists v1 s2 s3 v2,
     (a1v, a1s) = ([v2], s3) /\
-    env |- ([x], s1) ---> ([v1], s2) /\
-    (Env.insert (n, Some v1) env) |- ([y], s2) ---> ([v2], s3).
+    env |-- ([x], s1) ---> ([v1], s2) /\
+    (Env.insert (n, Some v1) env) |-- ([y], s2) ---> ([v2], s3).
 Proof.
   destruct Eval_eq; cleanup.
   eapply H4; eauto.
 Qed.
 
 Lemma Eval_eq_If : forall z y xs test s1 env a1v a1s,
-  env |- ([If test xs y z], s1) ---> (a1v, a1s) <->
+  env |-- ([If test xs y z], s1) ---> (a1v, a1s) <->
   exists vs s2 b v s3,
     (a1v, a1s) = ([v], s3) /\
-    env |- (xs, s1) ---> (vs, s2) /\
+    env |-- (xs, s1) ---> (vs, s2) /\
     take_branch test vs s2 = (Res b, s2) /\
-    env |- ([if b then y else z], s2) ---> ([v], s3).
+    env |-- ([if b then y else z], s2) ---> ([v], s3).
 Proof.
   destruct Eval_eq; cleanup.
   eapply H5; eauto.
 Qed.
 
 Lemma Eval_eq_Call : forall xs s1 fname env a1v a1s,
-  env |- ([Call fname xs], s1) ---> (a1v, a1s) <->
+  env |-- ([Call fname xs], s1) ---> (a1v, a1s) <->
   exists vs s2 v s3,
-    env |- (xs, s1) ---> (vs, s2) /\
+    env |-- (xs, s1) ---> (vs, s2) /\
     eval_app fname vs s2 (v, s3) /\
     (a1v, a1s) = ([v], s3).
 Proof.
@@ -258,9 +258,9 @@ Qed.
 
 Theorem delete_env_update :
   forall env xs s vs t n x,
-    env |- (xs, s) ---> (vs, t) ->
+    env |-- (xs, s) ---> (vs, t) ->
     ~ In n (flat_map free_vars xs) ->
-    (Env.insert (n, x) env) |- (xs, s) ---> (vs, t).
+    (Env.insert (n, x) env) |-- (xs, s) ---> (vs, t).
 Proof.
   intros env xs s vs t n x H Hnotin.
   induction H; subst; simpl flat_map in *.
@@ -301,7 +301,7 @@ Qed.
 Theorem remove_env_update :
   forall n x0 env v res s s1,
   ~ In n (free_vars x0) ->
-  (Env.insert (n, v) env) |- ([x0], s) ---> (res, s1) <-> env |- ([x0], s) ---> (res, s1).
+  (Env.insert (n, v) env) |-- ([x0], s) ---> (res, s1) <-> env |-- ([x0], s) ---> (res, s1).
 Proof.
   intros n x0 env v res s s1 Hnotin.
   split; intros H.

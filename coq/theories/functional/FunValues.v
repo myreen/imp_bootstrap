@@ -1,5 +1,6 @@
 From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
+From coqutil Require Import dlet.
 
 Notation name := nat (only parsing).
 
@@ -8,19 +9,25 @@ Inductive Value :=
   | Num (n : nat).
 
 Class Refinable (A : Type) :=
-  { refine : A -> Value }.
+  { encode : A -> Value }.
 
 Global Instance Refinable_nat : Refinable nat :=
-  { refine := Num }.
+  { encode := Num }.
 
-Definition value_name (s : list ascii) : nat :=
+Definition name_enc (s : list ascii) : nat :=
   fold_right (fun c acc => (nat_of_ascii c) * 256 + acc) 0 s.
+
+Definition name_enc_str (s: string) : nat :=
+  name_enc (list_ascii_of_string s).
+
+Definition value_name (s : string) : Value :=
+  Num (name_enc_str s).
 
 Definition value_list_of_values (xs : list Value) : Value :=
   fold_right (fun x acc => Pair x acc) (Num 0) xs.
 
 Global Instance Refinable_list {A : Type} `{Refinable A} : Refinable (list A) :=
-  { refine l := value_list_of_values (List.map refine l) }.
+  { encode l := value_list_of_values (List.map encode l) }.
 
 Definition value_less (v1 v2 : Value) : bool :=
   match v1, v2 with
@@ -62,20 +69,20 @@ Definition value_cons (x y : Value) : Value :=
   Pair x y.
 
 Global Instance Refinable_bool : Refinable bool :=
-  { refine b := if b then Num 1 else Num 0 }.
+  { encode b := if b then Num 1 else Num 0 }.
 
 Global Instance Refinable_pair {A B : Type} `{Refinable A} `{Refinable B} : Refinable (A * B) :=
-  { refine p := Pair (refine (fst p)) (refine (snd p)) }.
+  { encode p := Pair (encode (fst p)) (encode (snd p)) }.
 
 Global Instance Refinable_option {A : Type} `{Refinable (list A)} : Refinable (option A) :=
-  { refine o :=
+  { encode o :=
     match o with
-    | None => refine []
-    | Some x => refine [x]
+    | None => encode []
+    | Some x => encode [x]
     end }.
 
 Global Instance Refinable_char : Refinable ascii :=
-  { refine c := Num (nat_of_ascii c) }.
+  { encode c := Num (nat_of_ascii c) }.
 
 Definition value_isNum (v : Value) : bool :=
   match v with
@@ -99,7 +106,7 @@ Definition value_el3 (v : Value) : Value :=
   value_el2 (value_tail v).
 
 Theorem isNum_bool : forall b,
-  value_isNum (refine b) = true.
+  value_isNum (encode b) = true.
 Proof.
   intros. destruct b; reflexivity.
 Qed.

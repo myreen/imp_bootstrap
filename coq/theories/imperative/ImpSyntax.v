@@ -2,7 +2,7 @@ From impboot Require Import utils.Core.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
 
-Notation name := nat.
+Notation name := nat (only parsing).
 
 Inductive exp : Type :=
 | Var (n: name)             (*  variable             *)

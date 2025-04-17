@@ -16,26 +16,26 @@ From coqutil Require Import dlet.
 
 (* d/let *)
 
-Notation "'letd' x := e1 'in' e2" :=
-  ((fun x => e2) e1)
-  (at level 200).
+Notation "'letd' x := val 'in' body" :=
+  (dlet val (fun x => body))
+  (at level 200, x name, body at level 200).
 
 Notation
   "'letd' ''(' x , y ')' := val 'in' body" :=
-  ((fun v =>
+  (dlet val (fun v =>
       let x := fst v in
       let y := snd v in
-      body) val)
-  (at level 200, only parsing).
+      body))
+  (at level 200, body at level 200, only parsing).
 
 Notation
   "'letd' ''(' x , y , z ')' := val 'in' body" :=
-  ((fun v =>
+  (dlet val (fun v =>
       let x := fst (fst v) in
       let y := snd (fst v) in
       let z := snd v in
-      body) val)
-  (at level 200, only parsing).
+      body))
+  (at level 200, body at level 200, only parsing).
 
 (* CASE *)
 

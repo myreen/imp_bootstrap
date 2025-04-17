@@ -83,9 +83,9 @@ Fixpoint find (n : name) (k : nat) (vs : v_stack) : nat :=
 
 (* lookup variable with name `n`, based on stack `vs` *)
 Definition c_var (n : name) (l : nat) (vs : v_stack) : asm_appl * nat :=
-  letd k := find n 0 vs in
-  if k =? 0 then (List [ASMSyntax.Push RAX], l+1)
-  else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2).
+  letd k := (find n 0 vs) in
+  (if k =? 0 then (List [ASMSyntax.Push RAX], l+1)
+  else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2)).
 
 (* TODO(kπ) should we update the existing stack elements? *)
 (* asign variable with name `n`, based on stack *)

@@ -90,121 +90,118 @@ Ltac2 Type rec clist := [
   | Lcons (constr, clist)
 ].
 
-Ltac2 compile (e : constr) (env : clist) : constr :=
-  match! e with
-  | _ |-- (_, _) ---> ([encode (dlet ?val ?body)], _) =>
+Ltac2 rec compile (e : constr) (cenv : clist) : constr :=
+  lazy_match! e with
+  | (dlet ?val ?body) =>
     open_constr:(auto_let
-    (* b1 *) _
-    (* b2 *) _
     (* env *) _
     (* x1 y1 *) _ _
     (* s1 s2 s3 *) _ _ _
     (* v1 *) ltac2:(val)
     (* let_n *) _
     (* f *) ltac2:(body)
-    (* eval v1 *) _
-    (* eval v2 *) _
-    (* b1 /\ b2 *) _
+    (* eval v1 *) ltac2:(compile val cenv)
+    (* eval v2 *) ltac2:(compile body (Lcons val cenv))
     )
-  | _ |-- (_, _) ---> ([encode true], _) =>
+  | true =>
     open_constr:(auto_bool_T
     (* env *) _
     (* s *) _
     )
-  | _ |-- (_, _) ---> ([encode false], _) =>
+  | false =>
     open_constr:(auto_bool_F
     (* env *) _
     (* s *) _
     )
-  | _ |-- (_, _) ---> ([encode (negb _)], _) =>
+  | (negb ?b) =>
     open_constr:(auto_bool_not
     (* env *) _
     (* s *) _
     (* x1 *) _
-    (* b *) _
-    (* eval x1 *) _
+    (* b *) ltac2:(b)
+    (* eval x1 *) ltac2:(compile b cenv)
     )
-  | _ |-- (_, _) ---> ([encode (andb _ _)], _) =>
+  | (andb ?bA ?bB) =>
     open_constr:(auto_bool_and
     (* env *) _
     (* s *) _
     (* x1 x2 *) _ _
-    (* bA bB *) _ _
-    (* eval x1 *) _
-    (* eval x2 *) _
+    (* bA bB *) ltac2:(bA) ltac2:(bB)
+    (* eval x1 *) ltac2:(compile bA cenv)
+    (* eval x2 *) ltac2:(compile bB cenv)
     )
-  | _ |-- (_, _) ---> ([encode (eqb _ _)], _) =>
+  | (eqb ?bA ?bB) =>
     open_constr:(auto_bool_iff
     (* env *) _
     (* s *) _
     (* x1 x2 *) _ _
-    (* bA bB *) _ _
-    (* eval x1 *) _
-    (* eval x2 *) _
+    (* bA bB *) ltac2:(bA) ltac2:(bB)
+    (* eval x1 *) ltac2:(compile bA cenv)
+    (* eval x2 *) ltac2:(compile bB cenv)
     )
-  | _ |-- (_, _) ---> ([encode (if _ then _ else _)], _) =>
+  | (if ?b then ?t else ?f) =>
     open_constr:(last_bool_if
     (* env *) _
     (* s *) _
-    (* x_g x_t x_f *) _ _ _
-    (* b t f *) _ _ _
-    (* eval x_g *) _
-    (* eval x_t *) _
-    (* eval x_f *) _
+    (* x_b x_t x_f *) _ _ _
+    (* b t f *) ltac2:(b) ltac2:(t) ltac2:(f)
+    (* eval x_b *) ltac2:(compile b cenv)
+    (* eval x_t *) ltac2:(compile t cenv)
+    (* eval x_f *) ltac2:(compile f cenv)
     )
-  | _ |-- (_, _) ---> ([encode (_ + _)], _) =>
+  | (?n1 + ?n2) =>
     open_constr:(auto_num_add
-    (* b0 b1 *) _ _
     (* env *) _
     (* s0 s1 s2 *) _ _ _
     (* x1 x2 *) _ _
-    (* n1 n2 *) _ _
-    (* eval x1 *) _
-    (* eval x2 *) _
-    (* b0 /\ b1 *) _
+    (* n1 n2 *) ltac2:(n1) ltac2:(n2)
+    (* eval x1 *) ltac2:(compile n1 cenv)
+    (* eval x2 *) ltac2:(compile n2 cenv)
     )
-  | _ |-- (_, _) ---> ([encode (_ - _)], _) =>
+  | (?n1 - ?n2) =>
     open_constr:(auto_num_sub
-    (* b0 b1 *) _ _
     (* env *) _
     (* s0 s1 s2 *) _ _ _
     (* x1 x2 *) _ _
-    (* n1 n2 *) _ _
-    (* eval x1 *) _
-    (* eval x2 *) _
-    (* b0 /\ b1 *) _
+    (* n1 n2 *) ltac2:(n1) ltac2:(n2)
+    (* eval x1 *) ltac2:(compile n1 cenv)
+    (* eval x2 *) ltac2:(compile n2 cenv)
     )
-  | _ |-- (_, _) ---> ([encode (_ / _)], _) =>
+  | (?n1 / ?n2) =>
     open_constr:(auto_num_div
-    (* b0 b1 *) _ _
     (* env *) _
     (* s0 s1 s2 *) _ _ _
     (* x1 x2 *) _ _
-    (* n1 n2 *) _ _
-    (* eval x1 *) _
-    (* eval x2 *) _
-    (* b0 /\ b1 /\ n2 <> 0 *) _
+    (* n1 n2 *) ltac2:(n1) ltac2:(n2)
+    (* eval x1 *) ltac2:(compile n1 cenv)
+    (* eval x2 *) ltac2:(compile n2 cenv)
+    (* n2 <> 0 *) _
     )
-  | _ |-- (_, _) ---> ([encode (if Nat.eqb _ _ then _ else _)], _) =>
+  | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
     open_constr:(auto_num_if_eq
     (* A *) _
-    (* b0 b1 b2 b3 *) _ _ _ _
     (* env *) _
     (* s *) _
     (* x1 x2 y z *) _ _ _ _
-    (* n1 n2 t f *) _ _ _ _
+    (* n1 n2 t f *) ltac2:(n1) ltac2:(n2) ltac2:(t) ltac2:(f)
     (* a *) _
-    (* eval x1 *) _
-    (* eval x2 *) _
-    (* eval y *) _
-    (* eval z *) _
-    (* b0 /\ b1 /\ (if n1 =? n2 then b2 else b3) *) _
+    (* eval x1 *) ltac2:(compile n1 cenv)
+    (* eval x2 *) ltac2:(compile n2 cenv)
+    (* eval y *) ltac2:(compile t cenv)
+    (* eval z *) ltac2:(compile f cenv)
+    )
+  | ?n =>
+    print(of_string "xd");
+    open_constr:(auto_num_const
+    (* env *) _
+    (* s *) _
+    (* n *) ltac2:(n)
     )
   end.
 
 Ltac2 doauto () :=
   match! goal with
-  | [ |- ?g ] =>
+  | [ |- _ |-- (_, _) ---> ([encode ?g], _) ] =>
     refine (compile g Lnil); intros
   end.
 
@@ -214,7 +211,12 @@ Lemma arith_example : forall n,
     ([encode (letd x := 1 in x + n)], empty_state).
 Proof.
   intros; eexists.
+  (* Doesn't conclude the branch with compile :thinking: *)
   doauto ().
+  Show Proof.
+  all: simpl.
+  all: try (eapply auto_num_const).
+  all: try (doauto ()).
 
   (* repeat (doauto ()). *)
 

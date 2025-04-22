@@ -13,7 +13,7 @@ Require Import impboot.utils.AppList.
 Create HintDb automation.
 
 Theorem trans_app: forall n params vs body s s1 v,
-  let env := make_env params vs Env.empty in
+  let env := make_env params vs FEnv.empty in
     (env |-- ([body], s) ---> ([v], s1)) ->
     List.length params = List.length vs ->
     lookup_fun (name_enc n) s.(funs) = Some (params,body) ->
@@ -36,11 +36,11 @@ Proof.
   eapply Eval_Call with (vs := vs) (s2 := s2); eauto.
 Qed.
 
-Theorem trans_Var : forall n v env s,
-  Env.lookup env (name_enc n) = Some v ->
-  env |-- ([Var (name_enc n)], s) ---> ([v], s).
+Theorem trans_Var : forall {A} `{Refinable A} env s n (v : A),
+  FEnv.lookup env (name_enc n) = Some (encode v) ->
+  env |-- ([Var (name_enc n)], s) ---> ([encode v], s).
 Proof.
-  intros n v env s H.
+  intros.
   apply Eval_Var; auto.
 Qed.
 
@@ -76,7 +76,7 @@ Ltac Eval_eq :=
 Theorem auto_let : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
     env x1 y1 s1 s2 s3 v1 let_n f,
   env |-- ([x1], s1) ---> ([ra.(encode) v1], s2) ->
-  (Env.insert ((name_enc let_n), Some (ra.(encode) v1)) env) |-- ([y1], s2) --->
+  (FEnv.insert ((name_enc let_n), Some (ra.(encode) v1)) env) |-- ([y1], s2) --->
       ([rb.(encode) (f v1)], s3) ->
   env |-- ([Let (name_enc let_n) x1 y1], s1) ---> ([rb.(encode) (dlet v1 f)], s3).
 Proof.
@@ -161,15 +161,15 @@ Hint Resolve last_bool_if : automation.
 
 (* num *)
 
-(* Theorem auto_num_const_zero : forall env s,
+Theorem auto_num_const_zero : forall env s,
   env |-- ([Const 0], s) ---> ([Num 0], s).
 Proof.
   intros. apply Eval_Const.
 Qed.
-Hint Resolve auto_num_const_zero : automation. *)
+(* Hint Resolve auto_num_const_zero : automation. *)
 
 Theorem auto_num_const : forall env s n,
-  env |-- ([Const n], s) ---> ([Num n], s).
+  env |-- ([Const n], s) ---> ([encode n], s).
 Proof.
   intros. apply Eval_Const.
 Qed.
@@ -206,13 +206,13 @@ Proof.
 Qed.
 Hint Resolve auto_num_div : automation.
 
-Theorem auto_num_if_eq : forall {A}
-    env s x1 x2 y z n1 n2 t f (a : A -> Value),
+Theorem auto_num_if_eq : forall {A} `{Refinable A}
+    env s x1 x2 y z n1 n2 (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
-  env |-- ([y], s) ---> ([a t], s) ->
-  env |-- ([z], s) ---> ([a f], s) ->
-  env |-- ([If Equal [x1; x2] y z], s) ---> ([a (if n1 =? n2 then t else f)], s).
+  env |-- ([y], s) ---> ([encode t], s) ->
+  env |-- ([z], s) ---> ([encode f], s) ->
+  env |-- ([If Equal [x1; x2] y z], s) ---> ([encode (if n1 =? n2 then t else f)], s).
 Proof.
   intros.
   destruct (n1 =? n2) eqn:Heq.
@@ -266,8 +266,8 @@ Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([rb.(encode) v1], s) ->
   (forall y1 y2,
-    (Env.insert (name_enc n2, Some (encode y2))
-    (Env.insert (name_enc n1, Some (ra.(encode) y1)) env)) |-- ([x2], s) --->
+    (FEnv.insert (name_enc n2, Some (encode y2))
+    (FEnv.insert (name_enc n1, Some (ra.(encode) y1)) env)) |-- ([x2], s) --->
     ([rb.(encode) (v2 y1 y2)], s)) ->
   NoDup ([name_enc n1] ++ free_vars x0) ->
   env |-- ([If Equal [x0; Const 0] x1
@@ -308,7 +308,7 @@ Theorem auto_option_case : forall {A B} `{Refinable A} `{rb : Refinable B} (v0 :
   env |-- ([x0],s) ---> ([encode v0],s) ->
   env |-- ([x1],s) ---> ([rb.(encode) v1],s) ->
   (forall y1,
-  (Env.insert (name_enc n, Some (encode y1)) env) |-- ([x2],s) ---> ([rb.(encode) (v2 y1)],s)) ->
+  (FEnv.insert (name_enc n, Some (encode y1)) env) |-- ([x2],s) ---> ([rb.(encode) (v2 y1)],s)) ->
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n) (Op Head [x0]) x2)], s) --->
      ([rb.(encode) (option_CASE v0 v1 v2)], s).
@@ -356,8 +356,8 @@ Theorem auto_pair_case : forall {A1 A2 B} `{ra1 : Refinable A1} `{ra2 : Refinabl
   env s x0 x1 n1 n2 (v0 : A1 * A2) v1,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   (forall y1 y2,
-    (Env.insert (name_enc n2, Some (ra2.(encode) y2))
-    (Env.insert (name_enc n1, Some (ra1.(encode) y1)) env)) |-- ([x1], s) --->
+    (FEnv.insert (name_enc n2, Some (ra2.(encode) y2))
+    (FEnv.insert (name_enc n1, Some (ra1.(encode) y1)) env)) |-- ([x1], s) --->
     ([rb.(encode) (v1 y1 y2)], s)) ->
   NoDup ([name_enc n1] ++ [name_enc n2] ++ free_vars x0) ->
   env |-- ([Let (name_enc n1) (Op Head [x0])

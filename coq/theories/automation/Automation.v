@@ -5,8 +5,7 @@ Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
-From Ltac2 Require Import Ltac2.
-From Ltac2 Require Import Message.
+From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message.
 Require Import Coq.derive.Derive.
 
 Ltac rewrite_let := match goal with
@@ -22,7 +21,7 @@ Definition empty_state : state := init_state lnil [].
 
 (* TODO(kπ) figure out a good example, this one gets constant folded *)
 (* Example arith_example : forall n m,
-  exists prog, Env.empty |-- (prog, empty_state) ---> ([Num (let x := 1 in x + n - m)], empty_state).
+  exists prog, FEnv.empty |-- (prog, empty_state) ---> ([Num (let x := 1 in x + n - m)], empty_state).
 Proof.
   intros.
   rewrite_let.
@@ -81,27 +80,26 @@ Qed. *)
 (* Derive f1 SuchThat
   (forall n m,
     exists prog,
-      Env.empty |-- (prog, empty_state) --->
+      FEnv.empty |-- (prog, empty_state) --->
       ([encode (letd x := 1 in x + n - m)], empty_state))
   As f1_rpoof. *)
 
-Ltac2 Type rec clist := [
-  | Lnil
-  | Lcons (constr, clist)
-].
-
-Ltac2 rec compile (e : constr) (cenv : clist) : constr :=
+(* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
+Ltac2 rec compile (e : constr) (cenv : constr list) : constr :=
   lazy_match! e with
   | (dlet ?val ?body) =>
+    let compiled_val := compile val cenv in
+    let applied_body := eval_cbv beta open_constr:($body $val) in
+    let compiled_body := compile applied_body (val :: cenv) in
     open_constr:(auto_let
     (* env *) _
     (* x1 y1 *) _ _
     (* s1 s2 s3 *) _ _ _
-    (* v1 *) ltac2:(val)
+    (* v1 *) $val
     (* let_n *) _
-    (* f *) ltac2:(body)
-    (* eval v1 *) ltac2:(compile val cenv)
-    (* eval v2 *) ltac2:(compile body (Lcons val cenv))
+    (* f *) $body
+    (* eval v1 *) $compiled_val
+    (* eval f *) $compiled_body
     )
   | true =>
     open_constr:(auto_bool_T
@@ -114,104 +112,149 @@ Ltac2 rec compile (e : constr) (cenv : clist) : constr :=
     (* s *) _
     )
   | (negb ?b) =>
+    let compile_b := compile b cenv in
     open_constr:(auto_bool_not
     (* env *) _
     (* s *) _
     (* x1 *) _
-    (* b *) ltac2:(b)
-    (* eval x1 *) ltac2:(compile b cenv)
+    (* b *) $b
+    (* eval x1 *) $compile_b
     )
   | (andb ?bA ?bB) =>
+    let compile_bA := compile bA cenv in
+    let compile_bB := compile bB cenv in
     open_constr:(auto_bool_and
     (* env *) _
     (* s *) _
     (* x1 x2 *) _ _
-    (* bA bB *) ltac2:(bA) ltac2:(bB)
-    (* eval x1 *) ltac2:(compile bA cenv)
-    (* eval x2 *) ltac2:(compile bB cenv)
+    (* bA bB *) $bA $bB
+    (* eval x1 *) $compile_bA
+    (* eval x2 *) $compile_bB
     )
   | (eqb ?bA ?bB) =>
+    let compile_bA := compile bA cenv in
+    let compile_bB := compile bB cenv in
     open_constr:(auto_bool_iff
     (* env *) _
     (* s *) _
     (* x1 x2 *) _ _
-    (* bA bB *) ltac2:(bA) ltac2:(bB)
-    (* eval x1 *) ltac2:(compile bA cenv)
-    (* eval x2 *) ltac2:(compile bB cenv)
+    (* bA bB *) $bA $bB
+    (* eval x1 *) $compile_bA
+    (* eval x2 *) $compile_bB
     )
   | (if ?b then ?t else ?f) =>
+    let compile_b := compile b cenv in
+    let compile_t := compile t cenv in
+    let compile_f := compile f cenv in
     open_constr:(last_bool_if
     (* env *) _
     (* s *) _
     (* x_b x_t x_f *) _ _ _
-    (* b t f *) ltac2:(b) ltac2:(t) ltac2:(f)
-    (* eval x_b *) ltac2:(compile b cenv)
-    (* eval x_t *) ltac2:(compile t cenv)
-    (* eval x_f *) ltac2:(compile f cenv)
+    (* b t f *) $b $t $f
+    (* eval x_b *) $compile_b
+    (* eval x_t *) $compile_t
+    (* eval x_f *) $compile_f
     )
   | (?n1 + ?n2) =>
+    let compile_n1 := compile n1 cenv in
+    let compile_n2 := compile n2 cenv in
     open_constr:(auto_num_add
     (* env *) _
     (* s0 s1 s2 *) _ _ _
     (* x1 x2 *) _ _
-    (* n1 n2 *) ltac2:(n1) ltac2:(n2)
-    (* eval x1 *) ltac2:(compile n1 cenv)
-    (* eval x2 *) ltac2:(compile n2 cenv)
+    (* n1 n2 *) $n1 $n2
+    (* eval x1 *) $compile_n1
+    (* eval x2 *) $compile_n2
     )
   | (?n1 - ?n2) =>
+    let compile_n1 := compile n1 cenv in
+    let compile_n2 := compile n2 cenv in
     open_constr:(auto_num_sub
     (* env *) _
     (* s0 s1 s2 *) _ _ _
     (* x1 x2 *) _ _
-    (* n1 n2 *) ltac2:(n1) ltac2:(n2)
-    (* eval x1 *) ltac2:(compile n1 cenv)
-    (* eval x2 *) ltac2:(compile n2 cenv)
+    (* n1 n2 *) $n1 $n2
+    (* eval x1 *) $compile_n1
+    (* eval x2 *) $compile_n2
     )
   | (?n1 / ?n2) =>
+    let compile_n1 := compile n1 cenv in
+    let compile_n2 := compile n2 cenv in
     open_constr:(auto_num_div
     (* env *) _
     (* s0 s1 s2 *) _ _ _
     (* x1 x2 *) _ _
-    (* n1 n2 *) ltac2:(n1) ltac2:(n2)
-    (* eval x1 *) ltac2:(compile n1 cenv)
-    (* eval x2 *) ltac2:(compile n2 cenv)
+    (* n1 n2 *) $n1 $n2
+    (* eval x1 *) $compile_n1
+    (* eval x2 *) $compile_n2
     (* n2 <> 0 *) _
     )
   | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
+    let compile_n1 := compile n1 cenv in
+    let compile_n2 := compile n2 cenv in
+    let compile_t := compile t cenv in
+    let compile_f := compile f cenv in
     open_constr:(auto_num_if_eq
     (* A *) _
     (* env *) _
     (* s *) _
     (* x1 x2 y z *) _ _ _ _
-    (* n1 n2 t f *) ltac2:(n1) ltac2:(n2) ltac2:(t) ltac2:(f)
-    (* a *) _
-    (* eval x1 *) ltac2:(compile n1 cenv)
-    (* eval x2 *) ltac2:(compile n2 cenv)
-    (* eval y *) ltac2:(compile t cenv)
-    (* eval z *) ltac2:(compile f cenv)
+    (* n1 n2 t f *) $n1 $n2 $t $f
+    (* eval x1 *) $compile_n1
+    (* eval x2 *) $compile_n2
+    (* eval y *) $compile_t
+    (* eval z *) $compile_f
     )
-  | ?n =>
-    print(of_string "xd");
-    open_constr:(auto_num_const
+  | (if ?n1 <? ?n2 then ?t else ?f) =>
+    let compile_n1 := compile n1 cenv in
+    let compile_n2 := compile n2 cenv in
+    let compile_t := compile t cenv in
+    let compile_f := compile f cenv in
+    open_constr:(auto_num_if_less
     (* env *) _
     (* s *) _
-    (* n *) ltac2:(n)
+    (* x1 x2 y z *) _ _ _ _
+    (* n1 n2 t f *) $n1 $n2 $t $f
+    (* eval x1 *) $compile_n1
+    (* eval x2 *) $compile_n2
+    (* eval y *) $compile_t
+    (* eval z *) $compile_f
     )
+
+    | ?x =>
+    (* TODO(kπ) We should handle shadowing things (or avoid any type of shadowing in the implementation) *)
+    match find_opt (equal x) cenv with
+    | Some _ =>
+      open_constr:(trans_Var
+      (* env *) _
+      (* s *) _
+      (* n *) _
+      (* v *) $x
+      (* FEnv.lookup *) _
+      )
+    | None =>
+      open_constr:(auto_num_const
+      (* env *) _
+      (* s *) _
+      (* n *) $x
+      )
+    end
   end.
 
 Ltac2 doauto () :=
   match! goal with
   | [ |- _ |-- (_, _) ---> ([encode ?g], _) ] =>
-    refine (compile g Lnil); intros
+    refine (compile g []);
+    intros;
+    eauto with fenvDb
   end.
 
 Lemma arith_example : forall n,
   exists prog,
-    Env.empty |-- (prog, empty_state) --->
+    FEnv.empty |-- (prog, empty_state) --->
     ([encode (letd x := 1 in x + n)], empty_state).
 Proof.
   intros; eexists.
-  (* Doesn't conclude the branch with compile :thinking: *)
   doauto ().
   Show Proof.
   all: simpl.
@@ -226,7 +269,7 @@ Proof.
   all: try (eapply auto_num_add); intros.
   all: try (eapply auto_num_const); intros.
   (* all: repeat (autostep; intros). *)
-  all: try eapply trans_Var; try eapply Env.lookup_insert_eq.
+  all: try eapply trans_Var; try eapply FEnv.lookup_insert_eq.
   all: repeat split.
   all: eauto.
   - exact I.

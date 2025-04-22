@@ -97,7 +97,7 @@ Theorem Eval_eq :
   (forall v s env a1vs a1s, env |-- ([Const v], s) ---> (a1vs, a1s) <-> (a1vs, a1s) = ([Num v], s)) /\
   (forall s n env a1vs a1s,
      env |-- ([Var n], s) ---> (a1vs, a1s) <->
-     exists v, (a1vs, a1s) = ([v], s) /\ Env.lookup env n = Some v) /\
+     exists v, (a1vs, a1s) = ([v], s) /\ FEnv.lookup env n = Some v) /\
   (forall xs s1 f env a1vs a1s,
      env |-- ([Op f xs], s1) ---> (a1vs, a1s) <->
      exists vs s2 s3 v,
@@ -109,7 +109,7 @@ Theorem Eval_eq :
      exists v1 s2 s3 v2,
        (a1vs, a1s) = ([v2], s3) /\
        env |-- ([x], s1) ---> ([v1], s2) /\
-       (Env.insert (n, Some v1) env) |-- ([y], s2) ---> ([v2], s3)) /\
+       (FEnv.insert (n, Some v1) env) |-- ([y], s2) ---> ([v2], s3)) /\
   (forall z y xs test s1 env a1vs a1s,
      env |-- ([If test xs y z], s1) ---> (a1vs, a1s) <->
      exists vs s2 b v s3,
@@ -175,7 +175,7 @@ Qed.
 
 Lemma Eval_eq_Var : forall s n env a1v a1s,
   env |-- ([Var n], s) ---> (a1v, a1s) <->
-  exists v, (a1v, a1s) = ([v], s) /\ Env.lookup env n = Some v.
+  exists v, (a1v, a1s) = ([v], s) /\ FEnv.lookup env n = Some v.
 Proof.
   destruct Eval_eq; cleanup.
   eapply H2; eauto.
@@ -197,7 +197,7 @@ Lemma Eval_eq_Let : forall y x s1 n env a1v a1s,
   exists v1 s2 s3 v2,
     (a1v, a1s) = ([v2], s3) /\
     env |-- ([x], s1) ---> ([v1], s2) /\
-    (Env.insert (n, Some v1) env) |-- ([y], s2) ---> ([v2], s3).
+    (FEnv.insert (n, Some v1) env) |-- ([y], s2) ---> ([v2], s3).
 Proof.
   destruct Eval_eq; cleanup.
   eapply H4; eauto.
@@ -260,7 +260,7 @@ Theorem delete_env_update :
   forall env xs s vs t n x,
     env |-- (xs, s) ---> (vs, t) ->
     ~ In n (flat_map free_vars xs) ->
-    (Env.insert (n, x) env) |-- (xs, s) ---> (vs, t).
+    (FEnv.insert (n, x) env) |-- (xs, s) ---> (vs, t).
 Proof.
   intros env xs s vs t n x H Hnotin.
   induction H; subst; simpl flat_map in *.
@@ -275,7 +275,7 @@ Proof.
   - econstructor; eauto.
     unfold In in Hnotin; simpl in Hnotin.
     destruct (Nat.eq_dec n n0); subst; [tauto|].
-    rewrite Env.lookup_insert_neq; eauto.
+    rewrite FEnv.lookup_insert_neq; eauto.
   - econstructor; eauto.
     eapply IHeval; eauto.
     rewrite app_nil_r in Hnotin; assumption.
@@ -284,11 +284,11 @@ Proof.
     econstructor; eauto.
     rewrite in_remove_rw in H2.
     destruct (Nat.eq_dec n n0); subst.
-    + rewrite Env.insert_insert_eq in *.
+    + rewrite FEnv.insert_insert_eq in *.
       assumption.
     + assert (~ In n (free_vars exp2)) by tauto.
       specialize IHeval2 with (1 := H3).
-      rewrite Env.insert_insert_neq; auto.
+      rewrite FEnv.insert_insert_neq; auto.
   - rewrite app_nil_r in *.
     repeat rewrite not_In_app in *; destruct Hnotin; destruct H2.
     econstructor; eauto.
@@ -301,16 +301,16 @@ Qed.
 Theorem remove_env_update :
   forall n x0 env v res s s1,
   ~ In n (free_vars x0) ->
-  (Env.insert (n, v) env) |-- ([x0], s) ---> (res, s1) <-> env |-- ([x0], s) ---> (res, s1).
+  (FEnv.insert (n, v) env) |-- ([x0], s) ---> (res, s1) <-> env |-- ([x0], s) ---> (res, s1).
 Proof.
   intros n x0 env v res s s1 Hnotin.
   split; intros H.
-  - eapply delete_env_update with (n := n) (x := Env.lookup env n) in H; eauto.
+  - eapply delete_env_update with (n := n) (x := FEnv.lookup env n) in H; eauto.
     2: { unfold flat_map in *; rewrite app_nil_r; assumption. }
-    rewrite Env.insert_insert_eq in H.
-    assert (Env.insert (n, Env.lookup env n) env = env).
+    rewrite FEnv.insert_insert_eq in H.
+    assert (FEnv.insert (n, FEnv.lookup env n) env = env).
     2: { rewrite H0 in H; assumption. }
-    apply Env.insert_lookup_self.
+    apply FEnv.insert_lookup_self.
   - eapply delete_env_update; eauto.
     unfold flat_map.
     rewrite app_nil_r.

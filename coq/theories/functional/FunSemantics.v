@@ -4,7 +4,15 @@ Require Import impboot.functional.FunValues.
 Require Import impboot.functional.FunEnv.
 Require Import impboot.utils.Llist.
 
-Module Env := FunEnv.
+Module FEnv := FunEnv.
+
+Hint Resolve FEnv.lookup_insert_eq : fenvDb.
+Hint Resolve FEnv.lookup_insert_neq : fenvDb.
+Hint Resolve FEnv.insert_insert_eq : fenvDb.
+Hint Resolve FEnv.insert_insert_neq : fenvDb.
+Hint Resolve FEnv.insert_remove : fenvDb.
+Hint Resolve FEnv.lookup_empty : fenvDb.
+Hint Resolve FEnv.insert_lookup_self : fenvDb.
 
 Inductive err : Type :=
   | TimeOut
@@ -74,10 +82,10 @@ Definition take_branch (test : FunSyntax.test) (vs : list Value) (s : state) : r
   end.
 Arguments take_branch !_ !_ !_ /.
 
-Fixpoint make_env (keys : list name) (values : list Value) (acc : Env.env) : Env.env :=
+Fixpoint make_env (keys : list name) (values : list Value) (acc : FEnv.env) : FEnv.env :=
   match keys, values with
   | [], [] => acc
-  | k :: ks, v :: vs => make_env ks vs (Env.insert (k, Some v) acc)
+  | k :: ks, v :: vs => make_env ks vs (FEnv.insert (k, Some v) acc)
   | _, _ => acc
   end.
 
@@ -88,10 +96,10 @@ Fixpoint lookup_fun (n : name) (fs : list FunSyntax.dec) : option (list name * F
   end.
 Arguments lookup_fun !_ !_ /.
 
-Definition env_and_body (n : name) (args : list Value) (s : state) : option (Env.env * FunSyntax.exp) :=
+Definition env_and_body (n : name) (args : list Value) (s : state) : option (FEnv.env * FunSyntax.exp) :=
   match lookup_fun n s.(funs) with
   | None => None
-  | Some (params, body) => if List.length params =? List.length args then Some (make_env params args Env.empty, body) else None
+  | Some (params, body) => if List.length params =? List.length args then Some (make_env params args FEnv.empty, body) else None
   end.
 Arguments env_and_body !_ !_ /.
 
@@ -102,7 +110,7 @@ Reserved Notation "env '|--' ( es , s1 ) '--->' ( vs , s2 )" (at level 40, es at
 
 (* Ask Magnus why he likes using `list of exp`, instead of exp *)
 (* Answer: to avoid mutual recursion *)
-Inductive eval : Env.env -> list FunSyntax.exp -> state -> list Value -> state -> Prop :=
+Inductive eval : FEnv.env -> list FunSyntax.exp -> state -> list Value -> state -> Prop :=
 | Eval_Nil : forall env s,
   env |-- ([], s) ---> ([], s)
 | Eval_Cons : forall env exp1 v exp2 exps vs s1 s2 s3,
@@ -114,8 +122,8 @@ Inductive eval : Env.env -> list FunSyntax.exp -> state -> list Value -> state -
   env |-- ([FunSyntax.Const n],  s) ---> ([Num n],  s)
 | Eval_Var : forall env n v s,
   forall
-  (ENV_LOOKUP : Env.lookup env n = Some v),
-  env |-- ([FunSyntax.Var n],  s) ---> ([v],  s)
+  (ENV_LOOKUP : FEnv.lookup env n = Some v),
+  env |-- ([FunSyntax.Var n], s) ---> ([v],  s)
 | Eval_Op : forall env exps s1 vs s2 op v s3,
   forall
     (EVAL_ARGS : env |-- (exps,  s1) ---> (vs,  s2))
@@ -124,7 +132,7 @@ Inductive eval : Env.env -> list FunSyntax.exp -> state -> list Value -> state -
 | Eval_Let : forall env exp1 exp2 s1 v1 s2 n s3 v2,
   forall
     (EVAL_RHS : env |-- ([exp1],  s1) ---> ([v1],  s2))
-    (EVAL_RES : (Env.insert (n, Some v1) env) |-- ([exp2],  s2) ---> ([v2],  s3)),
+    (EVAL_RES : (FEnv.insert (n, Some v1) env) |-- ([exp2],  s2) ---> ([v2],  s3)),
   env |-- ([FunSyntax.Let n exp1 exp2],  s1) ---> ([v2],  s3)
 | Eval_If : forall env exps s1 vs s2 test b expt expf v s3,
   forall
@@ -159,5 +167,5 @@ Qed.
 
 Definition prog_terminates (input : llist ascii) (p : FunSyntax.prog) (out : list ascii) : Prop :=
   exists s r,
-    Env.empty |-- ([get_main p],  (init_state input (get_defs p))) ---> (r,  s) /\
+    FEnv.empty |-- ([get_main p],  (init_state input (get_defs p))) ---> (r,  s) /\
         out = s.(output).

@@ -224,13 +224,13 @@ Proof.
 Qed.
 Hint Resolve auto_num_if_eq : automation.
 
-Theorem auto_num_if_less : forall {A}
-  env s x1 x2 y z n1 n2 t f (a : A -> Value),
+Theorem auto_num_if_less : forall {A} `{Refinable A}
+  env s x1 x2 y z n1 n2 (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
-  env |-- ([y], s) ---> ([a t], s) ->
-  env |-- ([z], s) ---> ([a f], s) ->
-  env |-- ([If Less [x1; x2] y z], s) ---> ([a (if n1 <? n2 then t else f)], s).
+  env |-- ([y], s) ---> ([encode t], s) ->
+  env |-- ([z], s) ---> ([encode f], s) ->
+  env |-- ([If Less [x1; x2] y z], s) ---> ([encode (if n1 <? n2 then t else f)], s).
 Proof.
   intros.
   destruct (n1 <? n2) eqn:Heq.
@@ -265,10 +265,10 @@ Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
   env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([rb.(encode) v1], s) ->
-  (forall y1 y2,
-    (FEnv.insert (name_enc n2, Some (encode y2))
-    (FEnv.insert (name_enc n1, Some (ra.(encode) y1)) env)) |-- ([x2], s) --->
-    ([rb.(encode) (v2 y1 y2)], s)) ->
+  (forall xh xt, v0 = xh :: xt ->
+    (FEnv.insert (name_enc n2, Some (encode xt))
+      (FEnv.insert (name_enc n1, Some (ra.(encode) xh)) env)) |-- ([x2], s) --->
+      ([rb.(encode) (v2 xh xt)], s)) ->
   NoDup ([name_enc n1] ++ free_vars x0) ->
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n1) (Op Head [x0])
@@ -276,9 +276,10 @@ Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
      ([rb.(encode) (list_CASE v0 v1 v2)], s).
 Proof.
   intros.
-  destruct v0 as [|y1 y2].
-  - Eval_eq.
-  - simpl in *.
+  destruct v0 eqn:?.
+  1: { Eval_eq. }
+  simpl in *.
+  subst.
   rewrite NoDup_cons_iff in *; destruct H2.
   Eval_eq.
   + rewrite remove_env_update; eauto.

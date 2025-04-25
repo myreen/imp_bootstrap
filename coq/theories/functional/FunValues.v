@@ -14,14 +14,14 @@ Class Refinable (A : Type) :=
 Global Instance Refinable_nat : Refinable nat :=
   { encode := Num }.
 
-Definition name_enc (s : list ascii) : nat :=
+Definition name_enc_l (s : list ascii) : nat :=
   fold_right (fun c acc => (nat_of_ascii c) * 256 + acc) 0 s.
 
-Definition name_enc_str (s: string) : nat :=
-  name_enc (list_ascii_of_string s).
+Definition name_enc (s: string) : nat :=
+  name_enc_l (list_ascii_of_string s).
 
 Definition value_name (s : string) : Value :=
-  Num (name_enc_str s).
+  Num (name_enc s).
 
 Definition value_list_of_values (xs : list Value) : Value :=
   fold_right (fun x acc => Pair x acc) (Num 0) xs.

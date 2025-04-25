@@ -90,189 +90,188 @@ Qed. *)
 
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
 Ltac2 rec compile (e : constr) (cenv : constr list) : constr :=
-  print (of_constr e);
-  lazy_match! e with
-  | (dlet ?val ?body) =>
-    let compiled_val := compile val cenv in
-    let applied_body := eval_cbv beta open_constr:($body $val) in
-    let compiled_body := compile applied_body (val :: cenv) in
-    open_constr:(auto_let
-    (* env *) _
-    (* x1 y1 *) _ _
-    (* s1 s2 s3 *) _ _ _
-    (* v1 *) $val
-    (* let_n *) _
-    (* f *) $body
-    (* eval v1 *) $compiled_val
-    (* eval f *) $compiled_body
-    )
-  (* bool *)
-  | true =>
-    open_constr:(auto_bool_T
+  (* TODO(kπ) We should handle shadowing things (or avoid any type of shadowing in the implementation) *)
+  match List.find_opt (Constr.equal e) cenv with
+  | Some _ =>
+    open_constr:(trans_Var
     (* env *) _
     (* s *) _
+    (* n *) _
+    (* v *) $e
+    (* FEnv.lookup *) _
     )
-  | false =>
-    open_constr:(auto_bool_F
-    (* env *) _
-    (* s *) _
-    )
-  | (negb ?b) =>
-    let compile_b := compile b cenv in
-    open_constr:(auto_bool_not
-    (* env *) _
-    (* s *) _
-    (* x1 *) _
-    (* b *) $b
-    (* eval x1 *) $compile_b
-    )
-  | (andb ?bA ?bB) =>
-    let compile_bA := compile bA cenv in
-    let compile_bB := compile bB cenv in
-    open_constr:(auto_bool_and
-    (* env *) _
-    (* s *) _
-    (* x1 x2 *) _ _
-    (* bA bB *) $bA $bB
-    (* eval x1 *) $compile_bA
-    (* eval x2 *) $compile_bB
-    )
-  | (eqb ?bA ?bB) =>
-    let compile_bA := compile bA cenv in
-    let compile_bB := compile bB cenv in
-    open_constr:(auto_bool_iff
-    (* env *) _
-    (* s *) _
-    (* x1 x2 *) _ _
-    (* bA bB *) $bA $bB
-    (* eval x1 *) $compile_bA
-    (* eval x2 *) $compile_bB
-    )
-  | (if ?b then ?t else ?f) =>
-    let compile_b := compile b cenv in
-    let compile_t := compile t cenv in
-    let compile_f := compile f cenv in
-    open_constr:(last_bool_if
-    (* env *) _
-    (* s *) _
-    (* x_b x_t x_f *) _ _ _
-    (* b t f *) $b $t $f
-    (* eval x_b *) $compile_b
-    (* eval x_t *) $compile_t
-    (* eval x_f *) $compile_f
-    )
-  (* num *)
-  | (?n1 + ?n2) =>
-    let compile_n1 := compile n1 cenv in
-    let compile_n2 := compile n2 cenv in
-    open_constr:(auto_num_add
-    (* env *) _
-    (* s0 s1 s2 *) _ _ _
-    (* x1 x2 *) _ _
-    (* n1 n2 *) $n1 $n2
-    (* eval x1 *) $compile_n1
-    (* eval x2 *) $compile_n2
-    )
-  | (?n1 - ?n2) =>
-    let compile_n1 := compile n1 cenv in
-    let compile_n2 := compile n2 cenv in
-    open_constr:(auto_num_sub
-    (* env *) _
-    (* s0 s1 s2 *) _ _ _
-    (* x1 x2 *) _ _
-    (* n1 n2 *) $n1 $n2
-    (* eval x1 *) $compile_n1
-    (* eval x2 *) $compile_n2
-    )
-  | (?n1 / ?n2) =>
-    let compile_n1 := compile n1 cenv in
-    let compile_n2 := compile n2 cenv in
-    open_constr:(auto_num_div
-    (* env *) _
-    (* s0 s1 s2 *) _ _ _
-    (* x1 x2 *) _ _
-    (* n1 n2 *) $n1 $n2
-    (* eval x1 *) $compile_n1
-    (* eval x2 *) $compile_n2
-    (* n2 <> 0 *) _
-    )
-  | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
-    let compile_n1 := compile n1 cenv in
-    let compile_n2 := compile n2 cenv in
-    let compile_t := compile t cenv in
-    let compile_f := compile f cenv in
-    open_constr:(auto_num_if_eq
-    (* A *) _
-    (* env *) _
-    (* s *) _
-    (* x1 x2 y z *) _ _ _ _
-    (* n1 n2 t f *) $n1 $n2 $t $f
-    (* eval x1 *) $compile_n1
-    (* eval x2 *) $compile_n2
-    (* eval y *) $compile_t
-    (* eval z *) $compile_f
-    )
-  | (if ?n1 <? ?n2 then ?t else ?f) =>
-    let compile_n1 := compile n1 cenv in
-    let compile_n2 := compile n2 cenv in
-    let compile_t := compile t cenv in
-    let compile_f := compile f cenv in
-    open_constr:(auto_num_if_less
-    (* env *) _
-    (* s *) _
-    (* x1 x2 y z *) _ _ _ _
-    (* n1 n2 t f *) $n1 $n2 $t $f
-    (* eval x1 *) $compile_n1
-    (* eval x2 *) $compile_n2
-    (* eval y *) $compile_t
-    (* eval z *) $compile_f
-    )
-  (* list *)
-  | [] =>
-    open_constr:(auto_list_nil
-    (* env *) _
-    (* s *) _
-    )
-  | (?x :: ?xs) =>
-    let compile_x := compile x cenv in
-    let compile_xs := compile xs cenv in
-    open_constr:(auto_list_cons
-    (* env *) _
-    (* s *) _
-    (* x1 x2 *) _ _
-    (* x *) $x
-    (* xs *) $xs
-    (* eval x1 *) $compile_x
-    (* eval x2 *) $compile_xs
-    )
-  | (list_CASE ?v0 ?v1 ?v2) =>
-    let compile_v0 := compile v0 cenv in
-    let compile_v1 := compile v1 cenv in
-    let compile_v2 := (fun (xh : constr) (xt : constr) => compile (eval_cbv beta open_constr:($v2 $xh $xt)) (xh :: xt :: cenv)) in
-    open_constr:(auto_list_case
-    (* env *) _
-    (* s *) _
-    (* x0 x1 x2 *) _ _ _
-    (* n1 n2 *) _ _
-    (* v0 v1 v2 *) $v0 $v1 $v2
-    (* eval x0 *) $compile_v0
-    (* eval x1 *) $compile_v1
-    (* TODO(kπ) not sure if the &-references are correct *)
-    (* eval x2 *) (fun xh xt _ => ltac2:(Control.refine (fun () => (compile_v2 &xh &xt))))
-    (* NoDup *) _
-    )
-  | ?x =>
-    (* TODO(kπ) We should handle shadowing things (or avoid any type of shadowing in the implementation) *)
-    match find_opt (equal x) cenv with
-    | Some _ =>
-      open_constr:(trans_Var
+  | None =>
+    lazy_match! e with
+    | (dlet ?val ?body) =>
+      let compiled_val := compile val cenv in
+      let applied_body := eval_cbv beta open_constr:($body $val) in
+      let compiled_body := compile applied_body (val :: cenv) in
+      open_constr:(auto_let
+      (* env *) _
+      (* x1 y1 *) _ _
+      (* s1 s2 s3 *) _ _ _
+      (* v1 *) $val
+      (* let_n *) _
+      (* f *) $body
+      (* eval v1 *) $compiled_val
+      (* eval f *) $compiled_body
+      )
+    (* bool *)
+    | true =>
+      open_constr:(auto_bool_T
       (* env *) _
       (* s *) _
-      (* n *) _
-      (* v *) $x
-      (* FEnv.lookup *) _
       )
-    | None =>
+    | false =>
+      open_constr:(auto_bool_F
+      (* env *) _
+      (* s *) _
+      )
+    | (negb ?b) =>
+      let compile_b := compile b cenv in
+      open_constr:(auto_bool_not
+      (* env *) _
+      (* s *) _
+      (* x1 *) _
+      (* b *) $b
+      (* eval x1 *) $compile_b
+      )
+    | (andb ?bA ?bB) =>
+      let compile_bA := compile bA cenv in
+      let compile_bB := compile bB cenv in
+      open_constr:(auto_bool_and
+      (* env *) _
+      (* s *) _
+      (* x1 x2 *) _ _
+      (* bA bB *) $bA $bB
+      (* eval x1 *) $compile_bA
+      (* eval x2 *) $compile_bB
+      )
+    | (eqb ?bA ?bB) =>
+      let compile_bA := compile bA cenv in
+      let compile_bB := compile bB cenv in
+      open_constr:(auto_bool_iff
+      (* env *) _
+      (* s *) _
+      (* x1 x2 *) _ _
+      (* bA bB *) $bA $bB
+      (* eval x1 *) $compile_bA
+      (* eval x2 *) $compile_bB
+      )
+    | (if ?b then ?t else ?f) =>
+      let compile_b := compile b cenv in
+      let compile_t := compile t cenv in
+      let compile_f := compile f cenv in
+      open_constr:(last_bool_if
+      (* env *) _
+      (* s *) _
+      (* x_b x_t x_f *) _ _ _
+      (* b t f *) $b $t $f
+      (* eval x_b *) $compile_b
+      (* eval x_t *) $compile_t
+      (* eval x_f *) $compile_f
+      )
+    (* num *)
+    | (?n1 + ?n2) =>
+      let compile_n1 := compile n1 cenv in
+      let compile_n2 := compile n2 cenv in
+      open_constr:(auto_num_add
+      (* env *) _
+      (* s0 s1 s2 *) _ _ _
+      (* x1 x2 *) _ _
+      (* n1 n2 *) $n1 $n2
+      (* eval x1 *) $compile_n1
+      (* eval x2 *) $compile_n2
+      )
+    | (?n1 - ?n2) =>
+      let compile_n1 := compile n1 cenv in
+      let compile_n2 := compile n2 cenv in
+      open_constr:(auto_num_sub
+      (* env *) _
+      (* s0 s1 s2 *) _ _ _
+      (* x1 x2 *) _ _
+      (* n1 n2 *) $n1 $n2
+      (* eval x1 *) $compile_n1
+      (* eval x2 *) $compile_n2
+      )
+    | (?n1 / ?n2) =>
+      let compile_n1 := compile n1 cenv in
+      let compile_n2 := compile n2 cenv in
+      open_constr:(auto_num_div
+      (* env *) _
+      (* s0 s1 s2 *) _ _ _
+      (* x1 x2 *) _ _
+      (* n1 n2 *) $n1 $n2
+      (* eval x1 *) $compile_n1
+      (* eval x2 *) $compile_n2
+      (* n2 <> 0 *) _
+      )
+    | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
+      let compile_n1 := compile n1 cenv in
+      let compile_n2 := compile n2 cenv in
+      let compile_t := compile t cenv in
+      let compile_f := compile f cenv in
+      open_constr:(auto_num_if_eq
+      (* A *) _
+      (* env *) _
+      (* s *) _
+      (* x1 x2 y z *) _ _ _ _
+      (* n1 n2 t f *) $n1 $n2 $t $f
+      (* eval x1 *) $compile_n1
+      (* eval x2 *) $compile_n2
+      (* eval y *) $compile_t
+      (* eval z *) $compile_f
+      )
+    | (if ?n1 <? ?n2 then ?t else ?f) =>
+      let compile_n1 := compile n1 cenv in
+      let compile_n2 := compile n2 cenv in
+      let compile_t := compile t cenv in
+      let compile_f := compile f cenv in
+      open_constr:(auto_num_if_less
+      (* env *) _
+      (* s *) _
+      (* x1 x2 y z *) _ _ _ _
+      (* n1 n2 t f *) $n1 $n2 $t $f
+      (* eval x1 *) $compile_n1
+      (* eval x2 *) $compile_n2
+      (* eval y *) $compile_t
+      (* eval z *) $compile_f
+      )
+    (* list *)
+    | [] =>
+      open_constr:(auto_list_nil
+      (* env *) _
+      (* s *) _
+      )
+    | (?x :: ?xs) =>
+      let compile_x := compile x cenv in
+      let compile_xs := compile xs cenv in
+      open_constr:(auto_list_cons
+      (* env *) _
+      (* s *) _
+      (* x1 x2 *) _ _
+      (* x *) $x
+      (* xs *) $xs
+      (* eval x1 *) $compile_x
+      (* eval x2 *) $compile_xs
+      )
+    | (list_CASE ?v0 ?v1 ?v2) =>
+      let compile_v0 := compile v0 cenv in
+      let compile_v1 := compile v1 cenv in
+      let compile_v2 := (fun (xh : constr) (xt : constr) => compile (eval_cbv beta open_constr:($v2 $xh $xt)) (xh :: xt :: cenv)) in
+      open_constr:(auto_list_case
+      (* env *) _
+      (* s *) _
+      (* x0 x1 x2 *) _ _ _
+      (* n1 n2 *) _ _
+      (* v0 v1 v2 *) $v0 $v1 $v2
+      (* eval x0 *) $compile_v0
+      (* eval x1 *) $compile_v1
+      (* TODO(kπ) not sure if the &-references are correct *)
+      (* eval x2 *) (fun xh xt _ => ltac2:(Control.refine (fun () => (compile_v2 &xh &xt))))
+      (* NoDup *) _
+      )
+    | ?x =>
       open_constr:(auto_num_const
       (* env *) _
       (* s *) _

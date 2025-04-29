@@ -7,7 +7,7 @@ Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message.
 Import Ltac2.Constr.Unsafe.
-From coqutil Require Import Tactics.reference_to_string.
+From coqutil Require Import Tactics.reference_to_string Tactics.ident_of_string.
 Require Import Coq.derive.Derive.
 
 Ltac rewrite_let := match goal with
@@ -21,22 +21,11 @@ end.
 
 Definition empty_state : state := init_state lnil [].
 
-(* TODO(kπ) figure out a good example, this one gets constant folded *)
-(* Example arith_example : forall n m,
-  exists prog, FEnv.empty |-- (prog, empty_state) ---> ([Num (let x := 1 in x + n - m)], empty_state).
-Proof.
-  intros.
-  rewrite_let.
-  eexists. (* TODO(kπ) this simplifies my function :/ Is this a problem with normal code?*)
-  eapply auto_let; eauto; intros.
-  repeat match goal with
-  | |-- context[_ + _] => eapply auto_num_add; eauto
-  | |-- context[_ - _] => eapply auto_num_sub; eauto
-  end.
-  (* TODO(kπ) *)
-Qed. *)
-
-(* Ltac2 compile (c : constr) := 1. *)
+(* TODO(kπ):
+- consider using preterm instead of open_constr if thing get too slow
+- computing names seems super slow. Should we have some hardcoded automation for that?
+  (I tried to automate this by injectivity, but it's not injective :sad_goat:)
+*)
 
 (* Rupicola approach *)
 
@@ -79,18 +68,77 @@ Qed. *)
   (* This gets applied to eagerly *)
   eapply auto_let. *)
 
-(* Derive f1 SuchThat
-  (forall n m,
-    exists prog,
-      FEnv.empty |-- (prog, empty_state) --->
-      ([encode (letd x := 1 in x + n - m)], empty_state))
-  As f1_rpoof. *)
+(* *)
 
 (* HOL4-ish approach *)
 
+Ltac2 rec of_list (l : message list) : message :=
+  let rec of_list_go (l : message list) :=
+    match l with
+    | [] => Message.of_string ""
+    | [x] => x
+    | x :: xs => Message.concat x (Message.concat (Message.of_string ",") (of_list_go xs))
+    end
+  in Message.concat (Message.of_string "[ ") (Message.concat (of_list_go l) (Message.of_string " ]")).
+
+Ltac2 of_option (o : message option) : message :=
+  match o with
+  | Some x => x
+  | None => Message.of_string "None"
+  end.
+
+Ltac2 f_lookup_name (f_lookup : (string * constr) list) (fname : string) : constr option :=
+  match List.find_opt (fun (name, _) => String.equal name fname) f_lookup with
+  | Some (_, c) => Some c
+  | None => None
+  end.
+
+Ltac2 rec extract_fun (e : constr) : (constr * constr list) :=
+  match! e with
+  | (?f ?arg) =>
+    let (f_fun, f_args) := extract_fun f in
+    let f_args1 := List.append f_args [arg] in
+    (f_fun, f_args1)
+  | ?f =>
+    (f, [])
+  end.
+
+Ltac2 rec list_to_constr (l : constr list) : constr :=
+  match l with
+  | [] => open_constr:([])
+  | x :: xs =>
+    let xs' := list_to_constr xs in
+    open_constr:($x :: $xs')
+  end.
+
+Ltac2 reference_of_constr_opt c :=
+  match kind c with
+  | Var id => Some (Std.VarRef id)
+  | Constant const _inst => Some (Std.ConstRef const)
+  | Ind ind _inst => Some (Std.IndRef ind)
+  | Constructor cnstr _inst => Some (Std.ConstructRef cnstr)
+  | _ => None
+  end.
+
+Ltac2 reference_to_string (r : reference) : string option :=
+  Some (Ident.to_string (List.last (Env.path r))).
+
+Ltac2 of_f_lookup (f_lookup : (string * constr) list) : message :=
+  match f_lookup with
+  | [] => Message.of_string "[]"
+  | _ =>
+    let f_lookup' := List.map (fun (name, iden) =>
+      Message.concat (Message.of_string name) (Message.concat (Message.of_string " -> ") (Message.of_constr iden))
+    ) f_lookup in
+    of_list f_lookup'
+  end.
+
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
-Ltac2 rec compile (e : constr) (cenv : constr list) : constr :=
+Ltac2 rec compile (e : constr) (cenv : constr list) (f_lookup : (string * constr) list) : constr :=
   (* TODO(kπ) We should handle shadowing things (or avoid any type of shadowing in the implementation) *)
+  print (Message.of_string "compile");
+  print (Message.of_constr e);
+  print (of_list (List.map Message.of_constr cenv));
   match List.find_opt (Constr.equal e) cenv with
   | Some _ =>
     open_constr:(trans_Var
@@ -101,189 +149,221 @@ Ltac2 rec compile (e : constr) (cenv : constr list) : constr :=
     (* FEnv.lookup *) _
     )
   | None =>
-    lazy_match! e with
-    | (dlet ?val ?body) =>
-      let compiled_val := compile val cenv in
-      let applied_body := eval_cbv beta open_constr:($body $val) in
-      let compiled_body := compile applied_body (val :: cenv) in
-      open_constr:(auto_let
-      (* env *) _
-      (* x1 y1 *) _ _
-      (* s1 s2 s3 *) _ _ _
-      (* v1 *) $val
-      (* let_n *) _
-      (* f *) $body
-      (* eval v1 *) $compiled_val
-      (* eval f *) $compiled_body
-      )
-    (* bool *)
-    | true =>
-      open_constr:(auto_bool_T
-      (* env *) _
-      (* s *) _
-      )
-    | false =>
-      open_constr:(auto_bool_F
-      (* env *) _
-      (* s *) _
-      )
-    | (negb ?b) =>
-      let compile_b := compile b cenv in
-      open_constr:(auto_bool_not
-      (* env *) _
-      (* s *) _
-      (* x1 *) _
-      (* b *) $b
-      (* eval x1 *) $compile_b
-      )
-    | (andb ?bA ?bB) =>
-      let compile_bA := compile bA cenv in
-      let compile_bB := compile bB cenv in
-      open_constr:(auto_bool_and
-      (* env *) _
-      (* s *) _
-      (* x1 x2 *) _ _
-      (* bA bB *) $bA $bB
-      (* eval x1 *) $compile_bA
-      (* eval x2 *) $compile_bB
-      )
-    | (eqb ?bA ?bB) =>
-      let compile_bA := compile bA cenv in
-      let compile_bB := compile bB cenv in
-      open_constr:(auto_bool_iff
-      (* env *) _
-      (* s *) _
-      (* x1 x2 *) _ _
-      (* bA bB *) $bA $bB
-      (* eval x1 *) $compile_bA
-      (* eval x2 *) $compile_bB
-      )
-    | (if ?b then ?t else ?f) =>
-      let compile_b := compile b cenv in
-      let compile_t := compile t cenv in
-      let compile_f := compile f cenv in
-      open_constr:(last_bool_if
-      (* env *) _
-      (* s *) _
-      (* x_b x_t x_f *) _ _ _
-      (* b t f *) $b $t $f
-      (* eval x_b *) $compile_b
-      (* eval x_t *) $compile_t
-      (* eval x_f *) $compile_f
-      )
-    (* num *)
-    | (?n1 + ?n2) =>
-      let compile_n1 := compile n1 cenv in
-      let compile_n2 := compile n2 cenv in
-      open_constr:(auto_num_add
-      (* env *) _
-      (* s0 s1 s2 *) _ _ _
-      (* x1 x2 *) _ _
-      (* n1 n2 *) $n1 $n2
-      (* eval x1 *) $compile_n1
-      (* eval x2 *) $compile_n2
-      )
-    | (?n1 - ?n2) =>
-      let compile_n1 := compile n1 cenv in
-      let compile_n2 := compile n2 cenv in
-      open_constr:(auto_num_sub
-      (* env *) _
-      (* s0 s1 s2 *) _ _ _
-      (* x1 x2 *) _ _
-      (* n1 n2 *) $n1 $n2
-      (* eval x1 *) $compile_n1
-      (* eval x2 *) $compile_n2
-      )
-    | (?n1 / ?n2) =>
-      let compile_n1 := compile n1 cenv in
-      let compile_n2 := compile n2 cenv in
-      open_constr:(auto_num_div
-      (* env *) _
-      (* s0 s1 s2 *) _ _ _
-      (* x1 x2 *) _ _
-      (* n1 n2 *) $n1 $n2
-      (* eval x1 *) $compile_n1
-      (* eval x2 *) $compile_n2
-      (* n2 <> 0 *) _
-      )
-    | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
-      let compile_n1 := compile n1 cenv in
-      let compile_n2 := compile n2 cenv in
-      let compile_t := compile t cenv in
-      let compile_f := compile f cenv in
-      open_constr:(auto_num_if_eq
-      (* A *) _
-      (* env *) _
-      (* s *) _
-      (* x1 x2 y z *) _ _ _ _
-      (* n1 n2 t f *) $n1 $n2 $t $f
-      (* eval x1 *) $compile_n1
-      (* eval x2 *) $compile_n2
-      (* eval y *) $compile_t
-      (* eval z *) $compile_f
-      )
-    | (if ?n1 <? ?n2 then ?t else ?f) =>
-      let compile_n1 := compile n1 cenv in
-      let compile_n2 := compile n2 cenv in
-      let compile_t := compile t cenv in
-      let compile_f := compile f cenv in
-      open_constr:(auto_num_if_less
-      (* env *) _
-      (* s *) _
-      (* x1 x2 y z *) _ _ _ _
-      (* n1 n2 t f *) $n1 $n2 $t $f
-      (* eval x1 *) $compile_n1
-      (* eval x2 *) $compile_n2
-      (* eval y *) $compile_t
-      (* eval z *) $compile_f
-      )
-    (* list *)
+    let compile_go :=
+      lazy_match! e with
+      | (dlet ?val ?body) =>
+        let compiled_val := compile val cenv f_lookup in
+        let applied_body := eval_cbv beta open_constr:($body $val) in
+        let compiled_body := compile applied_body (val :: cenv) f_lookup in
+        open_constr:(auto_let
+        (* env *) _
+        (* x1 y1 *) _ _
+        (* s1 s2 s3 *) _ _ _
+        (* v1 *) $val
+        (* let_n *) _
+        (* f *) $body
+        (* eval v1 *) $compiled_val
+        (* eval f *) $compiled_body
+        )
+      (* bool *)
+      | true =>
+        open_constr:(auto_bool_T
+        (* env *) _
+        (* s *) _
+        )
+      | false =>
+        open_constr:(auto_bool_F
+        (* env *) _
+        (* s *) _
+        )
+      | (negb ?b) =>
+        let compile_b := compile b cenv f_lookup in
+        open_constr:(auto_bool_not
+        (* env *) _
+        (* s *) _
+        (* x1 *) _
+        (* b *) $b
+        (* eval x1 *) $compile_b
+        )
+      | (andb ?bA ?bB) =>
+        let compile_bA := compile bA cenv f_lookup in
+        let compile_bB := compile bB cenv f_lookup in
+        open_constr:(auto_bool_and
+        (* env *) _
+        (* s *) _
+        (* x1 x2 *) _ _
+        (* bA bB *) $bA $bB
+        (* eval x1 *) $compile_bA
+        (* eval x2 *) $compile_bB
+        )
+      | (eqb ?bA ?bB) =>
+        let compile_bA := compile bA cenv f_lookup in
+        let compile_bB := compile bB cenv f_lookup in
+        open_constr:(auto_bool_iff
+        (* env *) _
+        (* s *) _
+        (* x1 x2 *) _ _
+        (* bA bB *) $bA $bB
+        (* eval x1 *) $compile_bA
+        (* eval x2 *) $compile_bB
+        )
+      | (if ?b then ?t else ?f) =>
+        let compile_b := compile b cenv f_lookup in
+        let compile_t := compile t cenv f_lookup in
+        let compile_f := compile f cenv f_lookup in
+        open_constr:(last_bool_if
+        (* env *) _
+        (* s *) _
+        (* x_b x_t x_f *) _ _ _
+        (* b t f *) $b $t $f
+        (* eval x_b *) $compile_b
+        (* eval x_t *) $compile_t
+        (* eval x_f *) $compile_f
+        )
+      (* num *)
+      | (?n1 + ?n2) =>
+        let compile_n1 := compile n1 cenv f_lookup in
+        let compile_n2 := compile n2 cenv f_lookup in
+        open_constr:(auto_num_add
+        (* env *) _
+        (* s0 s1 s2 *) _ _ _
+        (* x1 x2 *) _ _
+        (* n1 n2 *) $n1 $n2
+        (* eval x1 *) $compile_n1
+        (* eval x2 *) $compile_n2
+        )
+      | (?n1 - ?n2) =>
+        let compile_n1 := compile n1 cenv f_lookup in
+        let compile_n2 := compile n2 cenv f_lookup in
+        open_constr:(auto_num_sub
+        (* env *) _
+        (* s0 s1 s2 *) _ _ _
+        (* x1 x2 *) _ _
+        (* n1 n2 *) $n1 $n2
+        (* eval x1 *) $compile_n1
+        (* eval x2 *) $compile_n2
+        )
+      | (?n1 / ?n2) =>
+        let compile_n1 := compile n1 cenv f_lookup in
+        let compile_n2 := compile n2 cenv f_lookup in
+        open_constr:(auto_num_div
+        (* env *) _
+        (* s0 s1 s2 *) _ _ _
+        (* x1 x2 *) _ _
+        (* n1 n2 *) $n1 $n2
+        (* eval x1 *) $compile_n1
+        (* eval x2 *) $compile_n2
+        (* n2 <> 0 *) _
+        )
+      | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
+        let compile_n1 := compile n1 cenv f_lookup in
+        let compile_n2 := compile n2 cenv f_lookup in
+        let compile_t := compile t cenv f_lookup in
+        let compile_f := compile f cenv f_lookup in
+        open_constr:(auto_num_if_eq
+        (* A *) _
+        (* env *) _
+        (* s *) _
+        (* x1 x2 y z *) _ _ _ _
+        (* n1 n2 t f *) $n1 $n2 $t $f
+        (* eval x1 *) $compile_n1
+        (* eval x2 *) $compile_n2
+        (* eval y *) $compile_t
+        (* eval z *) $compile_f
+        )
+      | (if ?n1 <? ?n2 then ?t else ?f) =>
+        let compile_n1 := compile n1 cenv f_lookup in
+        let compile_n2 := compile n2 cenv f_lookup in
+        let compile_t := compile t cenv f_lookup in
+        let compile_f := compile f cenv f_lookup in
+        open_constr:(auto_num_if_less
+        (* env *) _
+        (* s *) _
+        (* x1 x2 y z *) _ _ _ _
+        (* n1 n2 t f *) $n1 $n2 $t $f
+        (* eval x1 *) $compile_n1
+        (* eval x2 *) $compile_n2
+        (* eval y *) $compile_t
+        (* eval z *) $compile_f
+        )
+      (* list *)
+      | [] =>
+        open_constr:(auto_list_nil
+        (* env *) _
+        (* s *) _
+        )
+      | (?x :: ?xs) =>
+        let compile_x := compile x cenv f_lookup in
+        let compile_xs := compile xs cenv f_lookup in
+        open_constr:(auto_list_cons
+        (* env *) _
+        (* s *) _
+        (* x1 x2 *) _ _
+        (* x *) $x
+        (* xs *) $xs
+        (* eval x1 *) $compile_x
+        (* eval x2 *) $compile_xs
+        )
+      | (list_CASE ?v0 ?v1 ?v2) =>
+        let compile_v0 := compile v0 cenv f_lookup in
+        let compile_v1 := compile v1 cenv f_lookup in
+        let compile_v2 := (fun (xh : constr) (xt : constr) => compile (eval_cbv beta open_constr:($v2 $xh $xt)) (xh :: xt :: cenv) f_lookup) in
+        open_constr:(auto_list_case
+        (* env *) _
+        (* s *) _
+        (* x0 x1 x2 *) _ _ _
+        (* n1 n2 *) _ _
+        (* v0 v1 v2 *) $v0 $v1 $v2
+        (* eval x0 *) $compile_v0
+        (* eval x1 *) $compile_v1
+        (* TODO(kπ) not sure if the &-references are correct *)
+        (* eval x2 *) (fun xh xt _ => ltac2:(Control.refine (fun () => (compile_v2 &xh &xt))))
+        (* NoDup *) _
+        )
+      | ?x =>
+        open_constr:(auto_num_const
+        (* env *) _
+        (* s *) _
+        (* n *) $x
+        )
+      end
+    in
+    let (f, args) := extract_fun e in
+    match args with
     | [] =>
-      open_constr:(auto_list_nil
-      (* env *) _
-      (* s *) _
-      )
-    | (?x :: ?xs) =>
-      let compile_x := compile x cenv in
-      let compile_xs := compile xs cenv in
-      open_constr:(auto_list_cons
-      (* env *) _
-      (* s *) _
-      (* x1 x2 *) _ _
-      (* x *) $x
-      (* xs *) $xs
-      (* eval x1 *) $compile_x
-      (* eval x2 *) $compile_xs
-      )
-    | (list_CASE ?v0 ?v1 ?v2) =>
-      let compile_v0 := compile v0 cenv in
-      let compile_v1 := compile v1 cenv in
-      let compile_v2 := (fun (xh : constr) (xt : constr) => compile (eval_cbv beta open_constr:($v2 $xh $xt)) (xh :: xt :: cenv)) in
-      open_constr:(auto_list_case
-      (* env *) _
-      (* s *) _
-      (* x0 x1 x2 *) _ _ _
-      (* n1 n2 *) _ _
-      (* v0 v1 v2 *) $v0 $v1 $v2
-      (* eval x0 *) $compile_v0
-      (* eval x1 *) $compile_v1
-      (* TODO(kπ) not sure if the &-references are correct *)
-      (* eval x2 *) (fun xh xt _ => ltac2:(Control.refine (fun () => (compile_v2 &xh &xt))))
-      (* NoDup *) _
-      )
-    | ?x =>
-      open_constr:(auto_num_const
-      (* env *) _
-      (* s *) _
-      (* n *) $x
-      )
+      compile_go
+    | _ =>
+      let f_name_r := reference_of_constr_opt f in
+      let f_name_str := Option.bind f_name_r reference_to_string in
+      let f_constr_opt := Option.bind f_name_str (f_lookup_name f_lookup) in
+      match f_constr_opt with
+      | Some c =>
+        print (Message.of_string "Found function");
+        print (Message.of_constr c);
+        (* let refined_ident := refine_eval_app_hyp ident_ref in *)
+        let args_constr := list_to_constr args in
+        let compile_args := compile args_constr cenv f_lookup in
+        open_constr:(trans_Call
+        (* env *) _
+        (* xs *) _
+        (* s1 s2 s3 *) _ _ _
+        (* fname *) _
+        (* vs *) _
+        (* v *) _
+        (* eval args *) $compile_args
+        (* eval_app *) _
+        )
+      | None =>
+        compile_go
+      end
     end
   end.
+About trans_Call.
 
 Ltac2 rec constr_to_list (c : constr) : constr list :=
   match! c with
   | [] => []
-  | ?x :: ?xs => x :: constr_to_list xs
+  | (encode ?x) :: ?xs => x :: constr_to_list xs
   end.
 
 (* TODO(kπ) this only works when fun is the top level App in the compiled
@@ -295,21 +375,57 @@ Ltac2 rec fun_ident (c : constr) : reference :=
   | _ => reference_of_constr c
   end.
 
-Ltac2 doauto () :=
-  match! goal with
+Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
+  lazy_match! t with
+  (* TODO(kπ) Ltac(2) doesn't allow matching on open terms :sad_goat: *)
+  | (forall _, ?t1) =>
+    let t1_refined := refine_up_to_eval_app iden t1 in
+    open_constr:($t1_refined _)
+  | (fun _ => ?t1) =>
+    let t1_refined := refine_up_to_eval_app iden t1 in
+    open_constr:($t1_refined _)
+  | (_ -> ?t1) =>
+    let t1_refined := refine_up_to_eval_app iden t1 in
+    open_constr:($t1_refined _)
+  | eval_app _ _ _ _ =>
+    Control.hyp iden
+  | ?t1 =>
+    t1
+  end.
+
+Ltac2 get_f_lookup_from_hyps () : (string * constr) list :=
+  let hyps := Control.hyps () in
+  let f_lookup := List.flatten (List.map (fun (iden, _, t) =>
+    match! t with
+    | context [ eval_app (name_enc ?fname1) _ _ _ ] =>
+      (* print (Message.of_string "Found function in hypothesis");
+      print (Message.of_constr t); *)
+      let t_refined := refine_up_to_eval_app iden t in
+      [(string_of_constr_string fname1, t_refined)]
+    | _ => []
+    end
+  ) hyps) in
+  f_lookup.
+
+(* Top level tactic that compiles a program into FunLang *)
+(* Handles expression evaluation and function evaluation as goals *)
+Ltac2 docompile () :=
+  lazy_match! goal with
   | [ |- _ |-- (_, _) ---> ([encode ?g], _) ] =>
-    refine (compile g []);
+    refine (compile g [] []);
     intros;
     eauto with fenvDb
   (* TODO(kπ) we need to know whether it is the currently compiled function at some point  *)
-  | [ h : (lookup_fun ?fname _ = _) |- eval_app ?fname ?args _ (encode ?g, _) ] =>
+  | [ (* h : (lookup_fun ?_fname _ = _) *)
+  |- eval_app ?_fname ?args _ (encode ?g, _) ] =>
+    let f_lookup := get_f_lookup_from_hyps () in
     let argsl := constr_to_list args in
     let f_ident := fun_ident g in
     let g_norm := eval_unfold [(f_ident, AllOccurrences)] g in
-    print (of_string "g_norm");
-    print (of_constr g_norm);
-    let compile_g := compile g_norm argsl in
-    let h_ref := Control.hyp h in
+    print (Message.of_string "g_norm");
+    print (Message.of_constr g_norm);
+    print (of_list (List.map Message.of_constr argsl));
+    let compile_g := compile g_norm argsl f_lookup in
     refine open_constr:(trans_app
     (* n *) _
     (* params *) _
@@ -320,11 +436,18 @@ Ltac2 doauto () :=
     (* v *) _
     (* eval body *) $compile_g
     (* params length eq *) _
-    (* lookup_fun *) $h_ref
-    )
+    (* lookup_fun *) _
+    );
+    intros;
+    eauto with fenvDb
+  | [ |- ?x ] =>
+    print (Message.of_string "No match in docompile");
+    print (Message.of_constr x);
+    (* fail *)
+    refine open_constr:(_)
   end.
 
-Lemma arith_example : forall n,
+(* Lemma arith_example : forall n,
   exists prog,
     FEnv.empty |-- (prog, empty_state) --->
     ([encode
@@ -332,10 +455,10 @@ Lemma arith_example : forall n,
     ], empty_state).
 Proof.
   intros; eexists.
-  doauto ().
+  docompile ().
   Show Proof.
-  exact "a"%string.
-Qed.
+  (* exact "a"%string. *)
+Admitted.
 
 Lemma list_example : forall (n : nat),
   exists prog,
@@ -348,7 +471,7 @@ Lemma list_example : forall (n : nat),
 Proof.
   intros; eexists.
   (* Set Ltac2 Backtrace. *)
-  doauto ().
+  docompile ().
   Show Proof.
   (* TODO(kπ) Common crush tactic for these vvv (free_vars, NoDup, in_nil) *)
   all: unfold FunProperties.free_vars; simpl.
@@ -377,7 +500,7 @@ Lemma list_example2 : forall (n : nat),
 Proof.
   intros; eexists.
   (* Set Ltac2 Backtrace. *)
-  doauto ().
+  docompile ().
   Show Proof.
   (* TODO(kπ) Common crush tactic for these vvv (free_vars, NoDup, in_nil) *)
   all: unfold FunProperties.free_vars; simpl.
@@ -398,7 +521,7 @@ Proof.
     unfold name_enc, name_enc_l; simpl; ltac1:(lia).
   - exact ("g"%string).
   - exact ("h"%string). *)
-Admitted.
+Admitted. *)
 
 Definition foo (n : nat) : nat :=
   letd x := 1 in
@@ -413,22 +536,85 @@ Proof.
   intros; eexists; intros.
 
   (* TODO(kπ) This inlined the `y` :thinking: *)
-  doauto ().
+  docompile ().
   Show Proof.
-  - simpl; ltac1:(reflexivity).
+  (* - simpl; ltac1:(reflexivity).
   - exact "a"%string.
   - exact "b"%string.
   - exact "a"%string.
   - exact "b"%string.
-  Unshelve.
+  Unshelve. *)
 Admitted.
 
+Derive foo_prog in (forall (s : state) (n : nat),
+    lookup_fun (name_enc "foo") s.(funs) = Some ([name_enc "n"], foo_prog) ->
+    eval_app (name_enc "foo") [encode n] s (encode (foo n), s))
+  as foo_prog_proof.
+Proof.
+  intros.
+  subst foo_prog.
+  docompile ().
+  Show Proof.
+  (* - exact [name_enc "n"]. *)
+  - simpl; ltac1:(reflexivity).
+  Unshelve.
+  4: exact "x"%string.
+  4: exact "y"%string.
+  4: exact "n"%string.
+  4: exact "x"%string.
+  all: unfold make_env; simpl.
+  + rewrite FEnv.lookup_insert_neq > [|unfold not; unfold name_enc, name_enc_l; simpl; ltac1:(lia)].
+    rewrite FEnv.lookup_insert_eq; auto.
+  + rewrite FEnv.lookup_insert_eq; auto.
+  + rewrite FEnv.lookup_insert_eq; auto.
+  (* - exact "x"%string.
+  - exact "y"%string.
+  - exact "n"%string.
+  - exact "x"%string.
+  Unshelve.
+  all: unfold make_env; simpl.
+  + rewrite FEnv.lookup_insert_neq > [|unfold not; unfold name_enc, name_enc_l; simpl; ltac1:(lia)].
+    rewrite FEnv.lookup_insert_eq; auto.
+  + rewrite FEnv.lookup_insert_eq; auto.
+  + rewrite FEnv.lookup_insert_eq; auto. *)
+Qed.
+Print foo_prog.
+
+Definition bar (n : nat) : nat :=
+  foo (n + 1).
+
+Derive bar_prog in (forall (s : state) (n : nat),
+    lookup_fun (name_enc "foo") s.(funs) = Some ([name_enc "n"], foo_prog) ->
+    (forall n, eval_app (name_enc "foo") [encode n] s (encode (foo n), s)) ->
+    lookup_fun (name_enc "bar") s.(funs) = Some ([name_enc "n"], bar_prog) ->
+    eval_app (name_enc "bar") [encode n] s (encode (bar n), s))
+  as bar_prog_proof.
+Proof.
+  intros.
+  subst bar_prog.
+  (* TODO(kπ) `foo (n + 1)` gets translated to const :/ *)
+  docompile ().
+  Show Proof.
+
+
+
+  eapply trans_app.
+  3: exact H1.
+  - unfold bar.
+    eapply trans_Call.
+    2: unfold foo in H0; eapply H0.
+    eapply auto_num_add.
+    + eapply trans_Var; ltac1:(shelve).
+    + eapply auto_num_const; ltac1:(shelve).
+  - auto.
+
+  (* docompile (). *)
 (*
   all: simpl.
   all: try (eapply auto_num_const).
-  all: try (doauto ()).
+  all: try (docompile ()).
 
-  (* repeat (doauto ()). *)
+  (* repeat (docompile ()). *)
 
 
 

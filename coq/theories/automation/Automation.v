@@ -7,7 +7,10 @@ Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message.
 Import Ltac2.Constr.Unsafe.
-From coqutil Require Import Tactics.reference_to_string Tactics.ident_of_string.
+From coqutil Require Import
+  Tactics.reference_to_string
+  Tactics.ident_of_string
+  Tactics.ident_to_string.
 Require Import Coq.derive.Derive.
 
 Ltac rewrite_let := match goal with
@@ -103,12 +106,12 @@ Ltac2 rec extract_fun (e : constr) : (constr * constr list) :=
     (f, [])
   end.
 
-Ltac2 rec list_to_constr (l : constr list) : constr :=
+Ltac2 rec list_to_constr_encode (l : constr list) : constr :=
   match l with
   | [] => open_constr:([])
   | x :: xs =>
-    let xs' := list_to_constr xs in
-    open_constr:($x :: $xs')
+    let xs' := list_to_constr_encode xs in
+    open_constr:((encode $x) :: $xs')
   end.
 
 Ltac2 reference_of_constr_opt c :=
@@ -134,11 +137,32 @@ Ltac2 of_f_lookup (f_lookup : (string * constr) list) : message :=
   end.
 
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
-Ltac2 rec compile (e : constr) (cenv : constr list) (f_lookup : (string * constr) list) : constr :=
+Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list) (f_lookup : (string * constr) list) : constr :=
   (* TODO(kπ) We should handle shadowing things (or avoid any type of shadowing in the implementation) *)
   print (Message.of_string "compile");
-  print (Message.of_constr e);
+  print (Message.of_constr e0);
   print (of_list (List.map Message.of_constr cenv));
+  match! e0 with
+  | [] =>
+    open_constr:(trans_nil
+    (* env *) _
+    (* s *) _
+    )
+  | (encode ?e) :: ?es =>
+    let compile_e := compile e cenv f_lookup in
+    let compile_es := compile_list_encode es cenv f_lookup in
+    open_constr:(trans_cons
+    (* x *) _
+    (* xs *) _
+    (* v *) _
+    (* vs *) _
+    (* env *) _
+    (* s s1 s2 *) _ _ _
+    (* eval x *) $compile_e
+    (* eval xs *) $compile_es
+    )
+  end
+with compile (e : constr) (cenv : constr list) (f_lookup : (string * constr) list) : constr :=
   match List.find_opt (Constr.equal e) cenv with
   | Some _ =>
     open_constr:(trans_Var
@@ -336,29 +360,32 @@ Ltac2 rec compile (e : constr) (cenv : constr list) (f_lookup : (string * constr
       let f_name_r := reference_of_constr_opt f in
       let f_name_str := Option.bind f_name_r reference_to_string in
       let f_constr_opt := Option.bind f_name_str (f_lookup_name f_lookup) in
-      match f_constr_opt with
-      | Some c =>
+      match f_constr_opt, f_name_str with
+      | (Some c, Some fname) =>
         print (Message.of_string "Found function");
         print (Message.of_constr c);
         (* let refined_ident := refine_eval_app_hyp ident_ref in *)
-        let args_constr := list_to_constr args in
-        let compile_args := compile args_constr cenv f_lookup in
+        print (Message.of_constr e);
+        let args_constr := list_to_constr_encode args in
+        print (Message.of_constr args_constr);
+        print (of_list (List.map Message.of_constr args));
+        let compile_args := compile_list_encode args_constr cenv f_lookup in
+        let fname_str := constr_string_of_string fname in
         open_constr:(trans_Call
         (* env *) _
         (* xs *) _
         (* s1 s2 s3 *) _ _ _
-        (* fname *) _
+        (* fname *) (name_enc $fname_str)
         (* vs *) _
-        (* v *) _
+        (* v *) (encode $e)
         (* eval args *) $compile_args
         (* eval_app *) _
         )
-      | None =>
+      | _ =>
         compile_go
       end
     end
   end.
-About trans_Call.
 
 Ltac2 rec constr_to_list (c : constr) : constr list :=
   match! c with
@@ -585,28 +612,71 @@ Definition bar (n : nat) : nat :=
 
 Derive bar_prog in (forall (s : state) (n : nat),
     lookup_fun (name_enc "foo") s.(funs) = Some ([name_enc "n"], foo_prog) ->
-    (forall n, eval_app (name_enc "foo") [encode n] s (encode (foo n), s)) ->
+    (forall m, eval_app (name_enc "foo") [encode m] s (encode (foo m), s)) ->
     lookup_fun (name_enc "bar") s.(funs) = Some ([name_enc "n"], bar_prog) ->
     eval_app (name_enc "bar") [encode n] s (encode (bar n), s))
   as bar_prog_proof.
 Proof.
   intros.
   subst bar_prog.
-  (* TODO(kπ) `foo (n + 1)` gets translated to const :/ *)
   docompile ().
   Show Proof.
+  - simpl; reflexivity ().
+  Unshelve.
+  all: unfold make_env; eauto.
+  2: eapply FEnv.lookup_insert_eq; auto.
+  1: exact (FEnv.empty).
+  Show Proof.
+Qed.
+Print bar_prog.
 
+Definition baz (n m : nat) : nat :=
+  letd z := n + m in
+  z.
 
+Derive baz_prog in (forall (s : state) (n m : nat),
+    lookup_fun (name_enc "baz") s.(funs) = Some ([name_enc "n"; name_enc "m"], baz_prog) ->
+    eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s))
+  as baz_prog_proof.
+Proof.
+  intros.
+  subst baz_prog.
+  docompile ().
+  Show Proof.
+  - simpl; reflexivity ().
+  Unshelve.
+  all: unfold make_env; eauto.
+  4: exact "z"%string.
+  4: exact "n"%string.
+  4: exact "m"%string.
+  4: exact "z"%string.
+  + rewrite FEnv.lookup_insert_neq > [|unfold not; unfold name_enc, name_enc_l; simpl; ltac1:(lia)].
+    rewrite FEnv.lookup_insert_eq; auto.
+  + rewrite FEnv.lookup_insert_eq; auto.
+  + rewrite FEnv.lookup_insert_eq; auto.
+Qed.
 
-  eapply trans_app.
-  3: exact H1.
-  - unfold bar.
-    eapply trans_Call.
-    2: unfold foo in H0; eapply H0.
-    eapply auto_num_add.
-    + eapply trans_Var; ltac1:(shelve).
-    + eapply auto_num_const; ltac1:(shelve).
-  - auto.
+Definition baz2 (n : nat) : nat :=
+  baz (n + 1) n.
+
+Derive baz2_prog in (forall (s : state) (n : nat),
+    lookup_fun (name_enc "baz") s.(funs) = Some ([name_enc "n"; name_enc "m"], baz_prog) ->
+    (forall n m, eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s)) ->
+    lookup_fun (name_enc "baz2") s.(funs) = Some ([name_enc "n"], baz2_prog) ->
+    eval_app (name_enc "baz2") [encode n] s (encode (baz2 n), s))
+  as baz2_prog_proof.
+Proof.
+  intros.
+  subst baz2_prog.
+  docompile ().
+  Show Proof.
+  - simpl; reflexivity ().
+  Unshelve.
+  all: unfold make_env; eauto.
+  2: eapply FEnv.lookup_insert_eq; auto.
+  2: eapply FEnv.lookup_insert_eq; auto.
+  1: exact (FEnv.empty).
+Qed.
 
   (* docompile (). *)
 (*

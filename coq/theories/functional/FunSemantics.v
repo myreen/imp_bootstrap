@@ -1,10 +1,8 @@
 From impboot Require Import utils.Core.
+Require Export impboot.utils.Env.
 Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunValues.
-Require Import impboot.functional.FunEnv.
 Require Import impboot.utils.Llist.
-
-Module FEnv := FunEnv.
 
 Hint Resolve FEnv.lookup_insert_eq : fenvDb.
 Hint Resolve FEnv.lookup_insert_neq : fenvDb.
@@ -51,8 +49,8 @@ Definition fail {A} (s : state) : result A * state :=
 
 Definition next (s : state) : Value * state :=
   match s.(input) with
-  | lnil => (Num (2 ^ 32 - 1), s) (* EOF *)
-  | lcons c cs => (Num (nat_of_ascii c), set_input s cs)
+  | Lnil => (Num (2 ^ 32 - 1), s) (* EOF *)
+  | Lcons c cs => (Num (nat_of_ascii c), set_input s cs)
   end.
 
 Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Value * state :=
@@ -103,6 +101,7 @@ Definition env_and_body (n : name) (args : list Value) (s : state) : option (FEn
   end.
 Arguments env_and_body !_ !_ /.
 
+(* TOSO(kπ) SHould this take a clock? *)
 Definition init_state (inp : llist ascii) (funs : list FunSyntax.dec) : state :=
   {| funs := funs; clock := 0; input := inp; output := [] |}.
 

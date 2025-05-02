@@ -3,7 +3,7 @@ Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunProperties.
 Require Import impboot.functional.FunValues.
 Require impboot.imperative.ImpSyntax.
-From impboot Require Import utils.Core.
+From impboot Require Import utils.Core utils.Env.
 From coqutil Require Import dlet.
 Require Import impboot.utils.Words4Naive.
 Require Import coqutil.Word.Interface.
@@ -25,6 +25,25 @@ Proof.
   rewrite <- Nat.eqb_eq in H0; rewrite H0.
   reflexivity.
 Qed.
+
+Definition summm : nat -> nat :=
+  (fix summm n0 := nat_CASE n0 0 (fun n1 => n0 + summm n1)).
+Print summm.
+
+Fixpoint summmmmm (m : nat) (n : nat) : nat :=
+  nat_CASE n 0 (fun n1 => n1 + summmmmm (m + 1) n1).
+Print summmmmm.
+
+Theorem trans_ap_fix_nat: forall {B} `{Refinable B} n params vs body s s1 fix_v arg,
+  let env := make_env params vs FEnv.empty in
+    (env |-- ([body], s) ---> ([encode fix_v], s1)) ->
+    List.length params = List.length vs ->
+    lookup_fun (name_enc n) s.(funs) = Some (params,body) ->
+    eval_app (name_enc n) vs s (encode ((fix fix_name (fix_arg : nat) : B := fix_v) arg), s1).
+Proof.
+  intros; eapply App_intro; eauto.
+
+Admitted.
 
 Theorem trans_Call : forall env xs s1 s2 s3 fname vs v,
   env |-- (xs, s1) ---> (vs, s2) ->
@@ -242,6 +261,28 @@ Proof.
 Qed.
 Hint Resolve auto_num_if_less : automation.
 
+Theorem auto_nat_case : forall {A} `{Refinable A}
+  env s x0 x1 x2 n (v0 : nat) (v1 : A) v2,
+  env |-- ([x0], s) ---> ([encode v0], s) ->
+  env |-- ([x1], s) ---> ([encode v1], s) ->
+  (forall x, v0 = S x ->
+    (FEnv.insert (name_enc n, Some (encode x)) env) |-- ([x2], s) --->
+      ([encode (v2 x)], s)) ->
+  env |-- ([If Equal [x0; Const 0] x1
+      (Let (name_enc n)
+        (Op Sub [x0; Const 1]) x2)], s) --->
+     ([encode (nat_CASE v0 v1 v2)], s).
+Proof.
+  intros.
+  destruct v0 eqn:?.
+  1: Eval_eq.
+  simpl in *.
+  subst.
+  Eval_eq.
+  replace (n0 - 0) with n0 in *; eauto.
+  lia.
+Qed.
+
 (* list *)
 
 Theorem auto_list_nil : forall env s,
@@ -277,7 +318,7 @@ Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
 Proof.
   intros.
   destruct v0 eqn:?.
-  1: { Eval_eq. }
+  1: Eval_eq.
   simpl in *.
   subst.
   rewrite NoDup_cons_iff in *; destruct H2.

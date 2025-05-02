@@ -3,6 +3,7 @@ Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
 
 Notation name := nat (only parsing).
+Notation word64 := (@word.rep 64 word64) (only parsing).
 
 Inductive exp : Type :=
 | Var (n: name)             (*  variable             *)

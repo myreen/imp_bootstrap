@@ -3,7 +3,6 @@ Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.utils.AppList.
 Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Naive.
 Require Import ZArith.
 
 Open Scope app_list_scope.
@@ -48,12 +47,8 @@ Definition init (k : nat) : asm_appl :=
 Definition AllocLoc : nat := 7.
 
 (* Checks if a list has an even length *)
-Fixpoint even_len {A} (xs : list A) : bool :=
-  list_CASE xs
-    (* nil *)
-    true
-    (* :: *)
-    (fun _ ys => negb (even_len ys)).
+Definition even_len {A} (xs : list A) : bool :=
+  list_FIX xs (fun _ => true) (fun fx _ _ tt => negb (fx tt)) tt.
 
 (* jump label for failure cases
   if b is true – also push R15 before exiting give_up
@@ -68,18 +63,19 @@ Definition c_const (n : word64) (l : nat) (vs : v_stack) : asm_appl * nat :=
     (List [ASMSyntax.Push RAX; ASMSyntax.Const RAX n], l+2).
 
 (* Finds the index of a variable in a stack representation *)
-Fixpoint find (n : name) (k : nat) (vs : v_stack) : nat :=
-  list_CASE vs
+Definition find (n : name) (k : nat) (vs : v_stack) : nat :=
+  list_FIX vs
     (* nil *)
-    k
+    (fun k => k)
     (* :: *)
-    (fun x xs =>
+    (fun fx x xs k =>
       option_CASE x
         (* none *)
-        (find n (k+1) xs)
+        (fx (k+1))
         (* some *)
-        (fun v => if Nat.eqb v n then k else find n (k+1) xs)
-    ).
+        (fun v => if Nat.eqb v n then k else fx (k+1))
+    )
+    k.
 
 (* lookup variable with name `n`, based on stack `vs` *)
 Definition c_var (n : name) (l : nat) (vs : v_stack) : asm_appl * nat :=
@@ -190,15 +186,18 @@ Fixpoint c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
     letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
     (asm1 +++ asm2 +++ c_load, l2 + app_list_length c_load)).
 
-Fixpoint c_exps (es: list exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
-  list_CASE es
+Definition c_exps (es: list exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
+  list_FIX es
     (* [] *)
-    (List [], l)
+    (fun l_vs =>
+      letd '(l, vs) := l_vs in (List [], l))
     (* :: *)
-    (fun e es' =>
+    (fun fx e _ l_vs =>
+      letd '(l, vs) := l_vs in
       letd '(asm1, l1) := c_exp e l vs in
-      letd '(asm2, l2) := c_exps es' l1 vs in
-      (asm1 +++ asm2, l2)).
+      letd '(asm2, l2) := fx (l1, vs) in
+      (asm1 +++ asm2, l2))
+    (l, vs).
 
 (*
   RDI `cmp` RBX
@@ -238,14 +237,15 @@ Fixpoint c_test_jump (t : test) (pos_label : nat) (neg_label : nat)
       c_test_jump t neg_label pos_label l vs).
 
 (* Looks up a function name in a list of function addresses *)
-Fixpoint lookup (n : nat) (fs : f_lookup) : nat :=
-  list_CASE fs
+Definition lookup (n : nat) (fs : f_lookup) : nat :=
+  list_FIX fs
     (* [] *)
-    0
+    (fun _ => 0)
     (* :: *)
-    (fun xy xs =>
+    (fun fx xy xs _ =>
       letd '(x, y) := xy in
-      if Nat.eqb x n then y else lookup n xs).
+      if Nat.eqb x n then y else fx tt)
+    tt.
 
 (* Drop the current stack frame - elements corresponding to `vs` *)
 Definition make_ret (vs : v_stack) (l : nat) : asm_appl * nat :=
@@ -264,12 +264,13 @@ Definition c_pops (xs : list exp) (vs : v_stack) : asm_appl :=
   List [Jump Always (give_up (xorb (negb (even_len xs)) (even_len vs)))].
 
 (** Builds a stack representation for parameters of a function *)
-Fixpoint call_v_stack (xs: list name) (acc: v_stack): v_stack :=
-  list_CASE xs
+Definition call_v_stack (xs: list name) (acc: v_stack): v_stack :=
+  list_FIX xs
     (* [] *)
-    acc
+    (fun acc => acc)
     (* :: *)
-    (fun x xs' => call_v_stack xs' (Some x :: acc)).
+    (fun fx x xs' acc => fx (Some x :: acc))
+    acc.
 
 (** Push a list of variables onto the stack *)
 Definition c_pushes (v_names: list name) (l : nat): (asm_appl * v_stack * nat) :=
@@ -399,27 +400,31 @@ Definition name2str (n : nat) (acc : string) : string :=
   String (ascii_of_nat (n mod 256)) acc.
 
 (* Compiles a list of function declarations into assembly instructions *)
-Fixpoint c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm_appl * list (name * nat) * nat) :=
-  list_CASE ds
+Definition c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm_appl * list (name * nat) * nat) :=
+  list_FIX ds
     (* [] *)
-    (List [], fs, l)
+    (fun l_fs =>
+      letd '(l, fs) := l_fs in (List [], fs, l))
     (* :: *)
-    (fun d ds' =>
+    (fun fx d _ l_fs =>
+      letd '(l, fs) := l_fs in
       letd fname := name_of_func d in
       letd comment := List [Comment (name2str fname "")] in
       letd '(c1, l1) := c_fundef d (l + 1) fs 0 in
-      letd '(c2, fs', l2) := c_fundefs ds' l1 fs in
+      letd '(c2, fs', l2) := fx (l1, fs) in
       (comment +++ c1 +++ c2, (fname, l + 1) :: fs', l2)
-    ).
+    )
+    (l, fs).
 
-Fixpoint lookup_main (fs : list (name * nat)) : nat :=
-  list_CASE fs
+Definition lookup_main (fs : list (name * nat)) : nat :=
+  list_FIX fs
     (* [] *)
-    0
+    (fun _ => 0)
     (* :: *)
-    (fun f xs =>
+    (fun fx f _ _ =>
       letd '(f_name, f_line) := f in
-      if Nat.eqb f_name 0 then f_line else lookup_main xs).
+      if Nat.eqb f_name 0 then f_line else fx tt)
+    tt.
 
 (* Generates the complete assembly code for a given program *)
 Definition codegen (prog : prog) : asm :=

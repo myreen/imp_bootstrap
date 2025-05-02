@@ -75,6 +75,7 @@ Definition read_mem (a : word64) (s : state) : option word64 :=
   | Some opt => opt
   end.
 
+(* TODO(kπ) Has to be updated for handling mutating references? *)
 Definition write_mem (a : word64) (w : word64) (s : state) : option state :=
   match s.(memory) a with
   | Some None =>
@@ -128,8 +129,8 @@ Definition EOF_CONST : word64 := word.of_Z (0xFFFFFFFF : Z).
 
 Definition read_ascii (input : llist ascii) : (word64 * llist ascii) :=
   match input with
-  | lnil => (EOF_CONST, input)
-  | lcons c cs => (word.of_Z (Z.of_nat (nat_of_ascii c)), cs)
+  | Lnil => (EOF_CONST, input)
+  | Lcons c cs => (word.of_Z (Z.of_nat (nat_of_ascii c)), cs)
   end.
 
 Inductive step : s_or_h -> s_or_h -> Prop :=

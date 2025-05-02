@@ -1,4 +1,4 @@
-From Coq Require Export
+From Stdlib Require Export
   Lists.List
   Bool.Bool
   Strings.Ascii
@@ -60,4 +60,22 @@ Definition nat_CASE {A} (n : nat) (f0 : A) (fS : nat -> A) : A :=
   match n with
   | 0 => f0
   | S n' => fS n'
+  end.
+
+(* FIX *)
+
+Fixpoint list_FIX {A B C} (l : list A)
+  (f0 : C -> B)
+  (fS : (C -> B) -> A -> list A -> C -> B) : C -> B :=
+  match l with
+  | nil => f0
+  | x :: xs =>
+    fS (list_FIX xs f0 fS) x xs
+  end.
+
+Fixpoint nat_FIX {A C} (n : nat) (f0 : C -> A) (fS : (C -> A) -> nat -> C -> A) : C -> A :=
+  match n with
+  | 0 => f0
+  | S n' =>
+    fS (nat_FIX n' f0 fS) n'
   end.

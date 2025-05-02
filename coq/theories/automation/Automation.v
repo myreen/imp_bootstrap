@@ -22,7 +22,7 @@ Ltac rewrite_let := match goal with
   end
 end.
 
-Definition empty_state : state := init_state lnil [].
+Definition empty_state : state := init_state Lnil [].
 
 (* TODO(kπ):
 - consider using preterm instead of open_constr if thing get too slow
@@ -344,6 +344,23 @@ with compile (e : constr) (cenv : constr list) (f_lookup : (string * constr) lis
         (* eval x2 *) (fun xh xt _ => ltac2:(Control.refine (fun () => (compile_v2 &xh &xt))))
         (* NoDup *) _
         )
+      | (nat_CASE ?v0 ?v1 ?v2) =>
+        let compile_v0 := compile v0 cenv f_lookup in
+        let compile_v1 := compile v1 cenv f_lookup in
+        (* TODO(kπ) Dunno why this works. It shouldn't. We can't really support lambdas *)
+        (*          Also see the next comment. Is this OK? *)
+        let compile_v2 := (fun (x : constr) => compile (eval_cbv beta open_constr:($v2 $x)) (x :: cenv) f_lookup) in
+        open_constr:(auto_nat_case
+        (* env *) _
+        (* s *) _
+        (* x0 x1 x2 *) _ _ _
+        (* n *) _
+        (* v0 v1 v2 *) $v0 $v1 $v2
+        (* eval x0 *) $compile_v0
+        (* eval x1 *) $compile_v1
+        (* TODO(kπ) THIS IS WRONG, because this is an absolute reference to x (might be ok if we don't nest same _CASE functions) *)
+        (* eval x2 *) (fun x _ => ltac2:(Control.refine (fun () => (compile_v2 &x))))
+        )
       | ?x =>
         open_constr:(auto_num_const
         (* env *) _
@@ -361,14 +378,8 @@ with compile (e : constr) (cenv : constr list) (f_lookup : (string * constr) lis
       let f_name_str := Option.bind f_name_r reference_to_string in
       let f_constr_opt := Option.bind f_name_str (f_lookup_name f_lookup) in
       match f_constr_opt, f_name_str with
-      | (Some c, Some fname) =>
-        print (Message.of_string "Found function");
-        print (Message.of_constr c);
-        (* let refined_ident := refine_eval_app_hyp ident_ref in *)
-        print (Message.of_constr e);
+      | (Some _c, Some fname) =>
         let args_constr := list_to_constr_encode args in
-        print (Message.of_constr args_constr);
-        print (of_list (List.map Message.of_constr args));
         let compile_args := compile_list_encode args_constr cenv f_lookup in
         let fname_str := constr_string_of_string fname in
         open_constr:(trans_Call
@@ -677,6 +688,40 @@ Proof.
   2: eapply FEnv.lookup_insert_eq; auto.
   1: exact (FEnv.empty).
 Qed.
+
+Definition has_cases (n : nat) : nat :=
+  nat_CASE n 0 (fun n1 =>
+    nat_CASE n1 1 (fun n2 => n1 + n2)).
+Print has_cases.
+
+Derive has_cases_prog in (forall (s : state) (n : nat),
+    lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
+    eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s))
+  as has_cases_proof.
+Proof.
+
+
+
+Fixpoint sum_n (n : nat) : nat :=
+  nat_CASE n 0 (fun n1 => n + (sum_n n1)).
+Print sum_n.
+
+Derive sum_n_prog in (forall (s : state) (n : nat),
+    lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
+    eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
+  as fib_prog_proof.
+Proof.
+  intros.
+  subst sum_n_prog.
+  unfold sum_n.
+  eapply trans_app.
+  3: exact H.
+  2: simpl; reflexivity ().
+  unfold sum_n, make_env.
+
+
+  docompile ().
+  Show Proof.
 
   (* docompile (). *)
 (*

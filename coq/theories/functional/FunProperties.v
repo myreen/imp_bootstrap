@@ -1,4 +1,4 @@
-From impboot Require Import utils.Core.
+From impboot Require Import utils.Core utils.Env.
 Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunValues.
@@ -306,10 +306,10 @@ Proof.
   intros n x0 env v res s s1 Hnotin.
   split; intros H.
   - eapply delete_env_update with (n := n) (x := FEnv.lookup env n) in H; eauto.
-    2: { unfold flat_map in *; rewrite app_nil_r; assumption. }
+    2: unfold flat_map in *; rewrite app_nil_r; assumption.
     rewrite FEnv.insert_insert_eq in H.
     assert (FEnv.insert (n, FEnv.lookup env n) env = env).
-    2: { rewrite H0 in H; assumption. }
+    2: rewrite <- H0; assumption.
     apply FEnv.insert_lookup_self.
   - eapply delete_env_update; eauto.
     unfold flat_map.

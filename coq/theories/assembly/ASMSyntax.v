@@ -59,7 +59,7 @@ Inductive instr :=
   (* comment (has no semantics) *)
 | Comment (s : string).
 
-Notation asm := (list instr).
+Notation asm := (list instr) (only parsing).
 
 Definition reg2str (r : reg) (s: string) : string :=
   match r with

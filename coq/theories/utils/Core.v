@@ -64,14 +64,16 @@ Definition nat_CASE {A} (n : nat) (f0 : A) (fS : nat -> A) : A :=
 
 (* FIX *)
 
-Fixpoint list_FIX {A B C} (l : list A)
-  (f0 : C -> B)
-  (fS : (C -> B) -> A -> list A -> C -> B) : C -> B :=
+Fixpoint fold_right {A B} (f : B -> A -> A) (acc : A) (l : list B) : A :=
   match l with
-  | nil => f0
+  | nil => acc
   | x :: xs =>
-    fS (list_FIX xs f0 fS) x xs
+    f x (fold_right f acc xs)
   end.
+
+(* TODO(kπ) check this *)
+Definition fold_left {A B} (f : A -> B -> A) (acc : A) (l : list B) : A :=
+  fold_right (fun x g => fun z => g (f z x)) (fun z => z) l acc.
 
 Fixpoint nat_FIX {A C} (n : nat) (f0 : C -> A) (fS : (C -> A) -> nat -> C -> A) : C -> A :=
   match n with
@@ -79,3 +81,21 @@ Fixpoint nat_FIX {A C} (n : nat) (f0 : C -> A) (fS : (C -> A) -> nat -> C -> A) 
   | S n' =>
     fS (nat_FIX n' f0 fS) n'
   end.
+
+(* Word *)
+
+Require Import coqutil.Word.Interface.
+
+Declare Scope word.
+Infix "*w" := word.mul (at level 40, left associativity): word.
+Infix "/w" := word.divu (at level 40, left associativity): word.
+Infix "/sw" := word.divs (at level 40, left associativity): word.
+Infix "+w" := word.add (at level 50, left associativity): word.
+Infix "-w" := word.sub (at level 50, left associativity): word.
+Infix ">>w" := word.sru (at level 60, no associativity): word.
+Infix ">>>w" := word.srs (at level 60, no associativity): word.
+Infix "<<w" := word.slu (at level 60, no associativity): word.
+Notation "w1 <w w2" := (word.ltu w1 w2) (at level 70, no associativity): word.
+Notation "w1 >w w2" := (word.gtu w1 w2) (at level 70, no associativity): word.
+Notation "w1 <sw w2" := (word.lts w1 w2) (at level 70, no associativity): word.
+Open Scope word.

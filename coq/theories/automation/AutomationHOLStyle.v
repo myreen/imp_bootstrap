@@ -137,7 +137,8 @@ Ltac2 of_f_lookup (f_lookup : (string * constr) list) : message :=
   end.
 
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
-Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list) (f_lookup : (string * constr) list) : constr :=
+Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list)
+  (f_lookup : (string * constr) list) : constr :=
   (* TODO(kπ) We should handle shadowing things (or avoid any type of shadowing in the implementation) *)
   print (Message.of_string "compile");
   print (Message.of_constr e0);
@@ -162,7 +163,12 @@ Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list) (f_lookup : (st
     (* eval xs *) $compile_es
     )
   end
-with compile (e : constr) (cenv : constr list) (f_lookup : (string * constr) list) : constr :=
+with compile (e : constr) (cenv : constr list)
+  (f_lookup : (string * constr) list) : constr :=
+  print (Message.of_string "Compiling expression:");
+  print (Message.of_constr e);
+  print (Message.of_string "cenv");
+  print (of_list (List.map Message.of_constr cenv));
   match List.find_opt (Constr.equal e) cenv with
   | Some _ =>
     open_constr:(trans_Var
@@ -331,25 +337,48 @@ with compile (e : constr) (cenv : constr list) (f_lookup : (string * constr) lis
       | (list_CASE ?v0 ?v1 ?v2) =>
         let compile_v0 := compile v0 cenv f_lookup in
         let compile_v1 := compile v1 cenv f_lookup in
-        let compile_v2 := (fun (xh : constr) (xt : constr) => compile (eval_cbv beta open_constr:($v2 $xh $xt)) (xh :: xt :: cenv) f_lookup) in
+        let hdv0 := open_constr:(hd _ $v0) in
+        let tlv0 := open_constr:(tl $v0) in
+        let v0ap := (eval_cbv beta open_constr:($v2 $hdv0 $tlv0)) in
+        let compile_v2 := compile (eval_cbv beta v0ap) (tlv0 :: hdv0 :: cenv) f_lookup in
+        (* let compile_v2 := (fun (xh : constr) (xt : constr) => compile (eval_cbv beta open_constr:($v2 $xh $xt)) (xh :: xt :: cenv) f_lookup) in *)
         open_constr:(auto_list_case
         (* env *) _
         (* s *) _
         (* x0 x1 x2 *) _ _ _
         (* n1 n2 *) _ _
         (* v0 v1 v2 *) $v0 $v1 $v2
+        (* default_A *) _
         (* eval x0 *) $compile_v0
         (* eval x1 *) $compile_v1
         (* TODO(kπ) not sure if the &-references are correct *)
-        (* eval x2 *) (fun xh xt _ => ltac2:(Control.refine (fun () => (compile_v2 &xh &xt))))
+        (* eval x2 *) $compile_v2
         (* NoDup *) _
         )
       | (nat_CASE ?v0 ?v1 ?v2) =>
         let compile_v0 := compile v0 cenv f_lookup in
         let compile_v1 := compile v1 cenv f_lookup in
+        let predv0 := open_constr:($v0 - 1) in
+        let v0ap := (eval_cbv beta open_constr:($v2 $predv0)) in
+        print (Message.of_string "$v2 _");
+        print (Message.of_constr v0ap);
+        print (Message.of_string "$v2");
+        print (Message.of_constr open_constr:($v2));
+        print (Message.of_string "adding to cenv:");
+        print (Message.of_constr predv0);
+        let compile_v2 := compile v0ap (predv0 :: cenv) f_lookup in
         (* TODO(kπ) Dunno why this works. It shouldn't. We can't really support lambdas *)
         (*          Also see the next comment. Is this OK? *)
-        let compile_v2 := (fun (x : constr) => compile (eval_cbv beta open_constr:($v2 $x)) (x :: cenv) f_lookup) in
+        (* let fresh_ident := Option.map Fresh.in_goal (Ident.of_string "x") in
+        print (Message.of_string "fresh_ident");
+        print (Message.of_ident (Option.get fresh_ident));
+        let compile_v2 := (fun (x : constr) => compile (* (eval_cbv beta  *)open_constr:($v2 $x(* ) *)) (x :: cenv) f_lookup) in
+        print (Message.of_string "compile_v2");
+        let compile_v2_applied := compile_v2 (Constr.Unsafe.make (Constr.Unsafe.Var (Option.get fresh_ident))) in
+        print (Message.of_string "compile_v2_applied");
+        print (Message.of_constr compile_v2_applied);
+        let compile_lambda :=
+          Constr.Unsafe.make (Constr.Unsafe.Lambda (Constr.Binder.make fresh_ident (Constr.type v0)) compile_v2_applied) in *)
         open_constr:(auto_nat_case
         (* env *) _
         (* s *) _
@@ -358,10 +387,10 @@ with compile (e : constr) (cenv : constr list) (f_lookup : (string * constr) lis
         (* v0 v1 v2 *) $v0 $v1 $v2
         (* eval x0 *) $compile_v0
         (* eval x1 *) $compile_v1
-        (* TODO(kπ) THIS IS WRONG, because this is an absolute reference to x (might be ok if we don't nest same _CASE functions) *)
-        (* eval x2 *) (fun x _ => ltac2:(Control.refine (fun () => (compile_v2 &x))))
+        (* eval x2 *) $compile_v2
         )
       | ?x =>
+        (* open_constr:(_) *)
         open_constr:(auto_num_const
         (* env *) _
         (* s *) _
@@ -460,10 +489,12 @@ Ltac2 docompile () :=
     let argsl := constr_to_list args in
     let f_ident := fun_ident g in
     let g_norm := eval_unfold [(f_ident, AllOccurrences)] g in
-    print (Message.of_string "g_norm");
+    (* print (Message.of_string "g_norm");
     print (Message.of_constr g_norm);
-    print (of_list (List.map Message.of_constr argsl));
+    print (of_list (List.map Message.of_constr argsl)); *)
     let compile_g := compile g_norm argsl f_lookup in
+    print (Message.of_string "compile_g:");
+    print (Message.of_constr compile_g);
     refine open_constr:(trans_app
     (* n *) _
     (* params *) _
@@ -560,6 +591,35 @@ Proof.
   - exact ("g"%string).
   - exact ("h"%string). *)
 Admitted. *)
+
+Definition has_cases (n : nat) : nat :=
+  nat_CASE n 0 (fun n1 =>
+    nat_CASE n1 1 (fun n2 => n1 + n2)).
+Print has_cases.
+
+Derive has_cases_prog in (forall (s : state) (n : nat),
+    lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
+    eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s))
+  as has_cases_proof.
+Proof.
+  intros.
+  subst has_cases_prog.
+  docompile ().
+Abort.
+
+Definition has_cases_list (l : list nat) : nat :=
+  list_CASE l 0 (fun hd tl =>
+    list_CASE tl 1 (fun hdtl tltl => hd + hdtl)).
+
+Derive has_cases_list_prog in (forall (s : state) (l : list nat),
+    lookup_fun (name_enc "has_cases_list") s.(funs) = Some ([name_enc "l"], has_cases_list_prog) ->
+    eval_app (name_enc "has_cases_list") [encode l] s (encode (has_cases_list l), s))
+  as has_cases_list_proof.
+Proof.
+  intros.
+  subst has_cases_list_prog.
+  docompile ().
+Abort.
 
 Definition foo (n : nat) : nat :=
   letd x := 1 in
@@ -689,18 +749,6 @@ Proof.
   1: exact (FEnv.empty).
 Qed.
 
-Definition has_cases (n : nat) : nat :=
-  nat_CASE n 0 (fun n1 =>
-    nat_CASE n1 1 (fun n2 => n1 + n2)).
-Print has_cases.
-
-Derive has_cases_prog in (forall (s : state) (n : nat),
-    lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
-    eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s))
-  as has_cases_proof.
-Proof.
-
-
 
 Fixpoint sum_n (n : nat) : nat :=
   nat_CASE n 0 (fun n1 => n + (sum_n n1)).
@@ -708,6 +756,8 @@ Print sum_n.
 
 Derive sum_n_prog in (forall (s : state) (n : nat),
     lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
+    (* TODO(kπ) Added this just to try the HOL translation for recursion vvvvvvvvvvv *)
+    eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s) ->
     eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
   as fib_prog_proof.
 Proof.

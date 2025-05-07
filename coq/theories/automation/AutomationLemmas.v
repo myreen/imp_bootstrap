@@ -265,9 +265,8 @@ Theorem auto_nat_case : forall {A} `{Refinable A}
   env s x0 x1 x2 n (v0 : nat) (v1 : A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([encode v1], s) ->
-  (forall x, v0 = S x ->
-    (FEnv.insert (name_enc n, Some (encode x)) env) |-- ([x2], s) --->
-      ([encode (v2 x)], s)) ->
+  ((FEnv.insert (name_enc n, Some (encode (v0 - 1))) env) |-- ([x2], s) --->
+      ([encode (v2 (v0 - 1))], s)) ->
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n)
         (Op Sub [x0; Const 1]) x2)], s) --->
@@ -303,13 +302,12 @@ Qed.
 Hint Resolve auto_list_cons : automation.
 
 Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
-  env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2,
+  env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2 default_A,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([rb.(encode) v1], s) ->
-  (forall xh xt, v0 = xh :: xt ->
-    (FEnv.insert (name_enc n2, Some (encode xt))
-      (FEnv.insert (name_enc n1, Some (ra.(encode) xh)) env)) |-- ([x2], s) --->
-      ([rb.(encode) (v2 xh xt)], s)) ->
+  ((FEnv.insert (name_enc n2, Some (encode (tl v0)))
+    (FEnv.insert (name_enc n1, Some (ra.(encode) (hd default_A v0))) env)) |-- ([x2], s) --->
+      ([rb.(encode) (v2 (hd default_A v0) (tl v0))], s)) ->
   NoDup ([name_enc n1] ++ free_vars x0) ->
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n1) (Op Head [x0])
@@ -327,6 +325,108 @@ Proof.
   + simpl; reflexivity.
 Qed.
 Hint Resolve auto_list_case : automation.
+
+Print fold_left.
+Print list_CASE.
+Print fold_right.
+
+(* Fixpoint fold_right {A B} (f : B -> A -> A) (acc : A) (l : list B) : A :=
+  match l with
+  | nil => acc
+  | x :: xs =>
+    f x (fold_right f acc xs)
+  end. *)
+
+Definition suma (l : list nat) : nat :=
+  fold_right (fun h acc => h + acc) 0 l.
+
+Fixpoint suma1 (l : list nat) : nat :=
+  match l with
+  | nil => 0
+  | x :: xs =>
+    x + (suma1 xs)
+  end.
+
+Notation Var_enc n := (Var (name_enc n)).
+Definition suma_exp (l : list nat) : dec :=
+  Defun (name_enc "suma") [name_enc "l"] (
+    If Equal [Var_enc "l"; Const 0]
+      (Const 0)
+      (
+        Let (name_enc "h") (Op Head [Var_enc "l"])
+          (Let (name_enc "t") (Op Tail [Var_enc "l"])
+            (Let (name_enc "acc") (Call (name_enc "suma") [Var_enc "t"])
+              (Op FunSyntax.Add [Var_enc "h"; Var_enc "acc"])
+            )
+          )
+      )
+  ).
+
+(* TODO(kπ):
+- param order is wrong (also wrong vs the implementation (fold_right))
+- this whole thing is half way defined
+*)
+(* IMPORTANT: Assumption: first argument of the function is the list *)
+Theorem auto_app_fold_right : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
+  params_enc nl_enc paramsRest_enc n (s s1 : state) x0 x1 x2 body nh nacc v vs (v0 : list A) v1 v2,
+  let env := make_env params_enc vs FEnv.empty in
+  (* env |-- ([body], s) ---> (, s) -> *)
+  env |-- ([x0], s) ---> ([encode v0], s) ->
+  (* Do we need to realate x0 to nl_enc? *)
+  env |-- ([x1], s) ---> ([rb.(encode) v1], s1) ->
+  (forall xh xt acc, v0 = xh :: xt ->
+    acc = fold_right v2 acc xt ->
+    (FEnv.insert (name_enc nacc, Some (encode acc))
+      (FEnv.insert (name_enc nh, Some (ra.(encode) xh)) env)) |-- ([x2], s) --->
+      ([rb.(encode) (v2 xh acc)], s1)
+  ) ->
+  (* NoDup? *)
+  List.length params_enc = List.length vs ->
+  params_enc = nl_enc :: paramsRest_enc ->
+  lookup_fun (name_enc n) (funs s) = Some (params_enc, body) ->
+  body = (If Equal [x0; Const 0] x1
+    (Let (name_enc nh) (Op Head [x0])
+      (Let (name_enc nacc) (Call (name_enc n) ((Op Tail [x0]) :: List.map Var paramsRest_enc))
+        x2))) ->
+  (* after unfolding *)
+  v = fold_right v2 v1 v0 ->
+  eval_app (name_enc n) vs s (encode v, s1).
+Proof.
+  destruct v0 eqn:?.
+  - intros; eapply App_intro; eauto.
+    1: unfold env_and_body; simpl; rewrite H4.
+    1: rewrite H2; rewrite Nat.eqb_refl; reflexivity.
+    subst; simpl.
+    destruct vs eqn:Heqvs; try inversion H2; subst.
+    Eval_eq.
+  - intros; eapply App_intro; eauto.
+    1: unfold env_and_body; simpl; rewrite H4.
+    1: rewrite H2; rewrite Nat.eqb_refl; reflexivity.
+    subst; simpl.
+    destruct vs eqn:Heqvs; try inversion H2; subst.
+    eapply Eval_If; eauto; try unfold make_branch.
+    1: eapply Eval_Cons; eauto.
+    1: eapply Eval_Const; eauto.
+    1: unfold take_branch, return_; simpl; eauto.
+    simpl.
+    eapply Eval_Let; try eapply Eval_Op; simpl; eauto.
+    1: unfold return_; simpl; eauto.
+    eapply Eval_Let.
+    1: eapply Eval_Call; eauto.
+    2: unfold env_and_body; rewrite H4.
+    2: admit.
+    (* 1: destruct paramsRest_enc eqn:?; simpl. *)
+    (* 1: Eval_eq; eauto. *)
+    1: admit.
+    subst env; simpl in H1.
+    (* eapply H1.
+    Eval_eq; simpl in *.
+    + admit.
+    + unfold env_and_body.
+      rewrite H4. *)
+
+Abort.
+
 
 (* option *)
 

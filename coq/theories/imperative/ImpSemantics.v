@@ -6,32 +6,30 @@ Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
 Require Import coqutil.Word.Properties.
 
-Inductive rresult {A : Type} {B : Type} : Type :=
-  | RRes (a : A)
-  | RRet (b : B)
-  | RErr
-  | RTimeOut.
-Arguments rresult : clear implicits.
+Inductive err := TimeOut | Crash.
+
+Inductive Result {A : Type} {B : Type} : Type :=
+  | Res (a : A)
+  | Ret (b : B)
+  | Err (e: err).
+Arguments Result : clear implicits.
 
 Notation "'dolet' v <- r1 ; r2" := (match r1 with
-  | RRes v => r2
-  | RRet v => RRet v
-  | RErr => RErr
-  | RTimeOut => RTimeOut
+  | Res v => r2
+  | Ret v => Ret v
+  | Err e => Err e
   end) (at level 200, right associativity).
 
 Notation "'dolet' ( v1 , v2 ) <- r1 ; r2" := (match r1 with
-  | RRes (v1, v2) => r2
-  | RRet v => RRet v
-  | RErr => RErr
-  | RTimeOut => RTimeOut
+  | Res (v1, v2) => r2
+  | Ret v => Ret v
+  | Err e => Err e
   end) (at level 200, right associativity).
 
 Notation "'dolet' ( v1 , v2 , v3 ) <- r1 ; r2" := (match r1 with
-  | RRes (v1, v2, v3) => r2
-  | RRet v => RRet v
-  | RErr => RErr
-  | RTimeOut => RTimeOut
+  | Res (v1, v2, v3) => r2
+  | Ret v => Ret v
+  | Err e => Err e
   end) (at level 200, right associativity).
 
 Notation "r1 ;; r2" := (dolet _ <- r1 ; r2)
@@ -49,7 +47,7 @@ Record state := mkState {
   output : list ascii
 }.
 
-Definition result A := rresult A (state * word64).
+Definition result A := Result A word64.
 
 Definition set_input (s : state) (inp : llist ascii) : state :=
   {| funs := s.(funs);
@@ -85,7 +83,7 @@ Definition set_fuel (s : state) (fuel : nat) : state :=
 
 Definition alloc_chunk (s : state) : result state :=
   (* TODO(kπ) Check if there is no overflow in word64 (alloc_addr) *)
-  RRes {| funs := s.(funs);
+  Res {| funs := s.(funs);
     fuel := s.(fuel);
     memory := (fun a' => if word.eqb s.(alloc_addr) a' then Some None else s.(memory) a');
     alloc_addr := word.add s.(alloc_addr) (word.of_Z 64);
@@ -131,42 +129,42 @@ Fixpoint eval_exp (s : state) (env : IEnv.env) (e : exp) : result word64 :=
   match e with
   | Var n =>
       match IEnv.lookup env n with
-      | Some v => RRes v
-      | None => RErr
+      | Some v => Res v
+      | None => Err Crash
       end
-  | Const n => RRes n
+  | Const n => Res n
   | Add e1 e2 =>
       dolet v1 <- eval_exp s env e1 ;
       dolet v2 <- eval_exp s env e2 ;
-      RRes (word.add v1 v2)
+      Res (word.add v1 v2)
   | Sub e1 e2 =>
       dolet v1 <- eval_exp s env e1 ;
       dolet v2 <- eval_exp s env e2 ;
-      RRes (word.sub v1 v2)
+      Res (word.sub v1 v2)
   | Div e1 e2 =>
       dolet v1 <- eval_exp s env e1 ;
       dolet v2 <- eval_exp s env e2 ;
       if word.eqb v2 (word.of_Z 0)
-      then RErr
-      else RRes (word.divu v1 v2)
+      then Err Crash
+      else Res (word.divu v1 v2)
   | Read a b =>
       dolet va <- eval_exp s env a ;
       dolet vb <- eval_exp s env b ;
       (* convert index to byte offset *)
       let addr := word.add va (word.mul vb (word.of_Z 64)) in
       match read_mem addr s with
-      | Some v => RRes v
-      | _ => RErr
+      | Some v => Res v
+      | _ => Err Crash
       end
   end.
 
 Fixpoint eval_exps (s : state) (env : IEnv.env) (es : list exp) : result (list word64) :=
   match es with
-  | [] => RRes []
+  | [] => Res []
   | e :: es =>
     dolet v <- eval_exp s env e ;
     dolet vs <- eval_exps s env es ;
-    RRes (v :: vs)
+    Res (v :: vs)
   end.
 
 Fixpoint eval_test (s : state) (env : IEnv.env) (t : test) : result bool :=
@@ -175,20 +173,20 @@ Fixpoint eval_test (s : state) (env : IEnv.env) (t : test) : result bool :=
       dolet v1 <- eval_exp s env e1 ;
       dolet v2 <- eval_exp s env e2 ;
       match c with
-      | Less => RRes (word.ltu v1 v2)
-      | Equal => RRes (word.eqb v1 v2)
+      | Less => Res (word.ltu v1 v2)
+      | Equal => Res (word.eqb v1 v2)
     end
   | And t1 t2 =>
     dolet v1 <- eval_test s env t1 ;
     dolet v2 <- eval_test s env t2 ;
-    RRes (andb v1 v2)
+    Res (andb v1 v2)
   | Or t1 t2 =>
     dolet v1 <- eval_test s env t1 ;
     dolet v2 <- eval_test s env t2 ;
-    RRes (orb v1 v2)
+    Res (orb v1 v2)
   | Not t =>
     dolet v <- eval_test s env t ;
-    RRes (negb v)
+    Res (negb v)
   end.
 
 Definition find_func (fname : name) (s : state) :=
@@ -201,8 +199,8 @@ Definition allocate_memory (size : word64) (s : state) : result (word64 * state)
   dolet s1 <- List.fold_left (fun acc_s _ =>
     dolet acc_s_v <- acc_s ;
     alloc_chunk acc_s_v
-  ) idxs (RRes s) ;
-  RRes (s.(alloc_addr), s1).
+  ) idxs (Res s) ;
+  Res (s.(alloc_addr), s1).
 
 Fixpoint make_env (names : list name) (values : list word64) (acc : IEnv.env) : IEnv.env :=
   match names, values with
@@ -212,99 +210,108 @@ Fixpoint make_env (names : list name) (values : list word64) (acc : IEnv.env) : 
   | _, _ => acc
   end.
 
-(* TODO(kπ) Add fuel-based termination with the INTERP trick *)
+Notation "'doolet' v <- r1 ; r2" := (match r1 with
+  | (Res v, s) => r2
+  | (Ret v, s) => (Ret v, s)
+  | (Err e, s) => (Err e, s)
+  end) (at level 200, right associativity).
+
+Notation "'doolet' ( v , s ) <- r1 ; r2" := (match r1 with
+| (Res v, s) => r2
+| (Ret v, s) => (Ret v, s)
+| (Err e, s) => (Err e, s)
+  end) (at level 200, right associativity).
+
 Fixpoint eval_cmd (s : state) (env : IEnv.env) (c : cmd)
-  (EVAL_CMD : forall (s:state)(env:IEnv.env)(c:cmd), result (IEnv.env*state))
-  (EVAL_CMDS : forall (s:state)(env:IEnv.env)(cs:list cmd), result (IEnv.env*state))
-  { struct c } : result (IEnv.env * state) :=
+  (EVAL_CMD : forall (s:state)(env:IEnv.env)(c:cmd), (result IEnv.env) * state)
+  (EVAL_CMDS : forall (s:state)(env:IEnv.env)(cs:list cmd), (result IEnv.env) * state)
+  { struct c } : (result IEnv.env) * state :=
   let eval_cmd s env c := eval_cmd s env c EVAL_CMD EVAL_CMDS in
   let eval_cmds s env c := eval_cmds s env c EVAL_CMD EVAL_CMDS in
   match c with
   | Assign n e =>
-    dolet v <- eval_exp s env e ;
+    doolet v <- (eval_exp s env e, s) ;
     let env' := IEnv.insert (n, Some v) env in
-    RRes (env', s)
+    (Res env', s)
   | Update a e e' =>
-    dolet va <- eval_exp s env a ;
-    dolet ve <- eval_exp s env e ;
-    dolet ve' <- eval_exp s env e' ;
+    doolet va <- (eval_exp s env a, s) ;
+    doolet ve <- (eval_exp s env e, s) ;
+    doolet ve' <- (eval_exp s env e', s) ;
     match write_mem (word.add va ve) ve' s with
-    | Some s' => RRes (env, s')
-    | None => RErr
+    | Some s' => (Res env, s')
+    | None => (Err Crash, s)
     end
   | If t c1 c2 =>
-    dolet cond <- eval_test s env t ;
+    doolet cond <- (eval_test s env t, s) ;
     if cond
     then eval_cmds s env c1
     else eval_cmds s env c2
   | While t c =>
-    dolet cond <- eval_test s env t ;
+    doolet cond <- (eval_test s env t, s) ;
     if cond
     then
-      dolet (env', s') <- eval_cmds s env c ;
+      doolet (env', s') <- eval_cmds s env c ;
       EVAL_CMD s' env' (While t c)
     else
-      RRes (env, s)
+      (Res env, s)
   | Call n fname es =>
     match find_func fname s with
     | Some (Func _ params body) =>
       if Nat.eqb (List.length params) (List.length es)
       then
-        dolet args <- eval_exps s env es ;
+        doolet args <- (eval_exps s env es, s) ;
         let call_env := make_env params args IEnv.empty in
         match EVAL_CMDS s call_env body with
-        | RRet (s', rw) => RRes (env, s')
-        | _ => RErr
+        | (Ret _, s') => (Res env, s')
+        | _ => (Err Crash, s)
         end
-      else RErr
-    | None => RErr
+      else (Err Crash, s)
+    | None => (Err Crash, s)
     end
   | Return e =>
-  (* TODO(kπ) early return *)
-    dolet v <- eval_exp s env e ;
-    RRet (s, v)
-  (* TODO(kπ) Correct-ish up to here *)
+    doolet v <- (eval_exp s env e, s) ;
+    (Ret v, s)
   | Alloc n e =>
-    dolet size <- eval_exp s env e ;
+    doolet size <- (eval_exp s env e, s) ;
     match allocate_memory size s with
-    | RRes (addr, s') =>
+    | Res (addr, s') =>
       let env' := IEnv.insert (n, Some addr) env in
-      RRes (env', s')
-    | _ => RErr
+      (Res env', s')
+    | _ => (Err Crash, s)
     end
   | GetChar n =>
     let (next_word, new_inp) := read_ascii s.(input) in
     let env' := IEnv.insert (n, Some next_word) env in
-    RRes (env', set_input s new_inp)
+    (Res env', set_input s new_inp)
   | PutChar e =>
-    dolet v <- eval_exp s env e ;
+    doolet v <- (eval_exp s env e, s) ;
     let c := word_to_ascii v in
-    RRes (env, set_output s (s.(output) ++ [c]))
-  | Abort => RErr
+    (Res env, set_output s (s.(output) ++ [c]))
+  | Abort => (Err Crash, s)
   end
 with eval_cmds (s : state) (env : IEnv.env) (cs : list cmd)
-  (EVAL_CMD : forall (s:state)(env:IEnv.env)(c:cmd), result (IEnv.env*state))
-  (EVAL_CMDS : forall (s:state)(env:IEnv.env)(cs:list cmd), result (IEnv.env*state))
-  { struct cs } : result (IEnv.env * state) :=
+  (EVAL_CMD : forall (s:state)(env:IEnv.env)(c:cmd), (result IEnv.env) * state)
+  (EVAL_CMDS : forall (s:state)(env:IEnv.env)(cs:list cmd), (result IEnv.env) * state)
+  { struct cs } : (result IEnv.env) * state :=
   let eval_cmd s env c := eval_cmd s env c EVAL_CMD EVAL_CMDS in
   let eval_cmds s env cs := eval_cmds s env cs EVAL_CMD EVAL_CMDS in
   match cs with
-  | [] => RRes (env, s)
+  | [] => (Res env, s)
   | c :: cs =>
-    dolet (env1, s1) <- EVAL_CMD s env c ;
+    doolet (env1, s1) <- EVAL_CMD s env c ;
     eval_cmds s1 env1 cs
   end.
 
 Fixpoint EVAL_CMD (fuel : nat) (s : state) (env : IEnv.env) (c : cmd)
-  { struct fuel } : result (IEnv.env * state) :=
+  { struct fuel } : (result IEnv.env) * state :=
   match fuel with
-  | 0 => RTimeOut
+  | 0 => (Err TimeOut, s)
   | S fuel => eval_cmd s env c (EVAL_CMD fuel) (EVAL_CMDS fuel)
   end
 with EVAL_CMDS (fuel : nat)  (s : state) (env : IEnv.env) (cs : list cmd)
-  { struct fuel } : result (IEnv.env * state) :=
+  { struct fuel } : (result IEnv.env) * state :=
   match fuel with
-  | 0 => RTimeOut
+  | 0 => (Err TimeOut, s)
   | S fuel => eval_cmds s env cs (EVAL_CMD fuel) (EVAL_CMDS fuel)
   end.
 
@@ -314,6 +321,9 @@ Definition eval_prog (inp : llist ascii) (fuel : nat) (p : prog) : result state 
     let call_main := Call 0 0 [] in
     let s := init_state inp fuel funcs in
     let env := IEnv.empty in
-    dolet (_, s') <- eval_cmd s env call_main (EVAL_CMD fuel) (EVAL_CMDS fuel) ;
-    RRes s'
+    let (r, s') := eval_cmd s env call_main (EVAL_CMD fuel) (EVAL_CMDS fuel) in
+    match r with
+    | Ret v => Res s'
+    | _ => Err Crash
+    end
   end.

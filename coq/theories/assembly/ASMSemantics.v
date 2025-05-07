@@ -4,6 +4,7 @@ From impboot Require Import
 Require Import impboot.assembly.ASMSyntax.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
+Require Import Coq.Relations.Relation_Operators.
 
 Inductive word_or_ret :=
 | Word : word64 -> word_or_ret
@@ -221,3 +222,51 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
     s.(regs) ARG_REG = Some exit_code ->
     (List.length s.(stack)) mod 2 = 0 ->
     step (State s) (Halt exit_code (string_of_list_ascii s.(output))).
+
+Inductive steps : (s_or_h * nat) -> (s_or_h * nat) -> Prop :=
+| steps_refl : forall s n,
+  steps (s, n) (s, n)
+| steps_step_same : forall s1 s2 n,
+  step s1 s2 ->
+  steps (s1, n) (s2, n)
+| steps_step_succ : forall s1 s2 n,
+  step s1 s2 ->
+  steps (s1, n + 1) (s2, n)
+| steps_trans : forall s1 n1 s2 n2 s3 n3,
+  steps (s1, n1) (s2, n2) ->
+  steps (s2, n2) (s3, n3) ->
+  steps (s1, n1) (s3, n3).
+
+Definition can_write_mem_at (m : word64 -> option (option word64)) (a : word64) : Prop :=
+  m a = Some None.
+
+Definition memory_writable (r14 r15 : word64) (m : word64 -> option (option word64)) : Prop :=
+  word.ltu r14 r15 = true /\
+  word.modu r14 (word.of_Z 4) = word.of_Z 0 /\
+  word.modu r15 (word.of_Z 4) = word.of_Z 0 /\
+  r14 <> word.of_Z 0 /\
+  (forall a, word.ltu r14 a = true /\ word.ltu a r15 = true /\
+              word.modu a (word.of_Z 8) = word.of_Z 0 ->
+              can_write_mem_at m a).
+
+Definition init_state_ok (t : state) (inp : llist ascii) (asm : asm) : Prop :=
+  exists r14 r15,
+    t.(pc) = 0 /\
+    t.(instructions) = asm /\
+    t.(input) = inp /\
+    t.(output) = [] /\
+    t.(stack) = [] /\
+    t.(regs) R14 = Some r14 /\
+    t.(regs) R15 = Some r15 /\
+    memory_writable r14 r15 t.(memory).
+
+Definition asm_terminates (input : llist ascii) (asm : asm) (output : string) : Prop :=
+  exists t,
+    init_state_ok t input asm /\
+    clos_refl_trans s_or_h step (State t) (Halt (word.of_Z 0) output).
+
+(* Definition asm_diverges (input : llist ascii) (asm : asm) (output : string) : Prop :=
+  exists t,
+    init_state_ok t input asm /\
+    (forall k, exists t', clos_refl_trans_n step k (State t) (State t')) /\
+    output = build_lprefix_lub (fun t' => exists t'', clos_refl_trans step (State t) (State t') /\ t'.(output) = t''.(output)). *)

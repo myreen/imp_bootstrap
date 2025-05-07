@@ -296,11 +296,17 @@ Definition c_call (vs : v_stack) (target : nat)
 Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   (vs : v_stack) : (asm_appl * nat * v_stack) :=
   cmd_CASE c
+  (* Seq *)
+  (fun c1 c2 =>
+    letd '(asm1, l1, vs1) := c_cmd c1 l fs vs in
+    letd '(asm2, l2, vs2) := c_cmd c2 l1 fs vs1 in
+    (asm1 +++ asm2, l2, vs2)
+  )
   (* Assign *)
   (fun n e =>
-    letd '(c1, l1) := c_exp e l vs in
-    letd '(c2, l2, vs') := c_assign n l1 vs in
-    (c1 +++ c2, l2, vs'))
+    letd '(asm1, l1) := c_exp e l vs in
+    letd '(asm2, l2, vs2) := c_assign n l1 vs in
+    (asm1 +++ asm2, l2, vs2))
   (* Update *)
   (fun a e e' =>
     letd '(asm1, l1) := c_exp a l vs in
@@ -311,35 +317,22 @@ Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   (* If *)
   (fun t c1 c2 =>
     letd '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
-    (* TODO(kπ) These fold_lefts are wrong, since we cannot refine them *)
-    letd '(asm2, l2, vs') := fold_left (fun acc c =>
-      letd '(asmacc, lacc, vsacc) := acc in
-      letd '(asmc, lc, vsc) := c_cmd c lacc fs vsacc in
-      (asmacc +++ asmc, lc, vsc)
-    ) (List [], l1, vs) c1 in
-    letd '(asm3, l3, vs'') := fold_left (fun acc c =>
-      letd '(asmacc, lacc, vsacc) := acc in
-      letd '(asm11, l11, vs11) := c_cmd c lacc fs vsacc in
-      (asmacc +++ asm11, l11, vs11)
-    ) (List [], l2, vs') c2 in
+    letd '(asm2, l2, vs2) := c_cmd c1 l1 fs vs in
+    letd '(asm3, l3, vs3) := c_cmd c2 l2 fs vs2 in
     letd jump_to_start := List[ASMSyntax.Jump Always (l + 3)] in
     letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
     letd jump_to_c2 := List [ASMSyntax.Jump Always l2] in
     letd asmres := jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ asm3 in
-    (asmres, l3, vs''))
+    (asmres, l3, vs3))
   (* While *)
   (fun tst c1 =>
     letd '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
-    letd '(asm2, l2, vs') := fold_left (fun acc c =>
-      letd '(asmacc, lacc, vsacc) := acc in
-      letd '(asm11, l11, vs11) := c_cmd c lacc fs vsacc in
-      (asmacc +++ asm11, l11, vs11)
-    ) (List [], l1, vs) c1 in
+    letd '(asm2, l2, vs2) := c_cmd c1 l1 fs vs in
     letd jump_to_tst := List [ASMSyntax.Jump Always (l + 3)] in
     letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
     letd jump_to_end := List [ASMSyntax.Jump Always (l2+1)] in
     letd asmres := jump_to_tst +++ jump_to_c1 +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_tst in
-    (asmres, l2+1, vs'))
+    (asmres, l2+1, vs2))
   (* Call *)
   (fun n f es =>
     letd target := lookup f fs in
@@ -356,13 +349,13 @@ Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   (fun n e =>
     letd '(asm1, l1) := c_exp e l vs in
     letd asm2 := c_alloc vs in
-    letd '(asm3, l3, vs') := c_assign n l1 vs in
-    (asm1 +++ asm2 +++ asm3, l3, vs'))
+    letd '(asm3, l3, vs3) := c_assign n l1 vs in
+    (asm1 +++ asm2 +++ asm3, l3, vs3))
   (* GetChar *)
   (fun n =>
     letd '(asm1, l1) := c_read vs l in
-    letd '(asm2, l2, vs') := c_assign n l1 vs in
-    (asm1 +++ asm2, l2, vs'))
+    letd '(asm2, l2, vs2) := c_assign n l1 vs in
+    (asm1 +++ asm2, l2, vs2))
   (* PutChar *)
   (fun e =>
     letd '(asm1, l1) := c_exp e l vs in
@@ -371,20 +364,12 @@ Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   (* Abort *)
   (List [Jump Always (give_up (even_len vs))], l+1, vs).
 
-Definition c_cmds (cs : list cmd) (l : nat) (fs : f_lookup)
-  (vs : v_stack) : (asm_appl * nat * v_stack) :=
-  fold_left (fun acc c =>
-    letd '(asmacc, lacc, vsacc) := acc in
-    letd '(asm11, l11, vs11) := c_cmd c lacc fs vsacc in
-    (asmacc +++ asm11, l11, vs11)
-  ) (List [], l, vs) cs.
-
 (** Compiles a single function definition into assembly code. *)
 Definition c_fundef (fundef : func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
   func_CASE fundef
     (fun n v_names body =>
       letd '(asm0, vs0, l0) := c_pushes v_names l in
-      letd '(asm1, l1, vs1) := c_cmds body l0 fs vs0 in
+      letd '(asm1, l1, vs1) := c_cmd body l0 fs vs0 in
       (asm0 +++ asm1, l1)
     ).
 

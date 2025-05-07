@@ -55,10 +55,11 @@ Definition test_CASE {A} (t: test)
   end.
 
 Inductive cmd : Type :=
+| Seq (c1 : cmd) (c2 : cmd)                   (*  c1; c2                  *)
 | Assign (n: name) (e: exp)                   (*  n := e                  *)
 | Update (a: exp) (e: exp) (e': exp)          (*  a[e] := e'              *)
-| If (t: test) (c1: list cmd) (c2: list cmd)  (*  if (t) ... else ...     *)
-| While (t: test) (c: list cmd)               (*  while (t) ...           *)
+| If (t: test) (c1: cmd) (c2: cmd)  (*  if (t) ... else ...     *)
+| While (t: test) (c: cmd)               (*  while (t) ...           *)
 | Call (n: name) (f: name) (es: list exp)     (*  n := f(e1,e2,e3,...)    *)
 | Return (e: exp)                             (*  return from function    *)
 | Alloc (n: name) (e: exp)                    (*  n := malloc(e)          *)
@@ -67,10 +68,11 @@ Inductive cmd : Type :=
 | Abort.                                      (*  exit(1)                 *)
 
 Definition cmd_CASE {A} (c: cmd)
+  (scase: cmd -> cmd -> A)
   (acase: name -> exp -> A)
   (ucase: exp -> exp -> exp -> A)
-  (icase: test -> list cmd -> list cmd -> A)
-  (wcase: test -> list cmd -> A)
+  (icase: test -> cmd -> cmd -> A)
+  (wcase: test -> cmd -> A)
   (ccase: name -> name -> list exp -> A)
   (rcase: exp -> A)
   (acase': name -> exp -> A)
@@ -78,6 +80,7 @@ Definition cmd_CASE {A} (c: cmd)
   (pcase: exp -> A)
   (abcase: A) : A :=
   match c with
+  | Seq c1 c2 => scase c1 c2
   | Assign n e => acase n e
   | Update a e e' => ucase a e e'
   | If t c1 c2 => icase t c1 c2
@@ -91,9 +94,9 @@ Definition cmd_CASE {A} (c: cmd)
   end.
 
 Inductive func : Type :=
-| Func (n: name) (params: list name) (body: list cmd). (* func name, formal params, body *)
+| Func (n: name) (params: list name) (body: cmd). (* func name, formal params, body *)
 
-Definition func_CASE {A} (f: func) (fcase: name -> list name -> list cmd -> A) : A :=
+Definition func_CASE {A} (f: func) (fcase: name -> list name -> cmd -> A) : A :=
   match f with
   | Func n params body => fcase n params body
   end.

@@ -224,11 +224,12 @@ Notation "'doolet' ( v , s ) <- r1 ; r2" := (match r1 with
 
 Fixpoint eval_cmd (s : state) (env : IEnv.env) (c : cmd)
   (EVAL_CMD : forall (s:state)(env:IEnv.env)(c:cmd), (result IEnv.env) * state)
-  (EVAL_CMDS : forall (s:state)(env:IEnv.env)(cs:list cmd), (result IEnv.env) * state)
   { struct c } : (result IEnv.env) * state :=
-  let eval_cmd s env c := eval_cmd s env c EVAL_CMD EVAL_CMDS in
-  let eval_cmds s env c := eval_cmds s env c EVAL_CMD EVAL_CMDS in
+  let eval_cmd s env c := eval_cmd s env c EVAL_CMD in
   match c with
+  | Seq c1 c2 =>
+    doolet (env1, s1) <- eval_cmd s env c1 ;
+    eval_cmd s1 env1 c2
   | Assign n e =>
     doolet v <- (eval_exp s env e, s) ;
     let env' := IEnv.insert (n, Some v) env in
@@ -244,13 +245,13 @@ Fixpoint eval_cmd (s : state) (env : IEnv.env) (c : cmd)
   | If t c1 c2 =>
     doolet cond <- (eval_test s env t, s) ;
     if cond
-    then eval_cmds s env c1
-    else eval_cmds s env c2
+    then eval_cmd s env c1
+    else eval_cmd s env c2
   | While t c =>
     doolet cond <- (eval_test s env t, s) ;
     if cond
     then
-      doolet (env', s') <- eval_cmds s env c ;
+      doolet (env', s') <- eval_cmd s env c ;
       EVAL_CMD s' env' (While t c)
     else
       (Res env, s)
@@ -261,7 +262,7 @@ Fixpoint eval_cmd (s : state) (env : IEnv.env) (c : cmd)
       then
         doolet args <- (eval_exps s env es, s) ;
         let call_env := make_env params args IEnv.empty in
-        match EVAL_CMDS s call_env body with
+        match EVAL_CMD s call_env body with
         | (Ret _, s') => (Res env, s')
         | _ => (Err Crash, s)
         end
@@ -288,31 +289,13 @@ Fixpoint eval_cmd (s : state) (env : IEnv.env) (c : cmd)
     let c := word_to_ascii v in
     (Res env, set_output s (s.(output) ++ [c]))
   | Abort => (Err Crash, s)
-  end
-with eval_cmds (s : state) (env : IEnv.env) (cs : list cmd)
-  (EVAL_CMD : forall (s:state)(env:IEnv.env)(c:cmd), (result IEnv.env) * state)
-  (EVAL_CMDS : forall (s:state)(env:IEnv.env)(cs:list cmd), (result IEnv.env) * state)
-  { struct cs } : (result IEnv.env) * state :=
-  let eval_cmd s env c := eval_cmd s env c EVAL_CMD EVAL_CMDS in
-  let eval_cmds s env cs := eval_cmds s env cs EVAL_CMD EVAL_CMDS in
-  match cs with
-  | [] => (Res env, s)
-  | c :: cs =>
-    doolet (env1, s1) <- EVAL_CMD s env c ;
-    eval_cmds s1 env1 cs
   end.
 
 Fixpoint EVAL_CMD (fuel : nat) (s : state) (env : IEnv.env) (c : cmd)
   { struct fuel } : (result IEnv.env) * state :=
   match fuel with
   | 0 => (Err TimeOut, s)
-  | S fuel => eval_cmd s env c (EVAL_CMD fuel) (EVAL_CMDS fuel)
-  end
-with EVAL_CMDS (fuel : nat)  (s : state) (env : IEnv.env) (cs : list cmd)
-  { struct fuel } : (result IEnv.env) * state :=
-  match fuel with
-  | 0 => (Err TimeOut, s)
-  | S fuel => eval_cmds s env cs (EVAL_CMD fuel) (EVAL_CMDS fuel)
+  | S fuel => eval_cmd s env c (EVAL_CMD fuel)
   end.
 
 Definition eval_prog (inp : llist ascii) (fuel : nat) (p : prog) : result state :=
@@ -321,7 +304,7 @@ Definition eval_prog (inp : llist ascii) (fuel : nat) (p : prog) : result state 
     let call_main := Call 0 0 [] in
     let s := init_state inp fuel funcs in
     let env := IEnv.empty in
-    let (r, s') := eval_cmd s env call_main (EVAL_CMD fuel) (EVAL_CMDS fuel) in
+    let (r, s') := eval_cmd s env call_main (EVAL_CMD fuel) in
     match r with
     | Ret v => Res s'
     | _ => Err Crash

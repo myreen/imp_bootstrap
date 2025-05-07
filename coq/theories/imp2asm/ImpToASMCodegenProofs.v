@@ -22,7 +22,7 @@ Definition init_code_in (instructions : list instr) : Prop :=
   exists start, code_in 0 (init start) instructions.
 
 (* Looks up the function with identifier n in a list of funcs and returns its parameters and body if found. *)
-Fixpoint lookup_fun (n : nat) (ds : list func) : option (list name * list cmd) :=
+Fixpoint lookup_fun (n : nat) (ds : list func) : option (list name * cmd) :=
   match ds with
   | [] => None
   | (Func fname params body) :: ds =>
@@ -118,12 +118,12 @@ Definition goal :=
       end.
 
 Definition goals :=
-  forall (env : IEnv.env) (cmds : list cmd) (s s1 : ImpSemantics.state)
+  forall (env : IEnv.env) (cmd : cmd) (s s1 : ImpSemantics.state)
          (res : result IEnv.env) (t : ASMSemantics.state) (vs vs' : v_stack)
          (fs : f_lookup) (asmcmds : asm_appl) (l1 : nat) (curr rest : list word_or_ret),
-    EVAL_CMDS s.(fuel) s env cmds = (res, s1) /\
+    EVAL_CMD s.(fuel) s env cmd = (res, s1) /\
     res <> Err Crash /\
-    c_cmds cmds t.(pc) fs vs = (asmcmds, l1, vs') /\
+    c_cmd cmd t.(pc) fs vs = (asmcmds, l1, vs') /\
     state_rel fs s t /\
     env_ok env vs curr t /\
     has_stack t (curr ++ rest) /\

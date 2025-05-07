@@ -1,4 +1,4 @@
-From impboot Require Import utils.Core.
+(* From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
@@ -11,7 +11,7 @@ From coqutil Require Import
   Tactics.reference_to_string
   Tactics.ident_of_string
   Tactics.ident_to_string.
-Require Import Coq.derive.Derive.
+From Stdlib Require Import derive.Derive.
 
 Ltac rewrite_let := match goal with
 | [ |- context C [?subterm] ] =>
@@ -801,4 +801,4 @@ Proof.
   Show Proof.
 
   eauto with automation. *)
-
+ *)

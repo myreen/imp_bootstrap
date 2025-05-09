@@ -5,6 +5,12 @@ Require Import coqutil.Word.Naive.
 Notation name := nat (only parsing).
 Notation word64 := (@word.rep 64 word64) (only parsing).
 
+Definition name_enc_l (s : list ascii) : nat :=
+  fold_right (fun c acc => (nat_of_ascii c) * 256 + acc) 0 s.
+
+Definition name_of_string (s: string) : nat :=
+  name_enc_l (list_ascii_of_string s).
+
 Inductive exp : Type :=
 | Var (n: name)             (*  variable             *)
 | Const (n: word64)         (*  word constant        *)
@@ -58,8 +64,8 @@ Inductive cmd : Type :=
 | Seq (c1 : cmd) (c2 : cmd)                   (*  c1; c2                  *)
 | Assign (n: name) (e: exp)                   (*  n := e                  *)
 | Update (a: exp) (e: exp) (e': exp)          (*  a[e] := e'              *)
-| If (t: test) (c1: cmd) (c2: cmd)  (*  if (t) ... else ...     *)
-| While (t: test) (c: cmd)               (*  while (t) ...           *)
+| If (t: test) (c1: cmd) (c2: cmd)            (*  if (t) ... else ...     *)
+| While (t: test) (c: cmd)                    (*  while (t) ...           *)
 | Call (n: name) (f: name) (es: list exp)     (*  n := f(e1,e2,e3,...)    *)
 | Return (e: exp)                             (*  return from function    *)
 | Alloc (n: name) (e: exp)                    (*  n := malloc(e)          *)
@@ -117,4 +123,17 @@ Definition get_funcs (p: prog) : list func :=
 Definition name_of_func (f: func) : name :=
   match f with
   | Func n _ _ => n
+  end.
+
+(* Values *)
+
+Inductive Value :=
+| Word (w: word64)
+| Pointer (i: nat).
+
+Definition value_eqb (v1 v2 : Value): bool :=
+  match v1, v2 with
+  | Word w1, Word w2 => word.eqb w1 w2
+  | Pointer p1, Pointer p2 => p1 =? p2
+  | _, _ => false
   end.

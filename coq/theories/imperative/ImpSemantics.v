@@ -1,312 +1,413 @@
 Require Import impboot.utils.Core.
 Require Import impboot.utils.Llist.
 Require Import impboot.utils.Env.
+From Stdlib Require Import ListDec.
 Require Import impboot.imperative.ImpSyntax.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
 Require Import coqutil.Word.Properties.
 
-Inductive err := TimeOut | Crash.
+(* types *)
 
-Inductive Result {A : Type} {B : Type} : Type :=
-  | Res (a : A)
-  | Ret (b : B)
-  | Err (e: err).
-Arguments Result : clear implicits.
-
-Notation "'dolet' v <- r1 ; r2" := (match r1 with
-  | Res v => r2
-  | Ret v => Ret v
-  | Err e => Err e
-  end) (at level 200, right associativity).
-
-Notation "'dolet' ( v1 , v2 ) <- r1 ; r2" := (match r1 with
-  | Res (v1, v2) => r2
-  | Ret v => Ret v
-  | Err e => Err e
-  end) (at level 200, right associativity).
-
-Notation "'dolet' ( v1 , v2 , v3 ) <- r1 ; r2" := (match r1 with
-  | Res (v1, v2, v3) => r2
-  | Ret v => Ret v
-  | Err e => Err e
-  end) (at level 200, right associativity).
-
-Notation "r1 ;; r2" := (dolet _ <- r1 ; r2)
-  (at level 200, right associativity).
-
-(* memory keys are in bytes *)
-Notation memory_t := (word64 -> option (option word64)) (only parsing).
+Definition mem_block := (list (option Value)).
 
 Record state := mkState {
-  funs : list ImpSyntax.func;
-  fuel : nat;
-  memory : memory_t;
-  alloc_addr : word64;
-  input : llist ascii;
-  output : list ascii
+  vars : IEnv.env;
+  memory : list mem_block;
+  funs: list ImpSyntax.func;
+  input: llist ascii;
+  output: list ascii
 }.
 
-Definition result A := Result A word64.
+Inductive result {A : Type} :=
+| Return (v: A)
+| TimeOut
+| Crash
+| Abort.
+Arguments result : clear implicits.
 
-Definition set_input (s : state) (inp : llist ascii) : state :=
-  {| funs := s.(funs);
-     fuel := s.(fuel);
+Inductive outcome {A B : Type} :=
+| Cont (v: B)
+| Stop (v: result A).
+Arguments outcome : clear implicits.
+
+(* monad syntax *)
+
+Notation MRes A := (outcome Value A * state)%type (only parsing).
+Notation M A := (state -> MRes A) (only parsing).
+
+Definition bind {A B : Type} (ma: M A) (f: A -> M B): M B :=
+  (fun s =>
+    match ma s with
+    | (Cont res, s1) => f res s1
+    | (Stop e, s1) => (Stop e, s1)
+    end
+  ).
+
+Definition point {A : Type} (a : A) : M A :=
+  (fun s => (Cont a, s)).
+
+Notation "'let+' v := r1 'in' r2" :=
+  (bind r1 (fun v => r2))
+  (at level 200, right associativity).
+
+Notation "'let+' ( v1 , v2 ) := r1 'in' r2" :=
+  (bind r1 (fun v => let (v1, v2) := v in r2))
+  (at level 200, right associativity).
+
+Notation "r1 ;; r2" := (let+ _ := r1 in r2)
+  (at level 200, right associativity).
+
+Definition stop {A B} (v : result A) (s : state) : (outcome A B * state) :=
+  (Stop v, s).
+
+Definition crash {A B} (s : state) : (outcome A B * state) :=
+  stop Crash s.
+
+Definition cont {A B} (v : B) (s : state) : (outcome A B * state) :=
+  (Cont v, s).
+
+Definition next (input : llist ascii) : Value :=
+  match input with
+  | Lnil => Word (word.of_Z (2 ^ 32 - 1))
+  | Lcons c cs => Word (word.of_Z (Z.of_nat (nat_of_ascii c)))
+  end.
+
+Definition lookup_var (n : name) (s : state) : MRes Value :=
+  match IEnv.lookup s.(vars) n with
+  | Some v => cont v s
+  | None => crash s
+  end.
+
+Definition combine_word (f : word64 -> word64 -> word64) (x y : Value): M Value :=
+  match x, y with
+  | Word w1, Word w2 => cont (Word (f w1 w2))
+  | _, _ => stop Crash
+  end.
+
+Definition mem_load (ptr val : Value) (s : state) : (outcome Value Value * state) :=
+  match ptr, val with
+  | Pointer p, Word w =>
+    if negb (((w2n w) mod 8) =? 0) then crash s else
+    match List.nth_error s.(memory) p with
+    | None => crash s
+    | Some block =>
+      let idx := (w2n w) / 8 in
+      match List.nth_error block idx with
+      | Some (Some w) => cont w s
+      | _ => crash s
+      end
+    end
+  | _, _ => crash s
+  end.
+
+Definition set_input (inp : llist ascii) (s : state) : state :=
+  {| vars := s.(vars);
+     funs := s.(funs);
      memory := s.(memory);
-     alloc_addr := s.(alloc_addr);
      input := inp;
      output := s.(output) |}.
 
-Definition set_output (s : state) (out : list ascii) : state :=
-  {| funs := s.(funs);
-     fuel := s.(fuel);
+Definition set_output (out : list ascii) (s : state) : state :=
+  {| vars := s.(vars);
+     funs := s.(funs);
      memory := s.(memory);
-     alloc_addr := s.(alloc_addr);
      input := s.(input);
      output := out |}.
 
-Definition set_memory (s : state) (mem : memory_t) : state :=
-  {| funs := s.(funs);
-    fuel := s.(fuel);
-    memory := mem;
-    alloc_addr := s.(alloc_addr);
-    input := s.(input);
-    output := s.(output) |}.
+Definition set_memory (mem : list mem_block) (s : state) : state :=
+  {| vars := s.(vars);
+     funs := s.(funs);
+     memory := mem;
+     input := s.(input);
+     output := s.(output) |}.
 
-Definition set_fuel (s : state) (fuel : nat) : state :=
-  {| funs := s.(funs);
-    fuel := fuel;
+Definition set_vars (vars: IEnv.env) (s : state) : state :=
+  {| vars := vars;
+    funs := s.(funs);
     memory := s.(memory);
-    alloc_addr := s.(alloc_addr);
     input := s.(input);
     output := s.(output) |}.
 
-Definition alloc_chunk (s : state) : result state :=
-  (* TODO(kπ) Check if there is no overflow in word64 (alloc_addr) *)
-  Res {| funs := s.(funs);
-    fuel := s.(fuel);
-    memory := (fun a' => if word.eqb s.(alloc_addr) a' then Some None else s.(memory) a');
-    alloc_addr := word.add s.(alloc_addr) (word.of_Z 64);
-    input := s.(input);
-    output := s.(output) |}.
-
-Definition read_mem (a : word64) (s : state) : option word64 :=
-  match s.(memory) a with
-  | None => None
-  | Some opt => opt
-  end.
-
-Definition write_mem (a : word64) (w : word64) (s : state) : option state :=
-  match s.(memory) a with
-  | Some _ =>
-      Some (set_memory
-        s
-        (fun a' => if word.eqb a a' then Some (Some w) else s.(memory) a')
-      )
-  | _ => None
-  end.
-
-Definition init_state (inp : llist ascii) (fuel : nat) (funs : list ImpSyntax.func) : state :=
-  {| funs := funs;
-    memory := fun _ => None;
-    alloc_addr := word.of_Z 0;
-    fuel := fuel;
-    input := inp;
-    output := [] |}.
-
-Definition EOF_CONST : word64 := word.of_Z (0xFFFFFFFF : Z).
-
-Definition read_ascii (input : llist ascii) : (word64 * llist ascii) :=
-  match input with
-  | Lnil => (EOF_CONST, input)
-  | Lcons c cs => (word.of_Z (Z.of_nat (nat_of_ascii c)), cs)
-  end.
-
-Definition word_to_ascii (w : word64) : ascii :=
-  ascii_of_nat (Z.to_nat (word.unsigned w)).
-
-Fixpoint eval_exp (s : state) (env : IEnv.env) (e : exp) : result word64 :=
+Fixpoint eval_exp (e : exp) : M Value :=
   match e with
-  | Var n =>
-      match IEnv.lookup env n with
-      | Some v => Res v
-      | None => Err Crash
-      end
-  | Const n => Res n
+  | Var n => lookup_var n
+  | Const n => cont (Word n)
   | Add e1 e2 =>
-      dolet v1 <- eval_exp s env e1 ;
-      dolet v2 <- eval_exp s env e2 ;
-      Res (word.add v1 v2)
+      let+ v1 := eval_exp e1 in
+      let+ v2 := eval_exp e2 in
+      combine_word word.add v1 v2
   | Sub e1 e2 =>
-      dolet v1 <- eval_exp s env e1 ;
-      dolet v2 <- eval_exp s env e2 ;
-      Res (word.sub v1 v2)
+      let+ v1 := eval_exp e1 in
+      let+ v2 := eval_exp e2 in
+      combine_word word.sub v1 v2
   | Div e1 e2 =>
-      dolet v1 <- eval_exp s env e1 ;
-      dolet v2 <- eval_exp s env e2 ;
-      if word.eqb v2 (word.of_Z 0)
-      then Err Crash
-      else Res (word.divu v1 v2)
-  | Read a b =>
-      dolet va <- eval_exp s env a ;
-      dolet vb <- eval_exp s env b ;
-      (* convert index to byte offset *)
-      let addr := word.add va (word.mul vb (word.of_Z 64)) in
-      match read_mem addr s with
-      | Some v => Res v
-      | _ => Err Crash
-      end
+      let+ v1 := eval_exp e1 in
+      let+ v2 := eval_exp e2 in
+      if value_eqb v2 (Word (word.of_Z 0))
+      then crash
+      else combine_word word.divu v1 v2
+  | Read e1 e2 =>
+      let+ addr := eval_exp e1 in
+      let+ offset := eval_exp e2 in
+      mem_load addr offset
   end.
 
-Fixpoint eval_exps (s : state) (env : IEnv.env) (es : list exp) : result (list word64) :=
+Ltac unfold_monadic :=
+  unfold cont, crash, stop, point, bind, combine_word, mem_load in *.
+
+Ltac crunch_monadic :=
+  repeat match goal with
+  | [ |- context[match ?scr with _ => _ end] ] => destruct scr eqn:?
+  | [ H : context[match ?scr with _ => _ end] |- _ ] => destruct scr eqn:?
+  | _ => unfold_monadic
+  | _ => progress simpl in *
+  | _ => congruence
+  | _ => subst
+  end.
+
+Theorem eval_exp_pure: forall (e: exp) r (s s': state),
+  eval_exp e s = (r, s') -> s = s'.
+Proof.
+  induction e; simpl; intros.
+  1: unfold lookup_var in *; destruct (IEnv.lookup (vars s) n) eqn:?; unfold_monadic; congruence.
+  1: unfold_monadic; congruence.
+  all: crunch_monadic; eapply IHe1 in Heqp; try eapply IHe2 in Heqp0; congruence.
+Qed.
+
+Fixpoint eval_exps (es : list exp) : M (list Value) :=
   match es with
-  | [] => Res []
+  | [] => cont []
   | e :: es =>
-    dolet v <- eval_exp s env e ;
-    dolet vs <- eval_exps s env es ;
-    Res (v :: vs)
+    let+ v := eval_exp e in
+    let+ vs := eval_exps es in
+    cont (v :: vs)
   end.
 
-Fixpoint eval_test (s : state) (env : IEnv.env) (t : test) : result bool :=
+Theorem eval_exps_pure: forall (es: list exp) r (s s': state),
+  eval_exps es s = (r, s') -> s = s'.
+Proof.
+  induction es; simpl; intros.
+  - unfold_monadic; congruence.
+  - crunch_monadic; try eapply eval_exp_pure in Heqp; try eapply IHes in Heqp0; congruence.
+Qed.
+
+Definition dest_word (v: Value) : M word64 :=
+  match v with
+  | Word w => cont w
+  | _ => crash
+  end.
+
+Definition eval_cmp (c: cmp) (v1 v2: Value): M bool :=
+  match c, v1, v2 with
+  | Less, Word w1, Word w2 =>
+    cont (w1 <w w2)
+  | Equal, Word w1, Word w2 =>
+    cont (w1 =w w2)
+  | Equal, Pointer p, Word w =>
+    (if w =w (word.of_Z 0) then cont false else stop Crash)
+  | _, _, _ => stop Crash
+  end.
+
+Theorem eval_cmp_pure: forall (c: cmp) v1 v2 r (s s': state),
+  eval_cmp c v1 v2 s = (r, s') -> s = s'.
+Proof.
+  destruct c; simpl; intros; crunch_monadic; try congruence.
+Qed.
+
+Fixpoint eval_test (t : test) : M bool :=
   match t with
   | Test c e1 e2 =>
-      dolet v1 <- eval_exp s env e1 ;
-      dolet v2 <- eval_exp s env e2 ;
-      match c with
-      | Less => Res (word.ltu v1 v2)
-      | Equal => Res (word.eqb v1 v2)
-    end
+      let+ v1 := eval_exp e1 in
+      let+ v2 := eval_exp e2 in
+      eval_cmp c v1 v2
   | And t1 t2 =>
-    dolet v1 <- eval_test s env t1 ;
-    dolet v2 <- eval_test s env t2 ;
-    Res (andb v1 v2)
+    let+ v1 := eval_test t1 in
+    let+ v2 := eval_test t2 in
+    cont (andb v1 v2)
   | Or t1 t2 =>
-    dolet v1 <- eval_test s env t1 ;
-    dolet v2 <- eval_test s env t2 ;
-    Res (orb v1 v2)
+    let+ v1 := eval_test t1 in
+    let+ v2 := eval_test t2 in
+    cont (orb v1 v2)
   | Not t =>
-    dolet v <- eval_test s env t ;
-    Res (negb v)
+    let+ v := eval_test t in
+    cont (negb v)
   end.
 
-Definition find_func (fname : name) (s : state) :=
-  List.find (fun func => name_of_func func =? fname) s.(funs).
+Theorem eval_test_pure: forall (t: test) r (s s': state),
+  eval_test t s = (r, s') -> s = s'.
+Proof.
+  induction t; simpl; intros.
+  1: crunch_monadic; eapply eval_exp_pure in Heqp; try eapply eval_exp_pure in Heqp0; try eapply eval_cmp_pure in H; congruence.
+  1-2:crunch_monadic; eapply IHt1 in Heqp; try eapply IHt2 in Heqp0; congruence.
+  crunch_monadic; eapply IHt in Heqp; congruence.
+Qed.
 
-(* size is in 64-byte chunks (size = 1 =:= 64 bytes) *)
-Definition allocate_memory (size : word64) (s : state) : result (word64 * state) :=
-  let number_of_chunks := Z.to_nat (word.unsigned size) in
-  let idxs := (List.seq 0 number_of_chunks) in
-  dolet s1 <- List.fold_left (fun acc_s _ =>
-    dolet acc_s_v <- acc_s ;
-    alloc_chunk acc_s_v
-  ) idxs (Res s) ;
-  Res (s.(alloc_addr), s1).
+Definition assign (n: name) (v : Value) (s : state) : MRes unit :=
+  cont tt (set_vars (IEnv.insert (n, Some v) s.(vars)) s).
 
-Fixpoint make_env (names : list name) (values : list word64) (acc : IEnv.env) : IEnv.env :=
-  match names, values with
-  | [], [] => acc
-  | n :: names, v :: values =>
-    make_env names values (IEnv.insert (n, Some v) acc)
-  | _, _ => acc
+Fixpoint find_fun (fname : name) (fs : list func): option (list name * cmd) :=
+  match fs with
+  | nil => None
+  | (Func nm params body) :: rest =>
+    if fname =? nm then Some (params, body) else find_fun fname rest
   end.
 
-Notation "'doolet' v <- r1 ; r2" := (match r1 with
-  | (Res v, s) => r2
-  | (Ret v, s) => (Ret v, s)
-  | (Err e, s) => (Err e, s)
-  end) (at level 200, right associativity).
+Definition update_block (vs:mem_block) offset v : option mem_block :=
+  if offset <? List.length vs then Some (list_update offset (Some v) vs) else None.
 
-Notation "'doolet' ( v , s ) <- r1 ; r2" := (match r1 with
-| (Res v, s) => r2
-| (Ret v, s) => (Ret v, s)
-| (Err e, s) => (Err e, s)
-  end) (at level 200, right associativity).
+Definition update (v1 v2 v : Value) (s: state): MRes unit :=
+  match v1, v2 with
+  | (Pointer p), (Word offset) =>
+    if negb ((w2n offset) mod 8 =? 0) then crash s else
+      match nth_error s.(memory) p with
+      | None => crash s
+      | Some vs =>
+        match update_block vs ((w2n offset) / 8) v with
+        | None => crash s
+        | Some ws => cont tt (set_memory (list_update p ws s.(memory)) s)
+        end
+      end
+  | _, _ => crash s
+  end.
 
-Fixpoint eval_cmd (s : state) (env : IEnv.env) (c : cmd)
-  (EVAL_CMD : forall (s:state)(env:IEnv.env)(c:cmd), (result IEnv.env) * state)
-  { struct c } : (result IEnv.env) * state :=
-  let eval_cmd s env c := eval_cmd s env c EVAL_CMD in
+Definition alloc (len: word64) (s: state) : MRes Value :=
+  if negb ((w2n len) mod 8 =? 0) then crash s else
+    cont (Pointer (List.length s.(memory)))
+      (set_memory (s.(memory) ++ [repeat None ((w2n len) / 8)]) s).
+
+Definition put_char (v: Value) (s: state): MRes unit :=
+  match v with
+  | (Pointer p) => crash s
+  | (Word w) =>
+    if w2n w <? 256 then
+      cont tt (set_output (s.(output) ++ [ascii_of_nat (w2n w)]) s)
+    else crash s
+  end.
+
+Definition get_char (s: state) : MRes Value :=
+  cont (next s.(input))
+    (set_input (Llist.ltail s.(input)) s).
+
+Definition get_vars (s: state): MRes IEnv.env :=
+  cont s.(vars) s.
+
+Definition set_varsM (vars: IEnv.env) (s: state): MRes unit :=
+  cont tt (set_vars vars s).
+
+Definition nodupb (l: list nat): bool :=
+  if NoDup_dec Nat.eq_dec l then
+    true
+  else false.
+
+Definition get_body_and_set_vars (nm: name) (vs: list Value) (s: state): MRes cmd :=
+  match find_fun nm s.(funs) with
+  | None => crash s
+  | Some (params, body) =>
+      if orb (negb (List.length params =? List.length vs)) (negb (nodupb params)) then
+        crash s
+      else
+        cont body (set_vars (IEnv.insert_all (List.combine params (List.map Some vs)) IEnv.empty) s)
+  end.
+
+Definition catch_return {A} (f: M A) (s: state): MRes Value :=
+    match f s with
+    | (Cont _, s) => crash s
+    | (Stop (Return v), s) => cont v s
+    | (Stop TimeOut,s) => stop TimeOut s
+    | (Stop Crash,s) => stop Crash s
+    | (Stop Abort,s) => stop Abort s
+  end.
+
+Fixpoint eval_cmd (c : cmd)
+  (EVAL_CMD : forall (c:cmd), M unit)
+  { struct c } : M unit :=
+  let eval_cmd c := eval_cmd c EVAL_CMD in
   match c with
   | Seq c1 c2 =>
-    doolet (env1, s1) <- eval_cmd s env c1 ;
-    eval_cmd s1 env1 c2
+    let+ _ := eval_cmd c1 in
+    eval_cmd c2
   | Assign n e =>
-    doolet v <- (eval_exp s env e, s) ;
-    let env' := IEnv.insert (n, Some v) env in
-    (Res env', s)
-  | Update a e e' =>
-    doolet va <- (eval_exp s env a, s) ;
-    doolet ve <- (eval_exp s env e, s) ;
-    doolet ve' <- (eval_exp s env e', s) ;
-    match write_mem (word.add va ve) ve' s with
-    | Some s' => (Res env, s')
-    | None => (Err Crash, s)
-    end
-  | If t c1 c2 =>
-    doolet cond <- (eval_test s env t, s) ;
-    if cond
-    then eval_cmd s env c1
-    else eval_cmd s env c2
-  | While t c =>
-    doolet cond <- (eval_test s env t, s) ;
-    if cond
-    then
-      doolet (env', s') <- eval_cmd s env c ;
-      EVAL_CMD s' env' (While t c)
-    else
-      (Res env, s)
-  | Call n fname es =>
-    match find_func fname s with
-    | Some (Func _ params body) =>
-      if Nat.eqb (List.length params) (List.length es)
-      then
-        doolet args <- (eval_exps s env es, s) ;
-        let call_env := make_env params args IEnv.empty in
-        match EVAL_CMD s call_env body with
-        | (Ret _, s') => (Res env, s')
-        | _ => (Err Crash, s)
-        end
-      else (Err Crash, s)
-    | None => (Err Crash, s)
-    end
-  | Return e =>
-    doolet v <- (eval_exp s env e, s) ;
-    (Ret v, s)
-  | Alloc n e =>
-    doolet size <- (eval_exp s env e, s) ;
-    match allocate_memory size s with
-    | Res (addr, s') =>
-      let env' := IEnv.insert (n, Some addr) env in
-      (Res env', s')
-    | _ => (Err Crash, s)
-    end
-  | GetChar n =>
-    let (next_word, new_inp) := read_ascii s.(input) in
-    let env' := IEnv.insert (n, Some next_word) env in
-    (Res env', set_input s new_inp)
+    let+ v := eval_exp e in
+    assign n v
+  | ImpSyntax.Abort => stop Abort
   | PutChar e =>
-    doolet v <- (eval_exp s env e, s) ;
-    let c := word_to_ascii v in
-    (Res env, set_output s (s.(output) ++ [c]))
-  | Abort => (Err Crash, s)
+    let+ v := eval_exp e in
+    put_char v
+  | GetChar n =>
+    let+ v := get_char in
+    assign n v
+  | Alloc n e =>
+    let+ val := eval_exp e in
+    let+ len := dest_word val in
+    let+ ptr := alloc len in
+    assign n ptr
+  | Update a e e' =>
+    let+ ptr := eval_exp a in
+    let+ off := eval_exp e in
+    let+ val := eval_exp e' in
+    update ptr off val
+  | If t c1 c2 =>
+    let+ cond := eval_test t in
+    if cond
+    then eval_cmd c1
+    else eval_cmd c2
+  | ImpSyntax.Return e =>
+    let+ v := eval_exp e in
+    stop (Return v)
+  | While t c =>
+    let+ cond := eval_test t in
+    if cond then
+      let+ _ := (eval_cmd c) in
+      (EVAL_CMD (While t c))
+    else
+      cont tt
+  | Call n fname es =>
+    let+ vs := eval_exps es in
+    let+ vars := get_vars in
+    let+ body := get_body_and_set_vars fname vs in
+    let+ v := catch_return (EVAL_CMD body) in
+    let+ _ := assign n v in
+    set_varsM vars
   end.
 
-Fixpoint EVAL_CMD (fuel : nat) (s : state) (env : IEnv.env) (c : cmd)
-  { struct fuel } : (result IEnv.env) * state :=
+Fixpoint EVAL_CMD (fuel: nat) (c : cmd) { struct fuel } : M unit :=
   match fuel with
-  | 0 => (Err TimeOut, s)
-  | S fuel => eval_cmd s env c (EVAL_CMD fuel)
+  | 0 => stop TimeOut
+  | S fuel => eval_cmd c (EVAL_CMD (fuel - 1))
   end.
 
-Definition eval_prog (inp : llist ascii) (fuel : nat) (p : prog) : result state :=
+Definition init_state (inp: llist ascii) (funs: list func): state :=
+  {| vars   := IEnv.empty;
+      memory := [];
+      funs   := funs;
+      input  := inp;
+      output := []; |}.
+
+Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): MRes unit :=
   match p with
-  | Program funcs =>
-    let call_main := Call 0 0 [] in
-    let s := init_state inp fuel funcs in
-    let env := IEnv.empty in
-    let (r, s') := eval_cmd s env call_main (EVAL_CMD fuel) in
-    match r with
-    | Ret v => Res s'
-    | _ => Err Crash
-    end
+  | Program funs =>
+    let call_main_cmd: cmd := (Call 0 (name_of_string "main") []) in
+    let init_s := (init_state input funs) in
+    EVAL_CMD fuel call_main_cmd init_s
   end.
+
+Definition imp_avoids_crash (input: llist ascii) (p: prog) :=
+  forall fuel res s, eval_from fuel input p = (res, s) -> res <> Stop Crash.
+
+Definition imp_timesout (fuel: nat) (input: llist ascii) (p: prog) :=
+  exists s, eval_from fuel input p = (Stop TimeOut, s).
+
+Definition imp_output (fuel: nat) (input: llist ascii) (p: prog) :=
+    let (res, s) := eval_from fuel input p in
+    llist_of_list s.(output).
+
+(* TODO(kπ) for divergence proofs *)
+(* Definition imp_diverges (input: llist ascii) (p: prog) (output: list ascii) :=
+    (forall fuel, imp_timesout fuel input prog) /\
+    output = build_lprefix_lub { imp_output fuel input p | k IN UNIV }. *)
+
+Definition imp_weak_termination (input: llist ascii) (p: prog) (out: list ascii) :=
+  exists fuel outcome s,
+    eval_from fuel input p = (outcome, s) /\
+    (outcome <> Stop Abort -> outcome = Cont tt /\ s.(output) = out).

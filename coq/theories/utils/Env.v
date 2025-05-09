@@ -8,6 +8,7 @@ Module Type EnvT.
   Parameter Value : Type.
   Parameter lookup : env -> name -> option Value.
   Parameter insert : name * option Value -> env -> env.
+  Parameter insert_all : list (name * option Value) -> env -> env.
   Definition insert_some (p : name * Value) (v : env) : env :=
     insert (fst p, Some (snd p)) v.
   Parameter remove : name -> env -> env.
@@ -48,6 +49,11 @@ Module FEnv <: EnvT.
   Definition lookup (v : env) (x : name) : option Value := v x.
   Definition insert (p : name * option Value) (v : env) : env :=
     fun x => if Nat.eq_dec x (fst p) then (snd p) else v x.
+  Fixpoint insert_all (ps: list (name * option Value)) (v: env) :=
+    match ps with
+    | nil => v
+    | p :: ps => insert p (insert_all ps v)
+    end.
   Definition insert_some (p : name * Value) (v : env) : env :=
     insert (fst p, Some (snd p)) v.
   Definition remove (x : name) (v : env) : env :=
@@ -116,14 +122,17 @@ Require Import coqutil.Word.Properties.
 
 Module IEnv <: EnvT.
   Definition name := ImpSyntax.name.
-  Opaque name.
-  Definition Value := @word.rep 64 word64.
-  Opaque Value.
+  Definition Value := ImpSyntax.Value.
   Definition env := name -> option Value.
   Definition empty : env := fun _ => None.
   Definition lookup (v : env) (x : name) : option Value := v x.
   Definition insert (p : name * option Value) (v : env) : env :=
     fun x => if Nat.eq_dec x (fst p) then (snd p) else v x.
+  Fixpoint insert_all (ps: list (name * option Value)) (v: env) :=
+    match ps with
+    | nil => v
+    | p :: ps => insert p (insert_all ps v)
+    end.
   Definition insert_some (p : name * Value) (v : env) : env :=
     insert (fst p, Some (snd p)) v.
   Definition remove (x : name) (v : env) : env :=

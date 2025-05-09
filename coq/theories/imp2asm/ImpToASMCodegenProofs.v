@@ -75,7 +75,8 @@ Definition v_inv (t : ASMSemantics.state) (v : word64) (w : word64) : Prop :=
 Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or_ret) (t : ASMSemantics.state) : Prop :=
   List.length vs = List.length curr /\
   forall n v,
-    IEnv.lookup env n = Some v ->
+    (* TODO(kπ) should this also assert pointers? *)
+    IEnv.lookup env n = Some (ImpSyntax.Word v) ->
     index_of n 0 vs < List.length curr /\
     exists w,
       nth_error curr (index_of n 0 vs) = Some (Word w) /\
@@ -84,13 +85,13 @@ Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or
 (* Goals *)
 
 Definition goal :=
-  forall (env : IEnv.env) (s s1 : ImpSemantics.state) (c : cmd)
-         (res : result IEnv.env) (t : ASMSemantics.state)
+  forall (env : IEnv.env) (s s1 : ImpSemantics.state) (fuel: nat) (c : cmd)
+         (res : outcome Value unit) (t : ASMSemantics.state)
          (vs vs' : v_stack) (fs : f_lookup)
          (asmc : asm_appl) (l1 : nat)
          (curr rest : list word_or_ret),
-    EVAL_CMD s.(fuel) s env c = (res, s1) /\
-    res <> Err Crash /\
+    EVAL_CMD fuel c s = (res, s1) /\
+    res <> Stop Crash /\
     c_cmd c t.(pc) fs vs = (asmc, l1, vs') /\
     state_rel fs s t /\
     env_ok env vs curr t /\
@@ -99,53 +100,19 @@ Definition goal :=
     code_in t.(pc) (flatten asmc) t.(instructions)
     ->
     exists outcome,
-      (* TODO(kπ) we use an outer fuel for this *)
-      steps (State t, s.(fuel)) outcome /\
+      steps (State t, fuel) outcome /\
       match outcome with
       | (Halt ec output, ck) =>
           prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
           ec = (word.of_Z 1)
       | (State t1, ck) =>
           state_rel fs s1 t1 /\
-          ck = s1.(fuel) /\
+          ck = fuel /\
           forall v,
-            res = Res v ->
+            res = Stop (Return v) ->
             exists w,
               (* TODO(kπ) Do we need this? vvvvvv (probably in a different form?) *)
               (* v_inv t1 v w /\ *)
                 has_stack t1 (Word w :: curr ++ rest) /\
                 t1.(pc) = l1
       end.
-
-Definition goals :=
-  forall (env : IEnv.env) (cmd : cmd) (s s1 : ImpSemantics.state)
-         (res : result IEnv.env) (t : ASMSemantics.state) (vs vs' : v_stack)
-         (fs : f_lookup) (asmcmds : asm_appl) (l1 : nat) (curr rest : list word_or_ret),
-    EVAL_CMD s.(fuel) s env cmd = (res, s1) /\
-    res <> Err Crash /\
-    c_cmd cmd t.(pc) fs vs = (asmcmds, l1, vs') /\
-    state_rel fs s t /\
-    env_ok env vs curr t /\
-    has_stack t (curr ++ rest) /\
-    odd (List.length rest) = true /\
-    code_in t.(pc) (flatten asmcmds) t.(instructions)
-    ->
-    exists outcome,
-      steps (State t, s.(fuel)) outcome /\
-      match outcome with
-      | (Halt ec output, ck) =>
-          prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
-          ec = word.of_Z 1
-      | (State t1, ck) =>
-          state_rel fs s1 t1 /\
-          ck = s1.(fuel) /\
-          forall vs',
-            res = Res vs' ->
-            exists ws,
-              (* TODO(kπ) Do we need this? vvvvvv (probably in a different form?) *)
-              (* Forall2 (v_inv t1) vs' ws /\ *)
-              has_stack t1 (map Word (rev ws) ++ curr ++ rest) /\
-              t1.(pc) = l1
-      end.
-
-

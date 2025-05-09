@@ -85,6 +85,7 @@ Fixpoint nat_FIX {A C} (n : nat) (f0 : C -> A) (fS : (C -> A) -> nat -> C -> A) 
 (* Word *)
 
 Require Import coqutil.Word.Interface.
+Require Import coqutil.Word.Naive.
 
 Declare Scope word.
 Infix "*w" := word.mul (at level 40, left associativity): word.
@@ -95,7 +96,19 @@ Infix "-w" := word.sub (at level 50, left associativity): word.
 Infix ">>w" := word.sru (at level 60, no associativity): word.
 Infix ">>>w" := word.srs (at level 60, no associativity): word.
 Infix "<<w" := word.slu (at level 60, no associativity): word.
+Notation "w1 =w w2" := (word.eqb w1 w2) (at level 70, no associativity): word.
 Notation "w1 <w w2" := (word.ltu w1 w2) (at level 70, no associativity): word.
 Notation "w1 >w w2" := (word.gtu w1 w2) (at level 70, no associativity): word.
 Notation "w1 <sw w2" := (word.lts w1 w2) (at level 70, no associativity): word.
+Definition w2n (w: word64): nat :=
+  Z.to_nat (word.unsigned w).
 Open Scope word.
+
+(* List *)
+
+Fixpoint list_update {A : Type} (n : nat) (x : A) (l : list A) : list A :=
+  match n, l with
+  | O, _ :: xs => x :: xs
+  | S n, y :: xs => y :: list_update n x xs
+  | _, [] => []
+  end.

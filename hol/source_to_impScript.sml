@@ -54,21 +54,21 @@ Definition to_cons_def:
     | NONE => NONE
     | SOME (e1,x) =>
     case dest_Cons x of
-    | NONE => OPTION_MAP (λe2. [Call v (name "cons") [e1; e2]]) (to_exp x)
+    | NONE => OPTION_MAP (λe2. (Call v (name "cons") [e1; e2])) (to_exp x)
     | SOME (e2,x) =>
     case dest_Cons x of
-    | NONE => OPTION_MAP (λe3. [Call v (name "cons3") [e1; e2; e3]]) (to_exp x)
+    | NONE => OPTION_MAP (λe3. (Call v (name "cons3") [e1; e2; e3])) (to_exp x)
     | SOME (e3,x) =>
     case dest_Cons x of
-    | NONE => OPTION_MAP (λe4. [Call v (name "cons4") [e1; e2; e3; e4]]) (to_exp x)
+    | NONE => OPTION_MAP (λe4. (Call v (name "cons4") [e1; e2; e3; e4])) (to_exp x)
     | SOME (e4,x) =>
-              OPTION_MAP (λe5. [Call v (name "cons5") [e1; e2; e3; e4; e5]]) (to_exp x)
+              OPTION_MAP (λe5. (Call v (name "cons5") [e1; e2; e3; e4; e5])) (to_exp x)
 End
 
 Definition to_assign_def:
   to_assign v x =
     case to_exp x of
-    | SOME i => SOME [Assign v i]
+    | SOME i => SOME (Assign v i)
     | NONE =>
       case to_cons v x of
       | SOME r => SOME r
@@ -76,15 +76,15 @@ Definition to_assign_def:
         case x of
         | Call n es =>
             (case to_exps es of
-             | SOME xs => SOME [Call v n xs]
+             | SOME xs => SOME (Call v n xs)
              | NONE => NONE)
         | Op p es =>
             (case p, to_exps es of
-             | (Add,SOME [x1;x2]) => SOME [Call v (name "add") [x1;x2]]
-             | (Sub,SOME [x1;x2]) => SOME [Call v (name "sub") [x1;x2]]
-             | (Div,SOME [x1;x2]) => SOME [Assign v (Div x1 x2)]
-             | (Read,SOME [])     => SOME [GetChar v]
-             | (Write,SOME [x1])  => SOME [PutChar x1; Assign v (Const 0w)]
+             | (Add,SOME [x1;x2]) => SOME (Call v (name "add") [x1;x2])
+             | (Sub,SOME [x1;x2]) => SOME (Call v (name "sub") [x1;x2])
+             | (Div,SOME [x1;x2]) => SOME (Assign v (Div x1 x2))
+             | (Read,SOME [])     => SOME (GetChar v)
+             | (Write,SOME [x1])  => SOME (Seq (PutChar x1) (Assign v (Const 0w)))
              | _ => NONE)
         | _ => NONE
 End
@@ -92,20 +92,20 @@ End
 Definition to_cmd_def:
   to_cmd (e:source_syntax$exp) =
     case to_exp e of
-    | SOME i => SOME ([Return i] : cmd list)
+    | SOME i => SOME (Return i : cmd)
     | NONE =>
       case e of
       | If t es e1 e2 =>
          (case to_guard t es, to_cmd e1, to_cmd e2 of
-          | (SOME t1, SOME c1, SOME c2) => SOME [If t1 c1 c2]
+          | (SOME t1, SOME c1, SOME c2) => SOME (If t1 c1 c2)
           | _ => NONE)
       | Let v x y =>
          (case to_assign v x, to_cmd y of
-          | (SOME c1, SOME c2) => SOME (c1 ++ c2)
+          | (SOME c1, SOME c2) => SOME (Seq c1 c2)
           | _ => NONE)
       | Call n es =>
          (case to_exps es of
-          | SOME xs => SOME [Call (name "ret") n xs; Return (Var (name "ret"))]
+          | SOME xs => SOME (Seq (Call (name "ret") n xs) (Return (Var (name "ret"))))
           | _ => NONE)
       | _ => NONE
 End
@@ -119,31 +119,37 @@ Definition to_funs_def:
     | _ => NONE
 End
 
+Definition list_Seq_def[simp]:
+  list_Seq [] = Skip ∧
+  list_Seq [x] = x ∧
+  list_Seq (x::xs) = Seq x (list_Seq xs)
+End
+
 Definition builtin_def:
   builtin =
-    [(name "add",[name "a"; name "b"],
+    [(name "add",[name "a"; name "b"], list_Seq
        [Assign (name "c") (Add (Var (name "a")) (Var (name "b")));
-        If (Test Less (Var (name "c")) (Var (name "a"))) [Abort] [];
-        If (Test Less (Var (name "c")) (Var (name "b"))) [Abort] [];
+        If (Test Less (Var (name "c")) (Var (name "a"))) Abort Skip;
+        If (Test Less (Var (name "c")) (Var (name "b"))) Abort Skip;
         Return (Var (name "c"))]);
-     (name "sub",[name "a"; name "b"],
+     (name "sub",[name "a"; name "b"], list_Seq
        [If (Test Less (Var (name "a")) (Var (name "b")))
-          [Return (Const 0w)]
-          [Return (Sub (Var (name "a")) (Var (name "b")))]]);
-     (name "cons",[name "a"; name "b"],
+          (Return (Const 0w))
+          (Return (Sub (Var (name "a")) (Var (name "b"))))]);
+     (name "cons",[name "a"; name "b"], list_Seq
        [Alloc (name "ret") (Const 16w);
         Update (Var $ name "ret") (Const 0w) (Var $ name "a");
         Update (Var $ name "ret") (Const 8w) (Var $ name "b");
         Return (Var $ name "ret")]);
-     (name "cons3",[name "a"; name "b"; name "c"],
+     (name "cons3",[name "a"; name "b"; name "c"], list_Seq
        [Call (name "ret") (name "cons") [Var (name "b"); Var (name "c")];
         Call (name "ret") (name "cons") [Var (name "a"); Var (name "ret")];
         Return (Var $ name "ret")]);
-     (name "cons4",[name "a"; name "b"; name "c"; name "d"],
+     (name "cons4",[name "a"; name "b"; name "c"; name "d"], list_Seq
        [Call (name "ret") (name "cons3") [Var (name "b"); Var (name "c"); Var (name "d")];
         Call (name "ret") (name "cons") [Var (name "a"); Var (name "ret")];
         Return (Var $ name "ret")]);
-     (name "cons5",[name "a"; name "b"; name "c"; name "d"; name "e"],
+     (name "cons5",[name "a"; name "b"; name "c"; name "d"; name "e"], list_Seq
        [Call (name "ret") (name "cons4")
           [Var (name "b"); Var (name "c"); Var (name "d"); Var (name "e")];
         Call (name "ret") (name "cons") [Var (name "a"); Var (name "ret")];
@@ -282,16 +288,6 @@ Proof
     |> Q.SPEC ‘λ(x1,x2,x3) (y1,y2). P x1 x2 x3 y1 y2’
     |> SIMP_RULE std_ss [FORALL_PROD] |> GEN_ALL)
   \\ rpt conj_tac \\ simp []
-QED
-
-Theorem eval_cmd_cons:
-  eval_cmd (x::xs) s =
-    case eval_cmd [x] s of
-      (Cont v,s') => eval_cmd xs s'
-    | (Stop r,s') => (Stop r,s')
-Proof
-  Cases_on ‘xs’  \\ fs [eval_cmd_def]
-  \\ rpt (CASE_TAC \\ gvs [])
 QED
 
 Theorem env_rel_update:
@@ -456,7 +452,7 @@ Theorem Call_cons:
     EVERY (λ(n,ps,cs). find_fun n t.funs = SOME (ps,cs)) builtin ⇒
     ∃m1 ptr.
       ∀k c2.
-          eval_cmd (Call n (name "cons") [e1; e2]::c2)
+          eval_cmd (Seq (Call n (name "cons") [e1; e2]) c2)
                    (t with clock := SUC k + t.clock) =
           eval_cmd c2
                    (t with <| vars := t.vars |+ (n,ptr) ;
@@ -464,7 +460,7 @@ Theorem Call_cons:
                               clock := k + t.clock |>)  ∧
           v_rel (t.memory ++ m1) (Pair x y) ptr
 Proof
-  rw [Once eval_cmd_cons]
+  rw [Once eval_cmd_def]
   \\ simp [eval_cmd_def,bind_def,tick_def]
   \\ fs [builtin_def,source_valuesTheory.name_def,ADD1]
   \\ rpt $ qpat_x_assum ‘find_fun _ _ = _’ kall_tac
@@ -489,7 +485,7 @@ Theorem Call_cons3:
     EVERY (λ(n,ps,cs). find_fun n t.funs = SOME (ps,cs)) builtin ⇒
     ∃ck m1 ptr.
       ∀k c2.
-          eval_cmd (Call n (name "cons3") [e1; e2; e3]::c2)
+          eval_cmd (Seq (Call n (name "cons3") [e1; e2; e3]) c2)
                    (t with clock := (SUC $ SUC $ SUC k) + t.clock) =
           eval_cmd c2
                    (t with <| vars := t.vars |+ (n,ptr) ;
@@ -497,7 +493,7 @@ Theorem Call_cons3:
                               clock := k + t.clock |>)  ∧
           v_rel (t.memory ++ m1) (Pair x (Pair y z)) ptr
 Proof
-  rw [Once eval_cmd_cons]
+  rw [Once eval_cmd_def]
   \\ simp [eval_cmd_def,bind_def,tick_def]
   \\ fs [builtin_def,source_valuesTheory.name_def]
   \\ gvs [names_back]
@@ -543,7 +539,7 @@ Theorem Call_cons4:
     EVERY (λ(n,ps,cs). find_fun n t.funs = SOME (ps,cs)) builtin ⇒
     ∃ck m1 ptr.
       ∀k c2.
-          eval_cmd (Call n (name "cons4") [e1; e2; e3; e4]::c2)
+          eval_cmd (Seq (Call n (name "cons4") [e1; e2; e3; e4]) c2)
                    (t with clock := (SUC $ SUC $ SUC $ SUC $ SUC k) + t.clock) =
           eval_cmd c2
                    (t with <| vars := t.vars |+ (n,ptr) ;
@@ -551,7 +547,7 @@ Theorem Call_cons4:
                               clock := k + t.clock |>)  ∧
           v_rel (t.memory ++ m1) (Pair x (Pair y (Pair z q))) ptr
 Proof
-  rw [Once eval_cmd_cons]
+  rw [Once eval_cmd_def]
   \\ simp [eval_cmd_def,bind_def,tick_def]
   \\ fs [builtin_def,source_valuesTheory.name_def]
   \\ gvs [names_back]
@@ -599,7 +595,7 @@ Theorem Call_cons5:
     EVERY (λ(n,ps,cs). find_fun n t.funs = SOME (ps,cs)) builtin ⇒
     ∃ck m1 ptr.
       ∀k c2.
-          eval_cmd (Call n (name "cons5") [e1; e2; e3; e4; e5]::c2)
+          eval_cmd (Seq (Call n (name "cons5") [e1; e2; e3; e4; e5]) c2)
                    (t with clock := (SUC $ SUC $ SUC $ SUC $ SUC $ SUC $ SUC k) + t.clock) =
           eval_cmd c2
                    (t with <| vars := t.vars |+ (n,ptr) ;
@@ -607,7 +603,7 @@ Theorem Call_cons5:
                               clock := k + t.clock |>)  ∧
           v_rel (t.memory ++ m1) (Pair x (Pair y (Pair z (Pair q r)))) ptr
 Proof
-  rw [Once eval_cmd_cons]
+  rw [Once eval_cmd_def]
   \\ simp [eval_cmd_def,bind_def,tick_def]
   \\ fs [builtin_def,source_valuesTheory.name_def]
   \\ gvs [names_back]
@@ -738,14 +734,13 @@ Proof
   \\ rpt strip_tac \\ gvs []
   >~ [‘to_exp x = SOME i’] >-
    (drule_all to_exp_thm \\ strip_tac \\ gvs []
-    \\ simp [Once eval_cmd_cons]
     \\ fs [eval_cmd_def,bind_def]
     \\ first_x_assum $ qspec_then ‘t with vars := t.vars |+ (n,w)’ mp_tac
     \\ impl_tac
     >- (fs [state_rel_def] \\ irule_at Any env_rel_update \\ fs [])
     \\ rw [] \\ fs [])
   >~ [‘(env,[Call cn es],s)’] >-
-   (simp [Once eval_cmd_cons]
+   (simp [Once eval_cmd_def]
     \\ last_x_assum $ drule_at $ Pos last
     \\ simp [to_cmd_def]
     \\ strip_tac
@@ -764,11 +759,11 @@ Proof
     \\ impl_tac >- fs [state_rel_def]
     \\ strip_tac \\ fs []
     \\ qpat_x_assum ‘_ = (Stop (Return a),t2)’ mp_tac
-    \\ simp [Once eval_cmd_cons]
+    \\ simp [Once eval_cmd_def]
     \\ last_x_assum mp_tac
     \\ simp [Once Eval_cases] \\ strip_tac
     \\ drule_all to_exps_thm \\ strip_tac \\ gvs []
-    \\ Cases_on ‘eval_cmd [Call (name "ret") cn xs] (t1 with clock := k + t1.clock)’
+    \\ Cases_on ‘eval_cmd (Call (name "ret") cn xs) (t1 with clock := k + t1.clock)’
     \\ reverse $ Cases_on ‘q’
     >-
      (fs [] \\ strip_tac \\ gvs []
@@ -803,7 +798,7 @@ Proof
     \\ strip_tac \\ gvs []
     \\ drule_all to_exps_thm
     \\ strip_tac \\ rw []
-    \\ simp [Once eval_cmd_cons]
+    \\ simp [Once eval_cmd_def]
     \\ simp [Once eval_cmd_def]
     \\ gvs [builtin_def]
     \\ Q.REFINE_EXISTS_TAC ‘k+1’
@@ -831,7 +826,7 @@ Proof
     \\ strip_tac \\ gvs []
     \\ drule_all to_exps_thm
     \\ strip_tac \\ rw []
-    \\ simp [Once eval_cmd_cons]
+    \\ simp [Once eval_cmd_def]
     \\ simp [Once eval_cmd_def]
     \\ gvs [builtin_def]
     \\ Q.REFINE_EXISTS_TAC ‘k+1’
@@ -853,7 +848,7 @@ Proof
     \\ drule Eval_cons \\ simp [] \\ strip_tac
     \\ drule_all to_exp_thm \\ strip_tac \\ gvs []
     \\ drule_all to_exp_thm \\ strip_tac \\ gvs [v_rel_Num]
-    \\ simp [Once eval_cmd_cons]
+    \\ simp [Once eval_cmd_def]
     \\ simp [Once eval_cmd_def,bind_def]
     \\ first_x_assum $ qspec_then ‘t with vars := dd’ (assume_tac o Q.GEN ‘dd’)
     \\ gvs [] \\ pop_assum irule
@@ -865,7 +860,7 @@ Proof
     \\ strip_tac \\ gvs []
     \\ imp_res_tac Eval_length \\ gvs [LENGTH_EQ_NUM_compute]
     \\ pop_assum mp_tac \\ simp [Once Eval_cases] \\ strip_tac \\ gvs []
-    \\ simp [Once eval_cmd_cons]
+    \\ simp [Once eval_cmd_def]
     \\ simp [Once eval_cmd_def,bind_def,get_char_def]
     \\ first_x_assum $ qspec_then ‘t with <| vars := dd; input := ii |>’
          (assume_tac o Q.GENL [‘dd’,‘ii’])
@@ -884,7 +879,7 @@ Proof
     \\ fs [eval_cmd_def,bind_def,to_exps_def,AllCaseEqs()]
     \\ drule_all to_exp_thm \\ strip_tac \\ gvs []
     \\ fs [imp_source_semanticsTheory.put_char_def,v_rel_Num]
-    \\ simp [Once eval_cmd_cons]
+    \\ simp [Once eval_cmd_def]
     \\ simp [Once eval_cmd_def,bind_def]
     \\ first_x_assum $ qspec_then ‘t with <| vars := dd; output := ii |>’
          (assume_tac o Q.GENL [‘dd’,‘ii’])

@@ -291,43 +291,43 @@ Definition catch_return_def[simp]:
 End
 
 Definition eval_cmd_def:
-  eval_cmd [] s = cont () s ∧
-  eval_cmd (x::y::ys) s =
-   (case fix s (eval_cmd [x] s) of
+  eval_cmd Skip s = cont () s ∧
+  eval_cmd (Seq x y) s =
+   (case fix s (eval_cmd x s) of
     | (Stop r, s) => (Stop r, s)
-    | (Cont v, s) => eval_cmd (y::ys) s) ∧
-  eval_cmd [Assign n e] s =
+    | (Cont v, s) => eval_cmd y s) ∧
+  eval_cmd (Assign n e) s =
    do v <- eval_exp e ;
       assign n v od s ∧
-  eval_cmd [Abort] s = (Stop Abort, s) ∧
-  eval_cmd [PutChar c] s =
+  eval_cmd Abort s = (Stop Abort, s) ∧
+  eval_cmd (PutChar c) s =
    do v <- eval_exp c ;
       put_char v od s ∧
-  eval_cmd [GetChar n] s =
+  eval_cmd (GetChar n) s =
    do v <- get_char ;
       assign n v od s ∧
-  eval_cmd [Alloc n e] s =
+  eval_cmd (Alloc n e) s =
     do
        val <- eval_exp e ;
        len <- dest_word val ;
        ptr <- alloc len ;
        assign n ptr
     od s ∧
-  eval_cmd [Update e1 e2 e3] s =
+  eval_cmd (Update e1 e2 e3) s =
     do
        ptr <- eval_exp e1 ;
        off <- eval_exp e2 ;
        val <- eval_exp e3 ;
        update ptr off val
     od s ∧
-  eval_cmd [If t cs1 cs2] s =
+  eval_cmd (If t cs1 cs2) s =
    (case eval_test t s of
     | (Stop r, s) => (Stop r, s)
     | (Cont v, s) => eval_cmd (if v then cs1 else cs2) s) ∧
-  eval_cmd [Return e] s =
+  eval_cmd (Return e) s =
    do v <- eval_exp e ;
       stop (Return v) od s ∧
-  eval_cmd [Call n m es] s =
+  eval_cmd (Call n m es) s =
    (case eval_exps es s of
     | (Stop r, s) => (Stop r, s)
     | (Cont vs, s) =>
@@ -344,7 +344,7 @@ Definition eval_cmd_def:
                 | (Cont _, s) => (Stop Crash, s)
                 | (Stop (Return v), s) => assign n v (s with vars := vars)
                 | res => res))) ∧
-  eval_cmd [While t cs] s =
+  eval_cmd (While t cs) s =
    (case eval_test t s of
     | (Stop r, s) => (Stop r, s)
     | (Cont v, s) =>
@@ -355,9 +355,9 @@ Definition eval_cmd_def:
            (case tick s of
             | (Stop r, s) => (Stop r, s)
             | (Cont v, s) =>
-               eval_cmd [While t cs] s)))
+               eval_cmd (While t cs) s)))
 Termination
-  WF_REL_TAC ‘inv_image (measure I LEX measure I) (λ(xs,s). (s.clock,cmd1_size xs))’
+  WF_REL_TAC ‘inv_image (measure I LEX measure I) (λ(xs,s). (s.clock,cmd_size xs))’
   \\ rw [] \\ fs [fix_def,CaseEq"bool"] \\ rw [] \\ fs []
   \\ gvs [tick_def,AllCaseEqs(),stop_def,cont_def]
   \\ imp_res_tac eval_test_pure \\ gvs []
@@ -416,48 +416,48 @@ Theorem eval_cmd_def[allow_rebind] = REWRITE_RULE [fix_eval] eval_cmd_def;
 Theorem eval_cmd_ind[allow_rebind] = REWRITE_RULE [fix_eval] eval_cmd_ind;
 
 Theorem eval_cmd_thm:
-  eval_cmd [] = cont () ∧
-  eval_cmd (x::y::ys) =
-    do eval_cmd [x]
-     ; eval_cmd (y::ys)
+  eval_cmd Skip = cont () ∧
+  eval_cmd (Seq x y) =
+    do eval_cmd x
+     ; eval_cmd y
     od ∧
-  eval_cmd [Assign n e] =
+  eval_cmd (Assign n e) =
     do v <- eval_exp e
      ; assign n v
     od ∧
-  eval_cmd [Return e] =
+  eval_cmd (Return e) =
     do v <- eval_exp e
      ; stop (Return v)
     od ∧
-  eval_cmd [PutChar c] =
+  eval_cmd (PutChar c) =
     do v <- eval_exp c
      ; put_char v
     od ∧
-  eval_cmd [GetChar n] =
+  eval_cmd (GetChar n) =
     do v <- get_char
      ; assign n v od ∧
-  eval_cmd [Alloc n e] =
+  eval_cmd (Alloc n e) =
     do val <- eval_exp e
      ; len <- dest_word val
      ; ptr <- alloc len
      ; assign n ptr
     od ∧
-  eval_cmd [Update e1 e2 e3] =
+  eval_cmd (Update e1 e2 e3) =
     do ptr <- eval_exp e1
      ; off <- eval_exp e2
      ; val <- eval_exp e3
      ; update ptr off val
     od ∧
-  eval_cmd [If t cs1 cs2] =
+  eval_cmd (If t cs1 cs2) =
     do b <- eval_test t
      ; eval_cmd (if b then cs1 else cs2)
     od ∧
-  eval_cmd [While t cs] =
+  eval_cmd (While t cs) =
     do b <- eval_test t
      ; if ~b then cont () else
-         do eval_cmd cs ; tick ; eval_cmd [While t cs] od
+         do eval_cmd cs ; tick ; eval_cmd (While t cs) od
     od ∧
-  eval_cmd [Call n fname es] =
+  eval_cmd (Call n fname es) =
     do args <- eval_exps es
      ; locals <- get_vars
      ; body <- get_body_and_set_vars fname args
@@ -492,7 +492,7 @@ End
 
 Definition eval_from_def:
   eval_from k input (Program funs) =
-    eval_cmd [Call 0 (name "main") []] (init_state input funs k)
+    eval_cmd (Call 0 (name "main") []) (init_state input funs k)
 End
 
 Definition imp_avoids_crash_def:

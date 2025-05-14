@@ -28,20 +28,22 @@ Datatype:
 End
 
 Datatype:
-  cmd = Assign name exp                (*  v := e                  *)
-      | Update exp exp exp             (*  a[e] := e'              *)
-      | If test (cmd list) (cmd list)  (*  if (test) ... else ...  *)
-      | While test (cmd list)          (*  while (test) ...        *)
-      | Call name name (exp list)      (*  v := foo(e1,e2,e3,...)  *)
-      | Return exp                     (*  return from function    *)
-      | Alloc name exp                 (*  v := malloc(e)          *)
-      | GetChar name                   (*  v := getchar()          *)
-      | PutChar exp                    (*  putchar(e)              *)
-      | Abort                          (*  exit(1)                 *)
+  cmd = Skip                       (*  do nothing              *)
+      | Assign name exp            (*  v := e                  *)
+      | Update exp exp exp         (*  a[e] := e'              *)
+      | Seq cmd cmd                (*  ... ; ...               *)
+      | If test cmd cmd            (*  if (test) ... else ...  *)
+      | While test cmd             (*  while (test) ...        *)
+      | Call name name (exp list)  (*  v := foo(e1,e2,e3,...)  *)
+      | Return exp                 (*  return from function    *)
+      | Alloc name exp             (*  v := malloc(e)          *)
+      | GetChar name               (*  v := getchar()          *)
+      | PutChar exp                (*  putchar(e)              *)
+      | Abort                      (*  exit(1)                 *)
 End
 
 Datatype:
-  func = Func name (name list) (cmd list)   (* func name, formal params, body *)
+  func = Func name (name list) cmd   (* func name, formal params, body *)
 End
 
 Datatype:

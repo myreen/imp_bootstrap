@@ -20,14 +20,8 @@ Record state := mkState {
   output : list ascii    (* at each point output must be finite *)
 }.
 
-Fixpoint lookup {A} (n : nat) (xs : list A) : option A :=
-  match xs with
-  | [] => None
-  | x :: xs' => if (n =? 0) then Some x else lookup (n - 1) xs'
-  end.
-
 Definition fetch (s : state) : option instr :=
-  lookup s.(pc) s.(instructions).
+  List.nth_error s.(instructions) s.(pc).
 
 Definition inc (s : state) : state :=
   {| instructions := s.(instructions);

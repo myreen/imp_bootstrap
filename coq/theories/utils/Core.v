@@ -13,6 +13,7 @@ Require Export
   Arith
   ZArith.
 From coqutil Require Import dlet.
+From Coq.Unicode Require Export Utf8.
 
 (* d/let *)
 
@@ -39,28 +40,43 @@ Notation
 
 (* CASE *)
 
-Definition list_CASE {A B} (l : list A) (fnil : B) (fcons : A -> list A -> B) : B :=
+Class Analyzable T :=
+  { R: Type; analyze: T -> R }.
+
+Definition list_CASE [A] (l : list A) [B] (fnil : B) (fcons : A -> list A -> B) : B :=
   match l with
   | [] => fnil
   | x :: xs => fcons x xs
   end.
 
-Definition option_CASE {A B} (o : option A) (fnone : B) (fsome : A -> B) : B :=
+Instance Analyzable_List A : Analyzable (list A) :=
+  { analyze := @list_CASE A }.
+
+Definition option_CASE [A] (o : option A) [B] (fnone : B) (fsome : A -> B) : B :=
   match o with
   | None => fnone
   | Some x => fsome x
   end.
 
-Definition pair_CASE {A1 A2 B} (p : A1 * A2) (f: A1 -> A2 -> B) : B :=
+Instance Analyzable_Option A : Analyzable (option A) :=
+  { analyze := @option_CASE A }.
+
+Definition pair_CASE [A1 A2] (p : A1 * A2) [B] (f: A1 -> A2 -> B) : B :=
   match p with
   | (x, y) => f x y
   end.
 
-Definition nat_CASE {A} (n : nat) (f0 : A) (fS : nat -> A) : A :=
+Instance Analyzable_Pair A1 A2 : Analyzable (A1 * A2) :=
+  { analyze := @pair_CASE A1 A2}.
+
+Definition nat_CASE (n : nat) [A] (f0 : A) (fS : nat -> A) : A :=
   match n with
   | 0 => f0
   | S n' => fS n'
   end.
+
+Instance Analyzable_Nat : Analyzable nat :=
+  { analyze := nat_CASE }.
 
 (* FIX *)
 

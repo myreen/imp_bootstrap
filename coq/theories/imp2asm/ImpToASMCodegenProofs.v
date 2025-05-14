@@ -68,37 +68,83 @@ Definition has_stack (t : ASMSemantics.state) (xs : list word_or_ret) : Prop :=
     t.(stack) = ws.
 
 (* Constrains v to valid ranges and equates it with w in the context of ASM state t. *)
-Definition v_inv (t : ASMSemantics.state) (v : word64) (w : word64) : Prop :=
-  word.ltu v (word.of_Z (2 ^ 63)) = true /\ w = v.
+Definition v_inv (t : ASMSemantics.state) (v : Value) (w : word64) : Prop :=
+  match v with
+  | ImpSyntax.Word v => word.ltu v (word.of_Z (2 ^ 63)) = true /\ w = v
+  | Pointer v => t.(memory) w <> None (* TODO(kπ) assert equality of memory blocks? *)
+  end.
 
 (* Checks that environment variables map to valid locations and values on the stack in the ASM state. *)
 Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or_ret) (t : ASMSemantics.state) : Prop :=
   List.length vs = List.length curr /\
   forall n v,
-    (* TODO(kπ) should this also assert pointers? *)
-    IEnv.lookup env n = Some (ImpSyntax.Word v) ->
+    IEnv.lookup env n = Some v ->
     index_of n 0 vs < List.length curr /\
     exists w,
       nth_error curr (index_of n 0 vs) = Some (Word w) /\
       v_inv t v w.
 
+Definition cmd_res_rel (ri: outcome Value unit) (l1: nat) (stck: list word_or_ret) (t1: ASMSemantics.state) (s1: ImpSemantics.state) : Prop :=
+  match ri with
+  | Stop (Return v) => exists w,
+    v_inv t1 v w /\
+    has_stack t1 (Word w :: stck) /\
+    t1.(pc) = l1
+  | Cont _ =>
+    has_stack t1 stck /\
+    t1.(pc) = l1
+  | _ => False
+  end.
+
+Definition exp_res_rel (ri: outcome Value Value) (l1: nat) (stck: list word_or_ret) (t1: ASMSemantics.state) (s1: ImpSemantics.state) : Prop :=
+  match ri with
+  | Cont v => exists w,
+    v_inv t1 v w /\
+    has_stack t1 (Word w :: stck) /\
+    t1.(pc) = l1
+  | _ => False
+  end.
+
 (* Goals *)
 
-Definition goal :=
-  forall (env : IEnv.env) (s s1 : ImpSemantics.state) (fuel: nat) (c : cmd)
+Definition goal_exp (e : exp) :=
+  forall (s s1 : ImpSemantics.state) (fuel: nat)
+         (res : outcome Value Value) (t : ASMSemantics.state)
+         (vs vs' : v_stack) (fs : f_lookup)
+         (asmc : asm_appl) (l1 : nat)
+         (curr rest : list word_or_ret),
+    eval_exp e s = (res, s1) ->
+    res <> Stop Crash ->
+    c_exp e t.(pc) vs = (asmc, l1) ->
+    state_rel fs s t ->
+    env_ok s.(vars) vs curr t ->
+    has_stack t (curr ++ rest) ->
+    odd (List.length rest) = true ->
+    code_in t.(pc) (flatten asmc) t.(instructions) ->
+    exists outcome,
+      steps (State t, fuel) outcome /\
+      match outcome with
+      | (Halt ec output, ck) => False
+      | (State t1, ck) =>
+          state_rel fs s1 t1 /\
+          ck = fuel /\
+          exp_res_rel res l1 (curr ++ rest) t1 s1
+      end.
+
+Definition goal_cmd (c : cmd) :=
+  forall (s s1 : ImpSemantics.state) (fuel: nat)
          (res : outcome Value unit) (t : ASMSemantics.state)
          (vs vs' : v_stack) (fs : f_lookup)
          (asmc : asm_appl) (l1 : nat)
          (curr rest : list word_or_ret),
-    EVAL_CMD fuel c s = (res, s1) /\
-    res <> Stop Crash /\
-    c_cmd c t.(pc) fs vs = (asmc, l1, vs') /\
-    state_rel fs s t /\
-    env_ok env vs curr t /\
-    has_stack t (curr ++ rest) /\
-    odd (List.length rest) = true /\
-    code_in t.(pc) (flatten asmc) t.(instructions)
-    ->
+    EVAL_CMD fuel c s = (res, s1) ->
+    res <> Stop Crash ->
+    c_cmd c t.(pc) fs vs = (asmc, l1, vs') ->
+    state_rel fs s t ->
+    env_ok s.(vars) vs curr t ->
+    has_stack t (curr ++ rest) ->
+    odd (List.length rest) = true ->
+    code_in t.(pc) (flatten asmc) t.(instructions) ->
     exists outcome,
       steps (State t, fuel) outcome /\
       match outcome with
@@ -108,11 +154,110 @@ Definition goal :=
       | (State t1, ck) =>
           state_rel fs s1 t1 /\
           ck = fuel /\
-          forall v,
-            res = Stop (Return v) ->
-            exists w,
-              (* TODO(kπ) Do we need this? vvvvvv (probably in a different form?) *)
-              (* v_inv t1 v w /\ *)
-                has_stack t1 (Word w :: curr ++ rest) /\
-                t1.(pc) = l1
+          cmd_res_rel res l1 (curr ++ rest) t1 s1
       end.
+
+(* proofs *)
+
+Ltac unfold_outcome := unfold cont, crash, stop in *.
+
+Ltac cleanup :=
+  repeat match goal with
+  | [ H: _ /\ _ |- _ ] => destruct H
+  | [ H: exists _, _ |- _ ] => destruct H
+  end.
+
+Theorem give_up: forall fs ds t w n,
+  code_rel fs ds t.(instructions) ->
+  t.(regs) R15 = Some w ->
+  t.(pc) = give_up (odd (List.length t.(stack))) ->
+  steps (State t, n) (Halt (word.of_Z 1) (string_of_list_ascii t.(output)), n).
+Proof.
+  intros.
+  unfold give_up in *.
+  unfold code_rel in *.
+  cleanup.
+  eapply steps_trans.
+  - eapply steps_step_same.
+    eapply
+
+
+
+
+Theorem c_exp_Const : forall (w: word64),
+  goal_exp (ImpSyntax.Const w).
+Proof.
+  unfold goal_exp.
+  intros.
+  unfold has_stack in *.
+  cleanup.
+  eexists.
+  simpl eval_exp in *.
+  unfold_outcome.
+  simpl c_exp in *.
+  unfold c_const in *.
+  destruct (word.of_Z _ <w _) eqn:?.
+  1: {
+    inversion H1; subst; clear H1.
+    simpl flatten in *.
+    split.
+    1: {
+      eapply steps_trans.
+      + eapply steps_step_same.
+        simpl code_in in *.
+        cleanup.
+        eapply step_jump in e; eauto.
+      + eapply steps_step_same.
+        simpl code_in in *.
+        cleanup.
+        eapply step_const.
+        eauto.
+    }
+  }
+  inversion H1; subst; clear H1.
+  simpl flatten in *.
+  split.
+  1: {
+     eapply steps_trans.
+    + eapply steps_step_same.
+      simpl code_in in *.
+      cleanup.
+      eapply step_push in e; eauto.
+    + eapply steps_step_same.
+      simpl code_in in *.
+      cleanup.
+      eapply step_const.
+      eauto.
+  }
+  simpl.
+  repeat split; unfold state_rel in *; cleanup; intros; repeat split; simpl.
+  all: inversion H; subst; eauto.
+  - unfold code_rel in *.
+    cleanup.
+    eauto.
+  - unfold code_rel in *.
+    cleanup.
+    eapply H15 in H14.
+    cleanup.
+    eexists.
+    split; eauto.
+  - eexists; eexists.
+    eauto.
+  - unfold exp_res_rel.
+    eexists.
+    repeat split.
+    1: {
+      rewrite word.unsigned_ltu in *.
+      rewrite word.unsigned_of_Z in *.
+      unfold word.wrap in *.
+      (* THIS IS HORRIBLY SLOW *)
+      cbn.
+      cbn in Heqb.
+      lia.
+    }
+    + unfold has_stack.
+      simpl.
+      eauto.
+    + simpl.
+      lia.
+Qed.

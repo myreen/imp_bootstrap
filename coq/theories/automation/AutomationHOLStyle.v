@@ -1,4 +1,4 @@
-(* From impboot Require Import utils.Core.
+From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
@@ -30,50 +30,10 @@ Definition empty_state : state := init_state Lnil [].
   (I tried to automate this by injectivity, but it's not injective :sad_goat:)
 *)
 
-(* Rupicola approach *)
-
-(* Ltac autostep :=
-  (* eapply trans_app ||
-  eapply trans_Var ||
-  eapply trans_Call ||
-  eapply trans_nil ||
-  eapply trans_cons || *)
-  (* eapply auto_otherwise || *)
-  eapply auto_bool_F ||
-  eapply auto_bool_T ||
-  eapply auto_bool_not ||
-  eapply auto_bool_and ||
-  eapply auto_bool_iff ||
-  eapply last_bool_if ||
-  (* eapply auto_num_const_zero || *)
-  eapply auto_num_const ||
-  eapply auto_num_add ||
-  eapply auto_num_sub ||
-  eapply auto_num_div ||
-  eapply auto_num_if_eq ||
-  eapply auto_num_if_less ||
-  eapply auto_list_nil ||
-  eapply auto_list_cons ||
-  eapply auto_list_case ||
-  eapply auto_option_none ||
-  eapply auto_option_some ||
-  eapply auto_option_case ||
-  eapply auto_pair_fst ||
-  eapply auto_pair_snd ||
-  eapply auto_pair_cons ||
-  eapply auto_pair_case ||
-  eapply auto_char_CHR ||
-  eapply auto_char_ORD ||
-  eapply auto_word4_n2w ||
-  eapply auto_word64_n2w ||
-  eapply auto_word4_w2n ||
-  eapply auto_word64_w2n ||
-  (* This gets applied to eagerly *)
-  eapply auto_let. *)
-
-(* *)
-
-(* HOL4-ish approach *)
+Ltac2 beta_fix : red_flags := {
+  rBeta := true; rMatch := false; rFix := true; rCofix := false;
+  rZeta := false; rDelta := false; rConst := []; rStrength := Norm;
+}.
 
 Ltac2 rec of_list (l : message list) : message :=
   let rec of_list_go (l : message list) :=
@@ -106,6 +66,13 @@ Ltac2 rec extract_fun (e : constr) : (constr * constr list) :=
     (f, [])
   end.
 
+Ltac2 rec apply_to_args (fn: constr) (args: constr list) :=
+  match args with
+  | [] => fn
+  | arg :: args =>
+    apply_to_args open_constr:($fn $arg) args
+  end.
+
 Ltac2 rec list_to_constr_encode (l : constr list) : constr :=
   match l with
   | [] => open_constr:([])
@@ -134,6 +101,32 @@ Ltac2 of_f_lookup (f_lookup : (string * constr) list) : message :=
       Message.concat (Message.of_string name) (Message.concat (Message.of_string " -> ") (Message.of_constr iden))
     ) f_lookup in
     of_list f_lookup'
+  end.
+
+(* TODO(kπ) *)
+Ltac unfold_fix fn :=
+  lazymatch goal with
+  | [  |- context[fn ?x] ] =>
+    let f := fresh "f" in
+    eassert (forall x, fn x = ?[f] x) as -> by
+    (
+      unfold fn;
+      instantiate
+        (f :=
+          ltac:(
+            let ll := fresh "ll" in
+            intros ll;
+            let thm := open_constr:(analyze ll) in
+            apply thm; intros
+          )
+        );
+      cbv beta;
+      match goal with
+      | [  |- forall l, _ ] =>
+          let ll := fresh l in
+          intros ll; destruct ll
+      end; fold fn; simpl analyze; reflexivity
+        ); cbv beta
   end.
 
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
@@ -334,14 +327,13 @@ with compile (e : constr) (cenv : constr list)
         (* eval x1 *) $compile_x
         (* eval x2 *) $compile_xs
         )
-      | (list_CASE ?v0 ?v1 ?v2) =>
+      | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
         let compile_v0 := compile v0 cenv f_lookup in
         let compile_v1 := compile v1 cenv f_lookup in
         let hdv0 := open_constr:(hd _ $v0) in
         let tlv0 := open_constr:(tl $v0) in
         let v0ap := (eval_cbv beta open_constr:($v2 $hdv0 $tlv0)) in
         let compile_v2 := compile (eval_cbv beta v0ap) (tlv0 :: hdv0 :: cenv) f_lookup in
-        (* let compile_v2 := (fun (xh : constr) (xt : constr) => compile (eval_cbv beta open_constr:($v2 $xh $xt)) (xh :: xt :: cenv) f_lookup) in *)
         open_constr:(auto_list_case
         (* env *) _
         (* s *) _
@@ -351,7 +343,6 @@ with compile (e : constr) (cenv : constr list)
         (* default_A *) _
         (* eval x0 *) $compile_v0
         (* eval x1 *) $compile_v1
-        (* TODO(kπ) not sure if the &-references are correct *)
         (* eval x2 *) $compile_v2
         (* NoDup *) _
         )
@@ -360,25 +351,7 @@ with compile (e : constr) (cenv : constr list)
         let compile_v1 := compile v1 cenv f_lookup in
         let predv0 := open_constr:($v0 - 1) in
         let v0ap := (eval_cbv beta open_constr:($v2 $predv0)) in
-        print (Message.of_string "$v2 _");
-        print (Message.of_constr v0ap);
-        print (Message.of_string "$v2");
-        print (Message.of_constr open_constr:($v2));
-        print (Message.of_string "adding to cenv:");
-        print (Message.of_constr predv0);
         let compile_v2 := compile v0ap (predv0 :: cenv) f_lookup in
-        (* TODO(kπ) Dunno why this works. It shouldn't. We can't really support lambdas *)
-        (*          Also see the next comment. Is this OK? *)
-        (* let fresh_ident := Option.map Fresh.in_goal (Ident.of_string "x") in
-        print (Message.of_string "fresh_ident");
-        print (Message.of_ident (Option.get fresh_ident));
-        let compile_v2 := (fun (x : constr) => compile (* (eval_cbv beta  *)open_constr:($v2 $x(* ) *)) (x :: cenv) f_lookup) in
-        print (Message.of_string "compile_v2");
-        let compile_v2_applied := compile_v2 (Constr.Unsafe.make (Constr.Unsafe.Var (Option.get fresh_ident))) in
-        print (Message.of_string "compile_v2_applied");
-        print (Message.of_constr compile_v2_applied);
-        let compile_lambda :=
-          Constr.Unsafe.make (Constr.Unsafe.Lambda (Constr.Binder.make fresh_ident (Constr.type v0)) compile_v2_applied) in *)
         open_constr:(auto_nat_case
         (* env *) _
         (* s *) _
@@ -592,6 +565,65 @@ Proof.
   - exact ("h"%string). *)
 Admitted. *)
 
+Definition has_match (l: list nat) : nat :=
+  1 +
+  match l with
+  | nil => 0
+  | cons h t => h + 100
+  end.
+
+Derive has_match_prog in (forall s l,
+  lookup_fun (name_enc "has_match") s.(funs) = Some ([name_enc "l"], has_match_prog) ->
+  eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
+) as has_match_proof.
+Proof.
+  intros.
+  subst has_match_prog.
+  docompile ().
+  Show Proof.
+
+Fixpoint sum_n (n : nat) : nat :=
+  nat_CASE n 0 (fun n1 => n + (sum_n n1)).
+Print sum_n.
+
+(* Goal (forall n, ((fix sum_n (n0 : nat) : nat :=
+  nat_CASE n0 0 (fun n1 : nat =>
+  n0 + sum_n n1)) n) = 0).
+Proof.
+  intros.
+  cbn fix beta. *)
+
+Derive sum_n_prog in (forall (s : state) (n : nat),
+    lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
+    (* TODO(kπ) Added this just to try the HOL translation for recursion vvvvvvvvvvv *)
+    (* eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s) -> *)
+    eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
+  as fib_prog_proof.
+Proof.
+  intros.
+  subst sum_n_prog.
+
+  (* docompile (). *)
+
+  unfold sum_n.
+  (* change (eval_app (name_enc "sum_n") [encode n] s
+  (encode
+  ((fix sum_n (n0 : nat) : nat :=
+  nat_CASE n0 0 (fun n1 : nat =>
+  n0 + sum_n n1)) (S (pred(n)))), s)). *)
+  cbn fix beta.
+
+
+
+  eapply trans_app.
+  3: exact H.
+  2: simpl; reflexivity ().
+  unfold sum_n, make_env.
+
+
+  docompile ().
+  Show Proof.
+
 Definition has_cases (n : nat) : nat :=
   nat_CASE n 0 (fun n1 =>
     nat_CASE n1 1 (fun n2 => n1 + n2)).
@@ -748,57 +780,3 @@ Proof.
   2: eapply FEnv.lookup_insert_eq; auto.
   1: exact (FEnv.empty).
 Qed.
-
-
-Fixpoint sum_n (n : nat) : nat :=
-  nat_CASE n 0 (fun n1 => n + (sum_n n1)).
-Print sum_n.
-
-Derive sum_n_prog in (forall (s : state) (n : nat),
-    lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
-    (* TODO(kπ) Added this just to try the HOL translation for recursion vvvvvvvvvvv *)
-    eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s) ->
-    eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
-  as fib_prog_proof.
-Proof.
-  intros.
-  subst sum_n_prog.
-  unfold sum_n.
-  eapply trans_app.
-  3: exact H.
-  2: simpl; reflexivity ().
-  unfold sum_n, make_env.
-
-
-  docompile ().
-  Show Proof.
-
-  (* docompile (). *)
-(*
-  all: simpl.
-  all: try (eapply auto_num_const).
-  all: try (docompile ()).
-
-  (* repeat (docompile ()). *)
-
-
-
-  eapply auto_let; intros.
-  all: try (eapply auto_num_add); intros.
-  all: try (eapply auto_num_const); intros.
-  (* all: repeat (autostep; intros). *)
-  all: try eapply trans_Var; try eapply FEnv.lookup_insert_eq.
-  all: repeat split.
-  all: eauto.
-  - exact I.
-  - exact (fun n : nat => I).
-  Unshelve.
-  exact [].
-  Show Proof.
-  intros; eexists.
-  Opaque encode.
-  repeat (autostep; intros).
-  Show Proof.
-
-  eauto with automation. *)
- *)

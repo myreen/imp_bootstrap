@@ -12,7 +12,7 @@ Require Export
   Nat
   Arith
   ZArith.
-From coqutil Require Import dlet.
+From coqutil Require Export dlet.
 From Coq.Unicode Require Export Utf8.
 
 (* d/let *)
@@ -104,18 +104,18 @@ Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Naive.
 
 Declare Scope word.
-Infix "*w" := word.mul (at level 40, left associativity): word.
-Infix "/w" := word.divu (at level 40, left associativity): word.
-Infix "/sw" := word.divs (at level 40, left associativity): word.
-Infix "+w" := word.add (at level 50, left associativity): word.
-Infix "-w" := word.sub (at level 50, left associativity): word.
-Infix ">>w" := word.sru (at level 60, no associativity): word.
-Infix ">>>w" := word.srs (at level 60, no associativity): word.
-Infix "<<w" := word.slu (at level 60, no associativity): word.
-Notation "w1 =w w2" := (word.eqb w1 w2) (at level 70, no associativity): word.
-Notation "w1 <w w2" := (word.ltu w1 w2) (at level 70, no associativity): word.
-Notation "w1 >w w2" := (word.gtu w1 w2) (at level 70, no associativity): word.
-Notation "w1 <sw w2" := (word.lts w1 w2) (at level 70, no associativity): word.
+Infix "*w" := word.mul (at level 40, left associativity, only parsing): word.
+Infix "/w" := word.divu (at level 40, left associativity, only parsing): word.
+Infix "/sw" := word.divs (at level 40, left associativity, only parsing): word.
+Infix "+w" := word.add (at level 50, left associativity, only parsing): word.
+Infix "-w" := word.sub (at level 50, left associativity, only parsing): word.
+Infix ">>w" := word.sru (at level 60, no associativity, only parsing): word.
+Infix ">>>w" := word.srs (at level 60, no associativity, only parsing): word.
+Infix "<<w" := word.slu (at level 60, no associativity, only parsing): word.
+Notation "w1 =w w2" := (word.eqb w1 w2) (at level 70, no associativity, only parsing): word.
+Notation "w1 <w w2" := (word.ltu w1 w2) (at level 70, no associativity, only parsing): word.
+Notation "w1 >w w2" := (word.gtu w1 w2) (at level 70, no associativity, only parsing): word.
+Notation "w1 <sw w2" := (word.lts w1 w2) (at level 70, no associativity, only parsing): word.
 Definition w2n (w: word64): nat :=
   Z.to_nat (word.unsigned w).
 Open Scope word.

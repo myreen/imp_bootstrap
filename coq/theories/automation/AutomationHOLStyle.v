@@ -1,4 +1,4 @@
-From impboot Require Import utils.Core.
+(* From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
@@ -779,4 +779,4 @@ Proof.
   2: eapply FEnv.lookup_insert_eq; auto.
   2: eapply FEnv.lookup_insert_eq; auto.
   1: exact (FEnv.empty).
-Qed.
+Qed. *)

@@ -107,7 +107,7 @@ Definition exp_res_rel (ri: outcome Value Value) (l1: nat) (stck: list word_or_r
 
 (* Goals *)
 
-Definition goal_exp (e : exp) :=
+Definition goal_exp (e : exp): Prop :=
   forall (s s1 : ImpSemantics.state) (fuel: nat)
          (res : outcome Value Value) (t : ASMSemantics.state)
          (vs vs' : v_stack) (fs : f_lookup)
@@ -124,14 +124,16 @@ Definition goal_exp (e : exp) :=
     exists outcome,
       steps (State t, fuel) outcome /\
       match outcome with
-      | (Halt ec output, ck) => False
+      | (Halt ec output, ck) =>
+        prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
+          ec = (word.of_Z 1)
       | (State t1, ck) =>
           state_rel fs s1 t1 /\
           ck = fuel /\
           exp_res_rel res l1 (curr ++ rest) t1 s1
       end.
 
-Definition goal_cmd (c : cmd) :=
+Definition goal_cmd (c : cmd): Prop :=
   forall (s s1 : ImpSemantics.state) (fuel: nat)
          (res : outcome Value unit) (t : ASMSemantics.state)
          (vs vs' : v_stack) (fs : f_lookup)
@@ -159,13 +161,52 @@ Definition goal_cmd (c : cmd) :=
 
 (* proofs *)
 
-Ltac unfold_outcome := unfold cont, crash, stop in *.
+Ltac unfold_outcome :=
+  unfold cont, crash, stop in *.
+
+Ltac unfold_stack :=
+  unfold inc, set_stack, set_input, set_memory, set_pc,
+          set_vars, set_varsM, set_output, write_reg, write_mem in *; simpl.
 
 Ltac cleanup :=
   repeat match goal with
   | [ H: _ /\ _ |- _ ] => destruct H
   | [ H: exists _, _ |- _ ] => destruct H
+  | [ H : True |- _ ] => clear H
   end.
+
+Theorem rw_mod_2_even: forall (n: nat),
+  (n mod 2 = 0) <-> (even n = true).
+Proof.
+  split.
+  - revert n.
+    fix IH 1.
+    destruct n.
+    + reflexivity.
+    + intros.
+      destruct n.
+      * inversion H.
+      * simpl.
+        eapply IH.
+        change ((1 * 2 + n) mod 2 = 0) in H.
+        rewrite Nat.add_comm in H.
+        rewrite Nat.Div0.mod_add in H.
+        assumption.
+  - revert n.
+    fix IH 1.
+    destruct n.
+    + reflexivity.
+    + intros.
+      destruct n.
+      * inversion H.
+      * simpl in H.
+        change ((1 * 2 + n) mod 2 = 0).
+        rewrite Nat.add_comm.
+        rewrite Nat.Div0.mod_add.
+        eapply IH.
+        simpl.
+        assumption.
+Qed.
 
 Theorem give_up: forall fs ds t w n,
   code_rel fs ds t.(instructions) ->
@@ -176,49 +217,189 @@ Proof.
   intros.
   unfold give_up in *.
   unfold code_rel in *.
+  unfold init_code_in, init in *.
+  unfold code_in in *.
   cleanup.
+  destruct (odd (List.length (stack t))) eqn:?.
+  1: {
+    eapply steps_trans.
+    - eapply steps_step_same.
+      eapply step_push; eauto.
+      unfold fetch; rewrite H1; eauto.
+    - eapply steps_trans.
+      + eapply steps_step_same.
+        eapply step_const; eauto.
+        unfold_stack.
+        unfold fetch; rewrite H1; eauto.
+      + eapply steps_step_same.
+        eapply step_exit with (s := (write_reg ARG_REG (word.of_Z 1)
+        (inc (set_stack (Word w :: stack t) (inc t))))).
+        1: unfold fetch; unfold_stack; simpl; rewrite H1; eauto.
+        1: unfold_stack; simpl; eauto.
+        rewrite rw_mod_2_even.
+        simpl in *.
+        destruct (List.length (stack t)); [tauto|].
+        rewrite Nat.odd_succ in *.
+        assumption.
+  }
   eapply steps_trans.
-  - eapply steps_step_same.
-    eapply
+  + eapply steps_step_same.
+    eapply step_const; eauto.
+    unfold_stack.
+    unfold fetch; rewrite H1; eauto.
+  + eapply steps_step_same.
+    eapply step_exit with (s := (write_reg ARG_REG (word.of_Z 1) (inc t))).
+    1: unfold fetch; unfold_stack; simpl; rewrite H1; eauto.
+    1: unfold_stack; simpl; eauto.
+    rewrite rw_mod_2_even.
+    simpl in *.
+    rewrite <- Nat.negb_odd in *.
+    rewrite Heqb.
+    tauto.
+Qed.
 
+Theorem even_len_spec_str: forall {A} (l: list A),
+  (forall x, even_len (x :: l) = even (List.length (x :: l))) ∧
+  even_len l = even (List.length l).
+Proof.
+  induction l.
+  - split; reflexivity.
+  - simpl even_len.
+    destruct l; try reflexivity; split.
+    all: unfold list_CASE; cbv beta.
+    all: cleanup; try reflexivity; intros.
+    all: eapply eq_sym.
+    all: rewrite length_cons.
+    all: rewrite length_cons.
+    all: rewrite Nat.even_succ.
+    all: rewrite Nat.odd_succ.
+    all: eapply eq_sym.
+    1: assumption.
+    eapply H with (x := a).
+Qed.
 
+Theorem even_len_spec: forall {A} (l: list A),
+  even_len l = even (List.length l).
+Proof.
+  intros.
+  eapply even_len_spec_str.
+Qed.
 
+Theorem odd_len_spec_str: forall {A} (l: list A),
+  (forall x, odd_len (x :: l) = odd (List.length (x :: l))) ∧
+  odd_len l = odd (List.length l).
+Proof.
+  induction l.
+  - split; reflexivity.
+  - simpl odd_len.
+    destruct l; try reflexivity; split.
+    all: unfold list_CASE; cbv beta.
+    all: cleanup; try reflexivity; intros.
+    all: eapply eq_sym.
+    all: rewrite length_cons.
+    all: rewrite length_cons.
+    all: rewrite Nat.odd_succ.
+    all: rewrite Nat.even_succ.
+    all: eapply eq_sym.
+    1: assumption.
+    eapply H with (x := a).
+Qed.
+
+Theorem odd_len_spec: forall {A} (l: list A),
+  odd_len l = odd (List.length l).
+Proof.
+  intros.
+  eapply odd_len_spec_str.
+Qed.
+
+Theorem has_stack_even: forall t xs,
+  has_stack t xs -> even (List.length t.(stack)) = odd (List.length xs).
+Proof.
+  intros.
+  unfold has_stack in *; cleanup.
+  subst.
+  rewrite length_cons.
+  rewrite <- Nat.odd_succ.
+  reflexivity.
+Qed.
+
+Theorem substring_noop: forall s,
+  substring 0 (length s) s = s.
+Proof.
+Admitted.
+
+Theorem w_lt_bound: forall (w: word64),
+  (word.ltu (word.of_Z (2 ^ 63 - 1)) w = false \/
+    word.ltu w (word.of_Z (2 ^ 63)) = true) ->
+  word.ltu w (word.of_Z (2 ^ 63)) = true /\
+  (Naive.unsigned w <? Z.pow_pos 2 63 mod Z.pow_pos 2 64)%Z = true.
+Proof.
+  intros.
+  rewrite word.unsigned_ltu in *.
+  rewrite word.unsigned_of_Z in *.
+  unfold word.wrap in *.
+  (* THIS IS HORRIBLY SLOW *)
+  cbn in *.
+  lia.
+Qed.
 
 Theorem c_exp_Const : forall (w: word64),
   goal_exp (ImpSyntax.Const w).
 Proof.
   unfold goal_exp.
   intros.
-  unfold has_stack in *.
-  cleanup.
-  eexists.
+  specialize (has_stack_even t (curr ++ rest) H4); intros.
+  unfold has_stack in *; cleanup.
   simpl eval_exp in *.
-  unfold_outcome.
-  simpl c_exp in *.
-  unfold c_const in *.
+  unfold lookup_var in *.
+  unfold state_rel in *; cleanup.
+  unfold env_ok in *; cleanup.
+  simpl c_exp in *; unfold c_const in *.
   destruct (word.of_Z _ <w _) eqn:?.
   1: {
+    eexists.
     inversion H1; subst; clear H1.
     simpl flatten in *.
     split.
-    1: {
-      eapply steps_trans.
+    - eapply steps_trans.
       + eapply steps_step_same.
-        simpl code_in in *.
+        simpl code_in in *; cleanup.
+        eapply step_jump; eauto.
+        constructor.
+      + simpl.
+        all: unfold state_rel in *; cleanup.
+        eapply give_up.
+        all: unfold_stack; eauto.
+        rewrite odd_len_spec.
+        unfold env_ok in *.
         cleanup.
-        eapply step_jump in e; eauto.
-      + eapply steps_step_same.
-        simpl code_in in *.
-        cleanup.
-        eapply step_const.
-        eauto.
-    }
+        rewrite H3 in *.
+        f_equal.
+        apply eq_sym.
+        rewrite <- Nat.negb_even.
+        rewrite H7.
+        rewrite Nat.negb_odd.
+        rewrite length_app.
+        rewrite Nat.even_add.
+        repeat rewrite <- Nat.negb_odd.
+        rewrite H5.
+        rewrite Nat.negb_odd.
+        tauto.
+    - simpl.
+      split; try reflexivity.
+      inversion H; subst.
+      unfold state_rel in *; cleanup.
+      rewrite <- H10.
+      rewrite prefix_correct.
+      apply substring_noop.
   }
+  simpl.
   inversion H1; subst; clear H1.
   simpl flatten in *.
+  eexists.
   split.
   1: {
-     eapply steps_trans.
+    eapply steps_trans.
     + eapply steps_step_same.
       simpl code_in in *.
       cleanup.
@@ -226,7 +407,7 @@ Proof.
     + eapply steps_step_same.
       simpl code_in in *.
       cleanup.
-      eapply step_const.
+      eapply step_const with (w := w).
       eauto.
   }
   simpl.
@@ -235,9 +416,8 @@ Proof.
   - unfold code_rel in *.
     cleanup.
     eauto.
-  - unfold code_rel in *.
-    cleanup.
-    eapply H15 in H14.
+  - unfold code_rel in *; cleanup.
+    eapply H11 in H1.
     cleanup.
     eexists.
     split; eauto.
@@ -246,18 +426,152 @@ Proof.
   - unfold exp_res_rel.
     eexists.
     repeat split.
-    1: {
-      rewrite word.unsigned_ltu in *.
-      rewrite word.unsigned_of_Z in *.
-      unfold word.wrap in *.
-      (* THIS IS HORRIBLY SLOW *)
-      cbn.
-      cbn in Heqb.
-      lia.
-    }
+    1: eapply w_lt_bound; eauto.
     + unfold has_stack.
       simpl.
       eauto.
     + simpl.
       lia.
 Qed.
+
+Theorem c_exp_Var : forall (n: name),
+  goal_exp (ImpSyntax.Var n).
+Proof.
+  unfold goal_exp.
+  intros.
+  unfold has_stack in *; cleanup.
+  simpl eval_exp in *.
+  unfold lookup_var in *.
+  unfold state_rel in *; cleanup.
+  unfold env_ok in *; cleanup.
+  unfold code_rel in *; cleanup.
+  simpl c_exp in *; unfold c_var in *; unfold dlet in *.
+  destruct (index_of n 0 vs =? 0) eqn:?.
+  1: {
+    eexists.
+    inversion H1; subst; clear H1.
+    simpl flatten in *.
+    split.
+    - eapply steps_step_same.
+      simpl code_in in *; cleanup.
+      eapply step_push in e; eauto.
+    - simpl.
+      destruct (IEnv.lookup (vars s) n) eqn:?; unfold_outcome; inversion H; subst.
+      2: unfold not in H0; contradiction.
+      repeat split; simpl; eauto.
+      1: eexists; eexists; eauto.
+      unfold v_inv, has_stack.
+      destruct v eqn:?.
+      1: {
+        assert (x = w).
+        1: {
+          eapply H16 in Heqo; cleanup; subst.
+          unfold v_inv in *; cleanup; subst.
+          rewrite Nat.eqb_eq in *.
+          rewrite Heqb in *.
+          destruct curr; inversion H8; subst.
+          inversion H4; subst.
+          reflexivity.
+        }
+        subst.
+        exists w; repeat split; try exists w.
+        all: try eexists; repeat split.
+        all: unfold_stack.
+        all: eauto.
+        unfold v_inv in *; cleanup; subst.
+        unfold env_ok in *; cleanup.
+        pose (H16 n (ImpSyntax.Word w) Heqo); cleanup.
+        unfold v_inv in *; cleanup.
+        eapply w_lt_bound; eauto.
+      }
+      eexists; repeat split.
+      all: repeat eexists; repeat split.
+      all: unfold_stack.
+      all: eauto.
+      unfold env_ok in *; cleanup.
+      eapply H16 in Heqo; cleanup; subst.
+      unfold v_inv in *; cleanup; subst.
+      rewrite Nat.eqb_eq in *.
+      rewrite Heqb in *.
+      destruct curr; inversion H8; subst.
+      inversion H4; subst.
+      assumption.
+  }
+  unfold env_ok in *; cleanup.
+  unfold lookup_var in *; cleanup.
+  destruct (IEnv.lookup (vars s) n) eqn:?; unfold_outcome; inversion H; subst.
+  2: unfold not in H0; contradiction.
+  pose (H16 n v Heqo); cleanup.
+  eexists.
+  inversion H1; subst; clear H1.
+  simpl flatten in *.
+  split.
+  - eapply steps_trans.
+    + eapply steps_step_same.
+      simpl code_in in *; cleanup.
+      eapply step_push in e; eauto.
+    + eapply steps_step_same.
+      rewrite Nat.eqb_neq in *.
+      simpl code_in in *; cleanup.
+      eapply step_load_rsp; eauto.
+      all: unfold_stack; eauto.
+      2: {
+        rewrite <- H4 in *.
+        rewrite nth_error_app.
+        rewrite <- Nat.ltb_lt in *.
+        rewrite H8.
+        rewrite H18.
+        reflexivity.
+      }
+      eapply Nat.lt_trans; [eauto|].
+      assert (List.length (curr ++ rest) = List.length (Word x :: stack t)); [rewrite H4; reflexivity|].
+      rewrite length_app in *.
+      rewrite length_cons in *.
+      rewrite <- H1.
+      destruct rest; [inversion H5|].
+      rewrite length_cons in *.
+      lia.
+  - simpl.
+    unfold state_rel in *; cleanup.
+    unfold code_rel in *; cleanup.
+    repeat split; simpl; eauto.
+    1: eexists; eexists; eauto.
+    unfold v_inv, has_stack.
+    destruct v eqn:?.
+    1: {
+      eexists; repeat split; try eexists.
+      all: try eexists; repeat split.
+      all: unfold_stack.
+      all: eauto; try lia.
+      - unfold v_inv in *; cleanup; subst.
+        eapply w_lt_bound; eauto.
+      - eapply H16 in Heqo; cleanup; subst.
+        unfold v_inv in *; cleanup; subst.
+        reflexivity.
+    }
+    eexists; repeat split.
+    all: repeat eexists; repeat split.
+    all: unfold_stack.
+    all: eauto.
+    lia.
+Qed.
+
+Theorem c_exp_Add : forall (e1 e2: exp),
+  goal_exp e1 -> goal_exp e2 ->
+  goal_exp (ImpSyntax.Add e1 e2).
+Proof.
+  intros.
+  unfold goal_exp.
+  intros.
+  unfold has_stack in *; cleanup.
+  simpl eval_exp in *.
+
+  unfold lookup_var in *.
+  unfold state_rel in *; cleanup.
+  unfold env_ok in *; cleanup.
+  unfold code_rel in *; cleanup.
+  simpl c_exp in *; unfold c_add in *; unfold dlet in *.
+  (* unfold goal_exp in H. *)
+  (* specialize H with (t := t) (vs := vs) (s := s) (s1 := s1) (fuel := fuel). *)
+  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *.
+Admitted.

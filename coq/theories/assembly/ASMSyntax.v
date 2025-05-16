@@ -9,8 +9,8 @@ Inductive reg :=
 | RBX | RBP | R12 | R13 | R14 | R15 (* callee saved *)
 | RDX. (* caller saved, i.e. gets clobbered by external calls *)
 
-Notation ARG_REG := RDI.
-Notation RET_REG := RAX.
+Notation ARG_REG := RDI (only parsing).
+Notation RET_REG := RAX (only parsing).
 
 Scheme Equality for reg.
 

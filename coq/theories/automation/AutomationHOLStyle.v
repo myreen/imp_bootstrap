@@ -1,4 +1,4 @@
-(* From impboot Require Import utils.Core.
+From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
@@ -12,6 +12,7 @@ From coqutil Require Import
   Tactics.ident_of_string
   Tactics.ident_to_string.
 From Stdlib Require Import derive.Derive.
+From Stdlib Require Import FunInd.
 
 Ltac rewrite_let := match goal with
 | [ |- context C [?subterm] ] =>
@@ -243,11 +244,11 @@ with compile (e : constr) (cenv : constr list)
         (* eval x_t *) $compile_t
         (* eval x_f *) $compile_f
         )
-      (* num *)
+      (* nat *)
       | (?n1 + ?n2) =>
         let compile_n1 := compile n1 cenv f_lookup in
         let compile_n2 := compile n2 cenv f_lookup in
-        open_constr:(auto_num_add
+        open_constr:(auto_nat_add
         (* env *) _
         (* s0 s1 s2 *) _ _ _
         (* x1 x2 *) _ _
@@ -258,7 +259,7 @@ with compile (e : constr) (cenv : constr list)
       | (?n1 - ?n2) =>
         let compile_n1 := compile n1 cenv f_lookup in
         let compile_n2 := compile n2 cenv f_lookup in
-        open_constr:(auto_num_sub
+        open_constr:(auto_nat_sub
         (* env *) _
         (* s0 s1 s2 *) _ _ _
         (* x1 x2 *) _ _
@@ -269,7 +270,7 @@ with compile (e : constr) (cenv : constr list)
       | (?n1 / ?n2) =>
         let compile_n1 := compile n1 cenv f_lookup in
         let compile_n2 := compile n2 cenv f_lookup in
-        open_constr:(auto_num_div
+        open_constr:(auto_nat_div
         (* env *) _
         (* s0 s1 s2 *) _ _ _
         (* x1 x2 *) _ _
@@ -283,7 +284,7 @@ with compile (e : constr) (cenv : constr list)
         let compile_n2 := compile n2 cenv f_lookup in
         let compile_t := compile t cenv f_lookup in
         let compile_f := compile f cenv f_lookup in
-        open_constr:(auto_num_if_eq
+        open_constr:(auto_nat_if_eq
         (* A *) _
         (* env *) _
         (* s *) _
@@ -299,7 +300,7 @@ with compile (e : constr) (cenv : constr list)
         let compile_n2 := compile n2 cenv f_lookup in
         let compile_t := compile t cenv f_lookup in
         let compile_f := compile f cenv f_lookup in
-        open_constr:(auto_num_if_less
+        open_constr:(auto_nat_if_less
         (* env *) _
         (* s *) _
         (* x1 x2 y z *) _ _ _ _
@@ -330,28 +331,30 @@ with compile (e : constr) (cenv : constr list)
       | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
         let compile_v0 := compile v0 cenv f_lookup in
         let compile_v1 := compile v1 cenv f_lookup in
-        let hdv0 := open_constr:(hd _ $v0) in
-        let tlv0 := open_constr:(tl $v0) in
-        let v0ap := (eval_cbv beta open_constr:($v2 $hdv0 $tlv0)) in
-        let compile_v2 := compile (eval_cbv beta v0ap) (tlv0 :: hdv0 :: cenv) f_lookup in
         open_constr:(auto_list_case
         (* env *) _
         (* s *) _
         (* x0 x1 x2 *) _ _ _
         (* n1 n2 *) _ _
         (* v0 v1 v2 *) $v0 $v1 $v2
-        (* default_A *) _
         (* eval x0 *) $compile_v0
         (* eval x1 *) $compile_v1
-        (* eval x2 *) $compile_v2
+        (* eval x2 *) ltac2:(Control.enter (fun () =>
+          let h := Fresh.in_goal (Option.get (Ident.of_string "h_nm")) in
+          let t := Fresh.in_goal (Option.get (Ident.of_string "t_nm")) in
+          Std.intros false [IntroNaming (IntroFresh h)];
+          Std.intros false [IntroNaming (IntroFresh t)];
+          let h_constr := (Control.hyp h) in
+          let t_constr := (Control.hyp t) in
+          Control.refine (fun () =>
+            compile (eval_cbv beta open_constr:($v2 $h_constr $t_constr)) (t_constr :: h_constr :: cenv) f_lookup
+          )
+        ))
         (* NoDup *) _
         )
-      | (nat_CASE ?v0 ?v1 ?v2) =>
+      | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
         let compile_v0 := compile v0 cenv f_lookup in
         let compile_v1 := compile v1 cenv f_lookup in
-        let predv0 := open_constr:($v0 - 1) in
-        let v0ap := (eval_cbv beta open_constr:($v2 $predv0)) in
-        let compile_v2 := compile v0ap (predv0 :: cenv) f_lookup in
         open_constr:(auto_nat_case
         (* env *) _
         (* s *) _
@@ -360,11 +363,18 @@ with compile (e : constr) (cenv : constr list)
         (* v0 v1 v2 *) $v0 $v1 $v2
         (* eval x0 *) $compile_v0
         (* eval x1 *) $compile_v1
-        (* eval x2 *) $compile_v2
+        (* eval x2 *) ltac2:(Control.enter (fun () =>
+          let n := Fresh.in_goal (Option.get (Ident.of_string "n_nm")) in
+          Std.intros false [IntroNaming (IntroFresh n)];
+          let n_constr := (Control.hyp n) in
+          Control.refine (fun () =>
+            compile (eval_cbv beta open_constr:($v2 $n_constr)) (n_constr :: cenv) f_lookup
+          )
+        ))
         )
       | ?x =>
         (* open_constr:(_) *)
-        open_constr:(auto_num_const
+        open_constr:(auto_nat_const
         (* env *) _
         (* s *) _
         (* n *) $x
@@ -417,8 +427,7 @@ Ltac2 rec fun_ident (c : constr) : reference :=
 
 Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
   lazy_match! t with
-  (* TODO(kπ) Ltac(2) doesn't allow matching on open terms :sad_goat: *)
-  | (forall _, ?t1) =>
+  | (forall x, @?t1 x) =>
     let t1_refined := refine_up_to_eval_app iden t1 in
     open_constr:($t1_refined _)
   | (fun _ => ?t1) =>
@@ -456,7 +465,7 @@ Ltac2 docompile () :=
     intros;
     eauto with fenvDb
   (* TODO(kπ) we need to know whether it is the currently compiled function at some point  *)
-  | [ (* h : (lookup_fun ?_fname _ = _) *)
+  | [ h : (lookup_fun ?_fname _ = _)
   |- eval_app ?_fname ?args _ (encode ?g, _) ] =>
     let f_lookup := get_f_lookup_from_hyps () in
     let argsl := constr_to_list args in
@@ -478,12 +487,12 @@ Ltac2 docompile () :=
     (* v *) _
     (* eval body *) $compile_g
     (* params length eq *) _
-    (* lookup_fun *) _
+    (* lookup_fun *) ltac2:(Control.refine (fun () => Control.hyp h))
     );
     intros;
     eauto with fenvDb
   | [ |- ?x ] =>
-    print (Message.of_string "No match in docompile");
+    print (Message.of_string "No match in docompile for:");
     print (Message.of_constr x);
     (* fail *)
     refine open_constr:(_)
@@ -565,7 +574,7 @@ Proof.
   - exact ("h"%string). *)
 Admitted. *)
 
-Definition has_match (l: list nat) : nat :=
+(* Definition has_match (l: list nat) : nat :=
   1 +
   match l with
   | nil => 0
@@ -581,10 +590,14 @@ Proof.
   subst has_match_prog.
   docompile ().
   Show Proof.
+Abort. *)
 
-Fixpoint sum_n (n : nat) : nat :=
-  nat_CASE n 0 (fun n1 => n + (sum_n n1)).
-Print sum_n.
+Function sum_n (n : nat) : nat :=
+  match n with
+  | 0 => 0
+  | S n1 => (sum_n n1) + n
+  end.
+About sum_n_equation.
 
 (* Goal (forall n, ((fix sum_n (n0 : nat) : nat :=
   nat_CASE n0 0 (fun n1 : nat =>
@@ -602,17 +615,13 @@ Derive sum_n_prog in (forall (s : state) (n : nat),
 Proof.
   intros.
   subst sum_n_prog.
-
-  (* docompile (). *)
+  rewrite sum_n_equation.
+  eapply trans_app.
+  3: eauto.
+  2: reflexivity ().
+  docompile ().
 
   unfold sum_n.
-  (* change (eval_app (name_enc "sum_n") [encode n] s
-  (encode
-  ((fix sum_n (n0 : nat) : nat :=
-  nat_CASE n0 0 (fun n1 : nat =>
-  n0 + sum_n n1)) (S (pred(n)))), s)). *)
-  cbn fix beta.
-
 
 
   eapply trans_app.
@@ -621,12 +630,19 @@ Proof.
   unfold sum_n, make_env.
 
 
-  docompile ().
-  Show Proof.
+  (* docompile ().
+  Show Proof. *)
+Abort.
 
 Definition has_cases (n : nat) : nat :=
-  nat_CASE n 0 (fun n1 =>
-    nat_CASE n1 1 (fun n2 => n1 + n2)).
+  match n with
+  | 0 => 0
+  | S n1 =>
+    match n1 with
+    | 0 => 1
+    | S n2 => n1 + n2
+    end
+  end.
 Print has_cases.
 
 Derive has_cases_prog in (forall (s : state) (n : nat),
@@ -637,6 +653,7 @@ Proof.
   intros.
   subst has_cases_prog.
   docompile ().
+  Show Proof.
 Abort.
 
 Definition has_cases_list (l : list nat) : nat :=
@@ -779,4 +796,4 @@ Proof.
   2: eapply FEnv.lookup_insert_eq; auto.
   2: eapply FEnv.lookup_insert_eq; auto.
   1: exact (FEnv.empty).
-Qed. *)
+Qed.

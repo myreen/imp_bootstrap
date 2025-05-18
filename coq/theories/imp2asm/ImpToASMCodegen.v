@@ -4,6 +4,7 @@ Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.utils.AppList.
 Require Import coqutil.Word.Interface.
 Require Import ZArith.
+Require Import FunInd.
 
 Open Scope app_list_scope.
 
@@ -47,7 +48,7 @@ Definition init (k : nat) : asm :=
 Definition AllocLoc : nat := 7.
 
 (* Checks if a list has an even length *)
-Fixpoint even_len {A} (xs : list A) : bool :=
+Function even_len {A} (xs : list A): bool :=
   match xs with
   | nil => true
   | _ :: ys =>
@@ -57,8 +58,8 @@ Fixpoint even_len {A} (xs : list A) : bool :=
     end
   end.
 
-Fixpoint odd_len {A} (xs : list A) : bool :=
-match xs with
+Function odd_len {A} (xs : list A) : bool :=
+  match xs with
   | nil => false
   | _ :: ys =>
     match ys with
@@ -80,7 +81,7 @@ Definition c_const (n : word64) (l : nat) (vs : v_stack) : asm_appl * nat :=
     (List [ASMSyntax.Push RAX; ASMSyntax.Const RAX n], l+2).
 
 (* Finds the index of a variable in a stack representation *)
-Fixpoint index_of (n : name) (k : nat) (vs : v_stack) : nat :=
+Function index_of (n : name) (k : nat) (vs : v_stack) : nat :=
   match vs with
   | nil => k
   | x :: xs =>
@@ -170,7 +171,7 @@ Definition c_store : asm_appl :=
     ASMSyntax.Add RDI RDX;
     ASMSyntax.Store RAX RDI (word.of_Z 0) ].
 
-Fixpoint c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
+Function c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
   match e with
   | Var n => c_var n l vs
   | Const n => c_const n l vs
@@ -194,7 +195,7 @@ Fixpoint c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
       (asm1 +++ asm2 +++ c_load, l2 + app_list_length c_load)
   end.
 
-Fixpoint c_exps (es: list exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
+Function c_exps (es: list exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
   match es with
   | [] => (List [], l)
   | e :: es' =>
@@ -212,7 +213,7 @@ Definition c_cmp (c : cmp) : cond :=
     | Equal => ASMSyntax.Equal RDI RBX
   end.
 
-Fixpoint c_test_jump (t : test) (pos_label : nat) (neg_label : nat)
+Function c_test_jump (t : test) (pos_label : nat) (neg_label : nat)
   (l : nat) (vs : v_stack) : asm_appl * nat :=
   match t with
   | Test c e1 e2 =>
@@ -237,7 +238,7 @@ Fixpoint c_test_jump (t : test) (pos_label : nat) (neg_label : nat)
   end.
 
 (* Looks up a function name in a list of function addresses *)
-Fixpoint lookup (n : nat) (fs : f_lookup) : nat :=
+Function lookup (n : nat) (fs : f_lookup) : nat :=
   match fs with
   | [] => 0
   | (x, y) :: xs =>
@@ -261,7 +262,7 @@ Definition c_pops (xs : list exp) (vs : v_stack) : asm_appl :=
   List [Jump Always (give_up (xorb (negb (even_len xs)) (even_len vs)))].
 
 (** Builds a stack representation for parameters of a function *)
-Fixpoint call_v_stack (xs: list name) (acc: v_stack): v_stack :=
+Function call_v_stack (xs: list name) (acc: v_stack): v_stack :=
   match xs with
   | [] => acc
   | x :: xs' => call_v_stack xs' (Some x :: acc)
@@ -285,7 +286,7 @@ Definition c_call (vs : v_stack) (target : nat)
   letd asm1 := align (even_len vs) (List [ASMSyntax.Call target]) in
   (asm_pops +++ asm1, l + app_list_length asm_pops + app_list_length asm1).
 
-Fixpoint c_cmd (c : cmd) (l : nat) (fs : f_lookup)
+Function c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   (vs : v_stack) : (asm_appl * nat * v_stack) :=
   match c with
   | Seq c1 c2 =>
@@ -357,7 +358,7 @@ Definition c_fundef (fundef : func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
 
 (* TODO(kπ) termination is unobvious to Coq, super unimportant function, hacked for now *)
 (* Converts a numeric name to a string representation *)
-Fail Fixpoint name2str (n : nat) (acc : string) : string :=
+Fail Function name2str (n : nat) (acc : string) : string :=
   if n =? 0 then
     acc
   else
@@ -367,7 +368,7 @@ Definition name2str (n : nat) (acc : string) : string :=
   String (ascii_of_nat (n mod 256)) acc.
 
 (* Compiles a list of function declarations into assembly instructions *)
-Fixpoint c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm_appl * list (name * nat) * nat) :=
+Function c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm_appl * list (name * nat) * nat) :=
   match ds with
   | [] => (List [], fs, l)
   | d :: ds' =>

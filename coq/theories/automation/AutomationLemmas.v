@@ -1,4 +1,4 @@
-(* Require Import impboot.functional.FunSyntax.
+Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunProperties.
 Require Import impboot.functional.FunValues.
@@ -301,9 +301,10 @@ Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
   env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([rb.(encode) v1], s) ->
-  (forall h t, (FEnv.insert (name_enc n2, Some (encode t))
-    (FEnv.insert (name_enc n1, Some (ra.(encode) h)) env)) |-- ([x2], s) --->
-      ([rb.(encode) (v2 h t)], s)) ->
+  (forall h t,
+    (FEnv.insert (name_enc n2, Some (encode t))
+      (FEnv.insert (name_enc n1, Some (ra.(encode) h)) env)) |-- ([x2], s) --->
+        ([rb.(encode) (v2 h t)], s)) ->
   NoDup ([name_enc n1] ++ free_vars x0) ->
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n1) (Op Head [x0])
@@ -1071,4 +1072,4 @@ Qed.
 
 (* TODO(kπ) continue *)
 
- *)
+

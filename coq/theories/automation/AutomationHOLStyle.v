@@ -175,6 +175,15 @@ with compile (e : constr) (cenv : constr list)
   | None =>
     let compile_go :=
       lazy_match! e with
+      | (fun x => @?f x) =>
+        open_constr:(ltac2:(Control.enter (fun () =>
+          let x := Fresh.in_goal (Option.get (Ident.of_string "x_nm")) in
+          Std.intros false [IntroNaming (IntroFresh x)];
+          let x_constr := (Control.hyp x) in
+          Control.refine (fun () =>
+            compile (eval_cbv beta open_constr:($f $x_constr)) (x_constr :: cenv) f_lookup
+          )
+        )))
       | (dlet ?val ?body) =>
         let compiled_val := compile val cenv f_lookup in
         let applied_body := eval_cbv beta open_constr:($body $val) in
@@ -331,6 +340,7 @@ with compile (e : constr) (cenv : constr list)
       | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
         let compile_v0 := compile v0 cenv f_lookup in
         let compile_v1 := compile v1 cenv f_lookup in
+        let compile_v2 := compile v2 cenv f_lookup in
         open_constr:(auto_list_case
         (* env *) _
         (* s *) _
@@ -339,22 +349,13 @@ with compile (e : constr) (cenv : constr list)
         (* v0 v1 v2 *) $v0 $v1 $v2
         (* eval x0 *) $compile_v0
         (* eval x1 *) $compile_v1
-        (* eval x2 *) ltac2:(Control.enter (fun () =>
-          let h := Fresh.in_goal (Option.get (Ident.of_string "h_nm")) in
-          let t := Fresh.in_goal (Option.get (Ident.of_string "t_nm")) in
-          Std.intros false [IntroNaming (IntroFresh h)];
-          Std.intros false [IntroNaming (IntroFresh t)];
-          let h_constr := (Control.hyp h) in
-          let t_constr := (Control.hyp t) in
-          Control.refine (fun () =>
-            compile (eval_cbv beta open_constr:($v2 $h_constr $t_constr)) (t_constr :: h_constr :: cenv) f_lookup
-          )
-        ))
+        (* eval x2 *) $compile_v2
         (* NoDup *) _
         )
       | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
         let compile_v0 := compile v0 cenv f_lookup in
         let compile_v1 := compile v1 cenv f_lookup in
+        let compile_v2 := compile v2 cenv f_lookup in
         open_constr:(auto_nat_case
         (* env *) _
         (* s *) _
@@ -363,14 +364,7 @@ with compile (e : constr) (cenv : constr list)
         (* v0 v1 v2 *) $v0 $v1 $v2
         (* eval x0 *) $compile_v0
         (* eval x1 *) $compile_v1
-        (* eval x2 *) ltac2:(Control.enter (fun () =>
-          let n := Fresh.in_goal (Option.get (Ident.of_string "n_nm")) in
-          Std.intros false [IntroNaming (IntroFresh n)];
-          let n_constr := (Control.hyp n) in
-          Control.refine (fun () =>
-            compile (eval_cbv beta open_constr:($v2 $n_constr)) (n_constr :: cenv) f_lookup
-          )
-        ))
+        (* eval x2 *) $compile_v2
         )
       | ?x =>
         (* open_constr:(_) *)
@@ -619,15 +613,8 @@ Proof.
   eapply trans_app.
   3: eauto.
   2: reflexivity ().
-  docompile ().
+  (* docompile (). *)
 
-  unfold sum_n.
-
-
-  eapply trans_app.
-  3: exact H.
-  2: simpl; reflexivity ().
-  unfold sum_n, make_env.
 
 
   (* docompile ().
@@ -657,8 +644,14 @@ Proof.
 Abort.
 
 Definition has_cases_list (l : list nat) : nat :=
-  list_CASE l 0 (fun hd tl =>
-    list_CASE tl 1 (fun hdtl tltl => hd + hdtl)).
+  match l with
+  | nil => 0
+  | cons hd tl =>
+    match tl with
+    | nil => 1
+    | cons hdtl tltl => hd + hdtl
+    end
+  end.
 
 Derive has_cases_list_prog in (forall (s : state) (l : list nat),
     lookup_fun (name_enc "has_cases_list") s.(funs) = Some ([name_enc "l"], has_cases_list_prog) ->
@@ -668,6 +661,7 @@ Proof.
   intros.
   subst has_cases_list_prog.
   docompile ().
+  Show Proof.
 Abort.
 
 Definition foo (n : nat) : nat :=

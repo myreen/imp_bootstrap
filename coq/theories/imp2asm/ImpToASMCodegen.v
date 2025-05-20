@@ -178,7 +178,7 @@ Function c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
   | Add e1 e2 =>
       letd '(asm1, l1) := c_exp e1 l vs in
       letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
-      letd c_add_asm := c_add vs in
+      letd c_add_asm := c_add (None :: None :: vs) in
       (asm1 +++ asm2 +++ c_add_asm, l2 + app_list_length c_add_asm)
   | Sub e1 e2 =>
       letd '(asm1, l1) := c_exp e1 l vs in

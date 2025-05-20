@@ -1,4 +1,4 @@
-Require Import impboot.functional.FunSyntax.
+(* Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunProperties.
 Require Import impboot.functional.FunValues.
@@ -1072,4 +1072,4 @@ Qed.
 
 (* TODO(kπ) continue *)
 
-
+ *)

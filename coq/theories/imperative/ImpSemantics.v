@@ -9,7 +9,7 @@ Require Import coqutil.Word.Properties.
 
 (* types *)
 
-Definition mem_block := (list (option Value)).
+Notation mem_block := (list (option Value)) (only parsing).
 
 Record state := mkState {
   vars : IEnv.env;

@@ -1,4 +1,4 @@
-From impboot Require Import utils.Core.
+(* From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
@@ -376,6 +376,9 @@ with compile (e : constr) (cenv : constr list)
       end
     in
     let (f, args) := extract_fun e in
+    print (Message.of_string "extract_fun");
+    print (Message.of_constr f);
+    print (of_list (List.map Message.of_constr args));
     match args with
     | [] =>
       compile_go
@@ -384,7 +387,7 @@ with compile (e : constr) (cenv : constr list)
       let f_name_str := Option.bind f_name_r reference_to_string in
       let f_constr_opt := Option.bind f_name_str (f_lookup_name f_lookup) in
       match f_constr_opt, f_name_str with
-      | (Some _c, Some fname) =>
+      | (_, Some fname) =>
         let args_constr := list_to_constr_encode args in
         let compile_args := compile_list_encode args_constr cenv f_lookup in
         let fname_str := constr_string_of_string fname in
@@ -589,23 +592,33 @@ Abort. *)
 Function sum_n (n : nat) : nat :=
   match n with
   | 0 => 0
-  | S n1 => (sum_n n1) + n
+  | S n1 => (sum_n n1)(*  + n *)
   end.
 About sum_n_equation.
 
-(* Goal (forall n, ((fix sum_n (n0 : nat) : nat :=
-  nat_CASE n0 0 (fun n1 : nat =>
-  n0 + sum_n n1)) n) = 0).
+Goal forall (s : state) (n : nat),
+  exists sum_n_prog,
+    lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
+    (forall n, eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s)) ->
+    eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s).
 Proof.
+  eexists.
   intros.
-  cbn fix beta. *)
+  rewrite sum_n_equation.
+  eapply trans_app.
+  all: eauto.
+  all: try (reflexivity ()).
+  docompile ().
+  Show Proof.
+Abort.
+
 
 Derive sum_n_prog in (forall (s : state) (n : nat),
     lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
     (* TODO(kπ) Added this just to try the HOL translation for recursion vvvvvvvvvvv *)
-    (* eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s) -> *)
+    (forall n, eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s)) ->
     eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
-  as fib_prog_proof.
+  as sum_n_prog_proof.
 Proof.
   intros.
   subst sum_n_prog.
@@ -613,12 +626,8 @@ Proof.
   eapply trans_app.
   3: eauto.
   2: reflexivity ().
-  (* docompile (). *)
-
-
-
-  (* docompile ().
-  Show Proof. *)
+  (* docompile (). *) (* error: (cannot instantiate "?body" because "n" is not in its scope) *)
+  (* Show Proof. *)
 Abort.
 
 Definition has_cases (n : nat) : nat :=
@@ -631,6 +640,17 @@ Definition has_cases (n : nat) : nat :=
     end
   end.
 Print has_cases.
+
+Goal forall (s : state) (n : nat),
+  exists has_cases_prog,
+    lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
+    eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s).
+Proof.
+  eexists.
+  intros.
+  docompile ().
+  Show Proof.
+
 
 Derive has_cases_prog in (forall (s : state) (n : nat),
     lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
@@ -790,4 +810,4 @@ Proof.
   2: eapply FEnv.lookup_insert_eq; auto.
   2: eapply FEnv.lookup_insert_eq; auto.
   1: exact (FEnv.empty).
-Qed.
+Qed. *)

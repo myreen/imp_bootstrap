@@ -101,7 +101,7 @@ Definition env_and_body (n : name) (args : list Value) (s : state) : option (FEn
   end.
 Arguments env_and_body !_ !_ /.
 
-(* TOSO(kπ) Should this take a clock? *)
+(* TODO(kπ) Should this take a clock? *)
 Definition init_state (inp : llist ascii) (funs : list FunSyntax.dec) : state :=
   {| funs := funs; clock := 0; input := inp; output := [] |}.
 

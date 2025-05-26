@@ -60,12 +60,15 @@ Notation "r1 ;; r2" := (let+ _ := r1 in r2)
 
 Definition stop {A B} (v : result A) (s : state) : (outcome A B * state) :=
   (Stop v, s).
+Arguments stop _ _ !v !s /.
 
 Definition crash {A B} (s : state) : (outcome A B * state) :=
   stop Crash s.
+Arguments crash _ _ !s /.
 
 Definition cont {A B} (v : B) (s : state) : (outcome A B * state) :=
   (Cont v, s).
+Arguments cont _ _ !v !s /.
 
 Definition next (input : llist ascii) : Value :=
   match input with
@@ -204,8 +207,10 @@ Definition eval_cmp (c: cmp) (v1 v2: Value): M bool :=
     cont (w1 <w w2)
   | Equal, Word w1, Word w2 =>
     cont (w1 =w w2)
-  | Equal, Pointer p, Word w =>
-    (if w =w (word.of_Z 0) then cont false else stop Crash)
+  (* TODO(kπ) Ask Magnus or Clement? I removed this. Dunno how to distinguish
+  pointer vs word in asm. *)
+  (* | Equal, Pointer p, Word w =>
+    (if w =w (word.of_Z 0) then cont false else stop Crash) *)
   | _, _, _ => stop Crash
   end.
 

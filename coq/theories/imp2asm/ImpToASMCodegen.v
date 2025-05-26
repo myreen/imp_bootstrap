@@ -75,10 +75,7 @@ Definition give_up (b : bool) : nat := if b then 14 else 15.
 
 (* Compiles a constant value into assembly instructions *)
 Definition c_const (n : word64) (l : nat) (vs : v_stack) : asm_appl * nat :=
-  if word.ltu (word.of_Z ((2^63) - 1)) n then
-    (List [Jump Always (give_up (odd_len vs))], l+1)
-  else
-    (List [ASMSyntax.Push RAX; ASMSyntax.Const RAX n], l+2).
+  (List [ASMSyntax.Push RAX; ASMSyntax.Const RAX n], l+2).
 
 (* Finds the index of a variable in a stack representation *)
 Function index_of (n : name) (k : nat) (vs : v_stack) : nat :=
@@ -97,27 +94,22 @@ Definition c_var (n : name) (l : nat) (vs : v_stack) : asm_appl * nat :=
   (if k =? 0 then (List [ASMSyntax.Push RAX], l+1)
   else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2)).
 
-(* TODO(kπ) should we update the existing stack elements? *)
-(* asign variable with name `n`, based on stack *)
+(* assign variable with name `n`, based on stack *)
 Definition c_assign (n : name) (l : nat) (vs : v_stack) : (asm_appl * nat * v_stack) :=
   (List [], l, (Some n) :: vs).
 
 (*
   RAX := RAX + top_of_stack
-  if R13 < RAX then jump to give_up (R13 is the maximum value for a word)
 *)
 Definition c_add (vs : v_stack) : asm_appl :=
   List [ ASMSyntax.Pop RDI;
-    ASMSyntax.Add RAX RDI;
-    ASMSyntax.Jump (ASMSyntax.Less R13 RAX) (give_up (even_len vs)) ].
+    ASMSyntax.Add RAX RDI ].
 
 (*
   RAX := top_of_stack - RAX (or 0 if the result would be negative)
 *)
 Definition c_sub (l : nat) : asm_appl :=
   List [ ASMSyntax.Pop RDI;
-    ASMSyntax.Jump (ASMSyntax.Less RAX RDI) (l+3);
-    ASMSyntax.Mov RAX RDI;
     ASMSyntax.Sub RDI RAX;
     ASMSyntax.Mov RAX RDI ].
 
@@ -219,7 +211,9 @@ Function c_test_jump (t : test) (pos_label : nat) (neg_label : nat)
   | Test c e1 e2 =>
     letd '(asm1, l1) := c_exp e1 l vs in
     letd '(asm2, l2) := c_exp e2 l1 (None :: vs) in
-    letd c_cmp_asm := List [ASMSyntax.Jump (c_cmp c) pos_label] in
+    letd c_cmp_asm := List [Mov RBX RAX; Pop RDI; Pop RAX;
+      ASMSyntax.Jump (c_cmp c) pos_label;
+      ASMSyntax.Jump Always neg_label] in
     (asm1 +++ asm2 +++ c_cmp_asm, l2 + app_list_length c_cmp_asm)
   | And t1 t2 =>
     letd '(asm1, l1) := c_test_jump t1 (l + 1) neg_label (l + 2) vs in

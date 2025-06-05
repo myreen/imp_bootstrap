@@ -44,6 +44,12 @@ Definition bind {A B : Type} (ma: M A) (f: A -> M B): M B :=
     end
   ).
 
+Definition bindMRes {A B : Type} (ma: MRes A) (f: A -> state -> MRes B): MRes B :=
+  match ma with
+  | (Cont res, s1) => f res s1
+  | (Stop e, s1) => (Stop e, s1)
+  end.
+
 Definition point {A : Type} (a : A) : M A :=
   (fun s => (Cont a, s)).
 
@@ -54,6 +60,9 @@ Notation "'let+' v := r1 'in' r2" :=
 Notation "'let+' ( v1 , v2 ) := r1 'in' r2" :=
   (bind r1 (fun v => let (v1, v2) := v in r2))
   (at level 200, right associativity).
+
+Notation "'let*' ( v , s ) := r1 'in' r2" :=
+  (bindMRes r1 (fun v s => r2)) (at level 200, right associativity).
 
 Notation "r1 ;; r2" := (let+ _ := r1 in r2)
   (at level 200, right associativity).
@@ -106,8 +115,8 @@ Definition mem_load (ptr val : Value) (s : state) : (outcome Value Value * state
 
 Definition set_input (inp : llist ascii) (s : state) : state :=
   {| vars := s.(vars);
-     funs := s.(funs);
      memory := s.(memory);
+     funs := s.(funs);
      input := inp;
      output := s.(output) |}.
 
@@ -127,10 +136,17 @@ Definition set_memory (mem : list mem_block) (s : state) : state :=
 
 Definition set_vars (vars: IEnv.env) (s : state) : state :=
   {| vars := vars;
-    funs := s.(funs);
-    memory := s.(memory);
-    input := s.(input);
-    output := s.(output) |}.
+     funs := s.(funs);
+     memory := s.(memory);
+     input := s.(input);
+     output := s.(output) |}.
+
+Definition set_fuel (fuel: nat) (s: state) : state :=
+  {| vars := s.(vars);
+     funs := s.(funs);
+     memory := s.(memory);
+     input := s.(input);
+     output := s.(output) |}.
 
 Fixpoint eval_exp (e : exp) : M Value :=
   match e with
@@ -209,6 +225,7 @@ Definition eval_cmp (c: cmp) (v1 v2: Value): M bool :=
     cont (w1 =w w2)
   (* TODO(kπ) Ask Magnus or Clement? I removed this. Dunno how to distinguish
   pointer vs word in asm. *)
+  (* assume that every allocated address is greater than zero *)
   (* | Equal, Pointer p, Word w =>
     (if w =w (word.of_Z 0) then cont false else stop Crash) *)
   | _, _, _ => stop Crash
@@ -376,25 +393,25 @@ Fixpoint eval_cmd (c : cmd)
     set_varsM vars
   end.
 
-Fixpoint EVAL_CMD (fuel: nat) (c : cmd) { struct fuel } : M unit :=
+Fixpoint EVAL_CMD (fuel: nat) (c : cmd) {struct fuel} : M unit :=
   match fuel with
   | 0 => stop TimeOut
   | S fuel => eval_cmd c (EVAL_CMD (fuel - 1))
   end.
 
-Definition init_state (inp: llist ascii) (funs: list func): state :=
+Definition init_state (inp: llist ascii) (funs: list func) (fuel: nat): state :=
   {| vars   := IEnv.empty;
-      memory := [];
-      funs   := funs;
-      input  := inp;
-      output := []; |}.
+     memory := [];
+     funs   := funs;
+     input  := inp;
+     output := []; |}.
 
 Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): MRes unit :=
   match p with
   | Program funs =>
     let call_main_cmd: cmd := (Call 0 (name_of_string "main") []) in
-    let init_s := (init_state input funs) in
-    EVAL_CMD fuel call_main_cmd init_s
+    let init_s := init_state input funs fuel in
+    eval_cmd call_main_cmd (EVAL_CMD fuel) init_s
   end.
 
 Definition imp_avoids_crash (input: llist ascii) (p: prog) :=

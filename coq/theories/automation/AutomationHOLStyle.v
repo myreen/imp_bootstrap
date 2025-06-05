@@ -23,13 +23,105 @@ Ltac rewrite_let := match goal with
   end
 end.
 
+Theorem xddd: forall a, a -> a.
+Proof.
+  congruence.
+Defined.
+
 Definition empty_state : state := init_state Lnil [].
+
+Inductive xd : Type := MkXD.
 
 (* TODO(kπ):
 - consider using preterm instead of open_constr if thing get too slow
 - computing names seems super slow. Should we have some hardcoded automation for that?
   (I tried to automate this by injectivity, but it's not injective :sad_goat:)
 *)
+
+Ltac2 opt_to_list (o: 'a option): 'a list := match o with | Some x => [x] | None => [] end.
+
+Ltac2 kind_of_constr (c: constr): string :=
+  match Unsafe.kind c with
+  | Rel _ => "Rel"
+  | Var _ => "Var"
+  | Meta _ => "Meta"
+  | Evar _ _ => "Evar"
+  | Sort _ => "Sort"
+  | Cast _ _ _ => "Cast"
+  | Prod _ _ => "Prod"
+  | Lambda _ _ => "Lambda"
+  | LetIn _ _ _ => "LetIn"
+  | App _ _ => "App"
+  | Constant _ _ => "Constant"
+  | Ind _ _ => "Ind"
+  | Constructor _ _ => "Constructor"
+  | Case _ _ _ _ _ => "Case"
+  | Fix _ _ _ _ => "Fix"
+  | CoFix _ _ _ => "CoFix"
+  | Proj _ _ _ => "Proj"
+  | Uint63 _ => "Uint63"
+  | Float _ => "Float"
+  | String _ => "String"
+  | Array _ _ _ _ => "Array"
+  end.
+
+Ltac2 automation_lemmas () := List.flat_map (fun s => opt_to_list (Env.get [Option.get (Ident.of_string s)])) [
+  "auto_let";
+  "auto_bool_T";
+  "auto_bool_F";
+  "auto_bool_and";
+  "auto_bool_iff";
+  "auto_bool_not"
+].
+
+Ltac2 ident_of_fqn (fqn: string list): ident list :=
+  List.map (fun s => Option.get (Ident.of_string s)) fqn.
+
+Ltac2 get_test_ref() :=
+  let refs := Env.expand (ident_of_fqn ["auto_bool_not"]) in
+  List.hd refs.
+
+Ltac2 rec split_thm (c: constr): constr list :=
+  match! c with
+  | (∀ x, @?f x) =>
+    (* print t; *)
+    print (Message.of_constr c);
+    split_thm f
+  (* | (fun x => @?f x) =>
+    (* print t; *)
+    print (Message.of_constr c);
+    split_thm f *)
+  | ?c => [c]
+  end.
+
+Ltac2 rec split_thm_args_unsafe (c: constr): constr list :=
+  match Unsafe.kind c with
+  | Prod b c1 =>
+    print (Message.of_constr (Binder.type b));
+    print (Message.of_constr c1);
+    (Binder.type b) :: split_thm_args_unsafe c1
+  | _ => []
+  end.
+
+Ltac2 rec thm_constr_app (cf: constr -> constr) (ps: constr list) (acc: constr): constr :=
+  match ps with
+  | [] => acc
+  | p :: ps =>
+    let arg := match! p with
+              | _ |-- (_, _) ---> (_, _) => cf(p)
+              | (fun x => _) => cf(p)
+              | _ => open_constr:(_)
+              end in
+    thm_constr_app cf ps open_constr:($acc $arg)
+  end.
+
+(* TODO(kπ) Try using this approach for automatic-ish automation lemma usage/extensibility *)
+Ltac2 app_lemma (cf: constr -> constr) (lname: string) :=
+  let r := List.hd (Env.expand (ident_of_fqn [lname])) in
+  let c := Env.instantiate r in
+  let ctpe := type c in
+  let thm_parts := split_thm_args_unsafe ctpe in
+  thm_constr_app cf thm_parts c.
 
 Ltac2 beta_fix : red_flags := {
   rBeta := true; rMatch := false; rFix := true; rCofix := false;
@@ -80,16 +172,16 @@ Ltac2 rec list_to_constr_encode (l : constr list) : constr :=
   | x :: xs =>
     let xs' := list_to_constr_encode xs in
     open_constr:((encode $x) :: $xs')
-  end.
+end.
 
-Ltac2 reference_of_constr_opt c :=
+Ltac2 reference_of_constr_opt (c: constr): reference option :=
   match kind c with
   | Var id => Some (Std.VarRef id)
   | Constant const _inst => Some (Std.ConstRef const)
   | Ind ind _inst => Some (Std.IndRef ind)
   | Constructor cnstr _inst => Some (Std.ConstructRef cnstr)
   | _ => None
-  end.
+end.
 
 Ltac2 reference_to_string (r : reference) : string option :=
   Some (Ident.to_string (List.last (Env.path r))).
@@ -102,7 +194,7 @@ Ltac2 of_f_lookup (f_lookup : (string * constr) list) : message :=
       Message.concat (Message.of_string name) (Message.concat (Message.of_string " -> ") (Message.of_constr iden))
     ) f_lookup in
     of_list f_lookup'
-  end.
+end.
 
 (* TODO(kπ) *)
 Ltac unfold_fix fn :=
@@ -128,7 +220,7 @@ Ltac unfold_fix fn :=
           intros ll; destruct ll
       end; fold fn; simpl analyze; reflexivity
         ); cbv beta
-  end.
+end.
 
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
 Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list)
@@ -415,8 +507,8 @@ Ltac2 rec constr_to_list (c : constr) : constr list :=
 
 (* TODO(kπ) this only works when fun is the top level App in the compiled
 expression, otherwise we might have to have a funtion from a constr (that is a
-string) to reference. So constr stirng to string? *)
-Ltac2 rec fun_ident (c : constr) : reference :=
+string) to reference. So constr string to string? *)
+Ltac2 fun_ident (c : constr) : reference :=
   match kind c with
   | App f _ => reference_of_constr f
   | _ => reference_of_constr c
@@ -464,13 +556,17 @@ Ltac2 docompile () :=
   (* TODO(kπ) we need to know whether it is the currently compiled function at some point  *)
   | [ h : (lookup_fun ?_fname _ = _)
   |- eval_app ?_fname ?args _ (encode ?g, _) ] =>
+    (* If there `fname_equation` exists then apply that, otherwise unfold `fname` *)
+    let h_hyp := Control.hyp h in
     let f_lookup := get_f_lookup_from_hyps () in
     let argsl := constr_to_list args in
-    let f_ident := fun_ident g in
-    let g_norm := eval_unfold [(f_ident, AllOccurrences)] g in
-    (* print (Message.of_string "g_norm");
-    print (Message.of_constr g_norm);
-    print (of_list (List.map Message.of_constr argsl)); *)
+    let (fconstr, _) := extract_fun g in
+    (* let f_name_r_opt := reference_of_constr_opt fconstr in
+    let f_name_str_opt := Option.bind f_name_r_opt reference_to_string in
+    let f_ident_equation_opt := Option.map (fun n => String.app n "_equation") f_name_str_opt in
+    let f_ident_equation_r_opt := Option.map (fun s => ident_of_fqn [s]) f_name_str_opt in *)
+    let f_name_r := reference_of_constr fconstr in
+    let g_norm := eval_unfold [(f_name_r, AllOccurrences)] g in
     let compile_g := compile g_norm argsl f_lookup in
     print (Message.of_string "compile_g:");
     print (Message.of_constr compile_g);
@@ -484,7 +580,7 @@ Ltac2 docompile () :=
     (* v *) _
     (* eval body *) $compile_g
     (* params length eq *) _
-    (* lookup_fun *) ltac2:(Control.refine (fun () => Control.hyp h))
+    (* lookup_fun *) $h_hyp
     );
     intros;
     eauto with fenvDb
@@ -506,9 +602,9 @@ Proof.
   docompile ().
   Show Proof.
   (* exact "a"%string. *)
-Admitted.
+Admitted. *)
 
-Lemma list_example : forall (n : nat),
+(* Lemma list_example : forall (n : nat),
   exists prog,
     FEnv.empty |-- (prog, empty_state) --->
     ([encode
@@ -624,9 +720,10 @@ Proof.
   subst sum_n_prog.
   rewrite sum_n_equation.
   eapply trans_app.
-  3: eauto.
-  2: reflexivity ().
-  (* docompile (). *) (* error: (cannot instantiate "?body" because "n" is not in its scope) *)
+  all: eauto.
+  all: try (reflexivity ()).
+                (* kπ: this (vvv) is because we anually apply trans_app, so we don't add the argument to env (we should probably reuse the relational env, though) *)
+  docompile (). (* error: (cannot instantiate "?body" because "n" is not in its scope) *)
   (* Show Proof. *)
 Abort.
 

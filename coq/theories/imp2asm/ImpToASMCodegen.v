@@ -32,17 +32,22 @@ Definition init (k : nat) : asm :=
     (*  5 *) ASMSyntax.Exit;
     (* alloc routine starts here: *)
     (*  6 *) ASMSyntax.Comment "malloc";
-    (*  7 *) ASMSyntax.Jump (ASMSyntax.Equal R14 R15) 14;
-    (*  8 *) ASMSyntax.Comment "noop";
-    (*  9 *) ASMSyntax.Mov RDI RAX;
-    (* 10 *) ASMSyntax.Mov RAX R14;
-    (* 11 *) ASMSyntax.Add R14 RDI;
+    (*  7 *) ASMSyntax.Mov RDI RAX;
+    (*  8 *) ASMSyntax.Mov RAX R14;
+    (*  9 *) ASMSyntax.Add R14 RDI;
+    (* 10 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 14;
+    (* 11 *) ASMSyntax.Comment "noop";
     (* 12 *) ASMSyntax.Ret;
     (* give up: *)
-    (* 13 *) ASMSyntax.Comment "exit 1";
-    (* 14 *) ASMSyntax.Push R15;
-    (* 15 *) ASMSyntax.Const RDI (word.of_Z 1);
-    (* 16 *) ASMSyntax.Exit
+    (* 13 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
+    (* 14 *) ASMSyntax.Push R15; (* align stack *)
+    (* 15 *) ASMSyntax.Const RDI (word.of_Z 4);
+    (* 16 *) ASMSyntax.Exit;
+    (* abort: *)
+    (* 17 *) ASMSyntax.Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
+    (* 18 *) ASMSyntax.Push R15; (* align stack *)
+    (* 19 *) ASMSyntax.Const RDI (word.of_Z 1);
+    (* 20 *) ASMSyntax.Exit
   ].
 
 Definition AllocLoc : nat := 7.
@@ -69,9 +74,14 @@ Function odd_len {A} (xs : list A) : bool :=
   end.
 
 (* jump label for failure cases
-  if b is true – also push R15 before exiting give_up
+  b – does the stack need to be aligned
 *)
 Definition give_up (b : bool) : nat := if b then 14 else 15.
+
+(* abort
+  b – does the stack need to be aligned
+*)
+Definition abort (b : bool) : nat := if b then 18 else 19.
 
 (* Compiles a constant value into assembly instructions *)
 Definition c_const (n : word64) (l : nat) (vs : v_stack) : asm_appl * nat :=
@@ -137,10 +147,12 @@ Definition align (needs_alignment : bool) (asm1 : asm_appl) : asm_appl :=
   if needs_alignment then (List [Push RAX]) +++ asm1 +++ (List [Pop RDI]) else asm1.
 
 Definition c_read (vs : v_stack) (l : nat) : (asm_appl * nat) :=
-  (align (even_len vs) (List [ASMSyntax.Push RAX; ASMSyntax.GetChar]), l+2).
+  letd asm1 := align (even_len vs) (List [ASMSyntax.Push RAX; ASMSyntax.GetChar]) in
+  (asm1, l + app_list_length asm1).
 
 Definition c_write (vs : v_stack) (l : nat) : (asm_appl * nat) :=
-  (align (even_len vs) (List [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z 0)]), l+3).
+  letd asm1 := align (even_len vs) (List [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z 0)]) in
+  (asm1, l + app_list_length asm1).
 
 (*
   input : RAX, top_of_stack
@@ -163,6 +175,10 @@ Definition c_store : asm_appl :=
     ASMSyntax.Add RDI RDX;
     ASMSyntax.Store RAX RDI (word.of_Z 0) ].
 
+(* TODO(kπ)
+- check Equations – ask Yawen
+- otherwise, use the Ltac rewriting tactic (Fixpoint + Definition := unfold_once_fix )
+*)
 Function c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
   match e with
   | Var n => c_var n l vs
@@ -300,19 +316,20 @@ Function c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   | If t c1 c2 =>
     letd '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
     letd '(asm2, l2, vs2) := c_cmd c1 l1 fs vs in
-    letd '(asm3, l3, vs3) := c_cmd c2 l2 fs vs2 in
+    letd '(asm3, l3, vs3) := c_cmd c2 (l2 + 1) fs vs2 in
     letd jump_to_start := List[ASMSyntax.Jump Always (l + 3)] in
     letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
     letd jump_to_c2 := List [ASMSyntax.Jump Always l2] in
-    letd asmres := jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ asm3 in
+    letd jump_to_end := List [ASMSyntax.Jump Always l3] in
+    letd asmres := jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ jump_to_end +++ asm3 in
     (asmres, l3, vs3)
-  | While tst c1 =>
+  | While tst body =>
     letd '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
-    letd '(asm2, l2, vs2) := c_cmd c1 l1 fs vs in
+    letd '(asm2, l2, vs2) := c_cmd body l1 fs vs in
     letd jump_to_tst := List [ASMSyntax.Jump Always (l + 3)] in
-    letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
-    letd jump_to_end := List [ASMSyntax.Jump Always (l2+1)] in
-    letd asmres := jump_to_tst +++ jump_to_c1 +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_tst in
+    letd jump_to_body := List [ASMSyntax.Jump Always l1] in
+    letd jump_to_end := List [ASMSyntax.Jump Always (l2 + 2)] in
+    letd asmres := jump_to_tst +++ jump_to_body +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_tst in
     (asmres, l2+1, vs2)
   | Call n f es =>
     letd target := lookup f fs in
@@ -327,7 +344,7 @@ Function c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   | Alloc n e =>
     letd '(asm1, l1) := c_exp e l vs in
     letd asm2 := c_alloc vs in
-    letd '(asm3, l3, vs3) := c_assign n l1 vs in
+    letd '(asm3, l3, vs3) := c_assign n (l1 + app_list_length asm2) vs in
     (asm1 +++ asm2 +++ asm3, l3, vs3)
   | GetChar n =>
     letd '(asm1, l1) := c_read vs l in
@@ -338,7 +355,7 @@ Function c_cmd (c : cmd) (l : nat) (fs : f_lookup)
     letd '(asm2, l2) := c_write vs l1 in
     (asm1 +++ asm2, l2, vs)
   | Abort =>
-    (List [Jump Always (give_up (even_len vs))], l+1, vs)
+    (List [Jump Always (abort (odd_len vs))], l+1, vs)
   end.
 
 (** Compiles a single function definition into assembly code. *)

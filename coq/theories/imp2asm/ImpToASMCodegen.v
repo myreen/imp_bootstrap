@@ -98,15 +98,33 @@ Function index_of (n : name) (k : nat) (vs : v_stack) : nat :=
     end
   end.
 
+Function index_of_opt (n : name) (k : nat) (vs : v_stack) : option nat :=
+  match vs with
+  | nil => None
+  | x :: xs =>
+    match x with
+      | None => index_of_opt n (k+1) xs
+      | Some v => if Nat.eqb v n then Some k else index_of_opt n (k+1) xs
+    end
+  end.
+
 (* lookup variable with name `n`, based on stack `vs` *)
 Definition c_var (n : name) (l : nat) (vs : v_stack) : asm_appl * nat :=
   letd k := (index_of n 0 vs) in
-  (if k =? 0 then (List [ASMSyntax.Push RAX], l+1)
-  else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2)).
+  if k =? 0 then (List [ASMSyntax.Push RAX], l+1)
+  else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2).
 
 (* assign variable with name `n`, based on stack *)
 Definition c_assign (n : name) (l : nat) (vs : v_stack) : (asm_appl * nat * v_stack) :=
-  (List [], l, (Some n) :: vs).
+  letd k := (index_of_opt n 0 vs) in
+  match k return (asm_appl * nat * v_stack) with
+  | None => (List [], l, (Some n) :: vs)
+  | Some kv =>
+    match kv with
+    | 0 => (List [ASMSyntax.Pop RDI], l+1, vs)
+    | S _ => (List [ASMSyntax.Store_RSP RAX kv; ASMSyntax.Pop RAX], l+2, vs)
+    end
+  end.
 
 (*
   RAX := RAX + top_of_stack
@@ -322,15 +340,15 @@ Function c_cmd (c : cmd) (l : nat) (fs : f_lookup)
     letd jump_to_c2 := List [ASMSyntax.Jump Always l2] in
     letd jump_to_end := List [ASMSyntax.Jump Always l3] in
     letd asmres := jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ jump_to_end +++ asm3 in
-    (asmres, l3, vs3)
+    (asmres, l3, vs)
   | While tst body =>
     letd '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
     letd '(asm2, l2, vs2) := c_cmd body l1 fs vs in
     letd jump_to_tst := List [ASMSyntax.Jump Always (l + 3)] in
     letd jump_to_body := List [ASMSyntax.Jump Always l1] in
-    letd jump_to_end := List [ASMSyntax.Jump Always (l2 + 2)] in
+    letd jump_to_end := List [ASMSyntax.Jump Always (l2 + 1)] in
     letd asmres := jump_to_tst +++ jump_to_body +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_tst in
-    (asmres, l2+1, vs2)
+    (asmres, l2+1, vs)
   | Call n f es =>
     letd target := lookup f fs in
     letd '(asms, l1) := c_exps es l vs in

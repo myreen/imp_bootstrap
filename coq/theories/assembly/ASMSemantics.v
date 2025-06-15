@@ -3,7 +3,7 @@ From impboot Require Import
   utils.Llist.
 Require Import impboot.assembly.ASMSyntax.
 Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Naive.
+Require Import coqutil.Word.Properties.
 Require Import Coq.Relations.Relation_Operators.
 
 Inductive word_or_ret :=
@@ -83,6 +83,15 @@ Definition write_mem (a : word64) (w : word64) (s : state) : option state :=
               output := s.(output) |}
   | _ => None
   end.
+
+Definition update_stack (offset: nat) (w: word64) (s: state): state :=
+  {| instructions := s.(instructions);
+     pc := s.(pc);
+     regs := s.(regs);
+     stack := list_update offset (Word w) s.(stack);
+     memory := s.(memory);
+     input := s.(input);
+     output := s.(output) |}.
 
 Definition set_stack (xs : list word_or_ret) (s : state) : state :=
   {| instructions := s.(instructions);
@@ -180,6 +189,11 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
     offset < List.length s.(stack) ->
     nth_error s.(stack) offset = Some (Word w) ->
     step (State s) (State (write_reg r w (inc s)))
+| step_store_rsp : forall s r w offset,
+    fetch s = Some (Store_RSP r offset) ->
+    offset < List.length s.(stack) ->
+    s.(regs) r = Some w ->
+    step (State s) (State (update_stack offset w (inc s)))
 | step_add_rsp : forall s xs ys,
     fetch s = Some (Add_RSP (List.length xs)) ->
     s.(stack) = xs ++ ys ->

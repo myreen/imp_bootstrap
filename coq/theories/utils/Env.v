@@ -117,7 +117,6 @@ End FEnv.
 
 Require impboot.imperative.ImpSyntax.
 Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Naive.
 Require Import coqutil.Word.Properties.
 
 Module IEnv <: EnvT.

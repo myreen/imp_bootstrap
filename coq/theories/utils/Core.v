@@ -100,8 +100,14 @@ Fixpoint nat_FIX {A C} (n : nat) (f0 : C -> A) (fS : (C -> A) -> nat -> C -> A) 
 
 (* Word *)
 
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Naive.
+Require Import coqutil.Word.Interface. Import word.
+Require Import coqutil.Word.Properties.
+Require coqutil.Word.Naive.
+Require impboot.utils.Words4Naive.
+
+Definition word64 := (@word.rep 64 Naive.word64).
+
+Definition word4 := (@word.rep 4 Words4Naive.word4).
 
 Declare Scope word.
 Infix "*w" := word.mul (at level 40, left associativity, only parsing): word.

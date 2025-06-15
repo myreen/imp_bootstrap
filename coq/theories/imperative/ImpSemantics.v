@@ -4,7 +4,6 @@ Require Import impboot.utils.Env.
 From Stdlib Require Import ListDec.
 Require Import impboot.imperative.ImpSyntax.
 Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Naive.
 Require Import coqutil.Word.Properties.
 
 (* types *)

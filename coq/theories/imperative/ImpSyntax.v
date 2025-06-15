@@ -1,9 +1,8 @@
 From impboot Require Import utils.Core.
 Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Naive.
+Require Import coqutil.Word.Properties.
 
 Notation name := nat (only parsing).
-Notation word64 := (@word.rep 64 word64) (only parsing).
 
 Definition name_enc_l (s : list ascii) : nat :=
   fold_right (fun c acc => (nat_of_ascii c) * 256 + acc) 0 s.
@@ -67,7 +66,7 @@ Inductive cmd : Type :=
 | If (t: test) (c1: cmd) (c2: cmd)            (*  if (t) ... else ...     *)
 | While (t: test) (c: cmd)                    (*  while (t) ...           *)
 | Call (n: name) (f: name) (es: list exp)     (*  n := f(e1,e2,e3,...)    *)
-| Return (e: exp)                             (*  return from function    *)
+| Return (e: exp)                             (*  return e                *)
 | Alloc (n: name) (e: exp)                    (*  n := malloc(e)          *)
 | GetChar (n: name)                           (*  n := getchar()          *)
 | PutChar (e: exp)                            (*  putchar(e)              *)

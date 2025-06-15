@@ -7,7 +7,7 @@ From impboot Require Import utils.Core utils.Env.
 From coqutil Require Import dlet.
 Require Import impboot.utils.Words4Naive.
 Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Naive.
+Require Import coqutil.Word.Properties.
 Require Import impboot.utils.AppList.
 
 Create HintDb automation.
@@ -444,7 +444,7 @@ Hint Resolve auto_char_ORD : automation.
 
 (* word *)
 
-Definition value_word {n} (w : word n) : Value :=
+Definition value_word {n} `{word_inst : word n} (w : @word.rep n word_inst) : Value :=
   Num (Z.to_nat (word.unsigned w)).
 
 Theorem auto_word4_n2w : forall env s x1 x,

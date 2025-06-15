@@ -1,7 +1,7 @@
 From impboot Require Import utils.Core.
 Require Import impboot.utils.Words4Naive.
 Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Naive.
+Require Import coqutil.Word.Properties.
 
 Inductive reg :=
 | RAX (* ret val *)
@@ -49,6 +49,7 @@ Inductive instr :=
 | Push (r : reg)
 | Add_RSP (n : nat)
 | Load_RSP (r : reg) (n : nat)
+| Store_RSP (r : reg) (n : nat)
   (* memory *)
 | Load (r1 r2 : reg) (w : word4)
 | Store (r1 r2 : reg) (w : word4)

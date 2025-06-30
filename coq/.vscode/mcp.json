@@ -1,0 +1,8 @@
+{
+  "servers": {
+    "VsCoq": {
+      "type": "http",
+      "url": "http://localhost:2137/mcp"
+    }
+  }
+}

@@ -11,8 +11,8 @@ From coqutil Require Import
   Tactics.reference_to_string
   Tactics.ident_of_string
   Tactics.ident_to_string.
-From Stdlib Require Import derive.Derive.
-From Stdlib Require Import FunInd.
+From Coq Require Import derive.Derive.
+From Coq Require Import FunInd.
 
 Ltac rewrite_let := match goal with
 | [ |- context C [?subterm] ] =>

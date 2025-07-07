@@ -4,23 +4,6 @@ Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunValues.
 Require Import impboot.utils.Llist.
 
-(* What do I induct on here? induction e just gives me IH for singleton lists *)
-(* Lemma Eval_deterministic_single : forall e s env a1 a2,
-  env |-- ([e], s) ---> a1 ->
-  env |-- ([e], s) ---> a2 ->
-  a1 = a2.
-Proof.
-  intros e s env a1 a2 H1 H2.
-  induction e; try reflexivity; destruct a1, a2; simpl in *; subst.
-  all: inversion H1; inversion H2; subst; eauto; try congruence.
-  - unfold eval_op in *.
-Admitted. *)
-
-(*
-TODO(kπ):
-- for proofs use pa explicit tuples, instread of one variable that is a tuple
-*)
-
 Lemma Eval_deterministic : forall e s env a1v a1s,
   env |-- (e, s) ---> (a1v, a1s) ->
   forall a2v a2s,

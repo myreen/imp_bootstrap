@@ -194,7 +194,7 @@ Definition c_store : asm_appl :=
     ASMSyntax.Store RAX RDI (word.of_Z 0) ].
 
 (* TODO(kπ)
-- check Equations – ask Yawen
+- check Equations – ask Yawen – Yawen says "probably not"
 - otherwise, use the Ltac rewriting tactic (Fixpoint + Definition := unfold_once_fix )
 *)
 Function c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=

@@ -1,4 +1,8 @@
 -Q ../../coqutil/src/coqutil coqutil
+
+-Q ../../pat_my_coq/theories Patmycoq
+-I ../../pat_my_coq/src
+
 -Q theories impboot
 theories
 -arg -w -arg -notation-overridden

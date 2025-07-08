@@ -110,7 +110,7 @@ Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or
       nth_error curr (index_of n 0 vs) = Some (Word w) /\
       v_inv pmap v w.
 
-Definition cmd_res_rel (ri: result unit) (l1: nat)
+Definition cmd_res_rel (ri: outcome Value unit) (l1: nat)
   (curr: list word_or_ret) (rest: list word_or_ret) (vs: v_stack) (t1: ASMSemantics.state) (s1: ImpSemantics.state)
   (pmap: nat -> option (word64 * nat)) : Prop :=
   match ri with
@@ -119,18 +119,18 @@ Definition cmd_res_rel (ri: result unit) (l1: nat)
     mem_inv pmap t1.(memory) s1.(ImpSemantics.memory) /\
     has_stack t1 (Word w :: curr ++ rest) /\
     t1.(pc) = l1
-  | Interm _ => exists curr1,
+  | Cont _ => exists curr1,
     has_stack t1 (curr1 ++ rest) /\
     env_ok s1.(vars) vs curr1 pmap t1.(memory) s1.(ImpSemantics.memory) /\
     t1.(pc) = l1
   | _ => True (* TODO(kπ) is this correct? *)
   end.
 
-Definition exp_res_rel (ri: result Value) (l1: nat)
+Definition exp_res_rel (ri: outcome Value Value) (l1: nat)
   (stck: list word_or_ret) (t1: ASMSemantics.state) (s1: ImpSemantics.state)
   (pmap: nat -> option (word64 * nat)) : Prop :=
   match ri with
-  | Interm v => exists w,
+  | Cont v => exists w,
     v_inv pmap v w /\
     mem_inv pmap t1.(memory) s1.(ImpSemantics.memory) /\
     has_stack t1 (Word w :: stck) /\
@@ -162,7 +162,7 @@ Definition pmap_subsume (pmap: nat -> option (word64 * nat))
 
 Definition goal_exp (e : exp): Prop :=
   forall (s s1 : ImpSemantics.state) (fuel fuel1: nat)
-         (res : result Value) (t : ASMSemantics.state)
+         (res : outcome Value Value) (t : ASMSemantics.state)
          (vs vs' : v_stack) (fs : f_lookup)
          (asmc : asm_appl) (l1 : nat)
          (curr rest : list word_or_ret)
@@ -194,7 +194,7 @@ Definition goal_test (tst: test): Prop :=
          (asmc : asm_appl) (l1 ltrue lfalse : nat)
          (curr rest : list word_or_ret)
          (pmap: nat -> option (word64 * nat)),
-    eval_test tst s = (Interm b, s1) ->
+    eval_test tst s = (Cont b, s1) ->
     c_test_jump tst ltrue lfalse t.(pc) vs = (asmc, l1) ->
     state_rel fs s t ->
     env_ok s.(vars) vs curr pmap t.(memory) s.(ImpSemantics.memory) ->
@@ -216,13 +216,13 @@ Definition goal_test (tst: test): Prop :=
       end.
 
 Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
-  forall (s s1 : ImpSemantics.state) (fuel1: nat)
-         (res : result unit) (t : ASMSemantics.state)
+  forall (s s1 : ImpSemantics.state)
+         (res : outcome Value unit) (t : ASMSemantics.state)
          (vs vs' : v_stack) (fs : f_lookup)
          (asmc : asm_appl) (l1 : nat)
          (curr rest : list word_or_ret)
          (pmap: nat -> option (word64 * nat)),
-    EVAL_CMD fuel c s = ((res, s1), fuel1) ->
+    eval_cmd c (EVAL_CMD fuel) s = (res, s1) ->
     res <> Stop Crash ->
     c_cmd c t.(pc) fs vs = (asmc, l1, vs') ->
     state_rel fs s t ->
@@ -232,24 +232,23 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
     pmap_ok pmap ->
     odd (List.length rest) = true ->
     code_in t.(pc) (flatten asmc) t.(instructions) ->
-    exists outcome pmap1,
-      steps (State t, fuel) outcome /\
+    exists outcome pmap1 fuel1,
+      steps (State t, fuel + fuel1) outcome /\
       pmap_ok pmap1 /\
       pmap_subsume pmap pmap1 /\
       match outcome with
       | (Halt ec output, ck) =>
-        prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
-        (ec = (word.of_Z 1) \/ ec = (word.of_Z 4))
+          prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
+          (ec = (word.of_Z 1) \/ ec = (word.of_Z 4))
       | (State t1, ck) =>
-        fuel1 = ck /\
-        state_rel fs s1 t1 /\
-        cmd_res_rel res l1 curr rest vs' t1 s1 pmap1
+          state_rel fs s1 t1 /\
+          cmd_res_rel res l1 curr rest vs' t1 s1 pmap1
       end.
 
 (* proofs *)
 
 Ltac unfold_outcome :=
-  unfold interm, contdf, crash, stop in *.
+  unfold cont, crash, stop in *.
 
 Ltac unfold_stack :=
   unfold inc, set_stack, set_input, set_memory, set_pc,
@@ -661,28 +660,28 @@ Proof.
   - destruct (IEnv.lookup (vars s) n) eqn:?.
     all: inversion H; subst; congruence.
   - congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; subst; eauto.
+  - destruct (eval_exp e1 s) eqn:?; destruct o eqn:?.
+    2: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; inversion H3; subst; eauto.
+    destruct (eval_exp e2 s0) eqn:?; destruct o0 eqn:?.
+    2: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; inversion H3; subst; eauto.
     unfold combine_word in *.
     destruct v0; unfold_outcome.
     2: congruence.
     destruct v1; unfold_outcome.
     all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; subst; eauto.
+  - destruct (eval_exp e1 s) eqn:?; destruct o eqn:?.
+    2: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; inversion H3; subst; eauto.
+    destruct (eval_exp e2 s0) eqn:?; destruct o0 eqn:?.
+    2: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; inversion H3; subst; eauto.
     unfold combine_word in *.
     destruct v0; unfold_outcome.
     2: congruence.
     destruct v1; unfold_outcome.
     all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; subst; eauto.
+  - destruct (eval_exp e1 s) eqn:?; destruct o eqn:?.
+    2: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; inversion H3; subst; eauto.
+    destruct (eval_exp e2 s0) eqn:?; destruct o0 eqn:?.
+    2: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; inversion H3; subst; eauto.
     destruct (value_eqb v1 (ImpSyntax.Word (Naive.wrap 0))) eqn:?.
     1: congruence.
     unfold combine_word in *.
@@ -690,10 +689,10 @@ Proof.
     2: congruence.
     destruct v1; unfold_outcome.
     all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; subst; eauto.
+  - destruct (eval_exp e1 s) eqn:?; destruct o eqn:?.
+    2: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; inversion H3; subst; eauto.
+    destruct (eval_exp e2 s0) eqn:?; destruct o0 eqn:?.
+    2: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; inversion H3; subst; eauto.
     unfold mem_load in *.
     destruct v0; unfold_outcome.
     1: congruence.
@@ -705,64 +704,7 @@ Proof.
     2: congruence.
     destruct (nth_error _ (w2n w / 8)) eqn:?.
     2: congruence.
-    destruct o eqn:?.
-    all: congruence.
-Qed.
-
-Theorem eval_exp_not_contdf: forall e s res s1 c cnt,
-  eval_exp e s = (res, s1) ->
-  res <> ContDF c cnt.
-Proof.
-  induction e; intros.
-  all: simpl eval_exp in *.
-  all: unfold lookup_var, bind in *; unfold_outcome; simpl in *.
-  - destruct (IEnv.lookup _ _); unfold_outcome; cleanup; congruence.
-  - congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; subst; eauto.
-    unfold combine_word in *.
-    destruct v; unfold_outcome.
-    2: congruence.
-    destruct v0; unfold_outcome.
-    all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; subst; eauto.
-    unfold combine_word in *.
-    destruct v; unfold_outcome.
-    2: congruence.
-    destruct v0; unfold_outcome.
-    all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; subst; eauto.
-    destruct (value_eqb v0 (ImpSyntax.Word (Naive.wrap 0))) eqn:?.
-    1: congruence.
-    unfold combine_word in *.
-    destruct v; unfold_outcome.
-    2: congruence.
-    destruct v0; unfold_outcome.
-    all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; subst; eauto.
-    unfold mem_load in *.
-    destruct v; unfold_outcome.
-    1: congruence.
-    destruct v0; unfold_outcome.
-    2: congruence.
-    destruct (negb (w2n w mod 8 =? 0)) eqn:?.
-    1: congruence.
-    destruct (nth_error (ImpSemantics.memory s2) i) eqn:?.
-    2: congruence.
-    destruct (nth_error _ (w2n w / 8)) eqn:?.
-    2: congruence.
-    destruct o eqn:?.
+    destruct o1 eqn:?.
     all: congruence.
 Qed.
 
@@ -774,64 +716,30 @@ Proof.
   induction t; intros.
   all: simpl eval_test in *.
   all: unfold lookup_var, bind in *; unfold_outcome; simpl in *.
-  - destruct eval_exp eqn:?; destruct r eqn:?; cleanup.
+  - destruct eval_exp eqn:?; destruct o eqn:?; cleanup.
     all: eapply eval_exp_not_stop in Heqp; eauto; try congruence.
-    destruct eval_exp eqn:?; destruct r0 eqn:?; subst; cleanup.
+    destruct eval_exp eqn:?; destruct o0 eqn:?; subst; cleanup.
     all: eapply eval_exp_not_stop in Heqp0; eauto; try congruence.
     destruct c eqn:?; simpl in *; cleanup.
     all: destruct v0 eqn:?; destruct v1 eqn:?; subst; cleanup.
     all: unfold_outcome; cleanup; try congruence.
-  - destruct eval_test eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt1 in Heqp; eauto.
-    destruct (eval_test t2) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt2 in Heqp0; eauto.
+  - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
+    2: unfold not; intros; inversion H; subst; eapply IHt1 in Heqp; eauto.
+    destruct (eval_test t2) eqn:?; destruct o eqn:?; subst; cleanup.
+    2: unfold not; intros; inversion H; subst; eapply IHt2 in Heqp0; eauto.
     congruence.
-  - destruct eval_test eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt1 in Heqp; eauto.
-    destruct (eval_test t2) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt2 in Heqp0; eauto.
+  - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
+    2: unfold not; intros; inversion H; subst; eapply IHt1 in Heqp; eauto.
+    destruct (eval_test t2) eqn:?; destruct o eqn:?; subst; cleanup.
+    2: unfold not; intros; inversion H; subst; eapply IHt2 in Heqp0; eauto.
     congruence.
-  - destruct eval_test eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt in Heqp; eauto.
-    congruence.
-  (* TODO(kπ) Does this imply some sort of error? *)
-  Unshelve.
-  + exact Abort.
-  + exact Abort.
-  + exact Abort.
-  + exact Abort.
-Qed.
-
-Theorem eval_test_not_contdf: forall t s res s1 c cnt,
-  eval_test t s = (res, s1) ->
-  res <> ContDF c cnt.
-Proof.
-  induction t; intros.
-  all: simpl eval_test in *.
-  all: unfold lookup_var, bind in *; unfold_outcome; simpl in *.
-  - destruct eval_exp eqn:?; destruct r eqn:?; cleanup.
-    all: eapply eval_exp_not_contdf in Heqp; eauto; try congruence.
-    destruct eval_exp eqn:?; destruct r0 eqn:?; subst; cleanup.
-    all: eapply eval_exp_not_contdf in Heqp0; eauto; try congruence.
-    destruct c eqn:?; simpl in *; cleanup.
-    all: destruct v0 eqn:?; destruct v eqn:?; subst; cleanup.
-    all: unfold_outcome; cleanup; try congruence.
-  - destruct eval_test eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt1 in Heqp; eauto.
-    destruct (eval_test t2) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt2 in Heqp0; eauto.
-    congruence.
-  - destruct eval_test eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt1 in Heqp; eauto.
-    destruct (eval_test t2) eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt2 in Heqp0; eauto.
-    congruence.
-  - destruct eval_test eqn:?; destruct r eqn:?; subst; cleanup.
-    2,3: unfold not; intros; subst; eapply IHt in Heqp; eauto.
+  - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
+    2: unfold not; intros; inversion H; subst; eapply IHt in Heqp; eauto.
     congruence.
   (* TODO(kπ) Does this imply some sort of error? *)
   Unshelve.
-  all: eauto.
+  + exact Abort.
+  + exact Abort.
 Qed.
 
 Theorem mem_inv_pmap_subsume: forall pmap pmap1 asmm impm,
@@ -1237,13 +1145,11 @@ Proof.
   simpl eval_exp in *.
   simpl c_exp in *; unfold c_add, c_sub, c_div, c_load in *; unfold dlet in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp in *; subst.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   destruct (eval_exp e2 s0) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp0 in H1; subst.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   unfold combine_word in *.
   destruct v eqn:?; unfold_outcome; cleanup; subst.
   2: contradiction.
@@ -1314,13 +1220,11 @@ Proof.
   simpl eval_exp in *.
   simpl c_exp in *; unfold c_add, c_sub, c_div, c_load in *; unfold dlet in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp in *; subst.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   destruct (eval_exp e2 s0) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp0 in H1; subst.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   unfold combine_word in *.
   destruct v eqn:?; unfold_outcome; cleanup; subst.
   2: contradiction.
@@ -1395,13 +1299,11 @@ Proof.
   simpl eval_exp in *.
   simpl c_exp in *; unfold c_add, c_sub, c_div, c_load in *; unfold dlet in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp in *; subst.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   destruct (eval_exp e2 s0) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp0 in H1; subst.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   unfold combine_word in *.
   destruct (value_eqb _ _) eqn:?; unfold_outcome; cleanup; subst.
   1: contradiction.
@@ -1490,13 +1392,11 @@ Proof.
   simpl eval_exp in *; simpl mem_load in *.
   simpl c_exp in *; unfold c_add, c_sub, c_div, c_load in *; unfold dlet in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp in *; subst.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   destruct (eval_exp e2 s0) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp0 in H1; subst.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   unfold mem_load in *.
   destruct v eqn:?; unfold_outcome; cleanup; subst.
   1: contradiction.
@@ -1691,13 +1591,11 @@ Proof.
   simpl c_exp in *; unfold c_test_jump in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   destruct (eval_exp e2 s0) eqn:?; simpl in *.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   unfold eval_cmp in *.
   destruct v eqn:?; unfold_outcome; cleanup; subst.
   destruct v0 eqn:?; unfold_outcome; cleanup; subst.
@@ -1804,13 +1702,11 @@ Proof.
   simpl c_exp in *; unfold c_test_jump in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   destruct (eval_exp e2 s0) eqn:?; simpl in *.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: pat `eval_exp _ _ = _` eapply eval_exp_not_contdf in pat; contradiction.
   unfold eval_cmp in *.
   destruct v eqn:?; unfold_outcome; cleanup; subst.
   destruct v0 eqn:?; unfold_outcome; cleanup; subst.
@@ -1925,9 +1821,9 @@ Proof.
   simpl c_test_jump in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_test tst1 s) eqn:?; simpl in *.
-  destruct r eqn:?; subst; cleanup.
+  destruct o eqn:?; subst; cleanup.
   destruct (eval_test tst2 s0) eqn:?; simpl in *.
-  destruct r eqn:?; subst; cleanup.
+  destruct o eqn:?; subst; cleanup.
   unfold_outcome; cleanup.
   destruct (c_test_jump tst1) eqn:?; simpl in *.
   destruct (c_test_jump tst2) eqn:?; simpl in *.
@@ -2021,9 +1917,9 @@ Proof.
   simpl c_test_jump in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_test tst1 s) eqn:?; simpl in *.
-  destruct r eqn:?; subst; cleanup.
+  destruct o eqn:?; subst; cleanup.
   destruct (eval_test tst2 s0) eqn:?; simpl in *.
-  destruct r eqn:?; subst; cleanup.
+  destruct o eqn:?; subst; cleanup.
   unfold_outcome; cleanup.
   destruct (c_test_jump tst1) eqn:?; simpl in *.
   destruct (c_test_jump tst2) eqn:?; simpl in *.
@@ -2117,7 +2013,7 @@ Proof.
   simpl c_test_jump in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_test tst s) eqn:?; simpl in *.
-  destruct r eqn:?; subst; cleanup.
+  destruct o eqn:?; subst; cleanup.
   unfold_outcome; cleanup.
   destruct (c_test_jump tst) eqn:?; simpl in *.
   specialize (eval_test_pure tst _ _ _ Heqp).
@@ -2150,16 +2046,16 @@ Proof.
 Qed.
 
 Theorem c_cmd_Abort: forall (fuel: nat),
-  goal_cmd ImpSyntax.Abort (S fuel).
+  goal_cmd ImpSyntax.Abort fuel.
 Proof.
   unfold goal_cmd; intros.
   simpl c_cmd in *; cleanup.
-  pat `has_stack _ _` eapply has_stack_even in pat.
+  eapply has_stack_even in H4.
   unfold has_stack in *; cleanup.
   unfold state_rel in *; cleanup.
   unfold env_ok in *; cleanup.
   simpl flatten in *; simpl code_in in *; cleanup.
-  do 2 eexists; split.
+  eexists; eexists; eexists; split.
   1: {
     eapply steps_trans.
     1: eapply steps_step_same.
@@ -2174,9 +2070,11 @@ Proof.
   split; [eapply pmap_subsume_refl|].
   simpl; split; eauto.
   inversion H; subst.
-  pat `_ = output _` rewrite <- pat.
+  rewrite <- H2.
   rewrite prefix_correct.
   apply substring_noop.
+  Unshelve.
+  exact 0.
 Qed.
 
 (* Theorem c_cmd_Return: forall (e: exp),
@@ -2186,7 +2084,7 @@ Proof.
   unfold goal_cmd; intros.
   simpl eval_cmd in *; unfold bind in *.
   destruct (eval_exp) eqn:?; cleanup.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
   simpl c_cmd in *; unfold dlet in *.
   destruct c_exp eqn:?; cleanup.
@@ -2220,18 +2118,14 @@ Proof.
   } *)
 
 Theorem c_cmd_Assign: forall (n: name) (e: exp) (fuel: nat),
-  goal_cmd (ImpSyntax.Assign n e) (S fuel).
+  goal_cmd (ImpSyntax.Assign n e) fuel.
 Proof.
   intros.
   unfold goal_cmd; intros.
-  simpl EVAL_CMD in *; unfold bind in *.
+  simpl eval_cmd in *; unfold bind in *.
   destruct eval_exp eqn:?; cleanup.
-  destruct r eqn:?; subst.
+  destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
-  2: {
-
-  }
-  2: eapply eval_exp_not_contdf.
   simpl c_cmd in *; unfold c_assign, dlet, assign in *.
   destruct c_exp eqn:?; cleanup.
   unfold_outcome; cleanup.
@@ -2284,7 +2178,7 @@ Proof.
   unfold goal_cmd; intros.
   simpl eval_cmd in *; unfold bind in *.
   destruct eval_test eqn:?; cleanup.
-  destruct r eqn:?; subst; cleanup.
+  destruct o eqn:?; subst; cleanup.
   2: exfalso; destruct v eqn:?; eapply eval_test_not_stop in Heqp; eauto; try congruence.
   simpl c_cmd in *; unfold dlet, assign in *.
   destruct c_test_jump eqn:?; cleanup.
@@ -2344,7 +2238,7 @@ Proof.
   2: contradiction.
   cleanup; subst.
    *)
-  destruct eval_cmd eqn:?; destruct r eqn:?; subst; cleanup.
+  destruct eval_cmd eqn:?; destruct o eqn:?; subst; cleanup.
   2: { (* eval_cmd body = Stop v *)
     (* assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp. *)
     unfold goal_cmd in Heqp2; eapply H in Heqp2; eapply Heqp2 in H3; clear Heqp2; cleanup; eauto.
@@ -2427,7 +2321,7 @@ Proof.
   simpl c_cmd in *; unfold dlet in *.
   simpl eval_cmd in *; unfold bind in *; simpl in *; inversion H1; subst.
   destruct (eval_cmd c1 _) eqn:?; simpl in *.
-  destruct r eqn:?; subst; cleanup.
+  destruct o eqn:?; subst; cleanup.
   2: do 3 eexists; split; [eapply steps_refl|]; split; eauto; split; [eapply pmap_subsume_refl|]; eauto.
   2: admit.
   destruct (eval_cmd c2 _) eqn:?; simpl in *; inversion H1; clear H1; clear H12; subst.

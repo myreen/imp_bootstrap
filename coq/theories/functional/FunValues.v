@@ -26,6 +26,9 @@ Definition name_enc (s: string): name :=
 Definition value_name (s : string) : Value :=
   Num (name_enc s).
 
+Global Instance Refinable_string: Refinable string :=
+  { encode := value_name }.
+
 Definition value_list_of_values (xs : list Value) : Value :=
   fold_right (fun x acc => Pair x acc) (Num 0) xs.
 

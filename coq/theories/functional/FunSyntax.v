@@ -1,7 +1,8 @@
-Require Import Coq.Lists.List.
+From Stdlib Require Import NArith.
+From Stdlib Require Import Lists.List.
 Import ListNotations.
 
-Notation name := nat (only parsing).
+Notation name := N (only parsing).
 
 Inductive op : Type :=
 | Add
@@ -18,7 +19,7 @@ Inductive test : Type :=
 | Equal.
 
 Inductive exp : Type :=
-| Const (n : nat)                                (* constant number            *)
+| Const (n : N)                                (* constant number            *)
 | Var (n : name)                                 (* local variable             *)
 | Op (o : op) (args : list exp)                  (* primitive operations       *)
 | If (t : test) (conds : list exp) (e1 e2 : exp) (* if test .. then .. else .. *)
@@ -26,7 +27,7 @@ Inductive exp : Type :=
 | Call (f : name) (args : list exp).             (* call a function            *)
 
 Fixpoint exp_ind_str (P : exp -> Prop)
-  (HConst : forall n : nat, P (Const n))
+  (HConst : forall n : N, P (Const n))
   (HVar : forall n : name, P (Var n))
   (HOp : forall (o : op) (args : list exp), Forall P args -> P (Op o args))
   (HIf : forall (t : test) (conds : list exp) (e1 e2 : exp),
@@ -70,7 +71,7 @@ Fixpoint exp_ind_str (P : exp -> Prop)
 Fail Fixpoint exp_ind_list (P : list exp -> Prop)
   (HNil : P [])
   (HCons : forall e es, P [e] -> P es -> P (e :: es))
-  (HConst : forall n : nat, P [Const n])
+  (HConst : forall n : N, P [Const n])
   (HVar : forall n : name, P [Var n])
   (HOp : forall (o : op) (args : list exp), P args -> P [Op o args])
   (HIf : forall (t : test) (conds : list exp) (e1 e2 : exp),

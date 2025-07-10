@@ -4,7 +4,7 @@ From impboot Require Import
 Require Import impboot.assembly.ASMSyntax.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
-Require Import Coq.Relations.Relation_Operators.
+From Stdlib Require Import Relations.Relation_Operators.
 
 Inductive word_or_ret :=
 | Word : word64 -> word_or_ret
@@ -244,6 +244,12 @@ Inductive steps : (s_or_h * nat) -> (s_or_h * nat) -> Prop :=
   steps (s1, n1) (s2, n2) ->
   steps (s2, n2) (s3, n3) ->
   steps (s1, n1) (s3, n3).
+
+(* TODO(kπ) something like this *)
+(* Lemma steps_add_fuel: forall s1 n1 s2 n2 s3 n3,
+  steps (s1, n1) (s2, 0) ->
+  steps (s2, n2) (s3, n3) ->
+  steps (s1, n1 + n2) (s3, n3) *)
 
 Definition can_write_mem_at (m : word64 -> option (option word64)) (a : word64) : Prop :=
   m a = Some None.

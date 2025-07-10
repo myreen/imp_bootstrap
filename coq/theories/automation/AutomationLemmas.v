@@ -9,6 +9,7 @@ Require Import impboot.utils.Words4Naive.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
 Require Import impboot.utils.AppList.
+Require Import Patat.Patat.
 
 Create HintDb automation.
 
@@ -21,8 +22,8 @@ Theorem trans_app: forall n params vs body s s1 v,
 Proof.
   intros; eapply App_intro; eauto.
   unfold env_and_body; simpl.
-  rewrite H1.
-  rewrite <- Nat.eqb_eq in H0; rewrite H0.
+  pat `lookup_fun _ _ = _` rewrite pat.
+  pat `Datatypes.length _ = _` rewrite <- Nat.eqb_eq in pat; rewrite pat.
   reflexivity.
 Qed.
 
@@ -177,54 +178,61 @@ Proof.
 Qed.
 (* Hint Resolve auto_nat_const_zero : automation. *)
 
-Theorem auto_nat_const : forall env s n,
-  env |-- ([Const n], s) ---> ([encode n], s).
+Theorem auto_nat_const : forall env s (n: nat),
+  env |-- ([Const (N.of_nat n)], s) ---> ([encode n], s).
 Proof.
   intros. apply Eval_Const.
 Qed.
 Hint Resolve auto_nat_const : automation.
 
-Theorem auto_nat_add : forall env s0 s1 s2 x1 x2 n1 n2,
+Theorem auto_nat_add : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
   env |-- ([x2], s1) ---> ([encode n2], s2) ->
-  env |-- ([Op FunSyntax.Add [x1; x2]], s0) ---> ([encode (n1 + n2)], s2).
+  env |-- ([Op FunSyntax.Add [x1; x2]], s0) ---> ([encode (n1 + n2)%nat], s2).
 Proof.
-  intros.
-  repeat econstructor; eauto.
+  intros; simpl.
+  repeat econstructor; eauto; simpl.
+  rewrite Nnat.Nat2N.inj_add.
+  reflexivity.
 Qed.
 Hint Resolve auto_nat_add : automation.
 
-Theorem auto_nat_sub : forall env s0 s1 s2 x1 x2 n1 n2,
+Theorem auto_nat_sub : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
   env |-- ([x2], s1) ---> ([encode n2], s2) ->
-  env |-- ([Op FunSyntax.Sub [x1; x2]], s0) ---> ([encode (n1 - n2)], s2).
+  env |-- ([Op FunSyntax.Sub [x1; x2]], s0) ---> ([encode (n1 - n2)%nat], s2).
 Proof.
   intros.
-  repeat econstructor; eauto.
+  repeat econstructor; eauto; simpl.
+  rewrite Nnat.Nat2N.inj_sub.
+  reflexivity.
 Qed.
 Hint Resolve auto_nat_sub : automation.
 
-Theorem auto_nat_div : forall env s0 s1 s2 x1 x2 n1 n2,
+Theorem auto_nat_div : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
   env |-- ([x2], s1) ---> ([encode n2], s2) ->
-  (n2 <> 0 -> env |-- ([Op FunSyntax.Div [x1; x2]], s0) ---> ([encode (n1 / n2)], s2)).
+  ((N.of_nat n2) <> 0 -> env |-- ([Op FunSyntax.Div [x1; x2]], s0) ---> ([encode (n1 / n2)%nat], s2)).
 Proof.
   intros.
-  repeat econstructor; eauto.
-  rewrite <- Nat.eqb_neq in *; simpl; rewrite H1; reflexivity.
+  repeat econstructor; eauto; simpl.
+  rewrite <- N.eqb_neq in *; simpl.
+  pat `_ = false` rewrite pat.
+  rewrite Nnat.Nat2N.inj_div.
+  reflexivity.
 Qed.
 Hint Resolve auto_nat_div : automation.
 
 Theorem auto_nat_if_eq : forall {A} `{Refinable A}
-    env s x1 x2 y z n1 n2 (t f : A),
+    env s x1 x2 y z (n1 n2: nat) (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
   env |-- ([y], s) ---> ([encode t], s) ->
   env |-- ([z], s) ---> ([encode f], s) ->
-  env |-- ([If Equal [x1; x2] y z], s) ---> ([encode (if n1 =? n2 then t else f)], s).
+  env |-- ([If Equal [x1; x2] y z], s) ---> ([encode (if (N.of_nat n1) =? (N.of_nat n2) then t else f)], s).
 Proof.
   intros.
-  destruct (n1 =? n2) eqn:Heq.
+  destruct (_ =? _) eqn:Heq.
   all: repeat econstructor; eauto.
   all: match goal with
   | [ |- take_branch _ _ _ = _ ] => unfold take_branch, return_; reflexivity
@@ -234,15 +242,15 @@ Qed.
 Hint Resolve auto_nat_if_eq : automation.
 
 Theorem auto_nat_if_less : forall {A} `{Refinable A}
-  env s x1 x2 y z n1 n2 (t f : A),
+  env s x1 x2 y z (n1 n2: nat) (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
   env |-- ([y], s) ---> ([encode t], s) ->
   env |-- ([z], s) ---> ([encode f], s) ->
-  env |-- ([If Less [x1; x2] y z], s) ---> ([encode (if n1 <? n2 then t else f)], s).
+  env |-- ([If Less [x1; x2] y z], s) ---> ([encode (if (N.of_nat n1) <? (N.of_nat n2) then t else f)], s).
 Proof.
   intros.
-  destruct (n1 <? n2) eqn:Heq.
+  destruct (_ <? _) eqn:Heq.
   all: repeat econstructor; eauto.
   all: match goal with
   | [ |- take_branch _ _ _ = _ ] => unfold take_branch, return_; reflexivity
@@ -263,18 +271,19 @@ Theorem auto_nat_case : forall {A} `{Refinable A}
         (Op Sub [x0; Const 1]) x2)], s) --->
      ([encode (
         match v0 with
-        | 0 => v1
+        | 0%nat => v1
         | S n => v2 n
         end)], s).
 Proof.
   intros.
   destruct v0 eqn:?.
+  Opaque N.of_nat.
   1: Eval_eq.
   simpl in *.
   subst.
   Eval_eq.
-  replace (n0 - 0) with n0 in *; eauto.
-  lia.
+  assert ((N.of_nat (S n0) - 1) = N.of_nat n0) as -> by lia.
+  eauto.
 Qed.
 Hint Resolve auto_nat_case : automation.
 
@@ -423,18 +432,18 @@ Hint Resolve auto_pair_case : automation.
 
 Theorem auto_char_CHR : forall env s x1 x,
   env |-- ([x1], s) ---> ([Num x], s) ->
-  x < 256 ->
-  env |-- ([x1], s) ---> ([encode (ascii_of_nat x)], s).
+  (x < 256)%N ->
+  env |-- ([x1], s) ---> ([encode (ascii_of_N x)], s).
 Proof.
   intros.
   simpl.
-  rewrite nat_ascii_embedding; auto.
+  rewrite N_ascii_embedding; auto.
 Qed.
 Hint Resolve auto_char_CHR : automation.
 
 Theorem auto_char_ORD : forall env s x1 x,
   env |-- ([x1], s) ---> ([encode x], s) ->
-  env |-- ([x1], s) ---> ([Num (nat_of_ascii x)], s).
+  env |-- ([x1], s) ---> ([Num (N_of_ascii x)], s).
 Proof.
   intros.
   simpl in *.
@@ -445,19 +454,19 @@ Hint Resolve auto_char_ORD : automation.
 (* word *)
 
 Definition value_word {n} `{word_inst : word n} (w : @word.rep n word_inst) : Value :=
-  Num (Z.to_nat (word.unsigned w)).
+  Num (Z.to_N (word.unsigned w)).
 
 Theorem auto_word4_n2w : forall env s x1 x,
   env |-- ([x1], s) ---> ([Num x], s) ->
   x < 16 ->
-  env |-- ([x1], s) ---> ([value_word ((word.of_Z (Z.of_nat x)) : word4)], s).
+  env |-- ([x1], s) ---> ([value_word ((word.of_Z (Z.of_N x)) : word4)], s).
 Proof.
   intros.
   unfold value_word.
   rewrite word.unsigned_of_Z.
   unfold word.wrap.
   cbn.
-  assert ((Z.to_nat (Z.of_nat x mod 16)) = x).
+  assert ((Z.to_N (Z.of_N x mod 16)) = x).
   2: { rewrite H1. eapply H. }
   rewrite Z.mod_small; lia.
 Qed.
@@ -466,27 +475,27 @@ Hint Resolve auto_word4_n2w : automation.
 Theorem auto_word64_n2w : forall env s x1 x,
   env |-- ([x1], s) ---> ([Num x], s) ->
   x < 2 ^ 64 ->
-  env |-- ([x1], s) ---> ([value_word ((word.of_Z (Z.of_nat x)) : word64)], s).
+  env |-- ([x1], s) ---> ([value_word ((word.of_Z (Z.of_N x)) : word64)], s).
 Proof.
   intros.
   unfold value_word.
   rewrite word.unsigned_of_Z.
   unfold word.wrap.
   cbn.
-  assert ((Z.to_nat (Z.of_nat x mod (2 ^ 64))) = x).
+  assert ((Z.to_N (Z.of_N x mod (2 ^ 64))) = x).
   2: { cbn in H1. rewrite H1. eapply H. }
   rewrite Z.mod_small; try lia.
-  apply inj_lt in H0.
+  (* apply inj_lt in H0.
   split; try lia.
   rewrite inj_pow in H0.
   simpl  Z.of_nat in H0.
-  assumption.
+  assumption. *)
 Qed.
 Hint Resolve auto_word64_n2w : automation.
 
 Theorem auto_word4_w2n : forall env s x1 x,
   env |-- ([x1], s) ---> ([value_word (x : word4)], s) ->
-  env |-- ([x1], s) ---> ([Num (Z.to_nat (word.unsigned x))], s).
+  env |-- ([x1], s) ---> ([Num (Z.to_N (word.unsigned x))], s).
 Proof.
   intros.
   unfold value_word in *.
@@ -496,7 +505,7 @@ Hint Resolve auto_word4_w2n : automation.
 
 Theorem auto_word64_w2n : forall env s x1 x,
   env |-- ([x1], s) ---> ([value_word (x : word64)], s) ->
-  env |-- ([x1], s) ---> ([Num (Z.to_nat (word.unsigned x))], s).
+  env |-- ([x1], s) ---> ([Num (Z.to_N (word.unsigned x))], s).
 Proof.
   intros.
   unfold value_word in *.
@@ -510,7 +519,7 @@ Hint Resolve auto_word64_w2n : automation.
 
 (* cmp *)
 
-(* Global Instance Refinable_cmp : Refinable ImpSyntax.cmp :=
+Global Instance Refinable_cmp : Refinable ImpSyntax.cmp :=
 { encode cmp :=
   match cmp with
   | ImpSyntax.Equal => value_name "Equal"
@@ -544,7 +553,7 @@ Qed.
 
 Fixpoint encode_exp (e : ImpSyntax.exp) : Value :=
   match e with
-  | ImpSyntax.Var n => value_list_of_values [value_name "Var"; Num n]
+  | ImpSyntax.Var n => value_list_of_values [value_name "Var"; Num (N.of_nat n)]
   | ImpSyntax.Const n => value_list_of_values [value_name "Const"; value_word n]
   | ImpSyntax.Add e1 e2 =>
     value_list_of_values [value_name "Add"; encode_exp e1; encode_exp e2]
@@ -560,7 +569,7 @@ Global Instance Refinable_exp : Refinable ImpSyntax.exp :=
  { encode := encode_exp }.
 
 Theorem auto_exp_cons_Var: forall env s x_n n,
-  env |-- ([x_n], s) ---> ([Num n], s) ->
+  env |-- ([x_n], s) ---> ([Num (N.of_nat n)], s) ->
   env |-- ([Op Cons [Const (name_enc "Var"); Op Cons [x_n; Const 0]]], s) --->
        ([encode (ImpSyntax.Var n)], s).
 Proof. Eval_eq. Qed.
@@ -1066,10 +1075,100 @@ Qed.
 
 (* func *)
 
+Definition encode_func (f: ImpSyntax.func) : Value :=
+  match f with
+  | ImpSyntax.Func n params body =>
+    value_list_of_values [value_name "Func"; encode n; encode params; encode body]
+  end.
+
+Global Instance Refinable_func: Refinable ImpSyntax.func :=
+  { encode := encode_func }.
+
+Theorem auto_func_cons_Func: forall env s x_n x_params x_body n params body,
+  env |-- ([x_n], s) ---> ([encode n], s) ->
+  env |-- ([x_params], s) ---> ([encode params], s) ->
+  env |-- ([x_body], s) ---> ([encode body], s) ->
+  env |-- ([Op Cons [Const (name_enc "Func");
+                     Op Cons [x_n; Op Cons [x_params; Op Cons [x_body; Const 0]]]]], s) --->
+        ([encode (ImpSyntax.Func n params body)], s).
+Proof. Eval_eq. Qed.
+Hint Resolve auto_func_cons_Func : automation.
+
+Theorem auto_func_CASE: forall {A} `{Refinable A} env s x0 v0
+  Func_case f_Func (n1 n2 n3 : name),
+
+  env |-- ([x0], s) ---> ([encode v0], s) ->
+
+  (forall n params body,
+    (FEnv.insert (n3, Some (encode body))
+      (FEnv.insert (n2, Some (encode params))
+        (FEnv.insert (n1, Some (encode n)) env))) |-- ([Func_case], s) ---> ([encode (f_Func n params body)], s)) ->
+
+  NoDup ([n1; n2; n3] ++ free_vars x0) ->
+
+  env |-- ([Let n1 (Op Head [Op Tail [x0]])
+            (Let n2 (Op Head [Op Tail [Op Tail [x0]]])
+              (Let n3 (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Func_case))], s) --->
+     ([encode (
+       match v0 with
+       | ImpSyntax.Func n params body => f_Func n params body
+       end)], s).
+Proof.
+  Opaque name_enc.
+  intros.
+  destruct v0 eqn:?.
+  all: simpl in *; unfold value_list_of_values in *; simpl in *; subst.
+  all: Eval_eq.
+  all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
+  all: simpl; try reflexivity.
+Qed.
+Hint Resolve auto_func_CASE : automation.
+
 (* prog *)
 
-(* asm... *)
+Definition encode_prog (p : ImpSyntax.prog) : Value :=
+  match p with
+  | ImpSyntax.Program funcs =>
+    value_list_of_values [value_name "Program"; encode funcs]
+  end.
 
-(* TODO(kπ) continue *)
+Global Instance Refinable_prog : Refinable ImpSyntax.prog :=
+  { encode := encode_prog }.
 
- *)
+Theorem auto_prog_cons_Program: forall env s x_funcs funcs,
+  env |-- ([x_funcs], s) ---> ([encode funcs], s) ->
+  env |-- ([Op Cons [Const (name_enc "Program");
+                     Op Cons [x_funcs; Const 0]]], s) --->
+        ([encode (ImpSyntax.Program funcs)], s).
+Proof. Eval_eq. Qed.
+Hint Resolve auto_prog_cons_Program : automation.
+
+Theorem auto_prog_CASE: forall {A} `{Refinable A} env s x0 v0
+  Program_case f_Program (n1 : name),
+
+  env |-- ([x0], s) ---> ([encode v0], s) ->
+
+  (forall funcs,
+    (FEnv.insert (n1, Some (encode funcs)) env) |-- ([Program_case], s) ---> ([encode (f_Program funcs)], s)) ->
+
+  NoDup ([n1] ++ free_vars x0) ->
+
+  env |-- ([Let n1 (Op Head [Op Tail [x0]]) Program_case], s) --->
+     ([encode (
+       match v0 with
+       | ImpSyntax.Program funcs => f_Program funcs
+       end)], s).
+Proof.
+  Opaque name_enc.
+  intros.
+  destruct v0 eqn:?.
+  all: simpl in *; unfold value_list_of_values in *; simpl in *; subst.
+  all: Eval_eq.
+  all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
+  all: simpl; try reflexivity.
+Qed.
+Hint Resolve auto_prog_CASE : automation.
+
+(* asm *)
+
+

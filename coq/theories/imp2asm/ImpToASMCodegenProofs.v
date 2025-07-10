@@ -8,7 +8,7 @@ Require Import impboot.imperative.ImpSemantics.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.assembly.ASMSemantics.
 
-Require Import Patmycoq.Patmycoq.
+Require Import Patat.Patat.
 
 (* Definitions of invariants and relations *)
 
@@ -773,8 +773,7 @@ Proof.
   eapply H in H0; clear H; cleanup.
   eexists; split; eauto; intros.
   eapply H0 in H1; clear H0; cleanup.
-  eexists. *)
-
+  eexists; split. *)
 
 Theorem memory_set_memory: forall s p,
   memory (set_pc p s) = memory s.
@@ -2342,7 +2341,7 @@ Proof.
   eapply H0 in Heqp0; clear H0.
   2,3,4,9: eauto.
   3: eauto.
-  (* 4: eapply mem_inv_asmm_IMP.
+  4: eapply mem_inv_asmm_IMP.
   2: congruence.
   1: destruct x1; destruct s0; cleanup; subst.
   2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto.
@@ -2379,7 +2378,7 @@ Proof.
   }
   all: eauto.
   unfold state_rel in *; cleanup.
-  eapply env_ok_add_None; eauto. *)
+  eapply env_ok_add_None; eauto.
 Abort.
 
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),

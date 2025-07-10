@@ -50,7 +50,14 @@ Definition list_CASE [A] (l : list A) [B] (fnil : B) (fcons : A -> list A -> B) 
   end.
 
 Instance Analyzable_List A : Analyzable (list A) :=
-  { analyze := @list_CASE A }.
+  {
+    R := forall B, B -> (A -> list A -> B) -> B;
+    analyze l _ fnil fcons :=
+      match l with
+      | [] => fnil
+      | x :: xs => fcons x xs
+      end
+  }.
 
 Definition option_CASE [A] (o : option A) [B] (fnone : B) (fsome : A -> B) : B :=
   match o with
@@ -59,7 +66,14 @@ Definition option_CASE [A] (o : option A) [B] (fnone : B) (fsome : A -> B) : B :
   end.
 
 Instance Analyzable_Option A : Analyzable (option A) :=
-  { analyze := @option_CASE A }.
+  {
+    R := forall B, B -> (A -> B) -> B;
+    analyze o _ fnone fsome :=
+      match o with
+      | None => fnone
+      | Some x => fsome x
+      end
+  }.
 
 Definition pair_CASE [A1 A2] (p : A1 * A2) [B] (f: A1 -> A2 -> B) : B :=
   match p with
@@ -67,7 +81,13 @@ Definition pair_CASE [A1 A2] (p : A1 * A2) [B] (f: A1 -> A2 -> B) : B :=
   end.
 
 Instance Analyzable_Pair A1 A2 : Analyzable (A1 * A2) :=
-  { analyze := @pair_CASE A1 A2}.
+  {
+    R := forall B, (A1 -> A2 -> B) -> B;
+    analyze p _ f :=
+      match p with
+      | (x, y) => f x y
+      end
+  }.
 
 Definition nat_CASE (n : nat) [A] (f0 : A) (fS : nat -> A) : A :=
   match n with
@@ -76,7 +96,14 @@ Definition nat_CASE (n : nat) [A] (f0 : A) (fS : nat -> A) : A :=
   end.
 
 Instance Analyzable_Nat : Analyzable nat :=
-  { analyze := nat_CASE }.
+  {
+    R := forall A, A -> (nat -> A) -> A;
+    analyze n _ f0 fS :=
+      match n with
+      | 0 => f0
+      | S n' => fS n'
+      end
+  }.
 
 (* FIX *)
 

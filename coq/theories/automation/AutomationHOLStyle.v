@@ -1,10 +1,11 @@
-(* From impboot Require Import utils.Core.
+From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
+From impboot Require Import automation.Ltac2Utils.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message.
 Import Ltac2.Constr.Unsafe.
 From coqutil Require Import
@@ -14,56 +15,15 @@ From coqutil Require Import
 From Coq Require Import derive.Derive.
 From Coq Require Import FunInd.
 
-Ltac rewrite_let := match goal with
-| [ |- context C [?subterm] ] =>
-  match subterm with
-  | let x := ?a in @?b x =>
-    let C' := context C [b a] in
-    change C'
-  end
-end.
-
-Theorem xddd: forall a, a -> a.
-Proof.
-  congruence.
-Defined.
+Open Scope nat.
 
 Definition empty_state : state := init_state Lnil [].
-
-Inductive xd : Type := MkXD.
 
 (* TODO(kπ):
 - consider using preterm instead of open_constr if thing get too slow
 - computing names seems super slow. Should we have some hardcoded automation for that?
   (I tried to automate this by injectivity, but it's not injective :sad_goat:)
 *)
-
-Ltac2 opt_to_list (o: 'a option): 'a list := match o with | Some x => [x] | None => [] end.
-
-Ltac2 kind_of_constr (c: constr): string :=
-  match Unsafe.kind c with
-  | Rel _ => "Rel"
-  | Var _ => "Var"
-  | Meta _ => "Meta"
-  | Evar _ _ => "Evar"
-  | Sort _ => "Sort"
-  | Cast _ _ _ => "Cast"
-  | Prod _ _ => "Prod"
-  | Lambda _ _ => "Lambda"
-  | LetIn _ _ _ => "LetIn"
-  | App _ _ => "App"
-  | Constant _ _ => "Constant"
-  | Ind _ _ => "Ind"
-  | Constructor _ _ => "Constructor"
-  | Case _ _ _ _ _ => "Case"
-  | Fix _ _ _ _ => "Fix"
-  | CoFix _ _ _ => "CoFix"
-  | Proj _ _ _ => "Proj"
-  | Uint63 _ => "Uint63"
-  | Float _ => "Float"
-  | String _ => "String"
-  | Array _ _ _ _ => "Array"
-  end.
 
 Ltac2 automation_lemmas () := List.flat_map (fun s => opt_to_list (Env.get [Option.get (Ident.of_string s)])) [
   "auto_let";
@@ -73,9 +33,6 @@ Ltac2 automation_lemmas () := List.flat_map (fun s => opt_to_list (Env.get [Opti
   "auto_bool_iff";
   "auto_bool_not"
 ].
-
-Ltac2 ident_of_fqn (fqn: string list): ident list :=
-  List.map (fun s => Option.get (Ident.of_string s)) fqn.
 
 Ltac2 get_test_ref() :=
   let refs := Env.expand (ident_of_fqn ["auto_bool_not"]) in
@@ -128,21 +85,6 @@ Ltac2 beta_fix : red_flags := {
   rZeta := false; rDelta := false; rConst := []; rStrength := Norm;
 }.
 
-Ltac2 rec of_list (l : message list) : message :=
-  let rec of_list_go (l : message list) :=
-    match l with
-    | [] => Message.of_string ""
-    | [x] => x
-    | x :: xs => Message.concat x (Message.concat (Message.of_string ",") (of_list_go xs))
-    end
-  in Message.concat (Message.of_string "[ ") (Message.concat (of_list_go l) (Message.of_string " ]")).
-
-Ltac2 of_option (o : message option) : message :=
-  match o with
-  | Some x => x
-  | None => Message.of_string "None"
-  end.
-
 Ltac2 f_lookup_name (f_lookup : (string * constr) list) (fname : string) : constr option :=
   match List.find_opt (fun (name, _) => String.equal name fname) f_lookup with
   | Some (_, c) => Some c
@@ -174,52 +116,14 @@ Ltac2 rec list_to_constr_encode (l : constr list) : constr :=
     open_constr:((encode $x) :: $xs')
 end.
 
-Ltac2 reference_of_constr_opt (c: constr): reference option :=
-  match kind c with
-  | Var id => Some (Std.VarRef id)
-  | Constant const _inst => Some (Std.ConstRef const)
-  | Ind ind _inst => Some (Std.IndRef ind)
-  | Constructor cnstr _inst => Some (Std.ConstructRef cnstr)
-  | _ => None
-end.
-
-Ltac2 reference_to_string (r : reference) : string option :=
-  Some (Ident.to_string (List.last (Env.path r))).
-
-Ltac2 of_f_lookup (f_lookup : (string * constr) list) : message :=
+Ltac2 message_of_f_lookup (f_lookup : (string * constr) list) : message :=
   match f_lookup with
   | [] => Message.of_string "[]"
   | _ =>
     let f_lookup' := List.map (fun (name, iden) =>
       Message.concat (Message.of_string name) (Message.concat (Message.of_string " -> ") (Message.of_constr iden))
     ) f_lookup in
-    of_list f_lookup'
-end.
-
-(* TODO(kπ) *)
-Ltac unfold_fix fn :=
-  lazymatch goal with
-  | [  |- context[fn ?x] ] =>
-    let f := fresh "f" in
-    eassert (forall x, fn x = ?[f] x) as -> by
-    (
-      unfold fn;
-      instantiate
-        (f :=
-          ltac:(
-            let ll := fresh "ll" in
-            intros ll;
-            let thm := open_constr:(analyze ll) in
-            apply thm; intros
-          )
-        );
-      cbv beta;
-      match goal with
-      | [  |- forall l, _ ] =>
-          let ll := fresh l in
-          intros ll; destruct ll
-      end; fold fn; simpl analyze; reflexivity
-        ); cbv beta
+    message_of_list f_lookup'
 end.
 
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
@@ -228,7 +132,7 @@ Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list)
   (* TODO(kπ) We should handle shadowing things (or avoid any type of shadowing in the implementation) *)
   print (Message.of_string "compile");
   print (Message.of_constr e0);
-  print (of_list (List.map Message.of_constr cenv));
+  print (message_of_list (List.map Message.of_constr cenv));
   match! e0 with
   | [] =>
     open_constr:(trans_nil
@@ -254,7 +158,7 @@ with compile (e : constr) (cenv : constr list)
   print (Message.of_string "Compiling expression:");
   print (Message.of_constr e);
   print (Message.of_string "cenv");
-  print (of_list (List.map Message.of_constr cenv));
+  print (message_of_list (List.map Message.of_constr cenv));
   match List.find_opt (Constr.equal e) cenv with
   | Some _ =>
     open_constr:(trans_Var
@@ -470,7 +374,7 @@ with compile (e : constr) (cenv : constr list)
     let (f, args) := extract_fun e in
     print (Message.of_string "extract_fun");
     print (Message.of_constr f);
-    print (of_list (List.map Message.of_constr args));
+    print (message_of_list (List.map Message.of_constr args));
     match args with
     | [] =>
       compile_go
@@ -667,7 +571,7 @@ Proof.
   - exact ("h"%string). *)
 Admitted. *)
 
-(* Definition has_match (l: list nat) : nat :=
+(* Function has_match (l: list nat) : nat :=
   1 +
   match l with
   | nil => 0
@@ -907,4 +811,4 @@ Proof.
   2: eapply FEnv.lookup_insert_eq; auto.
   2: eapply FEnv.lookup_insert_eq; auto.
   1: exact (FEnv.empty).
-Qed. *)
+Qed.

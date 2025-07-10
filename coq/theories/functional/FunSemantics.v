@@ -50,7 +50,7 @@ Definition fail {A} (s : state) : result A * state :=
 Definition next (s : state) : Value * state :=
   match s.(input) with
   | Lnil => (Num (2 ^ 32 - 1), s) (* EOF *)
-  | Lcons c cs => (Num (nat_of_ascii c), set_input s cs)
+  | Lcons c cs => (Num (N_of_ascii c), set_input s cs)
   end.
 
 Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Value * state :=
@@ -66,7 +66,7 @@ Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Val
       let (v, s') := next s in
       return_ v (set_input s' (ltail s'.(input)))
   | FunSyntax.Write, [Num n] =>
-      if n <? 256 then return_ (Num 0) (set_output s (s.(output) ++ [ascii_of_nat n]))
+      if n <? 256 then return_ (Num 0) (set_output s (s.(output) ++ [ascii_of_N n]))
       else fail s
   | _, _ => fail s
   end.
@@ -90,14 +90,14 @@ Fixpoint make_env (keys : list name) (values : list Value) (acc : FEnv.env) : FE
 Fixpoint lookup_fun (n : name) (fs : list FunSyntax.dec) : option (list name * FunSyntax.exp) :=
   match fs with
   | [] => None
-  | FunSyntax.Defun k ps body :: rest => if k =? n then Some (ps, body) else lookup_fun n rest
+  | FunSyntax.Defun k ps body :: rest => if (k =? n)%N then Some (ps, body) else lookup_fun n rest
   end.
 Arguments lookup_fun !_ !_ /.
 
 Definition env_and_body (n : name) (args : list Value) (s : state) : option (FEnv.env * FunSyntax.exp) :=
   match lookup_fun n s.(funs) with
   | None => None
-  | Some (params, body) => if List.length params =? List.length args then Some (make_env params args FEnv.empty, body) else None
+  | Some (params, body) => if (List.length params =? List.length args)%nat then Some (make_env params args FEnv.empty, body) else None
   end.
 Arguments env_and_body !_ !_ /.
 

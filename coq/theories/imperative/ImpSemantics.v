@@ -18,24 +18,23 @@ Record state := mkState {
   output: list ascii
 }.
 
-Inductive result {A : Type} :=
-| Return (v: A)
+Inductive result :=
+| Return (v: Value)
 | TimeOut
 | Crash
 | Abort.
 Arguments result : clear implicits.
 
-Inductive outcome {A B : Type} :=
-| Cont (v: B)
-| Stop (v: result A).
+Inductive outcome {A : Type} :=
+| Cont (v: A)
+| Stop (v: result).
 Arguments outcome : clear implicits.
 
 (* monad syntax *)
 
-Notation MRes A := (outcome Value A * state)%type (only parsing).
-Notation M A := (state -> MRes A) (only parsing).
+Notation SRM A := (state -> (outcome A * state)) (only parsing).
 
-Definition bind {A B : Type} (ma: M A) (f: A -> M B): M B :=
+Definition bind {A B : Type} (ma: SRM A) (f: A -> SRM B): SRM B :=
   (fun s =>
     match ma s with
     | (Cont res, s1) => f res s1
@@ -43,13 +42,13 @@ Definition bind {A B : Type} (ma: M A) (f: A -> M B): M B :=
     end
   ).
 
-Definition bindMRes {A B : Type} (ma: MRes A) (f: A -> state -> MRes B): MRes B :=
+Definition bindMRes {A B : Type} (ma: (outcome A * state)) (f: A -> SRM B): (outcome B * state) :=
   match ma with
   | (Cont res, s1) => f res s1
   | (Stop e, s1) => (Stop e, s1)
   end.
 
-Definition point {A : Type} (a : A) : M A :=
+Definition point {A : Type} (a : A) : SRM A :=
   (fun s => (Cont a, s)).
 
 Notation "'let+' v := r1 'in' r2" :=
@@ -66,17 +65,17 @@ Notation "'let*' ( v , s ) := r1 'in' r2" :=
 Notation "r1 ;; r2" := (let+ _ := r1 in r2)
   (at level 200, right associativity).
 
-Definition stop {A B} (v : result A) (s : state) : (outcome A B * state) :=
+Definition stop {B} (v : result) (s : state) : (outcome B * state) :=
   (Stop v, s).
-Arguments stop _ _ !v !s /.
+Arguments stop _ !v !s /.
 
-Definition crash {A B} (s : state) : (outcome A B * state) :=
+Definition crash {B} (s : state) : (outcome B * state) :=
   stop Crash s.
-Arguments crash _ _ !s /.
+Arguments crash _ !s /.
 
-Definition cont {A B} (v : B) (s : state) : (outcome A B * state) :=
+Definition cont {B} (v : B) (s : state) : (outcome B * state) :=
   (Cont v, s).
-Arguments cont _ _ !v !s /.
+Arguments cont _ !v !s /.
 
 Definition next (input : llist ascii) : Value :=
   match input with
@@ -84,19 +83,19 @@ Definition next (input : llist ascii) : Value :=
   | Lcons c cs => Word (word.of_Z (Z.of_nat (nat_of_ascii c)))
   end.
 
-Definition lookup_var (n : name) (s : state) : MRes Value :=
+Definition lookup_var (n : name) (s : state) : (outcome Value * state) :=
   match IEnv.lookup s.(vars) n with
   | Some v => cont v s
   | None => crash s
   end.
 
-Definition combine_word (f : word64 -> word64 -> word64) (x y : Value): M Value :=
+Definition combine_word (f : word64 -> word64 -> word64) (x y : Value): SRM Value :=
   match x, y with
   | Word w1, Word w2 => cont (Word (f w1 w2))
   | _, _ => stop Crash
   end.
 
-Definition mem_load (ptr val : Value) (s : state) : (outcome Value Value * state) :=
+Definition mem_load (ptr val : Value) (s : state) : (outcome Value * state) :=
   match ptr, val with
   | Pointer p, Word w =>
     if negb (((w2n w) mod 8) =? 0) then crash s else
@@ -147,7 +146,7 @@ Definition set_fuel (fuel: nat) (s: state) : state :=
      input := s.(input);
      output := s.(output) |}.
 
-Fixpoint eval_exp (e : exp) : M Value :=
+Fixpoint eval_exp (e : exp) : SRM Value :=
   match e with
   | Var n => lookup_var n
   | Const n => cont (Word n)
@@ -193,7 +192,7 @@ Proof.
   all: crunch_monadic; eapply IHe1 in Heqp; try eapply IHe2 in Heqp0; congruence.
 Qed.
 
-Fixpoint eval_exps (es : list exp) : M (list Value) :=
+Fixpoint eval_exps (es : list exp) : SRM (list Value) :=
   match es with
   | [] => cont []
   | e :: es =>
@@ -210,13 +209,13 @@ Proof.
   - crunch_monadic; try eapply eval_exp_pure in Heqp; try eapply IHes in Heqp0; congruence.
 Qed.
 
-Definition dest_word (v: Value) : M word64 :=
+Definition dest_word (v: Value) : SRM word64 :=
   match v with
   | Word w => cont w
   | _ => crash
   end.
 
-Definition eval_cmp (c: cmp) (v1 v2: Value): M bool :=
+Definition eval_cmp (c: cmp) (v1 v2: Value): SRM bool :=
   match c, v1, v2 with
   | Less, Word w1, Word w2 =>
     cont (w1 <w w2)
@@ -236,7 +235,7 @@ Proof.
   destruct c; simpl; intros; crunch_monadic; try congruence.
 Qed.
 
-Fixpoint eval_test (t : test) : M bool :=
+Fixpoint eval_test (t : test) : SRM bool :=
   match t with
   | Test c e1 e2 =>
       let+ v1 := eval_exp e1 in
@@ -264,7 +263,7 @@ Proof.
   crunch_monadic; eapply IHt in Heqp; congruence.
 Qed.
 
-Definition assign (n: name) (v : Value) (s : state) : MRes unit :=
+Definition assign (n: name) (v : Value) (s : state) : (outcome unit * state) :=
   cont tt (set_vars (IEnv.insert (n, Some v) s.(vars)) s).
 
 Fixpoint find_fun (fname : name) (fs : list func): option (list name * cmd) :=
@@ -277,7 +276,7 @@ Fixpoint find_fun (fname : name) (fs : list func): option (list name * cmd) :=
 Definition update_block (vs:mem_block) offset v : option mem_block :=
   if offset <? List.length vs then Some (list_update offset (Some v) vs) else None.
 
-Definition update (v1 v2 v : Value) (s: state): MRes unit :=
+Definition update (v1 v2 v : Value) (s: state): (outcome unit * state) :=
   match v1, v2 with
   | (Pointer p), (Word offset) =>
     if negb ((w2n offset) mod 8 =? 0) then crash s else
@@ -292,12 +291,12 @@ Definition update (v1 v2 v : Value) (s: state): MRes unit :=
   | _, _ => crash s
   end.
 
-Definition alloc (len: word64) (s: state) : MRes Value :=
+Definition alloc (len: word64) (s: state) : (outcome Value * state) :=
   if negb ((w2n len) mod 8 =? 0) then crash s else
     cont (Pointer (List.length s.(memory)))
       (set_memory (s.(memory) ++ [repeat None ((w2n len) / 8)]) s).
 
-Definition put_char (v: Value) (s: state): MRes unit :=
+Definition put_char (v: Value) (s: state): (outcome unit * state) :=
   match v with
   | (Pointer p) => crash s
   | (Word w) =>
@@ -306,14 +305,14 @@ Definition put_char (v: Value) (s: state): MRes unit :=
     else crash s
   end.
 
-Definition get_char (s: state) : MRes Value :=
+Definition get_char (s: state) : (outcome Value * state) :=
   cont (next s.(input))
     (set_input (Llist.ltail s.(input)) s).
 
-Definition get_vars (s: state): MRes IEnv.env :=
+Definition get_vars (s: state): (outcome IEnv.env * state) :=
   cont s.(vars) s.
 
-Definition set_varsM (vars: IEnv.env) (s: state): MRes unit :=
+Definition set_varsM (vars: IEnv.env) (s: state): (outcome unit * state) :=
   cont tt (set_vars vars s).
 
 Definition nodupb (l: list nat): bool :=
@@ -321,7 +320,7 @@ Definition nodupb (l: list nat): bool :=
     true
   else false.
 
-Definition get_body_and_set_vars (nm: name) (vs: list Value) (s: state): MRes cmd :=
+Definition get_body_and_set_vars (nm: name) (vs: list Value) (s: state): (outcome cmd * state) :=
   match find_fun nm s.(funs) with
   | None => crash s
   | Some (params, body) =>
@@ -331,7 +330,7 @@ Definition get_body_and_set_vars (nm: name) (vs: list Value) (s: state): MRes cm
         cont body (set_vars (IEnv.insert_all (List.combine params (List.map Some vs)) IEnv.empty) s)
   end.
 
-Definition catch_return {A} (f: M A) (s: state): MRes Value :=
+Definition catch_return {A} (f: SRM A) (s: state): (outcome Value * state) :=
     match f s with
     | (Cont _, s) => crash s
     | (Stop (Return v), s) => cont v s
@@ -341,8 +340,8 @@ Definition catch_return {A} (f: M A) (s: state): MRes Value :=
   end.
 
 Fixpoint eval_cmd (c : cmd)
-  (EVAL_CMD : forall (c:cmd), M unit)
-  { struct c } : M unit :=
+  (EVAL_CMD : forall (c:cmd), SRM unit)
+  { struct c } : SRM unit :=
   let eval_cmd c := eval_cmd c EVAL_CMD in
   match c with
   | Seq c1 c2 =>
@@ -392,7 +391,7 @@ Fixpoint eval_cmd (c : cmd)
     set_varsM vars
   end.
 
-Fixpoint EVAL_CMD (fuel: nat) (c : cmd) {struct fuel} : M unit :=
+Fixpoint EVAL_CMD (fuel: nat) (c : cmd) {struct fuel} : SRM unit :=
   match fuel with
   | 0 => stop TimeOut
   | S fuel => eval_cmd c (EVAL_CMD (fuel - 1))
@@ -405,7 +404,7 @@ Definition init_state (inp: llist ascii) (funs: list func) (fuel: nat): state :=
      input  := inp;
      output := []; |}.
 
-Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): MRes unit :=
+Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome unit * state) :=
   match p with
   | Program funs =>
     let call_main_cmd: cmd := (Call 0 (name_of_string "main") []) in

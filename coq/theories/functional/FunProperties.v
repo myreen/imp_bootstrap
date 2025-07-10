@@ -214,7 +214,7 @@ Fixpoint free_vars (e : exp) : list name :=
   | Const _ => []
   | Var n => [n]
   | Op _ xs => flat_map free_vars xs
-  | Let n x y => free_vars x ++ remove Nat.eq_dec n (free_vars y)
+  | Let n x y => free_vars x ++ remove N.eq_dec n (free_vars y)
   | If _ xs y z => flat_map free_vars xs ++ free_vars y ++ free_vars z
   | Call _ xs => flat_map free_vars xs
   end.
@@ -257,7 +257,7 @@ Proof.
   - econstructor; eauto.
   - econstructor; eauto.
     unfold In in Hnotin; simpl in Hnotin.
-    destruct (Nat.eq_dec n n0); subst; [tauto|].
+    destruct (N.eq_dec n n0); subst; [tauto|].
     rewrite FEnv.lookup_insert_neq; eauto.
   - econstructor; eauto.
     eapply IHeval; eauto.
@@ -266,7 +266,7 @@ Proof.
     rewrite not_In_app in *; destruct Hnotin.
     econstructor; eauto.
     rewrite in_remove_rw in H2.
-    destruct (Nat.eq_dec n n0); subst.
+    destruct (N.eq_dec n n0); subst.
     + rewrite FEnv.insert_insert_eq in *.
       assumption.
     + assert (~ In n (free_vars exp2)) by tauto.

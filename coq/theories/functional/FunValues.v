@@ -2,22 +2,25 @@ From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
 From coqutil Require Import dlet.
 
-Notation name := nat (only parsing).
+Open Scope N.
 
 Inductive Value :=
   | Pair (v1 v2 : Value)
-  | Num (n : nat).
+  | Num (n : N).
 
 Class Refinable (A : Type) :=
   { encode : A -> Value }.
 
-Global Instance Refinable_nat : Refinable nat :=
-  { encode := Num }.
+Global Instance Refinable_nat: Refinable nat :=
+  { encode n := Num (N.of_nat n) }.
 
-Definition name_enc_l (s : list ascii) : nat :=
-  fold_right (fun c acc => (nat_of_ascii c) * 256 + acc) 0 s.
+(* Global Instance Refinable_N: Refinable N :=
+  { encode := Num }. *)
 
-Definition name_enc (s: string) : nat :=
+Definition name_enc_l (s : list ascii): name :=
+  fold_right (fun c acc => (N_of_ascii c) * 256 + acc)%N 0%N s.
+
+Definition name_enc (s: string): name :=
   name_enc_l (list_ascii_of_string s).
 
 Definition value_name (s : string) : Value :=
@@ -82,7 +85,7 @@ Global Instance Refinable_option {A : Type} `{Refinable (list A)} : Refinable (o
     end }.
 
 Global Instance Refinable_char : Refinable ascii :=
-  { encode c := Num (nat_of_ascii c) }.
+  { encode c := Num (N_of_ascii c) }.
 
 Definition value_isNum (v : Value) : bool :=
   match v with
@@ -90,7 +93,7 @@ Definition value_isNum (v : Value) : bool :=
   | _ => false
   end.
 
-Definition value_getNum (v : Value) : nat :=
+Definition value_getNum (v : Value) : N :=
   match v with
   | Num n => n
   | _ => 0
@@ -112,7 +115,7 @@ Proof.
 Qed.
 
 (* TODO(kπ) again problem with termination of this almost exact function *)
-Fail Fixpoint value_is_upper (n : nat) : bool :=
+Fail Fixpoint value_is_upper (n : N) : bool :=
   if n <? 256 then
     if n <? 65 then false else
     if n <? 91 then true else false

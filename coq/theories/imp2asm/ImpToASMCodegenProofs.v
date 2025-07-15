@@ -2347,44 +2347,20 @@ Proof.
   2: admit. (* prefix s2 (string_of_list_ascii (ImpSemantics.output s1)) = true *)
   destruct o eqn:?; subst; cleanup.
   2: do 3 eexists; split; eauto.
-  (* 2: do 3 eexists; split; [eapply steps_refl|]; split; eauto; split; [eapply pmap_subsume_refl|]; eauto. *)
-  (* 2: crunch_side_conditions_cmd. *)
-  (* destruct res eqn:?; simpl in*.
-  2: do 3 eexists; split; [eapply steps_refl|]; split; eauto; split; [eapply pmap_subsume_refl|]; eauto.
-  2: admit. *)
-  (* pat `eval_cmd c1 _ _ = _` at specialize (eval_cmd_steps_done_steps_up _ _ _ _ _ pat) as ?. *)
-  (* pat `eval_cmd c2 _ _ = _` at specialize (eval_cmd_steps_done_steps_up _ _ _ _ _ pat) as ?. *)
-
-
-  (* pat `steps (State t, _) _` at eapply steps_add_fuel with (x := s1.(steps_done) - s0.(steps_done)) in pat. *)
-  (* assert (steps_done s0 - steps_done s + (steps_done s1 - steps_done s0) = steps_done s1 - steps_done s) as Htmp; [|rewrite Htmp in *; clear Htmp]. *)
-  (* 1: rewrite Nat.add_sub_assoc; lia. *)
-  (* pat `goal_cmd c2 _` pat `goal_cmd c1 _` at unfold goal_cmd in pat; eapply pat in Heqp0; clear pat; eauto. *)
   unfold cmd_res_rel in * |-; cleanup; subst.
-
   unfold goal_cmd in H0.
   pat `steps (State t, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
   pat `eval_cmd c2 _ _ = _` at eapply H0 with (pmap := x0) in pat; clear H0; cleanup.
   2,3,4,8,9,10: eauto.
-
   2: instantiate (1 := x).
   all: eauto.
-  (* 4: eapply mem_inv_asmm_IMP. *)
-  (* 2: congruence. *)
   1: pat `steps (State t, _) _` at eapply steps_add_fuel with (x := fuel + x4) in pat; rewrite Nat.add_0_l in pat; rewrite <- Nat.add_assoc in pat.
   1: destruct x2; destruct s3; cleanup; subst.
   2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto; eapply pmap_subsume_trans; eauto.
-  (* all: unfold cmd_res_rel in * |-; cleanup. *)
-  (* all: try rewrite <- H24 in *. *)
-  (* all: unfold state_rel in *; cleanup. *)
-  (* 1: pat `cmd_res_rel _ _ _ _ _ _ _ _` at instantiate (1 := x) in pat. *)
   all: simpl in *; cleanup; subst.
   1: {
     pat `has_stack t _` at specialize (has_stack_even _ _ pat) as ?.
     pat `has_stack s2 _` at specialize (has_stack_even _ _ pat) as ?.
-    (* specialize (has_stack_even _ _ H23) as ?. *)
-    (* unfold has_stack in *; cleanup.
-    unfold env_ok in *; cleanup. *)
     pat `steps (State s2, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
     do 3 eexists.
     split.
@@ -2396,8 +2372,6 @@ Proof.
     crunch_side_conditions_cmd.
     eauto.
   }
-  Unshelve.
-  exact 0.
 Abort.
 
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),

@@ -15,7 +15,8 @@ Record state := mkState {
   memory : list mem_block;
   funs: list ImpSyntax.func;
   input: llist ascii;
-  output: list ascii
+  output: list ascii;
+  steps_done: nat
 }.
 
 Inductive result :=
@@ -116,35 +117,46 @@ Definition set_input (inp : llist ascii) (s : state) : state :=
      memory := s.(memory);
      funs := s.(funs);
      input := inp;
-     output := s.(output) |}.
+     output := s.(output);
+     steps_done := s.(steps_done) |}.
 
 Definition set_output (out : list ascii) (s : state) : state :=
   {| vars := s.(vars);
      funs := s.(funs);
      memory := s.(memory);
      input := s.(input);
-     output := out |}.
+     output := out;
+     steps_done := s.(steps_done) |}.
 
 Definition set_memory (mem : list mem_block) (s : state) : state :=
   {| vars := s.(vars);
      funs := s.(funs);
      memory := mem;
      input := s.(input);
-     output := s.(output) |}.
+     output := s.(output);
+     steps_done := s.(steps_done) |}.
 
 Definition set_vars (vars: IEnv.env) (s : state) : state :=
   {| vars := vars;
      funs := s.(funs);
      memory := s.(memory);
      input := s.(input);
-     output := s.(output) |}.
+     output := s.(output);
+     steps_done := s.(steps_done) |}.
 
-Definition set_fuel (fuel: nat) (s: state) : state :=
+Definition set_steps_done (new_steps_done: nat) (s: state) : state :=
   {| vars := s.(vars);
      funs := s.(funs);
      memory := s.(memory);
      input := s.(input);
-     output := s.(output) |}.
+     output := s.(output);
+     steps_done := new_steps_done |}.
+
+Definition add_steps_done (new_steps_done: nat) (s: state) : state :=
+  set_steps_done (s.(steps_done) + new_steps_done) s.
+
+Definition inc_steps_done : SRM unit := fun s =>
+  cont tt (add_steps_done 1 s).
 
 Fixpoint eval_exp (e : exp) : SRM Value :=
   match e with
@@ -339,6 +351,7 @@ Definition catch_return {A} (f: SRM A) (s: state): (outcome Value * state) :=
     | (Stop Abort,s) => stop Abort s
   end.
 
+(* TODO(kπ) set steps_done whenever we do another recursion *)
 Fixpoint eval_cmd (c : cmd)
   (EVAL_CMD : forall (c:cmd), SRM unit)
   { struct c } : SRM unit :=
@@ -394,15 +407,57 @@ Fixpoint eval_cmd (c : cmd)
 Fixpoint EVAL_CMD (fuel: nat) (c : cmd) {struct fuel} : SRM unit :=
   match fuel with
   | 0 => stop TimeOut
-  | S fuel => eval_cmd c (EVAL_CMD (fuel - 1))
+  | S fuel =>
+    let+ _ := inc_steps_done in
+    eval_cmd c (EVAL_CMD fuel)
   end.
+
+(* TODO(kπ) we need something like this, so that we know that:
+  When we increase fuel for any diverging program ->
+    We increase the number of steps done by the imperative evaluator ->
+      The assembly also does more steps
+*)
+Theorem eval_cmd_steps_done_ge_fuel: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit) (v: Value),
+  eval_cmd c (EVAL_CMD fuel) s = (o, s1) -> o = Stop TimeOut -> (s1.(steps_done) - s.(steps_done) >= fuel).
+Proof.
+  admit.
+Admitted.
+
+Theorem eval_cmd_steps_done_steps_up: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
+  eval_cmd c (EVAL_CMD fuel) s = (o, s1) -> s.(steps_done) <= s1.(steps_done).
+Proof.
+  induction c; induction fuel; intros.
+  (* Opaque EVAL_CMD. *)
+  all: repeat match goal with
+  | [ H: (_, _) = (_, _) |- _ ] => inversion H; subst; clear H
+  | [ H: (let (_, _) := eval_cmd ?c _ _ in  _) = _ |- _ ] => destruct (eval_cmd c _ _) eqn:?; subst
+  | [ H: (match ?o with _ => _ end) = _ |- _ ] => destruct o eqn:?; subst
+  | [ H: (match ?o with _ => _ end) _ = _ |- _ ] => destruct o eqn:?; subst
+  | [ H: (if ?v then _ else _) _ = _ |- _ ] => destruct v eqn:?; subst
+  | [ H: find_fun _ _ = _ |- _ ] => destruct (fund_fun _ _)
+  | [ H: eval_cmd _ _ _ = _ |- _ ] => eapply IHc1 in H || eapply IHc2 in H || eapply IHc in H
+  | [ H: eval_exp _ _ = _ |- _ ] => eapply eval_exp_pure in H; subst
+  | [ H: eval_exps _ _ = _ |- _ ] => eapply eval_exps_pure in H; subst
+  | [ H: eval_test _ _ = _ |- _ ] => eapply eval_test_pure in H; subst
+  | [ H: EVAL_CMD 0 _ _ = _ |- _ ] => unfold EVAL_CMD in H; fold EVAL_CMD in H
+  | [ H: EVAL_CMD (S _) _ _ = _ |- _ ] => unfold EVAL_CMD in H; fold EVAL_CMD in H
+  | [ H: eval_cmd _ _ _ = _ |- _ ] => unfold eval_cmd in H; fold eval_cmd in H
+  (* | _ => progress simpl in * *)
+  | _ => progress unfold stop, cont, crash, assign, update, catch_return, set_varsM, get_body_and_set_vars, dest_word, put_char, get_char, alloc, get_vars in *
+  | _ => progress unfold inc_steps_done, add_steps_done, set_steps_done, bind in *
+  | _ => eapply Nat.le_refl
+  | _ => lia
+  end.
+  all: admit.
+Admitted.
 
 Definition init_state (inp: llist ascii) (funs: list func) (fuel: nat): state :=
   {| vars   := IEnv.empty;
      memory := [];
      funs   := funs;
      input  := inp;
-     output := []; |}.
+     output := [];
+     steps_done := 0 |}.
 
 Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome unit * state) :=
   match p with

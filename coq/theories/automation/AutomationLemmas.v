@@ -23,8 +23,8 @@ Theorem trans_app: forall n params vs body s s1 v,
 Proof.
   intros; eapply App_intro; eauto.
   unfold env_and_body; simpl.
-  pat `lookup_fun _ _ = _` rewrite pat.
-  pat `Datatypes.length _ = _` rewrite <- Nat.eqb_eq in pat; rewrite pat.
+  pat `lookup_fun _ _ = _` at rewrite pat.
+  pat `Datatypes.length _ = _` at rewrite <- Nat.eqb_eq in pat; rewrite pat.
   reflexivity.
 Qed.
 
@@ -218,7 +218,7 @@ Proof.
   intros.
   repeat econstructor; eauto; simpl.
   rewrite <- N.eqb_neq in *; simpl.
-  pat `_ = false` rewrite pat.
+  pat `_ = false` at rewrite pat.
   rewrite Nnat.Nat2N.inj_div.
   reflexivity.
 Qed.

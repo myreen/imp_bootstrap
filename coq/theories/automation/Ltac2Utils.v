@@ -1,4 +1,4 @@
-From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message.
+From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf.
 Import Ltac2.Constr.Unsafe.
 From Coq Require Import derive.Derive.
 From Coq Require Import Recdef.
@@ -15,7 +15,7 @@ Open Scope nat.
 
 Ltac2 opt_to_list (o: 'a option): 'a list := match o with | Some x => [x] | None => [] end.
 
-Ltac2 kind_of_constr (c: constr): string :=
+Ltac2 kind_string_of_constr (c: constr): string :=
   match Unsafe.kind c with
   | Rel _ => "Rel"
   | Var _ => "Var"
@@ -86,6 +86,34 @@ Ltac rewrite_let :=
     end
   end.
 
+Ltac2 apply_tac_in (c : constr) (tac : unit -> unit) : constr :=
+  constr:(
+    ltac2:(
+      Control.refine (fun () => c);
+      tac ()
+    )
+  ).
+  (* match! c with
+  | context C [?inner] =>
+    (* instantiate the context to build the goal *)
+    let hole := Pattern.instantiate C inner in
+    (* build a quantified goal ?dummy := hole *)
+    (* let fake_goal := open_constr:(_ : hole) in *)
+    (* now in tactic-quotation, refine that, apply tac, and capture the result *)
+    let refined :=
+      constr:(ltac2:(
+                      Control.refine (fun () => hole);
+                      tac ())
+                (* now the goal is solved, and the proof term in the hole is the result *)
+                (* match fake_goal with
+                | ?res => res
+                end *)
+      ) in
+    (* fill the context with the refined result *)
+    Pattern.instantiate C refined
+  | _ => c
+  end in. *)
+
 Ltac unfold_fix fn :=
   let H := fresh "H" in
   let f := fresh "f" in
@@ -127,11 +155,37 @@ Ltac unfold_proof :=
 Ltac2 isFix (fconstr: constr): bool :=
   let fref := reference_of_constr fconstr in
   let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
+  printf "Unfolded %t is %t" fconstr unfolded;
   Constr.is_fix unfolded.
 
 Ltac2 Type exn ::= [
-  Oopsie (string)
+  Oopsie (message)
 ].
+
+Ltac2 rewrite_with_equation (fconstr: constr): unit :=
+  let fref: reference option := reference_of_constr_opt fconstr in
+  let f_str: string option := Option.bind fref reference_to_string in
+  let f_equation_str: string option := Option.map (fun n => String.app n "_equation") f_str in
+  let f_equation_ident: ident list option := Option.map (fun s => ident_of_fqn [s]) f_equation_str in
+  (* print (messsage_of_option (Option.map (fun l => messsage_of_list (List.map Message.of_ident l)) f_equation_ident)); *)
+  let f_equation_ref: reference list := List.flat_map (fun id => Env.expand id) (opt_to_list f_equation_ident) in
+  match f_equation_ref with
+  | [ref] =>
+    (* TODO(kπ) should be rewrite *)
+    (* can we rewrite in constr? *)
+    (* apply_tac_in exprconstr (fun () => Std.rewrite false [] ) *)
+    (* instantiate the f_equation_ref, then rewrite with it? *)
+    let instance := Env.instantiate ref in
+    let make_rw law := { Std.rew_orient := Some Std.LTR;
+                       Std.rew_repeat := Std.RepeatPlus;
+                       Std.rew_equatn := (fun () => (law, Std.NoBindings)) } in
+    rewrite0 false [make_rw instance] None None;
+    simpl analyze;
+    cbv beta
+  | _ =>
+    (* TODO(kπ) Add fconstr name or sth *)
+    Control.throw (Oopsie (fprintf "No (or too many) _equation lemmas found for definition %t" fconstr))
+  end.
 
 Ltac2 unfold_once (fconstr: constr) (exprconstr: constr): constr :=
   if isFix fconstr then
@@ -145,10 +199,12 @@ Ltac2 unfold_once (fconstr: constr) (exprconstr: constr): constr :=
     | [ref] =>
       (* TODO(kπ) should be rewrite *)
       (* can we rewrite in constr? *)
+      (* apply_tac_in exprconstr (fun () => Std.rewrite false [] ) *)
+      (* instantiate the f_equation_ref, then rewrite with it? *)
       Std.eval_unfold [(ref, AllOccurrences)] exprconstr
     | _ =>
       (* TODO(kπ) Add fconstr name or sth *)
-      Control.throw (Oopsie "No (or too many) _equation lemma found");
+      Control.throw (Oopsie (fprintf "No (or too many) _equation lemmas found for definition %t" fconstr));
       fconstr
     end
   else
@@ -182,15 +238,16 @@ About sum_n_equation.
 Goal forall n, sum_n n = 1.
 Proof.
   intros.
+  rewrite_with_equation constr:(sum_n).
   (* unfold_once constr:(sum_n) constr:(forall n, sum_n n = 1). *)
-  rewrite sum_n_equation.
+  (* rewrite sum_n_equation. *)
   (* ltac1:(unfold_fix sum_n). *)
 Abort.
 
 Goal forall l, has_match l = 1.
 Proof.
   intros.
-  rewrite has_match_equation.
-  unfolded_def constr:(has_match).
+  (* rewrite has_match_equation. *)
+  (* unfolded_def constr:(has_match). *)
   (* ltac1:(unfold_fix has_match). *)
 Abort. *)

@@ -6,7 +6,7 @@ Require Import impboot.functional.FunSemantics.
 Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
 From impboot Require Import automation.Ltac2Utils.
-From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message.
+From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf.
 Import Ltac2.Constr.Unsafe.
 From coqutil Require Import
   Tactics.reference_to_string
@@ -91,14 +91,32 @@ Ltac2 f_lookup_name (f_lookup : (string * constr) list) (fname : string) : const
   | None => None
   end.
 
-Ltac2 rec extract_fun (e : constr) : (constr * constr list) :=
+Ltac2 rec proper_const (c: constr): bool :=
+  match Constr.Unsafe.kind c with
+  | Var _ => true
+  | Constant _ _ => true
+  | Constructor _ _ => true
+  | App c cs => Bool.and (proper_const c) (Array.for_all proper_const cs)
+  | _ => false
+  end.
+
+(* Returns a tuple of (functions_part, arguments) if its a function application or ident,
+   otherwise None*)
+Ltac2 rec extract_fun (e : constr): (constr * constr list) option :=
   match! e with
   | (?f ?arg) =>
-    let (f_fun, f_args) := extract_fun f in
-    let f_args1 := List.append f_args [arg] in
-    (f_fun, f_args1)
+    match extract_fun f with
+    | Some (f_fun, f_args) =>
+      let f_args1 := List.append f_args [arg] in
+      Some (f_fun, f_args1)
+    | None =>
+      Some (f, [arg])
+    end
   | ?f =>
-    (f, [])
+    if Constr.is_var f then
+      Some (f, [])
+    else
+      None
   end.
 
 Ltac2 rec apply_to_args (fn: constr) (args: constr list) :=
@@ -364,26 +382,38 @@ with compile (e : constr) (cenv : constr list)
         )
       | ?x =>
         (* open_constr:(_) *)
-        open_constr:(auto_nat_const
-        (* env *) _
-        (* s *) _
-        (* n *) $x
-        )
+        if proper_const x then
+          open_constr:(auto_nat_const
+          (* env *) _
+          (* s *) _
+          (* n *) $x
+          )
+        else
+          (printf "f_lookup";
+          print (message_of_f_lookup f_lookup);
+          (Control.throw (Oopsie (fprintf
+            "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
+            x
+            (kind_string_of_constr x)
+          ));
+          open_constr:(_)))
       end
     in
-    let (f, args) := extract_fun e in
-    print (Message.of_string "extract_fun");
+    let f_args := extract_fun e in
+    (* print (Message.of_string "extract_fun");
     print (Message.of_constr f);
-    print (message_of_list (List.map Message.of_constr args));
-    match args with
-    | [] =>
+    print (message_of_list (List.map Message.of_constr args)); *)
+    match f_args with
+    | None =>
+      printf "f_args  = None: e = %t" e;
       compile_go
-    | _ =>
+    | Some (f, args) =>
+      printf "f_args  = Some (%t, _): e = %t" f e;
       let f_name_r := reference_of_constr_opt f in
       let f_name_str := Option.bind f_name_r reference_to_string in
       let f_constr_opt := Option.bind f_name_str (f_lookup_name f_lookup) in
       match f_constr_opt, f_name_str with
-      | (_, Some fname) =>
+      | (Some _, Some fname) =>
         let args_constr := list_to_constr_encode args in
         let compile_args := compile_list_encode args_constr cenv f_lookup in
         let fname_str := constr_string_of_string fname in
@@ -403,19 +433,10 @@ with compile (e : constr) (cenv : constr list)
     end
   end.
 
-Ltac2 rec constr_to_list (c : constr) : constr list :=
+Ltac2 rec constr_list_to_list (c : constr) : constr list :=
   match! c with
   | [] => []
-  | (encode ?x) :: ?xs => x :: constr_to_list xs
-  end.
-
-(* TODO(kπ) this only works when fun is the top level App in the compiled
-expression, otherwise we might have to have a funtion from a constr (that is a
-string) to reference. So constr string to string? *)
-Ltac2 fun_ident (c : constr) : reference :=
-  match kind c with
-  | App f _ => reference_of_constr f
-  | _ => reference_of_constr c
+  | (encode ?x) :: ?xs => x :: constr_list_to_list xs
   end.
 
 Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
@@ -451,43 +472,69 @@ Ltac2 get_f_lookup_from_hyps () : (string * constr) list :=
 
 (* Top level tactic that compiles a program into FunLang *)
 (* Handles expression evaluation and function evaluation as goals *)
-Ltac2 docompile () :=
+Ltac2 rec docompile () :=
   lazy_match! goal with
-  | [ |- _ |-- (_, _) ---> ([encode ?g], _) ] =>
-    refine (compile g [] []);
+  | [ |- _ |-- (_, _) ---> ([encode ?c], _) ] =>
+    refine (compile c [] []);
     intros;
     eauto with fenvDb
   (* TODO(kπ) we need to know whether it is the currently compiled function at some point  *)
+  (*          kπ: Don't we know it just by the fact that we are here instead of in compile? *)
   | [ h : (lookup_fun ?_fname _ = _)
-  |- eval_app ?_fname ?args _ (encode ?g, _) ] =>
+  |- eval_app (name_enc ?fname) ?args _ (encode ?c, _) ] =>
     (* If there `fname_equation` exists then apply that, otherwise unfold `fname` *)
     let h_hyp := Control.hyp h in
     let f_lookup := get_f_lookup_from_hyps () in
-    let argsl := constr_to_list args in
-    let (fconstr, _) := extract_fun g in
-    (* let f_name_r_opt := reference_of_constr_opt fconstr in
-    let f_name_str_opt := Option.bind f_name_r_opt reference_to_string in
-    let f_ident_equation_opt := Option.map (fun n => String.app n "_equation") f_name_str_opt in
-    let f_ident_equation_r_opt := Option.map (fun s => ident_of_fqn [s]) f_name_str_opt in *)
-    let f_name_r := reference_of_constr fconstr in
-    let g_norm := eval_unfold [(f_name_r, AllOccurrences)] g in
-    let compile_g := compile g_norm argsl f_lookup in
-    print (Message.of_string "compile_g:");
-    print (Message.of_constr compile_g);
-    refine open_constr:(trans_app
-    (* n *) _
-    (* params *) _
-    (* vs *) $args
-    (* body *) _
-    (* s *) _
-    (* s1 *) _
-    (* v *) _
-    (* eval body *) $compile_g
-    (* params length eq *) _
-    (* lookup_fun *) $h_hyp
-    );
-    intros;
-    eauto with fenvDb
+    let argsl := constr_list_to_list args in
+    match extract_fun c with
+    (* function ref --> unfold *)
+    | Some (fconstr, _) =>
+      let f_name_r := reference_of_constr fconstr in
+      if String.equal (string_of_constr_string fname) (Option.get (reference_to_string f_name_r)) then
+        printf "extract_fun %t = Some (%t, _)" c fconstr;
+        if isFix fconstr then
+          rewrite_with_equation fconstr
+        else (
+          let f_name_r := reference_of_constr fconstr in
+          let cl := default_on_concl None in
+          Std.unfold [(f_name_r, AllOccurrences)] cl
+        );
+        docompile ()
+      else (
+        let compiled := compile c argsl f_lookup in
+        refine open_constr:(trans_app
+        (* n *) _
+        (* params *) _
+        (* vs *) $args
+        (* body *) _
+        (* s *) _
+        (* s1 *) _
+        (* v *) _
+        (* eval body *) $compiled
+        (* params length eq *) _
+        (* lookup_fun *) $h_hyp
+        );
+        intros;
+        eauto with fenvDb
+      )
+    (* unfolded function ref --> just compile *)
+    | None =>
+      let compiled := compile c argsl f_lookup in
+      refine open_constr:(trans_app
+      (* n *) _
+      (* params *) _
+      (* vs *) $args
+      (* body *) _
+      (* s *) _
+      (* s1 *) _
+      (* v *) _
+      (* eval body *) $compiled
+      (* params length eq *) _
+      (* lookup_fun *) $h_hyp
+      );
+      intros;
+      eauto with fenvDb
+    end
   | [ |- ?x ] =>
     print (Message.of_string "No match in docompile for:");
     print (Message.of_constr x);
@@ -589,29 +636,14 @@ Proof.
   Show Proof.
 Abort. *)
 
-Function sum_n (n : nat) : nat :=
+Fixpoint sum_n (n : nat) : nat :=
   match n with
   | 0 => 0
-  | S n1 => (sum_n n1)(*  + n *)
+  | S n1 => (sum_n n1) + n
   end.
+Lemma sum_n_equation : ltac:(unfold_tpe sum_n).
+Proof. ltac1:(unfold_proof). Qed.
 About sum_n_equation.
-
-Goal forall (s : state) (n : nat),
-  exists sum_n_prog,
-    lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
-    (forall n, eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s)) ->
-    eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s).
-Proof.
-  eexists.
-  intros.
-  rewrite sum_n_equation.
-  eapply trans_app.
-  all: eauto.
-  all: try (reflexivity ()).
-  docompile ().
-  Show Proof.
-Abort.
-
 
 Derive sum_n_prog in (forall (s : state) (n : nat),
     lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
@@ -622,12 +654,13 @@ Derive sum_n_prog in (forall (s : state) (n : nat),
 Proof.
   intros.
   subst sum_n_prog.
-  rewrite sum_n_equation.
+  (* rewrite sum_n_equation.
   eapply trans_app.
   all: eauto.
-  all: try (reflexivity ()).
+  all: try (reflexivity ()). *)
                 (* kπ: this (vvv) is because we anually apply trans_app, so we don't add the argument to env (we should probably reuse the relational env, though) *)
-  docompile (). (* error: (cannot instantiate "?body" because "n" is not in its scope) *)
+  (* error: (cannot instantiate "?body" because "n" is not in its scope) *)
+  docompile ().
   (* Show Proof. *)
 Abort.
 
@@ -641,17 +674,6 @@ Definition has_cases (n : nat) : nat :=
     end
   end.
 Print has_cases.
-
-Goal forall (s : state) (n : nat),
-  exists has_cases_prog,
-    lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
-    eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s).
-Proof.
-  eexists.
-  intros.
-  docompile ().
-  Show Proof.
-
 
 Derive has_cases_prog in (forall (s : state) (n : nat),
     lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
@@ -685,28 +707,10 @@ Proof.
   Show Proof.
 Abort.
 
-Definition foo (n : nat) : nat :=
+(* Definition foo (n : nat) : nat :=
   letd x := 1 in
   letd y := n + x in
   y.
-
-Lemma function_example : forall (s : state) (n : nat),
-  exists prog,
-    lookup_fun (name_enc "foo") s.(funs) = Some ([name_enc "n"], prog) ->
-      eval_app (name_enc "foo") [encode n] s (encode (foo n), s).
-Proof.
-  intros; eexists; intros.
-
-  (* TODO(kπ) This inlined the `y` :thinking: *)
-  docompile ().
-  Show Proof.
-  (* - simpl; ltac1:(reflexivity).
-  - exact "a"%string.
-  - exact "b"%string.
-  - exact "a"%string.
-  - exact "b"%string.
-  Unshelve. *)
-Admitted.
 
 Derive foo_prog in (forall (s : state) (n : nat),
     lookup_fun (name_enc "foo") s.(funs) = Some ([name_enc "n"], foo_prog) ->
@@ -717,7 +721,7 @@ Proof.
   subst foo_prog.
   docompile ().
   Show Proof.
-  (* - exact [name_enc "n"]. *)
+  - exact [name_enc "n"].
   - simpl; ltac1:(reflexivity).
   Unshelve.
   4: exact "x"%string.
@@ -811,4 +815,4 @@ Proof.
   2: eapply FEnv.lookup_insert_eq; auto.
   2: eapply FEnv.lookup_insert_eq; auto.
   1: exact (FEnv.empty).
-Qed.
+Qed. *)

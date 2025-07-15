@@ -110,7 +110,7 @@ Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or
       nth_error curr (index_of n 0 vs) = Some (Word w) /\
       v_inv pmap v w.
 
-Definition cmd_res_rel (ri: outcome Value unit) (l1: nat)
+Definition cmd_res_rel (ri: outcome unit) (l1: nat)
   (curr: list word_or_ret) (rest: list word_or_ret) (vs: v_stack) (t1: ASMSemantics.state) (s1: ImpSemantics.state)
   (pmap: nat -> option (word64 * nat)) : Prop :=
   match ri with
@@ -126,7 +126,7 @@ Definition cmd_res_rel (ri: outcome Value unit) (l1: nat)
   | _ => True (* TODO(kπ) is this correct? *)
   end.
 
-Definition exp_res_rel (ri: outcome Value Value) (l1: nat)
+Definition exp_res_rel (ri: outcome Value) (l1: nat)
   (stck: list word_or_ret) (t1: ASMSemantics.state) (s1: ImpSemantics.state)
   (pmap: nat -> option (word64 * nat)) : Prop :=
   match ri with
@@ -162,7 +162,7 @@ Definition pmap_subsume (pmap: nat -> option (word64 * nat))
 
 Definition goal_exp (e : exp): Prop :=
   forall (s s1 : ImpSemantics.state) (fuel fuel1: nat)
-         (res : outcome Value Value) (t : ASMSemantics.state)
+         (res : outcome Value) (t : ASMSemantics.state)
          (vs vs' : v_stack) (fs : f_lookup)
          (asmc : asm_appl) (l1 : nat)
          (curr rest : list word_or_ret)
@@ -182,9 +182,9 @@ Definition goal_exp (e : exp): Prop :=
       match outcome with
       | (Halt ec output, fuel) => False
       | (State t1, fuel1) =>
-          state_rel fs s1 t1 /\
-          fuel1 = fuel /\
-          exp_res_rel res l1 (curr ++ rest) t1 s1 pmap
+        state_rel fs s1 t1 /\
+        fuel1 = fuel /\
+        exp_res_rel res l1 (curr ++ rest) t1 s1 pmap
       end.
 
 Definition goal_test (tst: test): Prop :=
@@ -217,7 +217,7 @@ Definition goal_test (tst: test): Prop :=
 
 Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
   forall (s s1 : ImpSemantics.state)
-         (res : outcome Value unit) (t : ASMSemantics.state)
+         (res : outcome unit) (t : ASMSemantics.state)
          (vs vs' : v_stack) (fs : f_lookup)
          (asmc : asm_appl) (l1 : nat)
          (curr rest : list word_or_ret)
@@ -232,17 +232,19 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
     pmap_ok pmap ->
     odd (List.length rest) = true ->
     code_in t.(pc) (flatten asmc) t.(instructions) ->
-    exists outcome pmap1 fuel1,
-      steps (State t, fuel + fuel1) outcome /\
+    exists outcome pmap1 (* fuel1 *),
+      steps (State t, s1.(steps_done) - s.(steps_done) (* + fuel1 *)) outcome /\
       pmap_ok pmap1 /\
       pmap_subsume pmap pmap1 /\
       match outcome with
       | (Halt ec output, ck) =>
-          prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
-          (ec = (word.of_Z 1) \/ ec = (word.of_Z 4))
+        (* ck = 0 /\ *)
+        prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
+        (ec = (word.of_Z 1) \/ ec = (word.of_Z 4))
       | (State t1, ck) =>
-          state_rel fs s1 t1 /\
-          cmd_res_rel res l1 curr rest vs' t1 s1 pmap1
+        ck = 0 /\
+        state_rel fs s1 t1 /\
+        cmd_res_rel res l1 curr rest vs' t1 s1 pmap1
       end.
 
 (* proofs *)
@@ -2044,17 +2046,20 @@ Proof.
   - eapply c_test_Not; eauto.
 Qed.
 
+(* cmd *)
+
 Theorem c_cmd_Abort: forall (fuel: nat),
   goal_cmd ImpSyntax.Abort fuel.
 Proof.
   unfold goal_cmd; intros.
   simpl c_cmd in *; cleanup.
-  eapply has_stack_even in H4.
+  pat `has_stack _ _` at eapply has_stack_even in pat.
+  simpl eval_cmd in *; unfold_outcome; cleanup.
   unfold has_stack in *; cleanup.
   unfold state_rel in *; cleanup.
   unfold env_ok in *; cleanup.
   simpl flatten in *; simpl code_in in *; cleanup.
-  eexists; eexists; eexists; split.
+  do 2 eexists; split.
   1: {
     eapply steps_trans.
     1: eapply steps_step_same.
@@ -2067,13 +2072,10 @@ Proof.
   }
   split; eauto.
   split; [eapply pmap_subsume_refl|].
-  simpl; split; eauto.
-  inversion H; subst.
-  rewrite <- H2.
+  simpl; split; eauto; eauto.
+  pat `_ = output _` as r at rewrite <- r.
   rewrite prefix_correct.
   apply substring_noop.
-  Unshelve.
-  exact 0.
 Qed.
 
 (* Theorem c_cmd_Return: forall (e: exp),
@@ -2318,32 +2320,42 @@ Proof.
   intros.
   unfold goal_cmd; intros.
   simpl c_cmd in *; unfold dlet in *.
-  simpl eval_cmd in *; unfold bind in *; simpl in *; inversion H1; subst.
+  simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct (eval_cmd c1 _) eqn:?; simpl in *.
   destruct o eqn:?; subst; cleanup.
-  2: do 3 eexists; split; [eapply steps_refl|]; split; eauto; split; [eapply pmap_subsume_refl|]; eauto.
+  2: do 2 eexists; split; [eapply steps_refl|]; split; eauto; split; [eapply pmap_subsume_refl|]; eauto.
   2: admit.
-  destruct (eval_cmd c2 _) eqn:?; simpl in *; inversion H1; clear H1; clear H12; subst.
   destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
   destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
-  unfold goal_cmd in H; eapply H in Heqp; clear H; eauto.
+  pat `eval_cmd c1 _ _ = _` at specialize (eval_cmd_steps_done_steps_up _ _ _ _ _ pat) as ?.
+  pat `eval_cmd c2 _ _ = _` at specialize (eval_cmd_steps_done_steps_up _ _ _ _ _ pat) as ?.
+  pat `goal_cmd c1 _` at unfold goal_cmd in pat; eapply pat in Heqp; clear pat; eauto.
   all: simpl flatten in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
-  rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ _ Heqp1)).
-  specialize (c_cmd_length c2 _ _ _ _ _ _ Heqp2) as ?; subst.
-  destruct x; destruct s2; cleanup; subst.
-  2: repeat eexists; repeat split; eauto; simpl; split; eauto.
+  pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ _ pat)).
+  pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ _ pat) as ?; subst.
+  destruct x.
+  pat `steps (State t, _) _` at eapply steps_add_fuel with (x := s1.(steps_done) - s0.(steps_done)) in pat.
+  assert (steps_done s0 - steps_done s + (steps_done s1 - steps_done s0) = steps_done s1 - steps_done s) as Htmp; [|rewrite Htmp in *; clear Htmp].
+  1: rewrite Nat.add_sub_assoc; lia.
+  destruct s2; cleanup; subst.
+  2: repeat eexists; repeat split; eauto; simpl; eauto.
+
   2: admit. (* prefix s2 (string_of_list_ascii (ImpSemantics.output s1)) = true *)
-  unfold cmd_res_rel in *; cleanup; subst.
+  unfold cmd_res_rel in * |-; cleanup; subst.
+  (* pat `goal_cmd c2 _` pat `goal_cmd c1 _` at unfold goal_cmd in pat; eapply pat in Heqp0; clear pat; eauto. *)
   unfold goal_cmd in H0.
-  rw ltac:(specialize (steps_instructions _ _ _ _ H3)).
-  eapply H0 in Heqp0; clear H0.
+  pat `steps (State t, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
+  pat `forall _ _, _` at eapply pat in Heqp0; clear pat.
   2,3,4,9: eauto.
   3: eauto.
-  4: eapply mem_inv_asmm_IMP.
-  2: congruence.
+  (* 4: eapply mem_inv_asmm_IMP. *)
+  (* 2: congruence. *)
   1: destruct x1; destruct s0; cleanup; subst.
+  2: {
+    repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto.
+  }
   2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto.
   2: eapply pmap_subsume_trans; eauto.
   all: unfold cmd_res_rel in *; cleanup.
@@ -2384,6 +2396,5 @@ Abort.
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),
   goal_cmd c fuel.
 Proof.
-  induction c.
-  all: induction fuel.
+  induction c; induction fuel.
 Abort.

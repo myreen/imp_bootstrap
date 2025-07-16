@@ -124,6 +124,7 @@ Definition cmd_res_rel (ri: outcome unit) (l1: nat)
     mem_inv pmap t1.(memory) s1.(ImpSemantics.memory) /\
     env_ok s1.(vars) vs curr1 pmap t1.(memory) s1.(ImpSemantics.memory) /\
     t1.(pc) = l1
+  (* | Stop TimeOut =>  *)
   | _ => True (* TODO(kπ) is this correct? *)
   end.
 
@@ -233,15 +234,16 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
     pmap_ok pmap ->
     odd (List.length rest) = true ->
     code_in t.(pc) (flatten asmc) t.(instructions) ->
-    exists outcome pmap1 fuel1,
-      steps (State t, fuel + fuel1) outcome /\
+    exists outcome pmap1,
+      steps (State t, s.(steps_done) - s1.(steps_done)) outcome /\
       pmap_ok pmap1 /\
       pmap_subsume pmap pmap1 /\
       match outcome with
       | (Halt ec output, ck) =>
-        (* ck = 0 /\ *)
         prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
         (ec = (word.of_Z 1) \/ ec = (word.of_Z 4))
+        (* TODO(kπ) do we need this? *)
+        (* ∧ res <> Stop TimeOut *)
       | (State t1, ck) =>
         ck = 0 /\
         state_rel fs s1 t1 /\
@@ -262,6 +264,9 @@ Ltac cleanup :=
   | [ H: _ /\ _ |- _ ] => destruct H
   | [ H: exists _, _ |- _ ] => destruct H
   | [ H: True |- _ ] => clear H
+  | [ H: Some _ = Some _ |- _ ] => inversion H; subst; clear H
+  | [ H: None = Some _ |- _ ] => inversion H; subst; clear H
+  | [ H: Some _ = None |- _ ] => inversion H; subst; clear H
   | [ H: (_, _) = (_, _) |- _ ] => inversion H; subst; clear H
   | [ H: _ :: _ = _ :: _ |- _ ] => inversion H; subst; clear H
   end.
@@ -808,7 +813,7 @@ Proof.
   simpl in *; subst.
   unfold write_mem in *; simpl in *; cleanup.
   destruct (memory _ _) eqn:?; try destruct o; cleanup.
-  all: inversion H5; clear H5; subst.
+  all: try inversion H5; try clear H5; subst.
   split; intros; eauto.
 Qed.
 
@@ -1476,7 +1481,6 @@ Proof.
       ) as ->.
       2: rewrite H30; eauto.
       rewrite H12 in *; cleanup.
-      inversion H19; subst.
       unfold w2n; simpl.
       cbn.
       rewrite mul_div_id; eauto.
@@ -2071,7 +2075,7 @@ Proof.
   unfold state_rel in *; cleanup.
   unfold env_ok in *; cleanup.
   simpl flatten in *; simpl code_in in *; cleanup.
-  do 3 eexists; split.
+  do 2 eexists; split.
   1: {
     eapply steps_trans.
     1: eapply steps_step_same.
@@ -2088,8 +2092,6 @@ Proof.
   pat `_ = output _` as r at rewrite <- r.
   rewrite prefix_correct.
   apply substring_noop.
-  Unshelve.
-  exact 0.
 Qed.
 
 (* Theorem c_cmd_Return: forall (e: exp),
@@ -2132,56 +2134,203 @@ Proof.
 
   } *)
 
+Lemma index_of_opt_in_bounds_str: forall nm vs k i,
+  index_of_opt nm k vs = Some i -> i < List.length vs + k.
+Proof.
+  induction vs; intros; simpl in *.
+  1: pat `None = Some _` at inversion pat.
+  destruct a; cleanup.
+  - destruct (_ =? _) eqn:?; cleanup.
+    + lia.
+    + spat `index_of_opt` at eapply IHvs in spat.
+      lia.
+  - spat `index_of_opt` at eapply IHvs in spat.
+    lia.
+Qed.
+
+Lemma index_of_opt_in_bounds: forall nm vs i,
+  index_of_opt nm 0 vs = Some i -> i < List.length vs.
+Proof.
+  intros.
+  spat `index_of_opt` at specialize (index_of_opt_in_bounds_str _ _ _ _ spat).
+  intros; lia.
+Qed.
+
 Theorem c_cmd_Assign: forall (n: name) (e: exp) (fuel: nat),
   goal_cmd (ImpSyntax.Assign n e) fuel.
 Proof.
   intros.
   unfold goal_cmd; intros.
-  simpl eval_cmd in *; unfold bind in *.
+  simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct eval_exp eqn:?; cleanup.
-  destruct o eqn:?; subst.
-  2: eval_exp_contr_stop_tac.
   simpl c_cmd in *; unfold c_assign, dlet, assign in *.
   destruct c_exp eqn:?; cleanup.
-  unfold_outcome; cleanup.
   simpl flatten in *; cleanup.
   repeat rewrite code_in_append in *; cleanup.
-  simpl code_in in*; cleanup.
-  specialize (eval_exp_pure e _ _ _ Heqp) as ?; subst.
+  destruct o; unfold_outcome; cleanup.
+  2: eval_exp_contr_stop_tac.
+  spat `eval_exp` at specialize (eval_exp_pure e _ _ _ Heqp) as ?; subst.
   eval_exp_correct_tac.
   destruct x eqn:?; destruct s eqn:?; cleanup; subst.
   2: contradiction.
   unfold exp_res_rel in *; cleanup; subst.
   unfold env_ok in *; cleanup.
-  (* TODO(kπ) destruct here *)
-  (* do 3 eexists; split.
-  1: eauto.
-  simpl.
-  split; eauto; split; [eapply pmap_subsume_refl|].
-  split; eauto; eexists.
-  rewrite app_comm_cons in *; split; eauto.
-  unfold env_ok in *; cleanup.
-  split; eauto; split.
-  1: repeat rewrite length_cons; congruence.
+  destruct index_of_opt eqn:?; cleanup.
+  2: {
+    rewrite app_comm_cons in *.
+    do 2 eexists; split.
+    1: eauto.
+    simpl.
+    repeat match goal with
+    | [ |- _ ∧ _ ] => split
+    | [ |- ∃_, _ ] => eexists
+    | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
+    | [ |- _ - _ = _ ] => lia
+    | _ => progress eauto
+    end.
+    unfold env_ok in *; cleanup.
+    split; [repeat rewrite length_cons; congruence|].
+    intros.
+    destruct (n =? n0) eqn:?.
+    - rewrite Nat.eqb_eq in *; rewrite Heqb in H3.
+      rewrite IEnv.lookup_insert_eq in *.
+      inversion H3; subst v; clear H3.
+      split; simpl; cleanup.
+      all: rewrite <- Nat.eqb_eq in *; rewrite Heqb.
+      1: lia.
+      eexists; simpl; split; eauto.
+    - rewrite Nat.eqb_neq in *.
+      rewrite IEnv.lookup_insert_neq in *; try assumption.
+      pat `∀ _, _` as Hthm at eapply Hthm in H3; cleanup.
+      split; simpl; cleanup.
+      all: rewrite <- Nat.eqb_neq in *; rewrite Heqb.
+      all: rewrite index_of_spec; try lia.
+      eexists; simpl; split; eauto.
+  }
+  destruct n0 eqn:?.
+
+  (* COPY PASTED FROM PREVIOUS *)
+  (* Should be similar to previous case? *)
+  (* In this case we just pop the top of the stack, since the expression result is now in RAX *)
+  (*   and we want to put this value at index 0 – RAX *)
+  1: {
+    rewrite app_comm_cons in *.
+    do 2 eexists; split.
+    1: eauto.
+    simpl.
+    repeat match goal with
+    | [ |- _ ∧ _ ] => split
+    | [ |- ∃_, _ ] => eexists
+    | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
+    | [ |- _ - _ = _ ] => lia
+    | _ => progress eauto
+    end.
+    unfold env_ok in *; cleanup.
+
+    split; [repeat rewrite length_cons; congruence|].
+    intros.
+    destruct (n =? n0) eqn:?.
+    - rewrite Nat.eqb_eq in *; rewrite Heqb in H3.
+      rewrite IEnv.lookup_insert_eq in *.
+      inversion H3; subst v; clear H3.
+      split; simpl; cleanup.
+      all: rewrite <- Nat.eqb_eq in *; rewrite Heqb.
+      1: lia.
+      eexists; simpl; split; eauto.
+    - rewrite Nat.eqb_neq in *.
+      rewrite IEnv.lookup_insert_neq in *; try assumption.
+      pat `∀ _, _` as Hthm at eapply Hthm in H3; cleanup.
+      split; simpl; cleanup.
+      all: rewrite <- Nat.eqb_neq in *; rewrite Heqb.
+      all: rewrite index_of_spec; try lia.
+      eexists; simpl; split; eauto.
+  }
+  (* END COPY PASTED FROM PREVIOUS *)
+
+  spat `index_of_opt` at specialize (index_of_opt_in_bounds _ _ _ spat) as ?.
+  spat `c_exp` at rwr ltac:(specialize (c_exp_length _ _ _ _ _ spat)).
+  spat `steps` at rw ltac:(specialize (steps_instructions _ _ _ _ spat)).
+  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl in *; cleanup.
+  unfold has_stack in *|-; cleanup.
+  pat `_ = List.length curr` at rewrite pat in *.
+  pat `curr ++ rest = _` at rewrite pat in *.
+  destruct n0 eqn:?.
+  1: {
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_store_rsp.
+      1: eauto.
+      1: pat `_ = stack s1` at rewrite <- pat in *; rewrite length_app; lia.
+      1: eauto.
+      eapply steps_step_same.
+      eapply step_pop.
+      1: eauto.
+      simpl.
+      pat `stack s1 = _` at rewrite pat.
+      reflexivity.
+    }
+    simpl.
+    repeat match goal with
+    | [ |- _ ∧ _ ] => split
+    | [ |- ∃_, _ ] => eexists
+    | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
+    | [ |- _ - _ = _ ] => lia
+    | _ => progress eauto
+    end.
+    -
+  }
+Qed.
+Abort.
+
+Theorem c_cmd_Seq: forall (fuel: nat) (c1 c2: cmd),
+  goal_cmd c1 fuel -> goal_cmd c2 fuel ->
+  goal_cmd (ImpSyntax.Seq c1 c2) fuel.
+Proof.
   intros.
-  destruct (n =? n1) eqn:?.
-  - rewrite Nat.eqb_eq in *; rewrite Heqb in H3.
-    rewrite IEnv.lookup_insert_eq in *.
-    inversion H3; subst v; clear H3.
-    split; simpl; cleanup.
-    all: rewrite <- Nat.eqb_eq in *; rewrite Heqb.
-    1: lia.
-    eexists; simpl; split; eauto.
-  - rewrite Nat.eqb_neq in *.
-    rewrite IEnv.lookup_insert_neq in *; try assumption.
-    eapply H14 in H3.
-    split; simpl; cleanup.
-    all: rewrite <- Nat.eqb_neq in *; rewrite Heqb.
-    all: rewrite index_of_spec; try lia.
-    eexists; simpl; split; eauto.
-  Unshelve.
-  exact 0.
-Qed. *)
+  unfold goal_cmd; intros.
+  simpl c_cmd in *; unfold dlet in *.
+  simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
+  destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
+  destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
+  simpl flatten in *; repeat rewrite code_in_append in *; cleanup.
+  pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ _ pat)).
+  pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ _ pat) as ?; subst.
+  destruct (eval_cmd c1 _) eqn:?; simpl in *; cleanup.
+  pat `goal_cmd c1 _` at unfold goal_cmd in pat; eapply pat in Heqp; clear pat; eauto; cleanup; [|destruct o; congruence].
+  destruct x; destruct s2; cleanup.
+  2: do 3 eexists; split; eauto; split; eauto; split; eauto; split; eauto.
+  2: admit. (* prefix s2 (string_of_list_ascii (ImpSemantics.output s1)) = true *)
+  destruct o eqn:?; subst; cleanup.
+  2: do 3 eexists; split; eauto.
+  unfold cmd_res_rel in * |-; cleanup; subst.
+  unfold goal_cmd in H0.
+  pat `steps (State t, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
+  pat `eval_cmd c2 _ _ = _` at eapply H0 with (pmap := x0) in pat; clear H0; cleanup.
+  2,3,4,8,9,10: eauto.
+  2: instantiate (1 := x).
+  all: eauto.
+  1: pat `steps (State t, _) _` at eapply steps_add_fuel with (x := fuel + x4) in pat; rewrite Nat.add_0_l in pat; rewrite <- Nat.add_assoc in pat.
+  1: destruct x2; destruct s3; cleanup; subst.
+  2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto; eapply pmap_subsume_trans; eauto.
+  all: simpl in *; cleanup; subst.
+  1: {
+    pat `has_stack t _` at specialize (has_stack_even _ _ pat) as ?.
+    pat `has_stack s2 _` at specialize (has_stack_even _ _ pat) as ?.
+    pat `steps (State s2, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
+    do 3 eexists.
+    split.
+    1: {
+      eapply steps_trans.
+      1: eauto.
+      eauto.
+    }
+    crunch_side_conditions_cmd.
+    eauto.
+  }
 Abort.
 
 (* Theorem c_cmd_While: forall (t: test) (c: cmd) (fuel: nat),
@@ -2326,53 +2475,6 @@ Proof.
   1: eexists; eexists; eauto. *)
 
 Abort. *)
-
-Theorem c_cmd_Seq: forall (fuel: nat) (c1 c2: cmd),
-  goal_cmd c1 fuel -> goal_cmd c2 fuel ->
-  goal_cmd (ImpSyntax.Seq c1 c2) fuel.
-Proof.
-  intros.
-  unfold goal_cmd; intros.
-  simpl c_cmd in *; unfold dlet in *.
-  simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
-  destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
-  destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
-  simpl flatten in *; repeat rewrite code_in_append in *; cleanup.
-  pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ _ pat)).
-  pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ _ pat) as ?; subst.
-  destruct (eval_cmd c1 _) eqn:?; simpl in *; cleanup.
-  pat `goal_cmd c1 _` at unfold goal_cmd in pat; eapply pat in Heqp; clear pat; eauto; cleanup; [|destruct o; congruence].
-  destruct x; destruct s2; cleanup.
-  2: do 3 eexists; split; eauto; split; eauto; split; eauto; split; eauto.
-  2: admit. (* prefix s2 (string_of_list_ascii (ImpSemantics.output s1)) = true *)
-  destruct o eqn:?; subst; cleanup.
-  2: do 3 eexists; split; eauto.
-  unfold cmd_res_rel in * |-; cleanup; subst.
-  unfold goal_cmd in H0.
-  pat `steps (State t, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
-  pat `eval_cmd c2 _ _ = _` at eapply H0 with (pmap := x0) in pat; clear H0; cleanup.
-  2,3,4,8,9,10: eauto.
-  2: instantiate (1 := x).
-  all: eauto.
-  1: pat `steps (State t, _) _` at eapply steps_add_fuel with (x := fuel + x4) in pat; rewrite Nat.add_0_l in pat; rewrite <- Nat.add_assoc in pat.
-  1: destruct x2; destruct s3; cleanup; subst.
-  2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto; eapply pmap_subsume_trans; eauto.
-  all: simpl in *; cleanup; subst.
-  1: {
-    pat `has_stack t _` at specialize (has_stack_even _ _ pat) as ?.
-    pat `has_stack s2 _` at specialize (has_stack_even _ _ pat) as ?.
-    pat `steps (State s2, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
-    do 3 eexists.
-    split.
-    1: {
-      eapply steps_trans.
-      1: eauto.
-      eauto.
-    }
-    crunch_side_conditions_cmd.
-    eauto.
-  }
-Abort.
 
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),
   goal_cmd c fuel.

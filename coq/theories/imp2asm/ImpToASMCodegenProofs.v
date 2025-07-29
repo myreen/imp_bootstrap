@@ -2502,41 +2502,42 @@ Proof.
   }
 Admitted.
 
-(* Theorem c_cmd_While: forall (t: test) (c: cmd) (fuel: nat),
+Theorem c_cmd_While: forall (t: test) (c: cmd) (fuel: nat),
   goal_cmd c fuel ->
   forall fuel1, fuel1 < fuel -> goal_cmd (ImpSyntax.While t c) fuel1 ->
   goal_cmd (ImpSyntax.While t c) fuel.
 Proof.
   intros.
   unfold goal_cmd; intros.
-  simpl eval_cmd in *; unfold bind in *.
+  simpl c_cmd in *; unfold dlet in *.
+  simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
+  destruct (c_test_jump _ _ _ _ _) eqn:?; simpl in *; subst; cleanup.
+  destruct (c_cmd c _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
+  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
+  spat `c_test_jump` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
+  spat `c_cmd c` at specialize (c_cmd_length c _ _ _ _ _ _ spat) as ?; subst.
   destruct eval_test eqn:?; cleanup.
   destruct o eqn:?; subst; cleanup.
-  2: exfalso; destruct v eqn:?; eapply eval_test_not_stop in Heqp; eauto; try congruence.
-  simpl c_cmd in *; unfold dlet, assign in *.
-  destruct c_test_jump eqn:?; cleanup.
-  destruct c_cmd eqn:?; cleanup.
+  2: exfalso; destruct v eqn:?; spat `eval_test` at eapply eval_test_not_stop in spat; eauto; try congruence.
   unfold_outcome; cleanup.
-  simpl flatten in *; cleanup.
-  simpl code_in in *; cleanup.
-  repeat rewrite code_in_append in *; cleanup.
-  specialize (c_test_length t _ _ _ _ _ _ Heqp0) as ?; subst.
-  assert (pc t0 + 3 = pc (set_pc (pc t0 + 3) t0)) as Htmp by reflexivity; rewrite Htmp in Heqp0; clear Htmp.
-  assert (pc t0 + 3 + Datatypes.length (flatten a) = pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) as Htmp by reflexivity; rewrite Htmp in Heqp1; clear Htmp.
-  specialize (eval_test_pure t _ _ _ Heqp) as ?; subst.
-  destruct p eqn:?; subst.
+  spat `c_test_jump` at
+    assert (pc t0 + 3 = pc (set_pc (pc t0 + 3) t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
+  spat `c_cmd` at
+    assert (pc t0 + 3 + Datatypes.length (flatten a) = pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
+  spat `eval_test` at specialize (eval_test_pure t _ _ _ spat) as ?; subst.
   destruct v eqn:?; cleanup; subst.
-  2: {
-    eapply c_test_correct in Heqp.
+  2: { (* test = false *)
+    spat `eval_test` at eapply c_test_correct in spat.
     2: shelve.
     all: eauto.
-    eauto; eapply Heqp in Heqp0; clear Heqp; eauto; cleanup.
+    spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
     all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
-    destruct x eqn:?; destruct s eqn:?; subst.
+    destruct x eqn:?; destruct s eqn:?; subst; cleanup.
     2: contradiction.
-    pose proof H5 as state_rel_t0.
-    unfold state_rel in H5, H16; cleanup; subst.
-    do 2 eexists; exists 0; split.
+    pat `state_rel _ _ t0` at pose proof pat.
+    pat `state_rel _ _ t0` at unfold state_rel in pat; cleanup; subst.
+    pat `state_rel _ _ s0` at unfold state_rel in pat; cleanup; subst.
+    do 2 eexists; split.
     all: try rewrite Nat.add_0_r.
     1: {
       eapply steps_trans.
@@ -2557,7 +2558,8 @@ Proof.
     simpl.
     unfold code_rel in *; cleanup; eauto.
     repeat split; eauto; [eapply pmap_subsume_refl|..].
-    1: eexists; eexists; eauto.
+    1: lia.
+    eexists; eexists; eauto.
   }
   all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
 (*
@@ -2573,23 +2575,23 @@ Proof.
    *)
   destruct eval_cmd eqn:?; destruct o eqn:?; subst; cleanup.
   2: { (* eval_cmd body = Stop v *)
-    (* assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp. *)
-    unfold goal_cmd in Heqp2; eapply H in Heqp2; eapply Heqp2 in H3; clear Heqp2; cleanup; eauto.
-    2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia(* ; rwr ltac:(specialize (steps_instructions _ _ _ _ H16)) *); simpl in *; eauto.
-
-    eapply c_test_correct in Heqp.
-    2: shelve. (* shelve fuel1 *)
+    spat `eval_test` at eapply c_test_correct in spat.
+    2: shelve.
     all: eauto.
-    eauto; eapply Heqp in Heqp0; clear Heqp; eauto; cleanup.
-    2: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
-    (* rewrite Nat.add_comm. *)
-    destruct x2 eqn:?; destruct s eqn:?; cleanup; subst.
+    spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
+    all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
+    destruct x eqn:?; destruct s eqn:?; cleanup; subst.
     2: contradiction.
+    assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
+    unfold goal_cmd in Heqp2; eapply H in Heqp2; eapply Heqp2 in H3; clear Heqp2; cleanup; eauto.
+    2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
+       pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl; eauto.
     cleanup; subst.
 
-    destruct x eqn:?; destruct s eqn:?; subst; cleanup.
+    destruct x eqn:?; destruct s eqn:?; subst; cleanup; subst.
     1: { (* steps (body) ~~> State *)
-      do 3 eexists; split.
+      pat `pc s2 = _` at rewrite <- pat in *.
+      do 2 eexists; split.
       1: {
         eapply steps_trans.
         1: eapply steps_step_same.
@@ -2598,26 +2600,37 @@ Proof.
         1: econstructor.
         simpl.
         eapply steps_trans.
-        1: eapply H18.
+        1: eauto.
         eapply steps_trans.
         1: eapply steps_step_same.
         1: eapply step_jump.
-        1: rewrite <- H23 in *.
-        1: unfold fetch; simpl; rwr ltac:(specialize (steps_instructions _ _ _ _ H18)); eauto.
+        1: unfold fetch; simpl; pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); eauto.
         1: econstructor.
         simpl.
-        eapply H2.
-
+        eauto.
       }
+      admit.
     }
     (* steps (body) ~~> Halt *)
-
-    2: {
-      unfold c_cmd.
+    pat `pc s2 = _` at rewrite <- pat in *.
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump.
+      1: eauto.
+      1: econstructor.
+      simpl.
+      eapply steps_trans.
+      1: eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump.
+      1: unfold fetch; simpl; pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); eauto.
+      1: econstructor.
+      simpl.
+      eauto.
     }
-    (* early return *)
-    do 3 eexists.
-
     admit.
   }
   (* do 2 eexists; exists 0; split.
@@ -2643,7 +2656,7 @@ Proof.
   repeat split; eauto; [eapply pmap_subsume_refl|..].
   1: eexists; eexists; eauto. *)
 
-Abort. *)
+Abort.
 
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),
   goal_cmd c fuel.

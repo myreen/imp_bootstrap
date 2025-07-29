@@ -99,15 +99,15 @@ Definition mem_inv (pmap: nat -> option (word64 * nat))
 
 (* Checks that environment variables map to valid locations and values on the stack in the ASM state. *)
 Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or_ret)
-  (pmap: nat -> option (word64 * nat))
-  (asmm : word64 -> option (option word64))
-  (impm: list (list (option Value))): Prop :=
+  (pmap: nat -> option (word64 * nat)): Prop :=
   List.length vs = List.length curr /\
   forall n v,
     IEnv.lookup env n = Some v ->
-    index_of n 0 vs < List.length curr /\
+    exists idx,
+    index_of_opt n 0 vs = Some idx /\
+    idx < List.length curr /\
     exists w,
-      nth_error curr (index_of n 0 vs) = Some (Word w) /\
+      nth_error curr idx = Some (Word w) /\
       v_inv pmap v w.
 
 Definition cmd_res_rel (ri: outcome unit) (l1: nat)
@@ -122,7 +122,7 @@ Definition cmd_res_rel (ri: outcome unit) (l1: nat)
   | Cont _ => exists curr1,
     has_stack t1 (curr1 ++ rest) /\
     mem_inv pmap t1.(memory) s1.(ImpSemantics.memory) /\
-    env_ok s1.(vars) vs curr1 pmap t1.(memory) s1.(ImpSemantics.memory) /\
+    env_ok s1.(vars) vs curr1 pmap /\
     t1.(pc) = l1
   (* | Stop TimeOut =>  *)
   | _ => True (* TODO(kπ) is this correct? *)
@@ -173,7 +173,7 @@ Definition goal_exp (e : exp): Prop :=
     res <> Stop Crash ->
     c_exp e t.(pc) vs = (asmc, l1) ->
     state_rel fs s t ->
-    env_ok s.(vars) vs curr pmap t.(memory) s.(ImpSemantics.memory) ->
+    env_ok s.(vars) vs curr pmap ->
     has_stack t (curr ++ rest) ->
     mem_inv pmap t.(memory) s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
@@ -199,7 +199,7 @@ Definition goal_test (tst: test): Prop :=
     eval_test tst s = (Cont b, s1) ->
     c_test_jump tst ltrue lfalse t.(pc) vs = (asmc, l1) ->
     state_rel fs s t ->
-    env_ok s.(vars) vs curr pmap t.(memory) s.(ImpSemantics.memory) ->
+    env_ok s.(vars) vs curr pmap ->
     has_stack t (curr ++ rest) ->
     mem_inv pmap t.(memory) s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
@@ -228,14 +228,14 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
     res <> Stop Crash ->
     c_cmd c t.(pc) fs vs = (asmc, l1, vs') ->
     state_rel fs s t ->
-    env_ok s.(vars) vs curr pmap t.(memory) s.(ImpSemantics.memory) ->
+    env_ok s.(vars) vs curr pmap ->
     has_stack t (curr ++ rest) ->
     mem_inv pmap t.(memory) s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
     odd (List.length rest) = true ->
     code_in t.(pc) (flatten asmc) t.(instructions) ->
     exists outcome pmap1,
-      steps (State t, s.(steps_done) - s1.(steps_done)) outcome /\
+      steps (State t, s1.(steps_done) - s.(steps_done)) outcome /\
       pmap_ok pmap1 /\
       pmap_subsume pmap pmap1 /\
       match outcome with
@@ -789,16 +789,17 @@ Proof.
   intros; simpl; reflexivity.
 Qed.
 
-Theorem env_ok_pmap_subsume: forall vars vs curr pmap pmap1 asmm impm,
-  env_ok vars vs curr pmap asmm impm ->
+Theorem env_ok_pmap_subsume: forall vars vs curr pmap pmap1,
+  env_ok vars vs curr pmap ->
   pmap_subsume pmap pmap1 ->
-  env_ok vars vs curr pmap1 asmm impm.
+  env_ok vars vs curr pmap1.
 Proof.
   intros.
   unfold env_ok, pmap_subsume in *; cleanup.
   split; eauto.
   intros.
   eapply H1 in H2; clear H1; cleanup.
+  eexists; split; eauto.
   split; eauto.
   eexists; eauto.
   split; eauto.
@@ -865,6 +866,142 @@ Proof.
     reflexivity.
 Qed.
 
+Theorem index_of_bounds: forall name vs k,
+  index_of name k vs ≤ k + (List.length vs).
+Proof.
+  induction vs; intros; simpl.
+  1: rewrite Nat.add_0_r; constructor.
+  simpl; destruct a.
+  - destruct (_ =? _) eqn:?; simpl; try rewrite IHvs; lia.
+  - try rewrite IHvs; lia.
+Qed.
+
+(* Lemma index_of_opt_spec: forall name vs k,
+  index_of_opt name k vs = Some  k + index_of name 0 vs. *)
+
+Lemma index_of_opt_in_bounds_str: forall nm vs k i,
+  index_of_opt nm k vs = Some i -> i < List.length vs + k.
+Proof.
+  induction vs; intros; simpl in *.
+  1: pat `None = Some _` at inversion pat.
+  destruct a; cleanup.
+  - destruct (_ =? _) eqn:?; cleanup.
+    + lia.
+    + spat `index_of_opt` at eapply IHvs in spat.
+      lia.
+  - spat `index_of_opt` at eapply IHvs in spat.
+    lia.
+Qed.
+
+Lemma index_of_opt_in_gt_k_str: forall nm vs k i,
+  index_of_opt nm k vs = Some i -> i >= k.
+Proof.
+  induction vs; intros; simpl in *.
+  1: pat `None = Some _` at inversion pat.
+  destruct a; cleanup.
+  - destruct (_ =? _) eqn:?; cleanup.
+    + lia.
+    + spat `index_of_opt` at eapply IHvs in spat.
+      lia.
+  - spat `index_of_opt` at eapply IHvs in spat.
+    lia.
+Qed.
+
+Lemma index_of_opt_in_bounds: forall nm vs i,
+  index_of_opt nm 0 vs = Some i -> i < List.length vs.
+Proof.
+  intros.
+  spat `index_of_opt` at specialize (index_of_opt_in_bounds_str _ _ _ _ spat) as ?.
+  lia.
+Qed.
+
+Lemma index_of_opt_Some_non_empty: forall nm vs k i,
+  index_of_opt nm k vs = Some i -> List.length vs > 0.
+Proof.
+  induction vs; intros; simpl in *.
+  1: pat `None = Some _` at inversion pat.
+  destruct a; cleanup.
+  - destruct (_ =? _) eqn:?; cleanup.
+    + lia.
+    + spat `index_of_opt` at eapply IHvs in spat.
+      lia.
+  - spat `index_of_opt` at eapply IHvs in spat.
+    lia.
+Qed.
+
+Lemma index_of_opt_Some_index_of: forall nm vs k i,
+  index_of_opt nm k vs = Some i -> index_of nm k vs = i.
+Proof.
+  induction vs; intros; simpl in *.
+  1: pat `None = Some _` at inversion pat.
+  destruct a; cleanup.
+  - destruct (_ =? _) eqn:?; cleanup.
+    + lia.
+    + spat `index_of_opt` at eapply IHvs in spat.
+      lia.
+  - spat `index_of_opt` at eapply IHvs in spat.
+    lia.
+Qed.
+
+Lemma index_of_opt_Some_any_k: forall nm vs k k1 i,
+  index_of_opt nm k vs = Some i -> index_of_opt nm (k + k1) vs = Some (i + k1).
+Proof.
+  induction vs; intros; simpl in *.
+  1: pat `None = Some _` at inversion pat.
+  destruct a; cleanup.
+  - destruct (_ =? _) eqn:?; cleanup.
+    + reflexivity.
+    + spat `index_of_opt` at eapply IHvs in spat.
+      spat `index_of_opt` at rewrite <- spat.
+      f_equal.
+      lia.
+  - spat `index_of_opt` at eapply IHvs in spat.
+    spat `index_of_opt` at rewrite <- spat.
+    f_equal.
+    lia.
+Qed.
+
+Lemma index_of_opt_Some_0_k: forall nm vs k i,
+  index_of_opt nm 0 vs = Some i -> index_of_opt nm k vs = Some (i + k).
+Proof.
+  intros * H.
+  eapply index_of_opt_Some_any_k in H.
+  eauto.
+Qed.
+
+Lemma index_of_opt_Some_inj: forall vs nm1 nm2 k i,
+  index_of_opt nm1 k vs = Some i /\ index_of_opt nm2 k vs = Some i ->
+    nm1 = nm2.
+Proof.
+  induction vs; intros; cleanup.
+  - simpl in *; cleanup.
+  - simpl in *.
+    destruct a.
+    2: specialize (IHvs _ _ _ _ (conj H H0)); assumption.
+    destruct (n =? nm1) eqn:?; destruct (n =? nm2) eqn:?.
+    all: try rewrite Nat.eqb_eq in *; eauto; try congruence; cleanup.
+    all: spat `index_of_opt` at eapply index_of_opt_in_gt_k_str in spat.
+    all: lia.
+Qed.
+
+(* Lemma index_of_opt_Some_nth_error: forall nm vs i,
+  index_of_opt nm 0 vs = Some i -> nth_error vs i = Some (Some nm).
+Proof.
+  (* induction vs; intros; simpl in *.
+  1: pat `None = Some _` at inversion pat.
+  destruct a; cleanup.
+  - destruct (_ =? _) eqn:?; cleanup.
+    + rewrite Nat.eqb_eq in *; subst; simpl; reflexivity.
+    + spat `index_of_opt` at eapply index_of_opt_Some_0_k in spat.
+      spat `index_of_opt` at rewrite <- spat.
+      f_equal.
+      lia.
+  - spat `index_of_opt` at eapply IHvs in spat.
+    spat `index_of_opt` at rewrite <- spat.
+    f_equal.
+    lia. *)
+Admitted. *)
+
 Ltac crunch_give_up_even :=
   repeat match  goal with
   | |- (ImpToASMCodegen.give_up _) = (ImpToASMCodegen.give_up _) => f_equal
@@ -887,10 +1024,10 @@ Ltac crunch_give_up_even :=
   | _ => tauto
 end.
 
-Theorem env_ok_add_None: forall vars vs curr x asmm impm pmap pmap1,
-  env_ok vars vs curr pmap asmm impm ->
+Theorem env_ok_add_None: forall vars vs curr x pmap pmap1,
+  env_ok vars vs curr pmap ->
   pmap_subsume pmap pmap1 ->
-  env_ok vars (None :: vs) (Word x :: curr) pmap1 asmm impm.
+  env_ok vars (None :: vs) (Word x :: curr) pmap1.
 Proof.
   intros * H.
   unfold env_ok in *; cleanup.
@@ -898,15 +1035,21 @@ Proof.
   1: simpl; eauto.
   intros*; intro HLookup.
   eapply H0 in HLookup; cleanup.
-  split; try eexists; try split.
+  spat `index_of_opt` at pose proof spat as ?.
+  eexists; split; try split; try eexists; try split.
   all: simpl.
-  all: try rewrite index_of_spec; try lia.
+  1: replace 1 with (0 + 1); [|reflexivity].
+  1: spat `index_of_opt` at eapply index_of_opt_Some_any_k with (k1 := 1) in spat; rewrite spat.
+  1: f_equal.
+  all: try rewrite Nat.add_1_r.
   all: unfold v_inv in *.
-  1: simpl; eapply H3.
+  1: lia.
+  1: simpl; eauto.
   destruct v; [assumption|].
   cleanup.
   unfold pmap_subsume in *.
-  eapply H1 in H4.
+  spat `∀ _, _` at pose proof spat as Hthm.
+  pat `pmap _ = _` at eapply Hthm in pat.
   eauto.
 Qed.
 
@@ -1054,12 +1197,12 @@ Proof.
       1: {
         assert (x = w).
         1: {
-          eapply H18 in Heqo; cleanup; subst.
+          spat `IEnv.lookup (vars s1) _ = Some _` at eapply spat in Heqo; cleanup.
+          pat `index_of_opt _ _ _ = _` at eapply index_of_opt_Some_index_of in pat.
           unfold v_inv in *; cleanup; subst.
           rewrite Nat.eqb_eq in *.
           rewrite Heqb in *.
-          destruct curr; inversion H10; subst.
-          inversion H4; subst.
+          destruct curr; simpl in *; cleanup.
           reflexivity.
         }
         subst.
@@ -1072,9 +1215,11 @@ Proof.
       1: eauto.
       all: simpl; eauto.
       rewrite Nat.eqb_eq in *.
+      pat `index_of_opt _ _ _ = _` at eapply index_of_opt_Some_index_of in pat.
       rewrite Heqb in *.
-      destruct curr; inversion H10; subst.
-      inversion H4; subst.
+      destruct curr; simpl in *; subst; cleanup.
+      1: pat `0 < 0` at inversion pat.
+      simpl in *; cleanup.
       assumption.
   }
   unfold env_ok in *; cleanup.
@@ -1098,7 +1243,9 @@ Proof.
       rewrite <- H4 in *.
       rewrite nth_error_app.
       rewrite <- Nat.ltb_lt in *.
+      pat `index_of_opt _ _ _ = _` at eapply index_of_opt_Some_index_of in pat.
       rewrite H1.
+      spat `_ <? _` at rewrite spat.
       eauto.
     }
     eapply Nat.lt_trans; [eauto|].
@@ -1108,6 +1255,7 @@ Proof.
     rewrite <- H.
     destruct rest; [inversion H7|].
     rewrite length_cons in *.
+    pat `index_of_opt _ _ _ = _` at eapply index_of_opt_Some_index_of in pat.
     lia.
   - simpl.
     unfold state_rel in *; cleanup.
@@ -2134,26 +2282,35 @@ Proof.
 
   } *)
 
-Lemma index_of_opt_in_bounds_str: forall nm vs k i,
-  index_of_opt nm k vs = Some i -> i < List.length vs + k.
-Proof.
-  induction vs; intros; simpl in *.
-  1: pat `None = Some _` at inversion pat.
-  destruct a; cleanup.
-  - destruct (_ =? _) eqn:?; cleanup.
-    + lia.
-    + spat `index_of_opt` at eapply IHvs in spat.
-      lia.
-  - spat `index_of_opt` at eapply IHvs in spat.
-    lia.
-Qed.
-
-Lemma index_of_opt_in_bounds: forall nm vs i,
-  index_of_opt nm 0 vs = Some i -> i < List.length vs.
+Lemma env_ok_replace_head: forall vars vs curr xnew xold n v pmap,
+  env_ok vars vs (Word xold :: curr) pmap →
+  v_inv pmap v xnew →
+  index_of_opt n 0 vs = Some 0 →
+  0 < List.length vs →
+  env_ok (IEnv.insert (n, Some v) vars) vs (Word xnew :: curr) pmap.
 Proof.
   intros.
-  spat `index_of_opt` at specialize (index_of_opt_in_bounds_str _ _ _ _ spat).
-  intros; lia.
+  unfold env_ok in *; cleanup.
+  simpl in *.
+  split; [assumption|].
+  intros.
+  destruct (n =? n0) eqn:?.
+  - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
+    rewrite IEnv.lookup_insert_eq in *; cleanup.
+    spat `_ = S _` at rewrite <- spat.
+    eexists; split; try split; simpl; cleanup; eauto.
+    eexists; simpl; split; eauto.
+  - rewrite Nat.eqb_neq in *.
+    rewrite IEnv.lookup_insert_neq in *; try assumption.
+    spat `IEnv.lookup` at pose proof spat as Hlookup.
+    pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
+    eexists; split; try split; simpl; cleanup; eauto.
+    eexists; simpl; split; eauto.
+    destruct x.
+    + spat `index_of_opt n` at pose proof spat as Hidx_of_n.
+      spat `index_of_opt n0` at pose proof spat as Hidx_of_n0.
+      specialize (index_of_opt_Some_inj _ _ _ _ _ (conj Hidx_of_n Hidx_of_n0)) as ?; congruence.
+    + simpl in *; assumption.
 Qed.
 
 Theorem c_cmd_Assign: forall (n: name) (e: exp) (fuel: nat),
@@ -2171,10 +2328,15 @@ Proof.
   2: eval_exp_contr_stop_tac.
   spat `eval_exp` at specialize (eval_exp_pure e _ _ _ Heqp) as ?; subst.
   eval_exp_correct_tac.
+  (* pat `eval_exp _ _ = (?res, _)` as Heval at
+  assert (res <> Stop Crash) as Hneq by congruence;
+  eapply c_exp_correct in Heval;
+  [eapply Heval in Hneq; clear Heval; cleanup|..].
+  2: eauto. *)
   destruct x eqn:?; destruct s eqn:?; cleanup; subst.
   2: contradiction.
   unfold exp_res_rel in *; cleanup; subst.
-  unfold env_ok in *; cleanup.
+  spat `env_ok` at pose proof spat as Henv_ok; unfold env_ok in spat; cleanup.
   destruct index_of_opt eqn:?; cleanup.
   2: {
     rewrite app_comm_cons in *.
@@ -2192,88 +2354,50 @@ Proof.
     split; [repeat rewrite length_cons; congruence|].
     intros.
     destruct (n =? n0) eqn:?.
-    - rewrite Nat.eqb_eq in *; rewrite Heqb in H3.
-      rewrite IEnv.lookup_insert_eq in *.
-      inversion H3; subst v; clear H3.
-      split; simpl; cleanup.
-      all: rewrite <- Nat.eqb_eq in *; rewrite Heqb.
+    - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
+      rewrite IEnv.lookup_insert_eq in *; cleanup.
+      eexists; split; try split; simpl; cleanup.
+      all: try rewrite Nat.eqb_refl; try reflexivity.
       1: lia.
       eexists; simpl; split; eauto.
     - rewrite Nat.eqb_neq in *.
       rewrite IEnv.lookup_insert_neq in *; try assumption.
-      pat `∀ _, _` as Hthm at eapply Hthm in H3; cleanup.
-      split; simpl; cleanup.
-      all: rewrite <- Nat.eqb_neq in *; rewrite Heqb.
-      all: rewrite index_of_spec; try lia.
+      spat `IEnv.lookup` at pose proof spat as Hlookup.
+      pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
+      eexists; split; try split; simpl; cleanup.
+      all: rewrite <- Nat.eqb_neq in *; try rewrite Heqb; simpl; try reflexivity.
+      1: spat `index_of_opt` at eapply index_of_opt_Some_any_k in spat; rewrite <- spat; reflexivity.
+      all: rewrite Nat.add_1_r; try lia.
       eexists; simpl; split; eauto.
   }
-  destruct n0 eqn:?.
-
-  (* COPY PASTED FROM PREVIOUS *)
-  (* Should be similar to previous case? *)
-  (* In this case we just pop the top of the stack, since the expression result is now in RAX *)
-  (*   and we want to put this value at index 0 – RAX *)
-  1: {
-    rewrite app_comm_cons in *.
-    do 2 eexists; split.
-    1: eauto.
-    simpl.
-    repeat match goal with
-    | [ |- _ ∧ _ ] => split
-    | [ |- ∃_, _ ] => eexists
-    | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
-    | [ |- _ - _ = _ ] => lia
-    | _ => progress eauto
-    end.
-    unfold env_ok in *; cleanup.
-
-    split; [repeat rewrite length_cons; congruence|].
-    intros.
-    destruct (n =? n0) eqn:?.
-    - rewrite Nat.eqb_eq in *; rewrite Heqb in H3.
-      rewrite IEnv.lookup_insert_eq in *.
-      inversion H3; subst v; clear H3.
-      split; simpl; cleanup.
-      all: rewrite <- Nat.eqb_eq in *; rewrite Heqb.
-      1: lia.
-      eexists; simpl; split; eauto.
-    - rewrite Nat.eqb_neq in *.
-      rewrite IEnv.lookup_insert_neq in *; try assumption.
-      pat `∀ _, _` as Hthm at eapply Hthm in H3; cleanup.
-      split; simpl; cleanup.
-      all: rewrite <- Nat.eqb_neq in *; rewrite Heqb.
-      all: rewrite index_of_spec; try lia.
-      eexists; simpl; split; eauto.
-  }
-  (* END COPY PASTED FROM PREVIOUS *)
-
-  spat `index_of_opt` at specialize (index_of_opt_in_bounds _ _ _ spat) as ?.
+  spat `index_of_opt` at pose proof spat.
+  spat `index_of_opt` at pose proof spat.
+  spat `index_of_opt` at eapply index_of_opt_Some_non_empty in spat.
+  spat `index_of_opt` at eapply index_of_opt_in_bounds in spat.
   spat `c_exp` at rwr ltac:(specialize (c_exp_length _ _ _ _ _ spat)).
   spat `steps` at rw ltac:(specialize (steps_instructions _ _ _ _ spat)).
-  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl in *; cleanup.
   unfold has_stack in *|-; cleanup.
-  pat `_ = List.length curr` at rewrite pat in *.
-  pat `curr ++ rest = _` at rewrite pat in *.
+  destruct curr; cleanup.
+  1: {
+    pat `Datatypes.length _ = Datatypes.length []` at rewrite pat in *.
+    pat `Datatypes.length [] > 0` at inversion pat.
+  }
   destruct n0 eqn:?.
   1: {
+    rewrite <- app_comm_cons in *.
+    simpl in *; cleanup.
     do 2 eexists; split.
     1: {
       eapply steps_trans.
       1: eauto.
-      eapply steps_trans.
-      1: eapply steps_step_same.
-      1: eapply step_store_rsp.
-      1: eauto.
-      1: pat `_ = stack s1` at rewrite <- pat in *; rewrite length_app; lia.
-      1: eauto.
       eapply steps_step_same.
       eapply step_pop.
       1: eauto.
-      simpl.
-      pat `stack s1 = _` at rewrite pat.
+      pat `_ = stack s1` at rewrite <- pat.
       reflexivity.
     }
     simpl.
+    unfold has_stack in *; cleanup.
     repeat match goal with
     | [ |- _ ∧ _ ] => split
     | [ |- ∃_, _ ] => eexists
@@ -2281,10 +2405,46 @@ Proof.
     | [ |- _ - _ = _ ] => lia
     | _ => progress eauto
     end.
-    -
+    1: pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity.
+    eapply env_ok_replace_head; eauto.
   }
-Qed.
-Abort.
+  spat `index_of_opt` at specialize (index_of_opt_in_bounds _ _ _ spat) as ?.
+  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl in *; cleanup.
+  unfold has_stack in *|-; cleanup.
+  pat `_ = S (List.length curr)` at rewrite pat in *.
+  do 2 eexists; split.
+  1: {
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_store_rsp.
+    1: eauto.
+    1: destruct rest; [spat `odd` at inversion spat|];
+       pat `_ = stack s1` at rewrite <- pat in *; rewrite length_cons; rewrite length_app; lia.
+    1: eauto.
+    eapply steps_step_same.
+    eapply step_pop.
+    1: eauto.
+    simpl.
+    pat `_ = stack s1` at rewrite <- pat.
+    reflexivity.
+  }
+  simpl.
+  repeat match goal with
+  | [ |- _ ∧ _ ] => split
+  | [ |- ∃_, _ ] => eexists
+  | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
+  | [ |- _ - _ = _ ] => lia
+  | _ => progress eauto
+  end.
+  3: lia.
+  (* has_stack (set_stack (list_update n1 (Word x0) (curr ++ rest)) (write_reg RAX x2 (inc (update_stack (S n1) x0
+(inc s1))))) (?curr1 ++ rest) *)
+  1: admit.
+  (* env_ok (IEnv.insert (n, Some v) (vars s0)) vs ?curr1 pmap *)
+  admit.
+Admitted.
 
 Theorem c_cmd_Seq: forall (fuel: nat) (c1 c2: cmd),
   goal_cmd c1 fuel -> goal_cmd c2 fuel ->
@@ -2300,12 +2460,20 @@ Proof.
   pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ _ pat)).
   pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ _ pat) as ?; subst.
   destruct (eval_cmd c1 _) eqn:?; simpl in *; cleanup.
+  assert (s0.(steps_done) <= s1.(steps_done)).
+  1: destruct o; cleanup; repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
+  assert (s.(steps_done) <= s0.(steps_done)).
+  1: repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
   pat `goal_cmd c1 _` at unfold goal_cmd in pat; eapply pat in Heqp; clear pat; eauto; cleanup; [|destruct o; congruence].
   destruct x; destruct s2; cleanup.
-  2: do 3 eexists; split; eauto; split; eauto; split; eauto; split; eauto.
+  all: spat `steps` at pose proof spat.
+  all: spat `steps` at eapply steps_add_fuel with (x := s1.(steps_done) - s0.(steps_done)) in spat.
+  all: assert (steps_done s0 - steps_done s + (steps_done s1 - steps_done s0) = s1.(steps_done) - s.(steps_done)) as ? by lia.
+  2: spat `_ = s1.(steps_done) - s.(steps_done)` at rewrite spat in *.
+  2: do 2 eexists; split; eauto; split; eauto; split; eauto; split; eauto.
   2: admit. (* prefix s2 (string_of_list_ascii (ImpSemantics.output s1)) = true *)
   destruct o eqn:?; subst; cleanup.
-  2: do 3 eexists; split; eauto.
+  2: do 2 eexists; split; eauto.
   unfold cmd_res_rel in * |-; cleanup; subst.
   unfold goal_cmd in H0.
   pat `steps (State t, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
@@ -2313,15 +2481,16 @@ Proof.
   2,3,4,8,9,10: eauto.
   2: instantiate (1 := x).
   all: eauto.
-  1: pat `steps (State t, _) _` at eapply steps_add_fuel with (x := fuel + x4) in pat; rewrite Nat.add_0_l in pat; rewrite <- Nat.add_assoc in pat.
-  1: destruct x2; destruct s3; cleanup; subst.
+  spat `_ = s1.(steps_done) - s.(steps_done)` at rewrite spat in *.
+  rewrite Nat.add_0_l in *.
+  1: destruct x1; destruct s3; cleanup; subst.
   2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto; eapply pmap_subsume_trans; eauto.
   all: simpl in *; cleanup; subst.
   1: {
     pat `has_stack t _` at specialize (has_stack_even _ _ pat) as ?.
     pat `has_stack s2 _` at specialize (has_stack_even _ _ pat) as ?.
     pat `steps (State s2, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
-    do 3 eexists.
+    do 2 eexists.
     split.
     1: {
       eapply steps_trans.
@@ -2331,7 +2500,7 @@ Proof.
     crunch_side_conditions_cmd.
     eauto.
   }
-Abort.
+Admitted.
 
 (* Theorem c_cmd_While: forall (t: test) (c: cmd) (fuel: nat),
   goal_cmd c fuel ->

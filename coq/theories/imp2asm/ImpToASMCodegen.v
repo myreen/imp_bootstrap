@@ -103,8 +103,8 @@ Function index_of_opt (n : name) (k : nat) (vs : v_stack) : option nat :=
   | nil => None
   | x :: xs =>
     match x with
-      | None => index_of_opt n (k+1) xs
-      | Some v => if Nat.eqb v n then Some k else index_of_opt n (k+1) xs
+    | None => index_of_opt n (k+1) xs
+    | Some v => if Nat.eqb v n then Some k else index_of_opt n (k+1) xs
     end
   end.
 

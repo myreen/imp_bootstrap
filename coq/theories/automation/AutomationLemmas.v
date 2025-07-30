@@ -264,7 +264,7 @@ Theorem auto_nat_case : forall {A} `{Refinable A}
   env s x0 x1 x2 n (v0 : nat) (v1 : A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([encode v1], s) ->
-  (forall n',
+  (forall n', S n' = v0 ->
     (FEnv.insert (name_enc n, Some (encode n')) env) |-- ([x2], s) --->
       ([encode (v2 n')], s)) ->
   env |-- ([If Equal [x0; Const 0] x1

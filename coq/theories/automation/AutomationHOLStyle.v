@@ -21,8 +21,6 @@ Definition empty_state : state := init_state Lnil [].
 
 (* TODO(kπ):
 - consider using preterm instead of open_constr if thing get too slow
-- computing names seems super slow. Should we have some hardcoded automation for that?
-  (I tried to automate this by injectivity, but it's not injective :sad_goat:)
 *)
 
 Ltac2 automation_lemmas () := List.flat_map (fun s => opt_to_list (Env.get [Option.get (Ident.of_string s)])) [
@@ -144,6 +142,16 @@ Ltac2 message_of_f_lookup (f_lookup : (string * constr) list) : message :=
     message_of_list f_lookup'
 end.
 
+Ltac2 intro_then (nm: string) (k: constr -> constr): constr :=
+  open_constr:(ltac2:(Control.enter (fun () =>
+    let x := Fresh.in_goal (Option.get (Ident.of_string nm)) in
+    Std.intros false [IntroNaming (IntroFresh x)];
+    let x_constr := (Control.hyp x) in
+    Control.refine (fun () =>
+      k x_constr
+    )
+  ))).
+
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
 Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list)
   (f_lookup : (string * constr) list) : constr :=
@@ -189,15 +197,26 @@ with compile (e : constr) (cenv : constr list)
   | None =>
     let compile_go :=
       lazy_match! e with
+      (* TODO(kπ): can we assume that we only compile lambdas, when we created them in the previous step? *)
+      (*           For now, we assume so, and require that any argument in *)
+      (*           automation lemma has to be followed by a precondition *)
+      (*       kπ: This might be worked around with automatic lemma application – we look at the lemma premise, not the term *)
+      (*           But then how do we know if an argument corresponds to a value or to a precondition? (== Prop) *)
       | (fun x => @?f x) =>
-        open_constr:(ltac2:(Control.enter (fun () =>
+        printf "found a function %t" f;
+        intro_then "x_nm" (fun x_constr =>
+          intro_then "x_precond" (fun _ =>
+            compile (eval_cbv beta open_constr:($f $x_constr)) (x_constr :: cenv) f_lookup
+          )
+        )
+        (* open_constr:(ltac2:(Control.enter (fun () =>
           let x := Fresh.in_goal (Option.get (Ident.of_string "x_nm")) in
           Std.intros false [IntroNaming (IntroFresh x)];
           let x_constr := (Control.hyp x) in
           Control.refine (fun () =>
             compile (eval_cbv beta open_constr:($f $x_constr)) (x_constr :: cenv) f_lookup
           )
-        )))
+        ))) *)
       | (dlet ?val ?body) =>
         let compiled_val := compile val cenv f_lookup in
         let applied_body := eval_cbv beta open_constr:($body $val) in
@@ -417,6 +436,9 @@ with compile (e : constr) (cenv : constr list)
         let args_constr := list_to_constr_encode args in
         let compile_args := compile_list_encode args_constr cenv f_lookup in
         let fname_str := constr_string_of_string fname in
+        (* TODO(kπ): Have to be careful, but in order to use specific compilation lemmas first, we might want to do this vvv *)
+        (*       kπ: Figure out why this works now :thinking: *)
+        (* Control.plus (fun _ => compile_go) (fun _ => *)
         open_constr:(trans_Call
         (* env *) _
         (* xs *) _
@@ -427,6 +449,7 @@ with compile (e : constr) (cenv : constr list)
         (* eval args *) $compile_args
         (* eval_app *) _
         )
+        (* ) *)
       | _ =>
         compile_go
       end
@@ -654,14 +677,9 @@ Derive sum_n_prog in (forall (s : state) (n : nat),
 Proof.
   intros.
   subst sum_n_prog.
-  (* rewrite sum_n_equation.
-  eapply trans_app.
-  all: eauto.
-  all: try (reflexivity ()). *)
-                (* kπ: this (vvv) is because we anually apply trans_app, so we don't add the argument to env (we should probably reuse the relational env, though) *)
-  (* error: (cannot instantiate "?body" because "n" is not in its scope) *)
   docompile ().
-  (* Show Proof. *)
+  Show Proof.
+  Unshelve.
 Abort.
 
 Definition has_cases (n : nat) : nat :=

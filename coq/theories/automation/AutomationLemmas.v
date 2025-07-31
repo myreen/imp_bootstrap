@@ -311,7 +311,7 @@ Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
   env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([rb.(encode) v1], s) ->
-  (forall h t,
+  (forall h t, h :: t = v0 ->
     (FEnv.insert (name_enc n2, Some (encode t))
       (FEnv.insert (name_enc n1, Some (ra.(encode) h)) env)) |-- ([x2], s) --->
         ([rb.(encode) (v2 h t)], s)) ->
@@ -358,7 +358,7 @@ Hint Resolve auto_option_some : automation.
 Theorem auto_option_case : forall {A B} `{Refinable A} `{rb : Refinable B} (v0 : option A) env s x0 x1 x2 n v1 v2,
   env |-- ([x0],s) ---> ([encode v0],s) ->
   env |-- ([x1],s) ---> ([rb.(encode) v1],s) ->
-  (forall inner,
+  (forall inner, Some inner = v0 ->
   (FEnv.insert (name_enc n, Some (encode inner)) env) |-- ([x2],s) ---> ([rb.(encode) (v2 inner)],s)) ->
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n) (Op Head [x0]) x2)], s) --->
@@ -410,14 +410,16 @@ Hint Resolve auto_pair_cons : automation.
 Theorem auto_pair_case : forall {A1 A2 B} `{ra1 : Refinable A1} `{ra2 : Refinable A2} `{rb : Refinable B}
   env s x0 x1 n1 n2 (v0 : A1 * A2) v1,
   env |-- ([x0], s) ---> ([encode v0], s) ->
-  (forall y1 y2,
+  (forall y1 y2, (y1, y2) = v0 ->
     (FEnv.insert (name_enc n2, Some (ra2.(encode) y2))
       (FEnv.insert (name_enc n1, Some (ra1.(encode) y1)) env)) |-- ([x1], s) --->
         ([rb.(encode) (v1 y1 y2)], s)) ->
   NoDup ([name_enc n1] ++ [name_enc n2] ++ free_vars x0) ->
   env |-- ([Let (name_enc n1) (Op Head [x0])
       (Let (name_enc n2) (Op Tail [x0]) x1)], s) --->
-  ([rb.(encode) (pair_CASE v0 v1)], s).
+  ([rb.(encode) (match v0 with
+                 | (y1, y2) => v1 y1 y2
+                 end)], s).
 Proof.
   intros.
   destruct v0 as [y1 y2]; simpl in *.
@@ -616,25 +618,25 @@ Theorem auto_exp_CASE: forall {A} `{Refinable A} env s x0 v0
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
-  (forall n,
+  (forall n, ImpSyntax.Var n = v0 ->
     (FEnv.insert (name_enc n1, Some (encode n)) env) |-- ([Var_case], s) ---> ([encode (f_Var n)], s)) ->
 
-  (forall w,
+  (forall w, ImpSyntax.Const w = v0 ->
     (FEnv.insert (name_enc n2, Some (value_word w)) env) |-- ([Const_case], s) ---> ([encode (f_Const w)], s)) ->
 
-  (forall e1 e2,
+  (forall e1 e2, ImpSyntax.Add e1 e2 = v0 ->
     (FEnv.insert (name_enc n4, Some (encode e2))
       (FEnv.insert (name_enc n3, Some (encode e1)) env)) |-- ([Add_case], s) ---> ([encode (f_Add e1 e2)], s)) ->
 
-  (forall e1 e2,
+  (forall e1 e2, ImpSyntax.Sub e1 e2 = v0 ->
     (FEnv.insert (name_enc n6, Some (encode e2))
       (FEnv.insert (name_enc n5, Some (encode e1)) env)) |-- ([Sub_case], s) ---> ([encode (f_Sub e1 e2)], s)) ->
 
-  (forall e1 e2,
+  (forall e1 e2, ImpSyntax.Div e1 e2 = v0 ->
     (FEnv.insert (name_enc n8, Some (encode e2))
       (FEnv.insert (name_enc n7, Some (encode e1)) env)) |-- ([Div_case], s) ---> ([encode (f_Div e1 e2)], s)) ->
 
-  (forall e1 e2,
+  (forall e1 e2, ImpSyntax.Read e1 e2 = v0 ->
     (FEnv.insert (name_enc n10, Some (encode e2))
       (FEnv.insert (name_enc n9, Some (encode e1)) env)) |-- ([Read_case], s) ---> ([encode (f_Read e1 e2)], s)) ->
 
@@ -733,20 +735,20 @@ Theorem auto_test_CASE: forall {A} `{Refinable A} env s x0 v0
   n1 n2 n3 n4 n5 n6 n7 n8,
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
-  (forall c e1 e2,
+  (forall c e1 e2, ImpSyntax.Test c e1 e2 = v0 ->
     (FEnv.insert (n3, Some (encode e2))
       (FEnv.insert (n2, Some (encode e1))
         (FEnv.insert (n1, Some (encode c)) env))) |-- ([Test_case], s) ---> ([encode (f_Test c e1 e2)], s)) ->
 
-  (forall t1 t2,
+  (forall t1 t2, ImpSyntax.And t1 t2 = v0 ->
     (FEnv.insert (n5, Some (encode t2))
       (FEnv.insert (n4, Some (encode t1)) env)) |-- ([And_case], s) ---> ([encode (f_And t1 t2)], s)) ->
 
-  (forall t1 t2,
+  (forall t1 t2, ImpSyntax.Or t1 t2 = v0 ->
     (FEnv.insert (n7, Some (encode t2))
       (FEnv.insert (n6, Some (encode t1)) env)) |-- ([Or_case], s) ---> ([encode (f_Or t1 t2)], s)) ->
 
-  (forall t,
+  (forall t, ImpSyntax.Not t = v0 ->
     (FEnv.insert (n8, Some (encode t)) env) |-- ([Not_case], s) ---> ([encode (f_Not t)], s)) ->
 
   NoDup ([n1; n2; n3; n4; n5; n6; n7; n8] ++ free_vars x0) ->
@@ -907,44 +909,44 @@ Theorem auto_cmd_CASE: forall {A} `{Refinable A} env s x0 v0
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
-  (forall c1 c2,
+  (forall c1 c2, ImpSyntax.Seq c1 c2 = v0 ->
     (FEnv.insert (n2, Some (encode c2))
       (FEnv.insert (n1, Some (encode c1)) env)) |-- ([Seq_case], s) ---> ([encode (f_Seq c1 c2)], s)) ->
 
-  (forall n e,
+  (forall n e, ImpSyntax.Assign n e = v0 ->
     (FEnv.insert (n4, Some (encode e))
       (FEnv.insert (n3, Some (encode n)) env)) |-- ([Assign_case], s) ---> ([encode (f_Assign n e)], s)) ->
 
-  (forall a e e',
+  (forall a e e', ImpSyntax.Update a e e' = v0 ->
     (FEnv.insert (n7, Some (encode e'))
       (FEnv.insert (n6, Some (encode e))
         (FEnv.insert (n5, Some (encode a)) env))) |-- ([Update_case], s) ---> ([encode (f_Update a e e')], s)) ->
 
-  (forall t c1 c2,
+  (forall t c1 c2, ImpSyntax.If t c1 c2 = v0 ->
     (FEnv.insert (n10, Some (encode c2))
       (FEnv.insert (n9, Some (encode c1))
         (FEnv.insert (n8, Some (encode t)) env))) |-- ([If_case], s) ---> ([encode (f_If t c1 c2)], s)) ->
 
-  (forall t c,
+  (forall t c, ImpSyntax.While t c = v0 ->
     (FEnv.insert (n12, Some (encode c))
       (FEnv.insert (n11, Some (encode t)) env)) |-- ([While_case], s) ---> ([encode (f_While t c)], s)) ->
 
-  (forall n f es,
+  (forall n f es, ImpSyntax.Call n f es = v0 ->
     (FEnv.insert (n15, Some (encode es))
       (FEnv.insert (n14, Some (encode f))
         (FEnv.insert (n13, Some (encode n)) env))) |-- ([Call_case], s) ---> ([encode (f_Call n f es)], s)) ->
 
-  (forall e,
+  (forall e, ImpSyntax.Return e = v0 ->
     (FEnv.insert (n16, Some (encode e)) env) |-- ([Return_case], s) ---> ([encode (f_Return e)], s)) ->
 
-  (forall n e,
+  (forall n e, ImpSyntax.Alloc n e = v0 ->
     (FEnv.insert (n18, Some (encode e))
       (FEnv.insert (n17, Some (encode n)) env)) |-- ([Alloc_case], s) ---> ([encode (f_Alloc n e)], s)) ->
 
-  (forall n,
+  (forall n, ImpSyntax.GetChar n = v0 ->
     (FEnv.insert (n19, Some (encode n)) env) |-- ([GetChar_case], s) ---> ([encode (f_GetChar n)], s)) ->
 
-  (forall e,
+  (forall e, ImpSyntax.PutChar e = v0 ->
     (FEnv.insert (n20, Some (encode e)) env) |-- ([PutChar_case], s) ---> ([encode (f_PutChar e)], s)) ->
 
   (env |-- ([Abort_case], s) ---> ([encode (f_Abort)], s)) ->
@@ -1044,10 +1046,10 @@ Theorem auto_app_list_CASE: forall {A} `{Refinable A} {R} `{Refinable R}
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
-  (forall xs,
+  (forall xs, List xs = v0 ->
     (FEnv.insert (n1, Some (encode xs)) env) |-- ([List_case], s) ---> ([encode (f_List xs)], s)) ->
 
-  (forall l1 l2,
+  (forall l1 l2, Append l1 l2 = v0 ->
     (FEnv.insert (n3, Some (encode l2))
       (FEnv.insert (n2, Some (encode l1)) env)) |-- ([Append_case], s) ---> ([encode (f_Append l1 l2)], s)) ->
 
@@ -1100,7 +1102,7 @@ Theorem auto_func_CASE: forall {A} `{Refinable A} env s x0 v0
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
-  (forall n params body,
+  (forall n params body, ImpSyntax.Func n params body = v0 ->
     (FEnv.insert (n3, Some (encode body))
       (FEnv.insert (n2, Some (encode params))
         (FEnv.insert (n1, Some (encode n)) env))) |-- ([Func_case], s) ---> ([encode (f_Func n params body)], s)) ->
@@ -1149,7 +1151,7 @@ Theorem auto_prog_CASE: forall {A} `{Refinable A} env s x0 v0
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
-  (forall funcs,
+  (forall funcs, ImpSyntax.Program funcs = v0 ->
     (FEnv.insert (n1, Some (encode funcs)) env) |-- ([Program_case], s) ---> ([encode (f_Program funcs)], s)) ->
 
   NoDup ([n1] ++ free_vars x0) ->
@@ -1314,11 +1316,11 @@ Theorem auto_cond_CASE: forall {A} `{Refinable A} env s x0 v0
 
   (env |-- ([Always_case], s) ---> ([encode f_Always], s)) ->
 
-  (forall r1 r2,
+  (forall r1 r2, ASMSyntax.Less r1 r2 = v0 ->
     (FEnv.insert (n2, Some (encode r2))
       (FEnv.insert (n1, Some (encode r1)) env)) |-- ([Less_case], s) ---> ([encode (f_Less r1 r2)], s)) ->
 
-  (forall r1 r2,
+  (forall r1 r2, ASMSyntax.Equal r1 r2 = v0 ->
     (FEnv.insert (n4, Some (encode r2))
       (FEnv.insert (n3, Some (encode r1)) env)) |-- ([Equal_case], s) ---> ([encode (f_Equal r1 r2)], s)) ->
 
@@ -1542,57 +1544,57 @@ Theorem auto_instr_CASE: forall {A} `{Refinable A} env s x0 v0
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
-  (forall r w,
+  (forall r w, ASMSyntax.Const r w = v0 ->
     (FEnv.insert (n2, Some (value_word w))
       (FEnv.insert (n1, Some (encode r)) env)) |-- ([Const_case], s) ---> ([encode (f_Const r w)], s)) ->
 
-  (forall r1 r2,
+  (forall r1 r2, ASMSyntax.Add r1 r2 = v0 ->
     (FEnv.insert (n4, Some (encode r2))
       (FEnv.insert (n3, Some (encode r1)) env)) |-- ([Add_case], s) ---> ([encode (f_Add r1 r2)], s)) ->
 
-  (forall r1 r2,
+  (forall r1 r2, ASMSyntax.Sub r1 r2 = v0 ->
     (FEnv.insert (n6, Some (encode r2))
       (FEnv.insert (n5, Some (encode r1)) env)) |-- ([Sub_case], s) ---> ([encode (f_Sub r1 r2)], s)) ->
 
-  (forall r,
+  (forall r, ASMSyntax.Div r = v0 ->
     (FEnv.insert (n7, Some (encode r)) env) |-- ([Div_case], s) ---> ([encode (f_Div r)], s)) ->
 
-  (forall c n,
+  (forall c n, ASMSyntax.Jump c n = v0 ->
     (FEnv.insert (n9, Some (Num (N.of_nat n)))
       (FEnv.insert (n8, Some (encode c)) env)) |-- ([Jump_case], s) ---> ([encode (f_Jump c n)], s)) ->
 
-  (forall n,
+  (forall n, ASMSyntax.Call n = v0 ->
     (FEnv.insert (n10, Some (Num (N.of_nat n))) env) |-- ([Call_case], s) ---> ([encode (f_Call n)], s)) ->
 
-  (forall r1 r2,
+  (forall r1 r2, ASMSyntax.Mov r1 r2 = v0 ->
     (FEnv.insert (n12, Some (encode r2))
       (FEnv.insert (n11, Some (encode r1)) env)) |-- ([Mov_case], s) ---> ([encode (f_Mov r1 r2)], s)) ->
 
   (env |-- ([Ret_case], s) ---> ([encode f_Ret], s)) ->
 
-  (forall r,
+  (forall r, ASMSyntax.Pop r = v0 ->
     (FEnv.insert (n13, Some (encode r)) env) |-- ([Pop_case], s) ---> ([encode (f_Pop r)], s)) ->
 
-  (forall r,
+  (forall r, ASMSyntax.Push r = v0 ->
     (FEnv.insert (n14, Some (encode r)) env) |-- ([Push_case], s) ---> ([encode (f_Push r)], s)) ->
 
-  (forall n,
+  (forall n, ASMSyntax.Add_RSP n = v0 ->
     (FEnv.insert (n15, Some (Num (N.of_nat n))) env) |-- ([Add_RSP_case], s) ---> ([encode (f_Add_RSP n)], s)) ->
 
-  (forall r n,
+  (forall r n, ASMSyntax.Load_RSP r n = v0 ->
     (FEnv.insert (n17, Some (Num (N.of_nat n)))
       (FEnv.insert (n16, Some (encode r)) env)) |-- ([Load_RSP_case], s) ---> ([encode (f_Load_RSP r n)], s)) ->
 
-  (forall r n,
+  (forall r n, ASMSyntax.Store_RSP r n = v0 ->
     (FEnv.insert (n19, Some (Num (N.of_nat n)))
       (FEnv.insert (n18, Some (encode r)) env)) |-- ([Store_RSP_case], s) ---> ([encode (f_Store_RSP r n)], s)) ->
 
-  (forall r1 r2 w,
+  (forall r1 r2 w, ASMSyntax.Load r1 r2 w = v0 ->
     (FEnv.insert (n20, Some (value_word w))
       (FEnv.insert (name_enc "load_r2", Some (encode r2))
         (FEnv.insert (name_enc "load_r1", Some (encode r1)) env))) |-- ([Load_case], s) ---> ([encode (f_Load r1 r2 w)], s)) ->
 
-  (forall r1 r2 w,
+  (forall r1 r2 w, ASMSyntax.Store r1 r2 w = v0 ->
     (FEnv.insert (name_enc "store_w", Some (value_word w))
       (FEnv.insert (name_enc "store_r2", Some (encode r2))
         (FEnv.insert (name_enc "store_r1", Some (encode r1)) env))) |-- ([Store_case], s) ---> ([encode (f_Store r1 r2 w)], s)) ->
@@ -1603,7 +1605,7 @@ Theorem auto_instr_CASE: forall {A} `{Refinable A} env s x0 v0
 
   (env |-- ([Exit_case], s) ---> ([encode f_Exit], s)) ->
 
-  (forall str,
+  (forall str, ASMSyntax.Comment str = v0 ->
     (FEnv.insert (name_enc "comment_str", Some (encode str)) env) |-- ([Comment_case], s) ---> ([encode (f_Comment str)], s)) ->
 
   NoDup ([n1; n2; n3; n4; n5; n6; n7; n8; n9; n10;

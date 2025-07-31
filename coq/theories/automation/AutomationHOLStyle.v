@@ -36,47 +36,136 @@ Ltac2 get_test_ref() :=
   let refs := Env.expand (ident_of_fqn ["auto_bool_not"]) in
   List.hd refs.
 
+(* TODO(kπ): this version doesn't work - loops infinitely *)
 Ltac2 rec split_thm (c: constr): constr list :=
-  match! c with
+  lazy_match! c with
   | (∀ x, @?f x) =>
     (* print t; *)
-    print (Message.of_constr c);
-    split_thm f
+    printf "splitting thm %t" c;
+    x :: split_thm f
   (* | (fun x => @?f x) =>
     (* print t; *)
     print (Message.of_constr c);
-    split_thm f *)
-  | ?c => [c]
-  end.
-
-Ltac2 rec split_thm_args_unsafe (c: constr): constr list :=
-  match Unsafe.kind c with
-  | Prod b c1 =>
-    print (Message.of_constr (Binder.type b));
-    print (Message.of_constr c1);
-    (Binder.type b) :: split_thm_args_unsafe c1
+    x :: split_thm f *)
   | _ => []
   end.
 
-Ltac2 rec thm_constr_app (cf: constr -> constr) (ps: constr list) (acc: constr): constr :=
-  match ps with
+Ltac2 rec split_thm_args (c: constr): constr list :=
+  match Unsafe.kind c with
+  | Prod b c1 =>
+    (* printf "splitting thm %t" c;
+    print (Message.of_constr (Binder.type b));
+    print (Message.of_constr c1); *)
+    (Binder.type b) :: split_thm_args c1
+  | _ => []
+  end.
+
+Ltac2 intro_then (nm: string) (k: constr -> constr): constr :=
+  open_constr:(ltac2:(Control.enter (fun () =>
+    let x := Fresh.in_goal (Option.get (Ident.of_string nm)) in
+    Std.intros false [IntroNaming (IntroFresh x)];
+    let x_constr := (Control.hyp x) in
+    Control.refine (fun () =>
+      k x_constr
+    )
+  ))).
+
+Ltac2 rec apply_thm (thm: constr) (args: constr list): constr :=
+  match args with
+  | [] => thm
+  | arg :: args =>
+    apply_thm open_constr:($thm $arg) args
+  end.
+
+Ltac2 isPropTerm (c: constr): bool :=
+  printf "Checking type of %t with type %t" c (Constr.type c);
+  Constr.equal (Constr.type c) constr:(Prop).
+
+(* Named arguments -> automation relevant *)
+(* Unnamed arguments -> irrelevant (side conditions) *)
+Ltac2 rec compile_if_needed (compilefn: constr -> constr list -> constr) (cenv: constr list)
+                            (extracted: constr) (thm_part: constr): constr :=
+  printf "compile_if_needed thm_part: %t" thm_part;
+  match! thm_part with
+  | _ |-- (_, _) ---> (_, _) =>
+    printf "compile_if_needed applying compilefn extracted: %t" extracted;
+    compilefn extracted cenv
+  | _ =>
+    match Unsafe.kind thm_part with
+    | Prod x f =>
+      match Binder.name x with
+      | Some _ =>
+        intro_then "x_nm" (fun x_constr =>
+          compile_if_needed compilefn (x_constr :: cenv) (eval_cbv beta open_constr:($extracted $x_constr)) f
+        )
+      | None =>
+        intro_then "x_nm" (fun _ =>
+          compile_if_needed compilefn cenv extracted f
+        )
+      end
+      (* TODO(kπ): We ideally would like to use the type (Constr.type (Binder.type x) == Prop), but it throws an exception *)
+      (*           Something about part of the type being free. *)
+      (* if isPropTerm (Binder.type x) then
+        (* intro but don't apply the argument *)
+        intro_then "x_nm" (fun _ =>
+          compile_if_needed compilefn cenv extracted f
+        )
+      else
+        (* intro and apply the argument *)
+        intro_then "x_nm" (fun x_constr =>
+          compile_if_needed (fun c => compilefn open_constr:($c $x_constr)) (x_constr :: cenv) extracted f
+        ) *)
+    | _ => open_constr:(_)
+    end
+  end.
+
+Ltac2 rec compile_if_needed_pair (compilefn: constr -> constr list -> constr) (cenv: constr list)
+                                 (part_pair: (constr * constr) option): constr :=
+  match part_pair with
+  | None => open_constr:(_)
+  | Some (extracted, thm_part) =>
+    compile_if_needed compilefn cenv extracted thm_part
+  end.
+
+Ltac2 rec isCompilable (c: constr): bool :=
+  match! c with
+  | _ |-- (_, _) ---> (_, _) => true
+  (* TODO(kπ): this doesn't work *)
+  (* | (fun x => @?f x) => isCompilable f
+  | (∀ x, @?f x) => isCompilable f *)
+  | _ =>
+    match Constr.Unsafe.kind c with
+    | Prod _ c1 => isCompilable c1
+    | _ => false
+    end
+  end.
+
+Ltac2 rec pair_thm_parts (thm_parts: constr list) (extracted: constr list)
+                         (acc: (constr * constr) option list): (constr * constr) option list :=
+  match thm_parts with
   | [] => acc
-  | p :: ps =>
-    let arg := match! p with
-              | _ |-- (_, _) ---> (_, _) => cf(p)
-              | (fun x => _) => cf(p)
-              | _ => open_constr:(_)
-              end in
-    thm_constr_app cf ps open_constr:($acc $arg)
+  | p :: thm_parts =>
+    if isCompilable p then
+      printf "isCompilable %t" p;
+      match extracted with
+      | extr :: extracted => pair_thm_parts thm_parts extracted (Some (extr, p) :: acc)
+      | _ => Control.throw_invalid_argument "pair_thm_parts"
+      end
+    else pair_thm_parts thm_parts extracted (None :: acc)
   end.
 
 (* TODO(kπ) Try using this approach for automatic-ish automation lemma usage/extensibility *)
-Ltac2 app_lemma (cf: constr -> constr) (lname: string) :=
-  let r := List.hd (Env.expand (ident_of_fqn [lname])) in
-  let c := Env.instantiate r in
-  let ctpe := type c in
-  let thm_parts := split_thm_args_unsafe ctpe in
-  thm_constr_app cf thm_parts c.
+Ltac2 app_lemma (cf: constr -> constr list -> constr) (cenv : constr list) (lname: string) (extracted: constr list) :=
+  let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
+  print (Message.of_string (Option.get (reference_to_string lemma_ref)));
+  let lemma_inst: constr := Env.instantiate lemma_ref in
+  let lemma_tpe: constr := type lemma_inst in
+  let thm_parts := split_thm_args lemma_tpe in
+  let paired_parts := List.rev (pair_thm_parts thm_parts extracted []) in
+  print (message_of_list (List.map Message.of_constr thm_parts));
+  let compiled_parts := List.map (compile_if_needed_pair cf cenv) paired_parts in
+  print (message_of_list (List.map Message.of_constr compiled_parts));
+  apply_thm lemma_inst compiled_parts.
 
 Ltac2 beta_fix : red_flags := {
   rBeta := true; rMatch := false; rFix := true; rCofix := false;
@@ -142,16 +231,6 @@ Ltac2 message_of_f_lookup (f_lookup : (string * constr) list) : message :=
     message_of_list f_lookup'
 end.
 
-Ltac2 intro_then (nm: string) (k: constr -> constr): constr :=
-  open_constr:(ltac2:(Control.enter (fun () =>
-    let x := Fresh.in_goal (Option.get (Ident.of_string nm)) in
-    Std.intros false [IntroNaming (IntroFresh x)];
-    let x_constr := (Control.hyp x) in
-    Control.refine (fun () =>
-      k x_constr
-    )
-  ))).
-
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
 Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list)
   (f_lookup : (string * constr) list) : constr :=
@@ -181,10 +260,8 @@ Ltac2 rec compile_list_encode (e0 : constr) (cenv : constr list)
   end
 with compile (e : constr) (cenv : constr list)
   (f_lookup : (string * constr) list) : constr :=
-  print (Message.of_string "Compiling expression:");
-  print (Message.of_constr e);
-  print (Message.of_string "cenv");
-  print (message_of_list (List.map Message.of_constr cenv));
+  let compile_nofl := (fun e cenv => compile e cenv f_lookup) in
+  printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_list (List.map Message.of_constr cenv)) cenv;
   match List.find_opt (Constr.equal e) cenv with
   | Some _ =>
     open_constr:(trans_Var
@@ -233,10 +310,11 @@ with compile (e : constr) (cenv : constr list)
         )
       (* bool *)
       | true =>
-        open_constr:(auto_bool_T
+        app_lemma compile_nofl cenv "auto_bool_T" []
+        (* open_constr:(auto_bool_T
         (* env *) _
         (* s *) _
-        )
+        ) *)
       | false =>
         open_constr:(auto_bool_F
         (* env *) _
@@ -386,7 +464,8 @@ with compile (e : constr) (cenv : constr list)
         (* NoDup *) _
         )
       | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
-        let compile_v0 := compile v0 cenv f_lookup in
+        app_lemma compile_nofl cenv "auto_nat_case" [v0; v1; v2]
+        (* let compile_v0 := compile v0 cenv f_lookup in
         let compile_v1 := compile v1 cenv f_lookup in
         let compile_v2 := compile v2 cenv f_lookup in
         open_constr:(auto_nat_case
@@ -398,7 +477,7 @@ with compile (e : constr) (cenv : constr list)
         (* eval x0 *) $compile_v0
         (* eval x1 *) $compile_v1
         (* eval x2 *) $compile_v2
-        )
+        ) *)
       | ?x =>
         (* open_constr:(_) *)
         if proper_const x then
@@ -408,8 +487,7 @@ with compile (e : constr) (cenv : constr list)
           (* n *) $x
           )
         else
-          (printf "f_lookup";
-          print (message_of_f_lookup f_lookup);
+          (printf "f_lookup %a" (fun _ => message_of_f_lookup) f_lookup;
           (Control.throw (Oopsie (fprintf
             "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
             x
@@ -670,13 +748,43 @@ About sum_n_equation.
 
 Derive sum_n_prog in (forall (s : state) (n : nat),
     lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
-    (* TODO(kπ) Added this just to try the HOL translation for recursion vvvvvvvvvvv *)
-    (forall n, eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s)) ->
     eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
   as sum_n_prog_proof.
 Proof.
   intros.
   subst sum_n_prog.
+  induction n.
+  2: { (* Inductive case *)
+    docompile ().
+    Show Proof.
+    Unshelve.
+    13: {
+      inversion x_nm0; subst.
+      (* assumption (). *) (* TODO(kπ): Ltac2 assumption bug? why does exact work, but assumption doesn't? *)
+      exact IHn.
+    }
+    all: ltac1:(shelve).
+  }
+  (* TODO(kπ): What should we do in the 0 case of induction? *)
+  (*       kπ: Do we just symbolically evaluate? *)
+  1: {
+    eapply trans_app; eauto; eauto; unfold make_env.
+    ltac1:(repeat (econstructor; eauto with fenvDb)).
+  }
+  (* TODO(kπ): Check if this is correct *)
+  Unshelve.
+Abort.
+
+Definition bool_ops (b: bool): bool :=
+  b && true.
+
+Derive bool_ops_prog in (forall (s : state) (b : bool),
+    lookup_fun (name_enc "bool_ops") s.(funs) = Some ([name_enc "b"], bool_ops_prog) ->
+    eval_app (name_enc "bool_ops") [encode b] s (encode (bool_ops b), s))
+  as bool_ops_prog_proof.
+Proof.
+  intros.
+  subst bool_ops_prog.
   docompile ().
   Show Proof.
   Unshelve.

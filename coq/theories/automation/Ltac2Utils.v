@@ -49,8 +49,21 @@ Ltac2 reference_of_constr_opt (c: constr): reference option :=
   | _ => None
 end.
 
+Ltac2 message_of_binder_relevance (r: Binder.relevance): message :=
+  match r with
+  | Binder.Relevant => fprintf "Relevant"
+  | Binder.Irrelevant => fprintf "Irrelevant"
+  | Binder.RelevanceVar _ => fprintf "RelevanceVar(..)"
+  end.
+
 Ltac2 reference_to_string (r : reference) : string option :=
   Some (Ident.to_string (List.last (Env.path r))).
+
+Ltac2 message_of_reference (r: reference): message :=
+  match reference_to_string r with
+  | Some s => Message.of_string s
+  | None => "WRONG REFERENCE"
+  end.
 
 Ltac2 ident_of_fqn (fqn: string list): ident list :=
   List.map (fun s => Option.get (Ident.of_string s)) fqn.
@@ -211,6 +224,8 @@ Ltac2 unfold_once (fconstr: constr) (exprconstr: constr): constr :=
     let f_name_r := reference_of_constr fconstr in
     let expr_norm := Std.eval_unfold [(f_name_r, AllOccurrences)] exprconstr in
     expr_norm.
+
+(* TESTS: *)
 
 (* Definition has_match (l: list nat) : nat :=
   1 +

@@ -62,7 +62,7 @@ Ltac2 reference_to_string (r : reference) : string option :=
 Ltac2 message_of_reference (r: reference): message :=
   match reference_to_string r with
   | Some s => Message.of_string s
-  | None => "WRONG REFERENCE"
+  | None => fprintf "WRONG REFERENCE"
   end.
 
 Ltac2 ident_of_fqn (fqn: string list): ident list :=

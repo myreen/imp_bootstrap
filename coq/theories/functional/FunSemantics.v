@@ -86,6 +86,7 @@ Fixpoint make_env (keys : list name) (values : list Value) (acc : FEnv.env) : FE
   | k :: ks, v :: vs => make_env ks vs (FEnv.insert (k, Some v) acc)
   | _, _ => acc
   end.
+Arguments make_env !_ !_ /.
 
 Fixpoint lookup_fun (n : name) (fs : list FunSyntax.dec) : option (list name * FunSyntax.exp) :=
   match fs with

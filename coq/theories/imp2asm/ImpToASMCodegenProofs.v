@@ -2204,11 +2204,12 @@ Qed.
 Ltac crunch_side_conditions_cmd :=
   repeat match goal with
   | [ |- _ ∧ _ ] => split
-  | [ |- pmap_ok _ ] => eauto
-  | [ |- pmap_subsume _ _ ] => eapply pmap_subsume_trans; eauto
-  | [ |- state_rel _ _ _ ] => eauto
-  | [ |- cmd_res_rel _ _ _ _ _ _ _ _ ] => eauto
+  | [ |- pmap_ok _ ] => progress eauto
+  | [ |- pmap_subsume _ _ ] => eapply pmap_subsume_trans; progress eauto
+  | [ |- state_rel _ _ _ ] => progress eauto
+  | [ |- cmd_res_rel _ _ _ _ _ _ _ _ ] => progress eauto
   | _ => progress simpl
+  | _ => assumption
   | _ => lia
   end.
 
@@ -2498,7 +2499,6 @@ Proof.
       eauto.
     }
     crunch_side_conditions_cmd.
-    eauto.
   }
 Admitted.
 
@@ -2561,18 +2561,8 @@ Proof.
     1: lia.
     eexists; eexists; eauto.
   }
+  (* test = true *)
   all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
-(*
-  eapply c_test_correct in Heqp.
-  2: shelve. (* shelve fuel1 *)
-  all: eauto.
-  eauto; eapply Heqp in Heqp0; clear Heqp; eauto; cleanup.
-  all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
-  (* rewrite Nat.add_comm. *)
-  destruct x eqn:?; destruct s eqn:?; cleanup; subst.
-  2: contradiction.
-  cleanup; subst.
-   *)
   destruct eval_cmd eqn:?; destruct o eqn:?; subst; cleanup.
   2: { (* eval_cmd body = Stop v *)
     spat `eval_test` at eapply c_test_correct in spat.
@@ -2587,31 +2577,7 @@ Proof.
     2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
        pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl; eauto.
     cleanup; subst.
-
-    destruct x eqn:?; destruct s eqn:?; subst; cleanup; subst.
-    1: { (* steps (body) ~~> State *)
-      pat `pc s2 = _` at rewrite <- pat in *.
-      do 2 eexists; split.
-      1: {
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_jump.
-        1: eauto.
-        1: econstructor.
-        simpl.
-        eapply steps_trans.
-        1: eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_jump.
-        1: unfold fetch; simpl; pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); eauto.
-        1: econstructor.
-        simpl.
-        eauto.
-      }
-      admit.
-    }
-    (* steps (body) ~~> Halt *)
+    destruct x eqn:?;subst; cleanup; subst.
     pat `pc s2 = _` at rewrite <- pat in *.
     do 2 eexists; split.
     1: {
@@ -2631,8 +2597,74 @@ Proof.
       simpl.
       eauto.
     }
-    admit.
+    destruct s eqn:?.
+    1: { (* steps (body) ~~> State *)
+      simpl in *; cleanup.
+      crunch_side_conditions_cmd.
+    }
+    (* steps (body) ~~> Halt *)
+    simpl in *; cleanup.
+    crunch_side_conditions_cmd.
   }
+  (* eval_cmd body = Cont v *)
+  spat `eval_test` at eapply c_test_correct in spat.
+  2: shelve.
+  all: eauto.
+  spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
+  all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
+  destruct x eqn:?; destruct s2 eqn:?; cleanup; subst.
+  2: contradiction.
+  assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s3))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
+  assert (Cont v <> Stop Crash) by congruence.
+
+  (* TODO(kπ): might be needed for adding fuel *)
+  (* assert (s0.(steps_done) <= s1.(steps_done)).
+  1: destruct o; cleanup; repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
+  assert (s.(steps_done) <= s0.(steps_done)).
+  1: repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia. *)
+
+  spat `eval_cmd c` at unfold goal_cmd in Heqp2; eapply H in Heqp2.
+  pat `Cont v <> _` at eapply Heqp2 in pat; clear Heqp2; cleanup; eauto.
+  2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
+      pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl; eauto.
+  cleanup; subst.
+  destruct x eqn:?;subst; cleanup; subst.
+  pat `pc s3 = _` at rewrite <- pat in *.
+
+  (* TODO(kπ): might be needed for adding fuel *)
+  (* all: spat `steps` at pose proof spat.
+  all: spat `steps` at eapply steps_add_fuel with (x := s1.(steps_done) - s0.(steps_done)) in spat.
+  all: assert (steps_done s0 - steps_done s + (steps_done s1 - steps_done s0) = s1.(steps_done) - s.(steps_done)) as ? by lia. *)
+
+  do 2 eexists; split.
+  1: {
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_jump.
+    1: eauto.
+    1: econstructor.
+    simpl.
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_jump.
+    1: unfold fetch; simpl; pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); eauto.
+    1: econstructor.
+    simpl.
+    eapply steps_trans.
+    1: eauto.
+    1: exact H18.
+    eapply steps_trans.
+  }
+  destruct s eqn:?.
+  1: { (* steps (body) ~~> State *)
+    simpl in *; cleanup.
+    crunch_side_conditions_cmd.
+  }
+  (* steps (body) ~~> Halt *)
+  simpl in *; cleanup.
+  crunch_side_conditions_cmd.
   (* do 2 eexists; exists 0; split.
   all: try rewrite Nat.add_0_r.
   1: {

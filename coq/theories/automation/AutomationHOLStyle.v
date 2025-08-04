@@ -19,10 +19,6 @@ Open Scope nat.
 
 Definition empty_state : state := init_state Lnil [].
 
-(* TODO(kπ):
-- consider using preterm instead of open_constr if thing get too slow
-*)
-
 Ltac2 automation_lemmas () := List.flat_map (fun s => opt_to_list (Env.get [Option.get (Ident.of_string s)])) [
   "auto_let";
   "auto_bool_T";
@@ -158,10 +154,10 @@ Ltac2 app_lemma (compile_fn: unit -> unit) (fenv: constr) (lname: string) (extra
   refine (compile_if_needed_rec compile_fn lemma_inst thm_parts (fenv :: extracted)).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)
-Ltac2 f_lookup_name (f_lookup : (string * constr) list) (fname : string) : constr option :=
+Ltac2 is_in_loopkup (f_lookup : (string * constr) list) (fname : string) : bool :=
   match List.find_opt (fun (name, _) => String.equal name fname) f_lookup with
-  | Some (_, c) => Some c
-  | None => None
+  | Some (_, c) => true
+  | None => false
   end.
 
 (* Check if `c` is a "proper" constant – used for sanity checks when compiling constants *)
@@ -245,26 +241,40 @@ Ltac2 rec get_cenv_from_fenv_constr (fenv: constr) : constr list :=
   | _ => []
   end.
 
-Ltac2 rec compile_list_of_exprs (compile_fn: unit -> unit) (fenv: constr): unit :=
-  printf "Compiling args list %t" (Control.goal ());
-  match! Control.goal () with
-  | _ |-- (_, _) ---> ([], _) =>
-    app_lemma compile_fn fenv "trans_nil" []
-  | _ |-- (_, _) ---> ((encode ?e) :: ?es, _) =>
-    printf "Compiling args cons list %t" (Control.goal ());
-    (* let compile_e := compile_fn e in
-    let compile_es := compile_list_of_exprs compile_fn es in *)
-    refine open_constr:(trans_cons
-    (* env *) $fenv
-    (* x *) _
-    (* xs *) _
-    (* v *) (encode $e)
-    (* vs *) $es
-    (* s s1 s2 *) _ _ _
-    (* eval x *) ltac2:(Control.enter(fun () => compile_fn ()))
-    (* eval xs *) ltac2:(Control.enter(fun () => compile_list_of_exprs compile_fn fenv))
-    )
+(* Apply the hypothesis `iden` to wildcards, until it is a top-level `eval_app` *)
+Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
+  lazy_match! t with
+  | (forall x, @?t1 x) =>
+    let t1_refined := refine_up_to_eval_app iden t1 in
+    open_constr:($t1_refined _)
+  | (fun _ => ?t1) =>
+    let t1_refined := refine_up_to_eval_app iden t1 in
+    open_constr:($t1_refined _)
+  | (_ -> ?t1) =>
+    let t1_refined := refine_up_to_eval_app iden t1 in
+    open_constr:($t1_refined _)
+  | eval_app _ _ _ _ =>
+    Control.hyp iden
+  | ?t1 =>
+    t1
   end.
+
+Ltac2 get_f_lookup_from_hyps () : (string * constr) list :=
+  let hyps := Control.hyps () in
+  let f_lookup := List.flatten (List.map (fun (iden, _, t) =>
+    match! t with
+    | context [ eval_app (name_enc ?fname1) _ _ _ ] =>
+      let t_refined := refine_up_to_eval_app iden t in
+      [(string_of_constr_string fname1, t_refined)]
+    | _ => []
+    end
+  ) hyps) in
+  f_lookup.
+
+Ltac2 fname_if_in_f_lookup (f_lookup: (string * constr) list) (f: constr) :=
+  let f_name_r: reference option := reference_of_constr_opt f in
+  let f_name_str := Option.bind f_name_r reference_to_string in
+  Option.bind f_name_str (fun n => if is_in_loopkup f_lookup n then Some n else None).
 
 (* The priority of lemmas is as follows: *)
 (* 1: variables *)
@@ -275,18 +285,13 @@ Ltac2 rec compile_list_of_exprs (compile_fn: unit -> unit) (fenv: constr): unit 
 (*   3.x: "normal" automation lemmas *)
 (*   3.last: constants *)
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
-Ltac2 rec compile (f_lookup : (string * constr) list) : unit :=
+Ltac2 rec compile () : unit :=
   let c := Control.goal () in
-  (* printf "Compiling expression: %t with cenv %a" c (fun () cenv => message_of_list (List.map Message.of_constr cenv)) cenv; *)
-  printf "Compiling expression: %t" c;
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
     let cenv := get_cenv_from_fenv_constr fenv in
-    let compile_nofl := (fun () => compile f_lookup) in
-    let app_lemma_fixed := app_lemma compile_nofl fenv in
-    let compile_list_exprs_fixed := (fun () => compile_list_of_exprs compile_nofl fenv) in
-    let compCenv := get_cenv_from_fenv_constr fenv in
-    printf "Compiling expression: %t with compCenv %a" e (fun () cenv => message_of_list (List.map Message.of_constr cenv)) compCenv;
+    let app_lemma_fixed := app_lemma compile fenv in
+    printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_list (List.map Message.of_constr cenv)) cenv;
     match List.find_opt (Constr.equal e) cenv with
     | Some _ =>
       refine open_constr:(trans_Var
@@ -299,23 +304,12 @@ Ltac2 rec compile (f_lookup : (string * constr) list) : unit :=
     | None =>
       let compile_go () :=
         lazy_match! e with
-        (* TODO(kπ): can we assume that we only compile lambdas, when we created them in the previous step? *)
-        (*           For now, we assume so, and require that any argument in *)
-        (*           automation lemma has to be followed by a precondition *)
-        (*       kπ: This might be worked around with automatic lemma application – we look at the lemma premise, not the term *)
-        (*           But then how do we know if an argument corresponds to a value or to a precondition? (== Prop) *)
         | (fun x => @?_f x) =>
           printf "POTENTIAL ERROR: trying to compile a function in the wild, namely %t" e;
           intro_then "x_nm" (fun _ =>
-            intro_then "x_precond" (fun _ =>
-              cbv beta;
-              compile f_lookup
-            )
+            compile ()
           )
         | (dlet ?val ?body) =>
-          (* let compiled_val := compile f_lookup val in
-          let applied_body := eval_cbv beta open_constr:($body $val) in
-          let compiled_body := compile f_lookup applied_body in *)
           refine open_constr:(auto_let
           (* env *) $fenv
           (* x1 y1 *) _ _
@@ -323,8 +317,8 @@ Ltac2 rec compile (f_lookup : (string * constr) list) : unit :=
           (* v1 *) $val
           (* let_n *) _
           (* f *) $body
-          (* eval v1 *) ltac2:(Control.enter(fun () => compile f_lookup))
-          (* eval f *) ltac2:(Control.enter(fun () => cbv beta; compile f_lookup))
+          (* eval v1 *) ltac2:(Control.enter compile)
+          (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
           )
         (* bool *)
         | true =>
@@ -363,13 +357,11 @@ Ltac2 rec compile (f_lookup : (string * constr) list) : unit :=
           if proper_const x then
             app_lemma_fixed "auto_nat_const" [x]
           else
-            (printf "f_lookup %a" (fun _ => message_of_f_lookup) f_lookup;
-            (Control.throw (Oopsie (fprintf
+            Control.throw (Oopsie (fprintf
               "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
               x
               (kind_string_of_constr x)
-            ));
-            refine open_constr:(_)))
+            ))
         end
       in
       match extract_fun e with
@@ -377,18 +369,13 @@ Ltac2 rec compile (f_lookup : (string * constr) list) : unit :=
         compile_go ()
       | Some (f, args) =>
         (* A function application *)
-        let f_name_r: reference option := reference_of_constr_opt f in
-        let f_name_str := Option.bind f_name_r reference_to_string in
-        let f_constr_opt := Option.bind f_name_str (f_lookup_name f_lookup) in
-        match f_constr_opt, f_name_str with
-        | (Some _, Some fname) =>
+        let f_lookup := get_f_lookup_from_hyps () in
+        let fname_opt := fname_if_in_f_lookup f_lookup f in
+        match fname_opt with
+        | Some fname =>
           (* Existing function that is in f_lookup (currently – in premises) *)
           let args_constr := list_to_constr_encode args in
-          printf "extracted a function from %t, args_constr: %t" e args_constr;
-          let compile_args := (fun () => compile_list_exprs_fixed ()) in
           let fname_str := constr_string_of_string fname in
-          printf "f_lookup";
-          print (message_of_f_lookup f_lookup);
           refine open_constr:(trans_Call
           (* env *) $fenv
           (* xs *) _
@@ -396,7 +383,7 @@ Ltac2 rec compile (f_lookup : (string * constr) list) : unit :=
           (* fname *) (name_enc $fname_str)
           (* vs *) $args_constr
           (* v *) (encode $e)
-          (* eval args *) ltac2:(Control.enter compile_args)
+          (* eval args *) ltac2:(Control.enter compile)
           (* eval_app *) _
           )
         | _ =>
@@ -404,6 +391,19 @@ Ltac2 rec compile (f_lookup : (string * constr) list) : unit :=
         end
       end
     end
+  | ?fenv |-- (_, _) ---> ([], _) =>
+    app_lemma compile fenv "trans_nil" []
+  | ?fenv |-- (_, _) ---> ((encode ?e) :: ?es, _) =>
+    refine open_constr:(trans_cons
+    (* env *) $fenv
+    (* x *) _
+    (* xs *) _
+    (* v *) (encode $e)
+    (* vs *) $es
+    (* s s1 s2 *) _ _ _
+    (* eval x *) ltac2:(Control.enter compile)
+    (* eval xs *) ltac2:(Control.enter compile)
+    )
   | _ =>
     Control.throw (Oopsie (fprintf "Error: Malformed input to compile, namely %t" c))
   end.
@@ -415,36 +415,6 @@ Ltac2 rec has_make_env (c: constr): bool :=
   | _ => false
   end.
 
-(* Apply the hypothesis `iden` to wildcards, until it is a top-level `eval_app` *)
-Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
-  lazy_match! t with
-  | (forall x, @?t1 x) =>
-    let t1_refined := refine_up_to_eval_app iden t1 in
-    open_constr:($t1_refined _)
-  | (fun _ => ?t1) =>
-    let t1_refined := refine_up_to_eval_app iden t1 in
-    open_constr:($t1_refined _)
-  | (_ -> ?t1) =>
-    let t1_refined := refine_up_to_eval_app iden t1 in
-    open_constr:($t1_refined _)
-  | eval_app _ _ _ _ =>
-    Control.hyp iden
-  | ?t1 =>
-    t1
-  end.
-
-Ltac2 get_f_lookup_from_hyps () : (string * constr) list :=
-  let hyps := Control.hyps () in
-  let f_lookup := List.flatten (List.map (fun (iden, _, t) =>
-    match! t with
-    | context [ eval_app (name_enc ?fname1) _ _ _ ] =>
-      let t_refined := refine_up_to_eval_app iden t in
-      [(string_of_constr_string fname1, t_refined)]
-    | _ => []
-    end
-  ) hyps) in
-  f_lookup.
-
 Ltac2 unfold_ref_everywhere (r: reference): unit :=
   let cl := default_on_concl None in
   Std.unfold [(r, AllOccurrences)] cl.
@@ -455,8 +425,7 @@ Ltac2 rec docompile () :=
   lazy_match! goal with
   | [ |- ?_fenv |-- (_, _) ---> ([encode ?_c], _) ] =>
     (* let cenv := get_cenv_from_fenv_constr fenv in *)
-    let f_lookup := get_f_lookup_from_hyps () in
-    compile f_lookup;
+    compile ();
     intros;
     eauto with fenvDb
   | [ h : (lookup_fun ?_fname _ = Some (?params, _))
@@ -691,8 +660,6 @@ Definition bar (n : nat) : nat :=
   foo (n + 1).
 
 Derive bar_prog in (forall (s : state) (n : nat),
-    (* TODO(kπ): I'm pretty sure that we don't want to add this vvv (we only want `eval_app`) *)
-    (* lookup_fun (name_enc "foo") s.(funs) = Some ([name_enc "n"], foo_prog) -> *)
     (forall m, eval_app (name_enc "foo") [encode m] s (encode (foo m), s)) ->
     lookup_fun (name_enc "bar") s.(funs) = Some ([name_enc "n"], bar_prog) ->
     eval_app (name_enc "bar") [encode n] s (encode (bar n), s))
@@ -730,8 +697,6 @@ Definition baz2 (n : nat) : nat :=
   baz (n + 1) n.
 
 Derive baz2_prog in (forall (s : state) (n : nat),
-    (* TODO(kπ): I'm pretty sure that we don't want to add this vvv (we only want `eval_app`) *)
-    (* lookup_fun (name_enc "baz") s.(funs) = Some ([name_enc "n"; name_enc "m"], baz_prog) -> *)
     (forall n m, eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s)) ->
     lookup_fun (name_enc "baz2") s.(funs) = Some ([name_enc "n"], baz2_prog) ->
     eval_app (name_enc "baz2") [encode n] s (encode (baz2 n), s))

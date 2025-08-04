@@ -51,7 +51,7 @@ Ltac2 rec split_thm_args (c: constr): constr list :=
   | _ => []
   end.
 
-Ltac2 intro_then (nm: string) (k: constr -> constr): constr :=
+Ltac2 intro_then_refine (nm: string) (k: constr -> constr): constr :=
   open_constr:(ltac2:(Control.enter (fun () =>
     let x := Fresh.in_goal (Option.get (Ident.of_string nm)) in
     Std.intros false [IntroNaming (IntroFresh x)];
@@ -61,50 +61,33 @@ Ltac2 intro_then (nm: string) (k: constr -> constr): constr :=
     )
   ))).
 
-Ltac2 rec apply_thm (thm: constr) (args: constr list): constr :=
+Ltac2 intro_then (nm: string) (k: constr -> unit): unit :=
+  Control.enter (fun () =>
+    let x := Fresh.in_goal (Option.get (Ident.of_string nm)) in
+    Std.intros false [IntroNaming (IntroFresh x)];
+    let x_constr := (Control.hyp x) in
+    k x_constr
+  ).
+
+Ltac2 rec apply_thm (thm: constr) (args: (unit -> unit) list): constr :=
   match args with
   | [] => thm
   | arg :: args =>
-    apply_thm open_constr:($thm $arg) args
+    apply_thm open_constr:($thm ltac2:(Control.enter arg)) args
   end.
 
-Ltac2 isPropTerm (c: constr): bool :=
-  printf "Checking type of %t with type %t" c (Constr.type c);
-  Constr.equal (Constr.type c) constr:(Prop).
-
-(* Named arguments -> automation relevant *)
-(* Unnamed arguments -> irrelevant (side conditions) *)
-Ltac2 rec compile_if_needed (compile_fn: constr list -> constr -> constr) (cenv: constr list)
-                            (extracted: constr) (thm_part: constr): constr :=
-  match! thm_part with
+Ltac2 rec compile_if_needed (compile_fn: unit -> unit): unit :=
+  match! Control.goal () with
   | _ |-- (_, _) ---> (_, _) =>
-    compile_fn cenv extracted
-  | _ =>
-    match Unsafe.kind thm_part with
-    | Prod x f =>
-      (* TODO(kπ): We ideally would like to use the type (Constr.type (Binder.type x) == Prop), but it throws an exception *)
-      (*           Something about part of the type being free. *)
-      (* if isPropTerm (Binder.type x) then *)
-      match Binder.name x with
-      | Some _ =>
-        intro_then "x_nm" (fun x_constr =>
-          compile_if_needed compile_fn (x_constr :: cenv) (eval_cbv beta open_constr:($extracted $x_constr)) f
-        )
-      | None =>
-        intro_then "x_nm" (fun _ =>
-          compile_if_needed compile_fn cenv extracted f
-        )
-      end
-    | _ => open_constr:(_)
-    end
-  end.
-
-Ltac2 rec compile_if_needed_pair (compile_fn: constr list -> constr -> constr) (cenv: constr list)
-                                 (part_pair: (constr * constr) option): constr :=
-  match part_pair with
-  | None => open_constr:(_)
-  | Some (extracted, thm_part) =>
-    compile_if_needed compile_fn cenv extracted thm_part
+    Control.enter (fun () =>
+      cbv beta;
+      compile_fn ()
+    )
+  | (forall _, _) =>
+    intro_then "x_nm" (fun _ =>
+      compile_if_needed compile_fn
+    )
+  | _ => refine open_constr:(_)
   end.
 
 Ltac2 rec isCompilable (c: constr): bool :=
@@ -115,6 +98,40 @@ Ltac2 rec isCompilable (c: constr): bool :=
     | Prod _ c1 => isCompilable c1
     | _ => false
     end
+  end.
+
+Ltac2 rec compile_if_needed_rec (compile_fn: unit -> unit) (acc: constr)
+                                (thm_parts: constr list) (extracted: constr list): constr :=
+  let acc := eval_cbv beta acc in
+  printf "compile_if_needed_rec acc: %t (with type %t)" acc (Constr.type acc);
+  match thm_parts with
+  | [] => acc
+  | thm_part :: thm_parts =>
+    (* is compilable (_ |-- _ ---> _) -> compile *)
+    if isCompilable thm_part then
+      let compiled := (fun () =>
+        compile_if_needed compile_fn
+      ) in
+      compile_if_needed_rec compile_fn open_constr:($acc ltac2:(Control.enter compiled)) thm_parts extracted
+    else
+      match extracted with
+      | extr :: extracted =>
+        (* TODO(kπ): Check if this can backtrack too much (we only want this for an automatic check of unification) *)
+        let use_extr := (fun () =>
+          (open_constr:($acc ltac2:(Control.enter (fun () => refine extr))), extracted)
+        ) in
+        let skip_extr := (fun _ =>
+          (open_constr:($acc _), (extr :: extracted))
+        ) in
+        let (acc, extracted) :=
+          match Control.case use_extr with
+          | Err _ => skip_extr ()
+          | Val (x, _) => x
+          end in
+        compile_if_needed_rec compile_fn acc thm_parts extracted
+      | _ =>
+        compile_if_needed_rec compile_fn open_constr:($acc _) thm_parts extracted
+      end
   end.
 
 Ltac2 rec pair_thm_parts (thm_parts: constr list) (extracted: constr list)
@@ -133,14 +150,12 @@ Ltac2 rec pair_thm_parts (thm_parts: constr list) (extracted: constr list)
 (* Apply lemma named `lname`, use compilaiton funciton `compile_fn` to compile "eval" premises of the lemma *)
 (*   Fill in `extracted` terms for "eval" premises *)
 (*   (Also make sure to update the `cenv` while recursing) *)
-Ltac2 app_lemma (compile_fn: constr list -> constr -> constr) (cenv : constr list) (lname: string) (extracted: constr list) :=
+Ltac2 app_lemma (compile_fn: unit -> unit) (fenv: constr) (lname: string) (extracted: constr list): unit :=
   let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
   let lemma_inst: constr := Env.instantiate lemma_ref in
   let lemma_tpe: constr := type lemma_inst in
   let thm_parts := split_thm_args lemma_tpe in
-  let paired_parts := List.rev (pair_thm_parts thm_parts extracted []) in
-  let compiled_parts := List.map (compile_if_needed_pair compile_fn cenv) paired_parts in
-  apply_thm lemma_inst compiled_parts.
+  refine (compile_if_needed_rec compile_fn lemma_inst thm_parts (fenv :: extracted)).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)
 Ltac2 f_lookup_name (f_lookup : (string * constr) list) (fname : string) : constr option :=
@@ -203,6 +218,12 @@ Ltac2 message_of_f_lookup (f_lookup : (string * constr) list) : message :=
     message_of_list f_lookup'
 end.
 
+Ltac2 rec constr_list_of_encode_constr (c : constr) : constr list :=
+  match! c with
+  | [] => []
+  | (encode ?x) :: ?xs => x :: constr_list_of_encode_constr xs
+  end.
+
 Ltac2 rec constr_list_of_constr (c : constr) : constr list :=
   match! c with
   | [] => []
@@ -211,33 +232,37 @@ Ltac2 rec constr_list_of_constr (c : constr) : constr list :=
 
 Ltac2 rec get_cenv_from_fenv_constr (fenv: constr) : constr list :=
   lazy_match! fenv with
-  | FEnv.insert (?_n, ?v) ?fenv =>
+  | FEnv.insert (?_n, Some (encode ?v)) ?fenv =>
     let acc := get_cenv_from_fenv_constr fenv in
     v :: acc
+  | FEnv.insert (?_n, None) ?fenv =>
+    get_cenv_from_fenv_constr fenv
   | make_env ?_ns ?vs ?fenv =>
     let acc := get_cenv_from_fenv_constr fenv in
     (* let names := List.map (fun c => string_of_constr_string c) (constr_list_of_constr ns) in *)
-    let values := constr_list_of_constr vs in
+    let values := constr_list_of_encode_constr vs in
     List.append values acc
   | _ => []
   end.
 
-Ltac2 rec compile_list_of_exprs (compile_fn: constr list -> constr -> constr) (cenv : constr list) (e0 : constr list): constr :=
-  match e0 with
-  | [] =>
-    app_lemma compile_fn cenv "trans_nil" []
-  | e :: es =>
-    let compile_e := compile_fn cenv e in
-    let compile_es := compile_list_of_exprs compile_fn cenv es in
-    open_constr:(trans_cons
+Ltac2 rec compile_list_of_exprs (compile_fn: unit -> unit) (fenv: constr): unit :=
+  printf "Compiling args list %t" (Control.goal ());
+  match! Control.goal () with
+  | _ |-- (_, _) ---> ([], _) =>
+    app_lemma compile_fn fenv "trans_nil" []
+  | _ |-- (_, _) ---> ((encode ?e) :: ?es, _) =>
+    printf "Compiling args cons list %t" (Control.goal ());
+    (* let compile_e := compile_fn e in
+    let compile_es := compile_list_of_exprs compile_fn es in *)
+    refine open_constr:(trans_cons
+    (* env *) $fenv
     (* x *) _
     (* xs *) _
-    (* v *) _
-    (* vs *) _
-    (* env *) _
+    (* v *) (encode $e)
+    (* vs *) $es
     (* s s1 s2 *) _ _ _
-    (* eval x *) $compile_e
-    (* eval xs *) $compile_es
+    (* eval x *) ltac2:(Control.enter(fun () => compile_fn ()))
+    (* eval xs *) ltac2:(Control.enter(fun () => compile_list_of_exprs compile_fn fenv))
     )
   end.
 
@@ -250,20 +275,21 @@ Ltac2 rec compile_list_of_exprs (compile_fn: constr list -> constr -> constr) (c
 (*   3.x: "normal" automation lemmas *)
 (*   3.last: constants *)
 (* TODO(kπ) track free variables to name let_n (use Ltac2.Free) *)
-Ltac2 rec compile (cenv : constr list) (f_lookup : (string * constr) list) (c : constr) : constr :=
-  let compile_nofl := (fun cenv => compile cenv f_lookup) in
-  let app_lemma_fixed := app_lemma compile_nofl cenv in
-  let compile_list_exprs_fixed := compile_list_of_exprs compile_nofl cenv in
-  printf "Compiling expression: %t with cenv %a" c (fun () cenv => message_of_list (List.map Message.of_constr cenv)) cenv;
+Ltac2 rec compile (f_lookup : (string * constr) list) : unit :=
+  let c := Control.goal () in
+  (* printf "Compiling expression: %t with cenv %a" c (fun () cenv => message_of_list (List.map Message.of_constr cenv)) cenv; *)
+  printf "Compiling expression: %t" c;
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
-    (* TODO(kπ): Shadow cenv to test if we can get rid of it *)
     let cenv := get_cenv_from_fenv_constr fenv in
+    let compile_nofl := (fun () => compile f_lookup) in
+    let app_lemma_fixed := app_lemma compile_nofl fenv in
+    let compile_list_exprs_fixed := (fun () => compile_list_of_exprs compile_nofl fenv) in
     let compCenv := get_cenv_from_fenv_constr fenv in
     printf "Compiling expression: %t with compCenv %a" e (fun () cenv => message_of_list (List.map Message.of_constr cenv)) compCenv;
     match List.find_opt (Constr.equal e) cenv with
     | Some _ =>
-      open_constr:(trans_Var
+      refine open_constr:(trans_Var
       (* env *) _
       (* s *) _
       (* n *) _
@@ -271,33 +297,34 @@ Ltac2 rec compile (cenv : constr list) (f_lookup : (string * constr) list) (c : 
       (* FEnv.lookup *) _
       )
     | None =>
-      let compile_go :=
+      let compile_go () :=
         lazy_match! e with
         (* TODO(kπ): can we assume that we only compile lambdas, when we created them in the previous step? *)
         (*           For now, we assume so, and require that any argument in *)
         (*           automation lemma has to be followed by a precondition *)
         (*       kπ: This might be worked around with automatic lemma application – we look at the lemma premise, not the term *)
         (*           But then how do we know if an argument corresponds to a value or to a precondition? (== Prop) *)
-        | (fun x => @?f x) =>
+        | (fun x => @?_f x) =>
           printf "POTENTIAL ERROR: trying to compile a function in the wild, namely %t" e;
-          intro_then "x_nm" (fun x_constr =>
+          intro_then "x_nm" (fun _ =>
             intro_then "x_precond" (fun _ =>
-              compile (x_constr :: cenv) f_lookup (eval_cbv beta open_constr:($f $x_constr))
+              cbv beta;
+              compile f_lookup
             )
           )
         | (dlet ?val ?body) =>
-          let compiled_val := compile cenv f_lookup val in
+          (* let compiled_val := compile f_lookup val in
           let applied_body := eval_cbv beta open_constr:($body $val) in
-          let compiled_body := compile (val :: cenv) f_lookup applied_body in
-          open_constr:(auto_let
-          (* env *) _
+          let compiled_body := compile f_lookup applied_body in *)
+          refine open_constr:(auto_let
+          (* env *) $fenv
           (* x1 y1 *) _ _
           (* s1 s2 s3 *) _ _ _
           (* v1 *) $val
           (* let_n *) _
           (* f *) $body
-          (* eval v1 *) $compiled_val
-          (* eval f *) $compiled_body
+          (* eval v1 *) ltac2:(Control.enter(fun () => compile f_lookup))
+          (* eval f *) ltac2:(Control.enter(fun () => cbv beta; compile f_lookup))
           )
         (* bool *)
         | true =>
@@ -342,12 +369,12 @@ Ltac2 rec compile (cenv : constr list) (f_lookup : (string * constr) list) (c : 
               x
               (kind_string_of_constr x)
             ));
-            open_constr:(_)))
+            refine open_constr:(_)))
         end
       in
       match extract_fun e with
       | None =>
-        compile_go
+        compile_go ()
       | Some (f, args) =>
         (* A function application *)
         let f_name_r: reference option := reference_of_constr_opt f in
@@ -356,22 +383,24 @@ Ltac2 rec compile (cenv : constr list) (f_lookup : (string * constr) list) (c : 
         match f_constr_opt, f_name_str with
         | (Some _, Some fname) =>
           (* Existing function that is in f_lookup (currently – in premises) *)
-          let compile_args := compile_list_exprs_fixed args in
+          let args_constr := list_to_constr_encode args in
+          printf "extracted a function from %t, args_constr: %t" e args_constr;
+          let compile_args := (fun () => compile_list_exprs_fixed ()) in
           let fname_str := constr_string_of_string fname in
           printf "f_lookup";
           print (message_of_f_lookup f_lookup);
-          open_constr:(trans_Call
-          (* env *) _
+          refine open_constr:(trans_Call
+          (* env *) $fenv
           (* xs *) _
           (* s1 s2 s3 *) _ _ _
           (* fname *) (name_enc $fname_str)
-          (* vs *) _
+          (* vs *) $args_constr
           (* v *) (encode $e)
-          (* eval args *) $compile_args
+          (* eval args *) ltac2:(Control.enter compile_args)
           (* eval_app *) _
           )
         | _ =>
-          compile_go
+          compile_go ()
         end
       end
     end
@@ -384,27 +413,6 @@ Ltac2 rec has_make_env (c: constr): bool :=
   | (FEnv.insert _ ?c) => has_make_env c
   | make_env _ _ _ => true
   | _ => false
-  end.
-
-Ltac2 normalize_compile (f_lookup : (string * constr) list) (e : constr) : constr :=
-  lazy_match! e with
-  | ?fenv |-- (_, _) ---> ([encode ?c], _) =>
-    if has_make_env fenv then
-      open_constr:(ltac2:(Control.enter(fun () =>
-        unfold make_env;
-        Control.refine(fun () =>
-          compile [] f_lookup c
-        )
-      )))
-    else
-      compile [] f_lookup e
-  | _ => compile [] f_lookup e
-  end.
-
-Ltac2 rec constr_list_of_encode_constr (c : constr) : constr list :=
-  match! c with
-  | [] => []
-  | (encode ?x) :: ?xs => x :: constr_list_of_encode_constr xs
   end.
 
 (* Apply the hypothesis `iden` to wildcards, until it is a top-level `eval_app` *)
@@ -445,10 +453,10 @@ Ltac2 unfold_ref_everywhere (r: reference): unit :=
 (* Handles expression evaluation and function evaluation as goals *)
 Ltac2 rec docompile () :=
   lazy_match! goal with
-  | [ |- ?fenv |-- (_, _) ---> ([encode ?_c], _) ] =>
-    let cenv := get_cenv_from_fenv_constr fenv in
+  | [ |- ?_fenv |-- (_, _) ---> ([encode ?_c], _) ] =>
+    (* let cenv := get_cenv_from_fenv_constr fenv in *)
     let f_lookup := get_f_lookup_from_hyps () in
-    refine (compile cenv f_lookup (Control.goal ()));
+    compile f_lookup;
     intros;
     eauto with fenvDb
   | [ h : (lookup_fun ?_fname _ = Some (?params, _))
@@ -504,7 +512,7 @@ Ltac2 rec docompile () :=
       (* params length eq *) _
       (* lookup_fun *) $h_hyp
       );
-      intros;
+      (* intros; *)
       eauto with fenvDb
     end
   | [ |- ?x ] =>
@@ -531,7 +539,14 @@ Proof.
   relcompile.
   Show Proof.
   Unshelve.
-Abort.
+  all: subst; unfold make_env; eauto with fenvDb.
+  3: exact "h"%string.
+  3: exact "t"%string.
+  3: exact "h"%string.
+  all: eauto with fenvDb.
+  simpl; ltac1:(repeat constructor).
+  all: intro Hcont; unfold In in *; ltac1:(try contradiction); inversion Hcont; inversion H0.
+Qed.
 
 Fixpoint sum_n (n : nat) : nat :=
   match n with
@@ -554,7 +569,7 @@ Proof.
     relcompile.
     Show Proof.
     Unshelve.
-    13: {
+    1: {
       inversion x_nm0; subst.
       (* assumption (). *) (* TODO(kπ): Ltac2 assumption bug? why does exact work, but assumption doesn't? *)
       exact IHn.
@@ -570,10 +585,9 @@ Proof.
   (* TODO(kπ): Check if this is correct *)
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  1: exact "n1"%string.
-  1: exact "n"%string.
-  2: eauto with fenvDb.
-  exact FEnv.empty.
+  2: exact "n1"%string.
+  2: exact "n"%string.
+  eauto with fenvDb.
 Qed.
 
 Definition bool_ops (b: bool): bool :=
@@ -589,7 +603,8 @@ Proof.
   relcompile.
   Show Proof.
   Unshelve.
-Abort.
+  all: unfold make_env; eauto with fenvDb.
+Qed.
 
 Definition has_cases (n : nat) : nat :=
   match n with
@@ -611,7 +626,13 @@ Proof.
   subst has_cases_prog.
   relcompile.
   Show Proof.
-Abort.
+  Unshelve.
+  all: unfold make_env; eauto with fenvDb.
+  2: exact "n"%string.
+  2: exact "n1"%string.
+  2: exact "n"%string.
+  eauto with fenvDb.
+Qed.
 
 Definition has_cases_list (l : list nat) : nat :=
   match l with
@@ -632,7 +653,18 @@ Proof.
   subst has_cases_list_prog.
   relcompile.
   Show Proof.
-Abort.
+  Unshelve.
+  all: unfold make_env; eauto with fenvDb.
+  5: exact "hd"%string.
+  5: exact "tl"%string.
+  5: exact "hdtl"%string.
+  5: exact "tltl"%string.
+  5: exact "hd"%string.
+  5: exact "hdtl"%string.
+  all: eauto with fenvDb.
+  all: simpl; ltac1:(repeat constructor).
+  all: intro Hcont; unfold In in *; ltac1:(try contradiction); inversion Hcont; inversion H0.
+Qed.
 
 Definition foo (n : nat) : nat :=
   letd x := 1 in
@@ -649,12 +681,10 @@ Proof.
   relcompile.
   Show Proof.
   Unshelve.
-  1: exact "x"%string.
-  1: exact "y"%string.
-  1: exact "n"%string.
-  1: exact "x"%string.
-  1: exact "y"%string.
-  all: eauto with fenvDb.
+  2: exact "x"%string.
+  2: exact "y"%string.
+  2: exact "n"%string.
+  eauto with fenvDb.
 Qed.
 
 Definition bar (n : nat) : nat :=
@@ -674,7 +704,6 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  1: exact FEnv.empty.
 Qed.
 
 Definition baz (n m : nat) : nat :=
@@ -692,8 +721,8 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  1: exact "n"%string.
-  1: exact "z"%string.
+  2: exact "n"%string.
+  2: exact "n"%string.
   all: eauto with fenvDb.
 Qed.
 
@@ -714,6 +743,4 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  exact FEnv.empty.
 Qed.
-Print baz2_prog.

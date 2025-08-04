@@ -53,12 +53,12 @@ Proof.
   apply Eval_Nil.
 Qed.
 
-Theorem trans_cons : forall x xs v vs env s s1 s2,
+Theorem trans_cons : forall env x xs v vs s s1 s2,
   env |-- ([x], s) ---> ([v], s1) ->
   env |-- (xs, s1) ---> (vs, s2) ->
   env |-- (x :: xs, s) ---> (v :: vs, s2).
 Proof.
-  intros x xs v vs env s s1 s2 H1 H2.
+  intros env x xs v vs s s1 s2 H1 H2.
   destruct xs; simpl in *.
   - inversion H2; subst.
     assumption.

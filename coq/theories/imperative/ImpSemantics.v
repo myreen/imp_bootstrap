@@ -451,6 +451,32 @@ Proof.
   all: admit.
 Admitted.
 
+Theorem EVAL_CMD_steps_done_steps_up: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
+  EVAL_CMD fuel c s = (o, s1) -> s.(steps_done) <= s1.(steps_done).
+Proof.
+  intros * H.
+  destruct fuel; simpl in *; unfold stop in *; inversion H; subst.
+  - lia.
+  - unfold bind in *; simpl in *.
+    eapply eval_cmd_steps_done_steps_up in H.
+    simpl in *.
+    lia.
+Qed.
+
+Theorem EVAL_CMD_steps_done_non_zero: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
+  EVAL_CMD fuel c s = (o, s1) ->
+  fuel <> 0 ->
+  0 < s1.(steps_done) - s.(steps_done).
+Proof.
+  intros * H.
+  destruct fuel; simpl in *; unfold stop in *; inversion H; subst.
+  - lia.
+  - unfold bind in *; simpl in *.
+    eapply eval_cmd_steps_done_steps_up in H.
+    simpl in *.
+    lia.
+Qed.
+
 Definition init_state (inp: llist ascii) (funs: list func) (fuel: nat): state :=
   {| vars   := IEnv.empty;
      memory := [];

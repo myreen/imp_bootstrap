@@ -151,6 +151,8 @@ Ltac2 app_lemma (compile_fn: unit -> unit) (fenv: constr) (lname: string) (extra
   let lemma_inst: constr := Env.instantiate lemma_ref in
   let lemma_tpe: constr := type lemma_inst in
   let thm_parts := split_thm_args lemma_tpe in
+  (* TODO(kπ): we assume that `env` is the first argument, can we just special case fenv and pass it to every `FEnv.env` premise? *)
+  (*           Otherwise, just pass it as a normal "extracted" parameter to this function? *)
   refine (compile_if_needed_rec compile_fn lemma_inst thm_parts (fenv :: extracted)).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)

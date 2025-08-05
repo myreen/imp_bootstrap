@@ -97,8 +97,7 @@ Proof.
 Qed.
 Hint Resolve auto_let : automation.
 
-Theorem auto_otherwise : forall {A} `{ra : Refinable A}
-    env s x1 v1,
+Theorem auto_otherwise : forall {A} `{ra : Refinable A} env s x1 v1,
   env |-- ([x1], s) ---> ([encode v1], s) ->
   env |-- ([If Less [Const 0; Const 1] x1 (Const 0)], s) ---> ([encode (value_otherwise v1)], s).
 Proof.
@@ -224,8 +223,7 @@ Proof.
 Qed.
 Hint Resolve auto_nat_div : automation.
 
-Theorem auto_nat_if_eq : forall {A} `{Refinable A}
-    env s x1 x2 y z (n1 n2: nat) (t f : A),
+Theorem auto_nat_if_eq : forall {A} `{Refinable A} env s x1 x2 y z (n1 n2: nat) (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
   env |-- ([y], s) ---> ([encode t], s) ->
@@ -242,8 +240,7 @@ Proof.
 Qed.
 Hint Resolve auto_nat_if_eq : automation.
 
-Theorem auto_nat_if_less : forall {A} `{Refinable A}
-  env s x1 x2 y z (n1 n2: nat) (t f : A),
+Theorem auto_nat_if_less : forall {A} `{Refinable A} env s x1 x2 y z (n1 n2: nat) (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
   env |-- ([y], s) ---> ([encode t], s) ->
@@ -260,8 +257,7 @@ Proof.
 Qed.
 Hint Resolve auto_nat_if_less : automation.
 
-Theorem auto_nat_case : forall {A} `{Refinable A}
-  env s x0 x1 x2 n (v0 : nat) (v1 : A) v2,
+Theorem auto_nat_case : forall {A} `{Refinable A} env s x0 x1 x2 n (v0 : nat) (v1 : A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([encode v1], s) ->
   (forall n', S n' = v0 ->
@@ -307,8 +303,7 @@ Proof.
 Qed.
 Hint Resolve auto_list_cons : automation.
 
-Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
-  env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2,
+Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B} env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([rb.(encode) v1], s) ->
   (forall h t, h :: t = v0 ->
@@ -408,7 +403,7 @@ Qed.
 Hint Resolve auto_pair_cons : automation.
 
 Theorem auto_pair_case : forall {A1 A2 B} `{ra1 : Refinable A1} `{ra2 : Refinable A2} `{rb : Refinable B}
-  env s x0 x1 n1 n2 (v0 : A1 * A2) v1,
+    env s x0 x1 n1 n2 (v0 : A1 * A2) v1,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   (forall y1 y2, (y1, y2) = v0 ->
     (FEnv.insert (name_enc n2, Some (ra2.(encode) y2))

@@ -334,20 +334,24 @@ Function c_cmd (c : cmd) (l : nat) (fs : f_lookup)
   | If t c1 c2 =>
     letd '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
     letd '(asm2, l2, vs2) := c_cmd c1 l1 fs vs in
-    letd '(asm3, l3, vs3) := c_cmd c2 (l2 + 1) fs vs2 in
+    letd '(asm3, l3, vs3) := c_cmd c2 (l2 + 1) fs vs in
     letd jump_to_start := List[ASMSyntax.Jump Always (l + 3)] in
     letd jump_to_c1 := List [ASMSyntax.Jump Always l1] in
     letd jump_to_c2 := List [ASMSyntax.Jump Always l2] in
     letd jump_to_end := List [ASMSyntax.Jump Always l3] in
     letd asmres := jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ jump_to_end +++ asm3 in
+    (* TODO(kπ): Cannot know the result `vs` statically. Is there a better way to compile `if`s? *)
+    (*           Should we manually drop the additional stuff from the stack *)
     (asmres, l3, vs)
   | While tst body =>
     letd '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
     letd '(asm2, l2, vs2) := c_cmd body l1 fs vs in
     letd jump_to_tst := List [ASMSyntax.Jump Always (l + 3)] in
+    letd jump_to_beginning := List [ASMSyntax.Jump Always l] in
     letd jump_to_body := List [ASMSyntax.Jump Always l1] in
     letd jump_to_end := List [ASMSyntax.Jump Always (l2 + 1)] in
-    letd asmres := jump_to_tst +++ jump_to_body +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_tst in
+    letd asmres := jump_to_tst +++ jump_to_body +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_beginning in
+    (* TODO(kπ): Same as with if: what's the correct result `vs` here? *)
     (asmres, l2+1, vs)
   | Call n f es =>
     letd target := lookup f fs in

@@ -257,7 +257,8 @@ Ltac unfold_outcome :=
 
 Ltac unfold_stack :=
   unfold inc, set_stack, set_input, set_memory, set_pc,
-          set_vars, set_varsM, set_output, write_reg, write_mem in *; simpl.
+          set_vars, set_varsM, set_output, write_reg, write_mem,
+          add_steps_done, set_steps_done in *; simpl.
 
 Ltac cleanup :=
   repeat match goal with
@@ -783,7 +784,7 @@ Proof.
   eapply H0 in H1; clear H0; cleanup.
   eexists; split. *)
 
-Theorem memory_set_memory: forall s p,
+Theorem memory_set_pc: forall s p,
   memory (set_pc p s) = memory s.
 Proof.
   intros; simpl; reflexivity.
@@ -2213,6 +2214,19 @@ Ltac crunch_side_conditions_cmd :=
   | _ => lia
   end.
 
+Lemma steps_lift_fuel_from: forall s1 s2 n FromIState toIState newIState,
+  steps (s1, toIState - FromIState) (s2, n) ->
+  FromIState ≤ toIState ->
+  toIState ≤ newIState ->
+  steps (s1, newIState - FromIState) (s2, n + (newIState - toIState)).
+Proof.
+  intros * Hsteps **.
+  eapply steps_add_fuel with (x := newIState - toIState) in Hsteps.
+  assert (toIState - FromIState + (newIState - toIState) = newIState - FromIState) as ? by lia.
+  spat `_ - _ + _ = _` at rewrite spat in *.
+  assumption.
+Qed.
+
 Theorem c_cmd_Abort: forall (fuel: nat),
   goal_cmd ImpSyntax.Abort fuel.
 Proof.
@@ -2504,12 +2518,14 @@ Admitted.
 
 Theorem c_cmd_While: forall (t: test) (c: cmd) (fuel: nat),
   goal_cmd c fuel ->
-  forall fuel1, fuel1 < fuel -> goal_cmd (ImpSyntax.While t c) fuel1 ->
+  (forall fuel1, fuel1 < fuel -> goal_cmd (ImpSyntax.While t c) fuel1) ->
   goal_cmd (ImpSyntax.While t c) fuel.
 Proof.
   intros.
   unfold goal_cmd; intros.
-  simpl c_cmd in *; unfold dlet in *.
+  spat `c_cmd` at pose proof spat.
+  spat `c_cmd` at simpl c_cmd in spat; unfold dlet in spat.
+  Opaque c_cmd.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct (c_test_jump _ _ _ _ _) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
@@ -2550,8 +2566,8 @@ Proof.
       1: eauto.
       eapply steps_step_same.
       eapply step_jump.
-      1: unfold fetch; rewrite H20.
-      1: rwr ltac:(specialize (steps_instructions _ _ _ _ H2)).
+      1: unfold fetch; pat `pc s0 = _` at rewrite pat.
+      1: pat `steps _ _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)).
       1: simpl; rewrite Nat.add_comm; eauto.
       constructor.
     }
@@ -2573,7 +2589,7 @@ Proof.
     destruct x eqn:?; destruct s eqn:?; cleanup; subst.
     2: contradiction.
     assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
-    unfold goal_cmd in Heqp2; eapply H in Heqp2; eapply Heqp2 in H3; clear Heqp2; cleanup; eauto.
+    spat `eval_cmd c` at unfold goal_cmd in spat; eapply H in spat; eapply spat in H2; clear spat; cleanup; eauto.
     2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
        pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl; eauto.
     cleanup; subst.
@@ -2616,26 +2632,96 @@ Proof.
   2: contradiction.
   assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s3))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
   assert (Cont v <> Stop Crash) by congruence.
-
-  (* TODO(kπ): might be needed for adding fuel *)
-  (* assert (s0.(steps_done) <= s1.(steps_done)).
-  1: destruct o; cleanup; repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
-  assert (s.(steps_done) <= s0.(steps_done)).
-  1: repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia. *)
-
-  spat `eval_cmd c` at unfold goal_cmd in Heqp2; eapply H in Heqp2.
-  pat `Cont v <> _` at eapply Heqp2 in pat; clear Heqp2; cleanup; eauto.
+  assert (s0.(steps_done) <= s.(steps_done)).
+  1: pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
+  spat `eval_cmd c` at unfold goal_cmd in H; eapply H with (s1 := s) in spat; clear H; cleanup; eauto.
   2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
       pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl; eauto.
   cleanup; subst.
   destruct x eqn:?;subst; cleanup; subst.
   pat `pc s3 = _` at rewrite <- pat in *.
-
-  (* TODO(kπ): might be needed for adding fuel *)
-  (* all: spat `steps` at pose proof spat.
-  all: spat `steps` at eapply steps_add_fuel with (x := s1.(steps_done) - s0.(steps_done)) in spat.
-  all: assert (steps_done s0 - steps_done s + (steps_done s1 - steps_done s0) = s1.(steps_done) - s.(steps_done)) as ? by lia. *)
-
+  Opaque eval_cmd.
+  destruct fuel.
+  1: spat `EVAL_CMD` at simpl in spat; unfold_outcome; cleanup.
+  1: { (* fuel = 0 -> TimeOut *)
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump.
+      1: eauto.
+      1: econstructor.
+      simpl.
+      eapply steps_trans.
+      1: eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump.
+      1: unfold fetch; simpl; pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); eauto.
+      1: econstructor.
+      simpl.
+      eauto.
+    }
+    destruct s2; cleanup.
+    all: crunch_side_conditions_cmd.
+  }
+  (* fuel = S n *)
+  spat `EVAL_CMD` at pose proof spat; eapply EVAL_CMD_steps_done_non_zero in spat; eauto.
+  spat `EVAL_CMD` at simpl in spat; unfold_outcome; cleanup.
+  spat `_ = (res, _)` at unfold bind in *; simpl in spat; subst.
+  assert (s.(steps_done) <= s1.(steps_done)).
+  1: pat `eval_cmd (While t c) _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; unfold_stack; simpl in *; lia.
+  spat `steps (_, s.(steps_done) - s0.(steps_done)) (_, s.(steps_done) - s0.(steps_done))` at pose proof spat.
+  spat `steps (_, s.(steps_done) - s0.(steps_done)) (_, s.(steps_done) - s0.(steps_done))` at apply steps_lift_fuel_from with (newIState := s1.(steps_done)) in spat; eauto.
+  assert (s.(steps_done) - s0.(steps_done) + (s1.(steps_done) - s.(steps_done)) = s1.(steps_done) - s0.(steps_done)) as ? by lia.
+  spat `_ = _ - _` at rewrite spat in *.
+  spat `steps (_, s.(steps_done) - s0.(steps_done)) (_, _)` at pose proof spat.
+  spat `steps (_, s.(steps_done) - s0.(steps_done)) (_, _)` at apply steps_lift_fuel_from with (newIState := s1.(steps_done)) in spat; eauto.
+  destruct s2; cleanup; subst.
+  2: { (* steps (body) ~~> Halt *)
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump.
+      1: eauto.
+      1: econstructor.
+      simpl.
+      eapply steps_trans.
+      1: eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump.
+      1: unfold fetch; simpl; pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); eauto.
+      1: econstructor.
+      simpl.
+      eauto.
+    }
+    simpl in *; cleanup.
+    crunch_side_conditions_cmd.
+    admit. (* prefix s2 (string_of_list_ascii (ImpSemantics.output s1)) = true *)
+  }
+  (* steps (body) ~~> State *)
+  all: pat `cmd_res_rel _ _ _ _ _ _ _` at unfold cmd_res_rel in pat; cleanup; eauto.
+  spat `c_cmd _ (pc t0)` at assert (pc t0 = pc (set_pc (pc t0) s2)) as Hpceq by reflexivity; rewrite Hpceq in spat; clear Hpceq.
+  assert (fuel < S fuel) as ? by lia.
+  spat `_ < S _` at apply H0 in spat as Hgoal_While; clear H0.
+  spat `eval_cmd (While t c)` at unfold goal_cmd in Hgoal_While; eapply Hgoal_While with (t := set_pc (pc t0) s2) in spat; clear Hgoal_While; cleanup.
+  all: simpl; eauto.
+  3: {
+    simpl; repeat rewrite code_in_append; cleanup; repeat split.
+    all: pat `steps (_, _) (State s2, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
+    all: pat `steps (_, _) (State s3, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
+    all: repeat rewrite Nat.add_1_r; eauto; pat `pc s3 = _` at try rewrite <- pat; eauto.
+  }
+  (* TODO(kπ): This is problematic. The body can declare new variables and then the stack contains new entries. *)
+  (*           Should we drop the additional stuff from the stack after the body is executed? *)
+  2: admit. (* env_ok (vars s) vs' x x0 *)
+  destruct x1.
+  rewrite Nat.add_0_l in *.
+  destruct (steps_done s1 - steps_done s) eqn:?.
+  1: spat `0 < 0` at inversion spat.
+  pat `steps _ (_, n0)` at simpl in pat.
   do 2 eexists; split.
   1: {
     eapply steps_trans.
@@ -2654,41 +2740,36 @@ Proof.
     simpl.
     eapply steps_trans.
     1: eauto.
-    1: exact H18.
     eapply steps_trans.
+    1: eapply steps_step_succ.
+    1: eapply step_jump.
+    1: {
+      unfold fetch; simpl; pat `steps (_, _) (State s2, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
+      pat `steps (_, _) (State s3, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
+      pat `pc s2 = _` at rewrite pat; eauto.
+      pat `pc s3 = _` at rewrite pat in *; eauto.
+      assert (pc t0 + 3 + List.length (flatten a) = S (S (S (pc t0 + List.length (flatten a))))) as -> by lia; eauto.
+    }
+    1: econstructor.
+    simpl.
+    assert (n1 = s1.(steps_done) - s.(steps_done) - 1) as ? by lia.
+    assert (s1.(steps_done) - (s.(steps_done) + 1) = s1.(steps_done) - s.(steps_done) - 1) as ? by lia.
+    spat `_ = _ - _ - _` at rewrite spat in *; clear spat.
+    spat `_ = _ - _ - _` at rewrite spat in *; clear spat.
+    eauto.
   }
-  destruct s eqn:?.
+  destruct s4 eqn:?.
   1: { (* steps (body) ~~> State *)
     simpl in *; cleanup.
     crunch_side_conditions_cmd.
+    assert ( (S (pc t0 + 3 + Datatypes.length (flatten a) + Datatypes.length (flatten a0))) =
+      (S (Datatypes.length (flatten a0) + (pc t0 + 3 + Datatypes.length (flatten a))))) as <- by lia.
+    eauto.
   }
   (* steps (body) ~~> Halt *)
   simpl in *; cleanup.
   crunch_side_conditions_cmd.
-  (* do 2 eexists; exists 0; split.
-  all: try rewrite Nat.add_0_r.
-  1: {
-    eapply steps_trans.
-    1: eapply steps_step_same.
-    1: eapply step_jump.
-    1: eauto.
-    1: constructor.
-    simpl.
-    eapply steps_trans.
-    1: eauto.
-    eapply steps_step_same.
-    eapply step_jump.
-    1: unfold fetch; rewrite H20.
-    1: rwr ltac:(specialize (steps_instructions _ _ _ _ H16)).
-    1: simpl; rewrite Nat.add_comm; eauto.
-    constructor.
-  }
-  simpl.
-  unfold code_rel in *; cleanup; eauto.
-  repeat split; eauto; [eapply pmap_subsume_refl|..].
-  1: eexists; eexists; eauto. *)
-
-Abort.
+Admitted.
 
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),
   goal_cmd c fuel.

@@ -240,7 +240,7 @@ Inductive steps : (s_or_h * nat) -> (s_or_h * nat) -> Prop :=
   steps (s1, n) (s2, n)
 | steps_step_succ : forall s1 s2 n,
   step s1 s2 ->
-  steps (s1, n + 1) (s2, n)
+  steps (s1, S n) (s2, n)
 | steps_trans : forall s1 n1 s2 n2 s3 n3,
   steps (s1, n1) (s2, n2) ->
   steps (s2, n2) (s3, n3) ->

@@ -85,8 +85,7 @@ Ltac crunch_NoDup :=
   | _ => assumption
   end.
 
-Theorem auto_let : forall {A B} `{ra : Refinable A} `{rb : Refinable B}
-    env x1 y1 s1 s2 s3 v1 let_n f,
+Theorem auto_let : forall {A B} `{ra : Refinable A} `{rb : Refinable B} env x1 y1 s1 s2 s3 v1 let_n f,
   env |-- ([x1], s1) ---> ([ra.(encode) v1], s2) ->
   (FEnv.insert ((name_enc let_n), Some (ra.(encode) v1)) env) |-- ([y1], s2) --->
       ([rb.(encode) (f v1)], s3) ->
@@ -257,6 +256,15 @@ Proof.
 Qed.
 Hint Resolve auto_nat_if_less : automation.
 
+(* Consider making the "compilable" premises as one big match. e.g. *)
+(*
+(match v0 with
+| 0 => env |-- ([x1], s) ---> ([encode v1], s)
+| S n' =>
+  (FEnv.insert (name_enc n, Some (encode n')) env) |-- ([x2], s) --->
+    ([encode (v2 n')], s)
+end) ->
+*)
 Theorem auto_nat_case : forall {A} `{Refinable A} env s x0 x1 x2 n (v0 : nat) (v1 : A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   env |-- ([x1], s) ---> ([encode v1], s) ->

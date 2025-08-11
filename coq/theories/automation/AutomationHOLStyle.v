@@ -99,7 +99,7 @@ Ltac2 rec isCompilable (c: constr): bool :=
 Ltac2 rec compile_if_needed_rec (compile_fn: unit -> unit) (acc: constr)
                                 (thm_parts: constr list) (extracted: constr list): constr :=
   let acc := eval_cbv beta acc in
-  printf "compile_if_needed_rec acc: %t (with type %t)" acc (Constr.type acc);
+  (* printf "compile_if_needed_rec acc: %t (with type %t)" acc (Constr.type acc); *)
   match thm_parts with
   | [] => acc
   | thm_part :: thm_parts =>
@@ -146,14 +146,14 @@ Ltac2 rec pair_thm_parts (thm_parts: constr list) (extracted: constr list)
 (* Apply lemma named `lname`, use compilaiton funciton `compile_fn` to compile "eval" premises of the lemma *)
 (*   Fill in `extracted` terms for "eval" premises *)
 (*   (Also make sure to update the `cenv` while recursing) *)
-Ltac2 app_lemma (compile_fn: unit -> unit) (fenv: constr) (lname: string) (extracted: constr list): unit :=
+Ltac2 app_lemma (compile_fn: unit -> unit) (lname: string) (extracted: constr list): unit :=
   let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
   let lemma_inst: constr := Env.instantiate lemma_ref in
   let lemma_tpe: constr := type lemma_inst in
   let thm_parts := split_thm_args lemma_tpe in
   (* TODO(kπ): we assume that `env` is the first argument, can we just special case fenv and pass it to every `FEnv.env` premise? *)
   (*           Otherwise, just pass it as a normal "extracted" parameter to this function? *)
-  refine (compile_if_needed_rec compile_fn lemma_inst thm_parts (fenv :: extracted)).
+  refine (compile_if_needed_rec compile_fn lemma_inst thm_parts extracted).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)
 Ltac2 is_in_loopkup (f_lookup : (string * constr) list) (fname : string) : bool :=
@@ -292,7 +292,7 @@ Ltac2 rec compile () : unit :=
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
     let cenv := get_cenv_from_fenv_constr fenv in
-    let app_lemma_fixed := app_lemma compile fenv in
+    let app_lemma_fixed := app_lemma compile in
     printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_list (List.map Message.of_constr cenv)) cenv;
     match List.find_opt (Constr.equal e) cenv with
     | Some _ =>
@@ -322,42 +322,54 @@ Ltac2 rec compile () : unit :=
           (* eval v1 *) ltac2:(Control.enter compile)
           (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
           )
+        | (let x := ?val in @?body x) =>
+          (* might work, but normal `let`s get inlined before (maybe because of the "cbv beta" after unfolding) *)
+          refine open_constr:(auto_let
+          (* env *) $fenv
+          (* x1 y1 *) _ _
+          (* s1 s2 s3 *) _ _ _
+          (* v1 *) $val
+          (* let_n *) _
+          (* f *) $body
+          (* eval v1 *) ltac2:(Control.enter compile)
+          (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
+          )
         (* bool *)
         | true =>
-          app_lemma_fixed "auto_bool_T" []
+          app_lemma_fixed "auto_bool_T" [fenv]
         | false =>
-          app_lemma_fixed "auto_bool_F" []
+          app_lemma_fixed "auto_bool_F" [fenv]
         | (negb ?b) =>
-          app_lemma_fixed "auto_bool_not" [b]
+          app_lemma_fixed "auto_bool_not" [fenv; b]
         | (andb ?bA ?bB) =>
-          app_lemma_fixed "auto_bool_and" [bA; bB]
+          app_lemma_fixed "auto_bool_and" [fenv; bA; bB]
         | (eqb ?bA ?bB) =>
-          app_lemma_fixed "auto_bool_iff" [bA; bB]
+          app_lemma_fixed "auto_bool_iff" [fenv; bA; bB]
         | (if ?b then ?t else ?f) =>
-          app_lemma_fixed "last_bool_if" [b; t; f]
+          app_lemma_fixed "last_bool_if" [fenv; b; t; f]
         (* nat *)
         | (?n1 + ?n2) =>
-          app_lemma_fixed "auto_nat_add" [n1; n2]
+          app_lemma_fixed "auto_nat_add" [fenv; n1; n2]
         | (?n1 - ?n2) =>
-          app_lemma_fixed "auto_nat_sub" [n1; n2]
+          app_lemma_fixed "auto_nat_sub" [fenv; n1; n2]
         | (?n1 / ?n2) =>
-          app_lemma_fixed "auto_nat_div" [n1; n2]
+          app_lemma_fixed "auto_nat_div" [fenv; n1; n2]
         | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
-          app_lemma_fixed "auto_nat_if_eq" [n1; n2; t; f]
+          app_lemma_fixed "auto_nat_if_eq" [fenv; n1; n2; t; f]
         | (if ?n1 <? ?n2 then ?t else ?f) =>
-          app_lemma_fixed "auto_nat_if_less" [n1; n2; t; f]
+          app_lemma_fixed "auto_nat_if_less" [fenv; n1; n2; t; f]
         (* list *)
         | [] =>
-          app_lemma_fixed "auto_list_nil" []
+          app_lemma_fixed "auto_list_nil" [fenv]
         | (?x :: ?xs) =>
-          app_lemma_fixed "auto_list_cons" [x; xs]
+          app_lemma_fixed "auto_list_cons" [fenv; x; xs]
         | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
-          app_lemma_fixed "auto_list_case" [v0; v1; v2]
+          app_lemma_fixed "auto_list_case" [fenv; v0; v1; v2]
         | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
-          app_lemma_fixed "auto_nat_case" [v0; v1; v2]
+          app_lemma_fixed "auto_nat_case" [fenv; v0; v1; v2]
         | ?x =>
           if proper_const x then
-            app_lemma_fixed "auto_nat_const" [x]
+            app_lemma_fixed "auto_nat_const" [fenv; x]
           else
             Control.throw (Oopsie (fprintf
               "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
@@ -394,7 +406,7 @@ Ltac2 rec compile () : unit :=
       end
     end
   | ?fenv |-- (_, _) ---> ([], _) =>
-    app_lemma compile fenv "trans_nil" []
+    app_lemma compile "trans_nil" [fenv]
   | ?fenv |-- (_, _) ---> ((encode ?e) :: ?es, _) =>
     refine open_constr:(trans_cons
     (* env *) $fenv
@@ -500,6 +512,8 @@ Function has_match (l: list nat) : nat :=
   | cons h t => h + 100
   end.
 
+(* TODO(kπ): lookups might grow Qed time. Might want to rewrite them to mul=lti-inserts *)
+
 Derive has_match_prog in (forall s l,
   lookup_fun (name_enc "has_match") s.(funs) = Some ([name_enc "l"], has_match_prog) ->
   eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
@@ -538,12 +552,12 @@ Proof.
   induction n.
   2: { (* Inductive case *)
     relcompile.
+    1: cbv iota.
     Show Proof.
     Unshelve.
     1: {
       inversion x_nm0; subst.
-      (* assumption (). *) (* TODO(kπ): Ltac2 assumption bug? why does exact work, but assumption doesn't? *)
-      exact IHn.
+      assumption ().
     }
     all: ltac1:(shelve).
   }
@@ -553,7 +567,6 @@ Proof.
     eapply trans_app; eauto; eauto; unfold make_env.
     ltac1:(repeat (econstructor; eauto with fenvDb)).
   }
-  (* TODO(kπ): Check if this is correct *)
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
   2: exact "n1"%string.
@@ -638,8 +651,8 @@ Proof.
 Qed.
 
 Definition foo (n : nat) : nat :=
-  letd x := 1 in
-  letd y := n + x in
+  let/d x := 1 in
+  let/d y := n + x in
   y.
 
 Derive foo_prog in (forall (s : state) (n : nat),
@@ -676,7 +689,7 @@ Proof.
 Qed.
 
 Definition baz (n m : nat) : nat :=
-  letd z := n + m in
+  let/d z := n + m in
   z.
 
 Derive baz_prog in (forall (s : state) (n m : nat),

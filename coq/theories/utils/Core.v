@@ -17,12 +17,12 @@ From Coq.Unicode Require Export Utf8.
 
 (* d/let *)
 
-Notation "'letd' x := val 'in' body" :=
+Notation "'let/d' x := val 'in' body" :=
   (dlet val (fun x => body))
   (at level 200, x name, body at level 200).
 
 Notation
-  "'letd' ''(' x , y ')' := val 'in' body" :=
+  "'let/d' ''(' x , y ')' := val 'in' body" :=
   (dlet val (fun v =>
       let x := fst v in
       let y := snd v in
@@ -30,7 +30,7 @@ Notation
   (at level 200, body at level 200, only parsing).
 
 Notation
-  "'letd' ''(' x , y , z ')' := val 'in' body" :=
+  "'let/d' ''(' x , y , z ')' := val 'in' body" :=
   (dlet val (fun v =>
       let x := fst (fst v) in
       let y := snd (fst v) in

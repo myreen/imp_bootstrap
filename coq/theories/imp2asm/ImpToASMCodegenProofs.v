@@ -103,11 +103,9 @@ Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or
   List.length vs = List.length curr /\
   forall n v,
     IEnv.lookup env n = Some v ->
-    exists idx,
-    index_of_opt n 0 vs = Some idx /\
-    idx < List.length curr /\
     exists w,
-      nth_error curr idx = Some (Word w) /\
+      index_of n 0 vs < List.length curr /\
+      nth_error curr (index_of n 0 vs) = Some (Word w) /\
       v_inv pmap v w.
 
 Definition cmd_res_rel (ri: outcome unit) (l1: nat)
@@ -220,13 +218,13 @@ Definition goal_test (tst: test): Prop :=
 Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
   forall (s s1 : ImpSemantics.state)
          (res : outcome unit) (t : ASMSemantics.state)
-         (vs vs' : v_stack) (fs : f_lookup)
+         (vs : v_stack) (fs : f_lookup)
          (asmc : asm_appl) (l1 : nat)
          (curr rest : list word_or_ret)
          (pmap: nat -> option (word64 * nat)),
     eval_cmd c (EVAL_CMD fuel) s = (res, s1) ->
     res <> Stop Crash ->
-    c_cmd c t.(pc) fs vs = (asmc, l1, vs') ->
+    c_cmd c t.(pc) fs vs = (asmc, l1) ->
     state_rel fs s t ->
     env_ok s.(vars) vs curr pmap ->
     has_stack t (curr ++ rest) ->
@@ -247,7 +245,7 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
       | (State t1, ck) =>
         ck = 0 /\
         state_rel fs s1 t1 /\
-        cmd_res_rel res l1 rest vs' t1 s1 pmap1
+        cmd_res_rel res l1 rest vs t1 s1 pmap1
       end.
 
 (* proofs *)
@@ -606,8 +604,8 @@ Proof.
   reflexivity.
 Qed.
 
-Theorem c_cmd_length: forall c l fs vs l1 asm1 vs1,
-  c_cmd c l fs vs = (asm1, l1, vs1) -> l1 = l + List.length (flatten asm1).
+Theorem c_cmd_length: forall c l fs vs l1 asm1,
+  c_cmd c l fs vs = (asm1, l1) -> l1 = l + List.length (flatten asm1).
 Proof.
   induction c.
   all: intros.
@@ -619,9 +617,9 @@ Proof.
   | [ H : (_, _) = (_, _) |- _ ] => inversion H; subst; clear H
   | [ |- context[ fst ?x ] ] => destruct x eqn:?; simpl in *; subst
   | [ H: context[ fst ?x ] |- _ ] => destruct x eqn:?; simpl in *; subst
-  | [ H : c_cmd _ _ _ _ = (_, _, _) |- _ ] => eapply IHc2 in H; subst
-  | [ H : c_cmd _ _ _ _ = (_, _, _) |- _ ] => eapply IHc1 in H; subst
-  | [ H : c_cmd _ _ _ _ = (_, _, _) |- _ ] => eapply IHc in H; subst
+  | [ H : c_cmd _ _ _ _ = (_, _) |- _ ] => eapply IHc2 in H; subst
+  | [ H : c_cmd _ _ _ _ = (_, _) |- _ ] => eapply IHc1 in H; subst
+  | [ H : c_cmd _ _ _ _ = (_, _) |- _ ] => eapply IHc in H; subst
   | [ H: c_exp _ _ _ = (_, _) |- _ ] =>
     eapply c_exp_length in H; subst
   | [ H: c_exps _ _ _ = (_, _) |- _ ] =>
@@ -801,8 +799,6 @@ Proof.
   intros.
   eapply H1 in H2; clear H1; cleanup.
   eexists; split; eauto.
-  split; eauto.
-  eexists; eauto.
   split; eauto.
   unfold v_inv in *; simpl; destruct v eqn:?; cleanup; eauto.
 Qed.
@@ -1036,13 +1032,10 @@ Proof.
   1: simpl; eauto.
   intros*; intro HLookup.
   eapply H0 in HLookup; cleanup.
-  spat `index_of_opt` at pose proof spat as ?.
+  spat `index_of` at pose proof spat as ?.
   eexists; split; try split; try eexists; try split.
   all: simpl.
-  1: replace 1 with (0 + 1); [|reflexivity].
-  1: spat `index_of_opt` at eapply index_of_opt_Some_any_k with (k1 := 1) in spat; rewrite spat.
-  1: f_equal.
-  all: try rewrite Nat.add_1_r.
+  all: try rewrite index_of_spec.
   all: unfold v_inv in *.
   1: lia.
   1: simpl; eauto.
@@ -1199,7 +1192,6 @@ Proof.
         assert (x = w).
         1: {
           spat `IEnv.lookup (vars s1) _ = Some _` at eapply spat in Heqo; cleanup.
-          pat `index_of_opt _ _ _ = _` at eapply index_of_opt_Some_index_of in pat.
           unfold v_inv in *; cleanup; subst.
           rewrite Nat.eqb_eq in *.
           rewrite Heqb in *.
@@ -1216,10 +1208,8 @@ Proof.
       1: eauto.
       all: simpl; eauto.
       rewrite Nat.eqb_eq in *.
-      pat `index_of_opt _ _ _ = _` at eapply index_of_opt_Some_index_of in pat.
       rewrite Heqb in *.
       destruct curr; simpl in *; subst; cleanup.
-      1: pat `0 < 0` at inversion pat.
       simpl in *; cleanup.
       assumption.
   }
@@ -1244,9 +1234,7 @@ Proof.
       rewrite <- H4 in *.
       rewrite nth_error_app.
       rewrite <- Nat.ltb_lt in *.
-      pat `index_of_opt _ _ _ = _` at eapply index_of_opt_Some_index_of in pat.
       rewrite H1.
-      spat `_ <? _` at rewrite spat.
       eauto.
     }
     eapply Nat.lt_trans; [eauto|].
@@ -1256,7 +1244,6 @@ Proof.
     rewrite <- H.
     destruct rest; [inversion H7|].
     rewrite length_cons in *.
-    pat `index_of_opt _ _ _ = _` at eapply index_of_opt_Some_index_of in pat.
     lia.
   - simpl.
     unfold state_rel in *; cleanup.

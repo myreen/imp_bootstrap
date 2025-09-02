@@ -1,7 +1,7 @@
--Q ../../coqutil/src/coqutil coqutil
+-Q coqutil/src/coqutil coqutil
 
--Q ../../pat_my_coq/theories Patat
--I ../../pat_my_coq/src
+-Q patat/theories Patat
+-I patat/src
 
 -Q theories impboot
 theories

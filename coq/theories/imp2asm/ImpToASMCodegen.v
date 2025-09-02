@@ -10,12 +10,6 @@ Open Scope app_list_scope.
 
 Notation asm_appl := (app_list instr).
 
-(*
-TODO(kπ):
-- there might be an issue with sizes of arguments to assign vs arguments to
-  malloc, unless we don't care
-*)
-
 Notation v_stack := (list (option nat)).
 Notation f_lookup := (list (name * nat)).
 

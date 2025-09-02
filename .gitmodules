@@ -1,0 +1,6 @@
+[submodule "coq/coqutil"]
+	path = coq/coqutil
+	url = git@github.com:mit-plv/coqutil.git
+[submodule "coq/patat"]
+	path = coq/patat
+	url = git@github.com:KacperFKorban/patat.git

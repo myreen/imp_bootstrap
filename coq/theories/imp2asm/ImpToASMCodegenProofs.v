@@ -103,10 +103,15 @@ Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or
   List.length vs = List.length curr /\
   forall n v,
     IEnv.lookup env n = Some v ->
+    index_of n 0 vs < List.length curr /\
     exists w,
-      index_of n 0 vs < List.length curr /\
       nth_error curr (index_of n 0 vs) = Some (Word w) /\
       v_inv pmap v w.
+
+Definition binders_ok (c: cmd) (vs: list (option nat)) :=
+  forall (n: name),
+    In n (unique_binders c) ->
+      index_of n 0 vs < List.length vs.
 
 Definition cmd_res_rel (ri: outcome unit) (l1: nat)
   (rest: list word_or_ret) (vs: v_stack) (t1: ASMSemantics.state) (s1: ImpSemantics.state)
@@ -227,6 +232,7 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
     c_cmd c t.(pc) fs vs = (asmc, l1) ->
     state_rel fs s t ->
     env_ok s.(vars) vs curr pmap ->
+    binders_ok c vs ->
     has_stack t (curr ++ rest) ->
     mem_inv pmap t.(memory) s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
@@ -798,7 +804,7 @@ Proof.
   split; eauto.
   intros.
   eapply H1 in H2; clear H1; cleanup.
-  eexists; split; eauto.
+  split; eauto; eexists; eauto.
   split; eauto.
   unfold v_inv in *; simpl; destruct v eqn:?; cleanup; eauto.
 Qed.
@@ -871,6 +877,44 @@ Proof.
   simpl; destruct a.
   - destruct (_ =? _) eqn:?; simpl; try rewrite IHvs; lia.
   - try rewrite IHvs; lia.
+Qed.
+
+Theorem index_of_lbound: forall name vs k,
+  k ≤ index_of name k vs.
+Proof.
+  induction vs; intros; simpl.
+  1: constructor.
+  simpl; destruct a.
+  - destruct (_ =? _) eqn:?; simpl; [constructor|].
+    specialize (IHvs (k + 1)).
+    lia.
+  - specialize (IHvs (k + 1)).
+    lia.
+Qed.
+
+Theorem index_of_bound_inj: forall vs nm1 nm2 k i,
+  index_of nm1 k vs = i -> index_of nm2 k vs = i ->
+  k + i < (List.length vs) ->
+    nm1 = nm2.
+Proof.
+  induction vs; intros; cleanup.
+  - simpl in *; cleanup.
+    pat `_ < 0` at inversion pat.
+  - simpl in *.
+    destruct a.
+    2: {
+      assert (S (index_of nm1 k vs) = i) by (rewrite index_of_spec in *; lia).
+      assert (S (index_of nm2 k vs) = i) by (rewrite index_of_spec in *; lia).
+      destruct i; [rewrite index_of_spec in *; lia|].
+      ring_simplify in H1.
+      (* continue with this instantiate IHvs with the new i *)
+      specialize (IHvs _ _ _ _ H H0).
+      assumption.
+    }
+    destruct (n =? nm1) eqn:?; destruct (n =? nm2) eqn:?.
+    all: try rewrite Nat.eqb_eq in *; eauto; try congruence; cleanup.
+    all: spat `index_of_opt` at eapply index_of_opt_in_gt_k_str in spat.
+    all: lia.
 Qed.
 
 (* Lemma index_of_opt_spec: forall name vs k,
@@ -1033,7 +1077,7 @@ Proof.
   intros*; intro HLookup.
   eapply H0 in HLookup; cleanup.
   spat `index_of` at pose proof spat as ?.
-  eexists; split; try split; try eexists; try split.
+  split; eauto; try eexists; try split; try eexists; try split.
   all: simpl.
   all: try rewrite index_of_spec.
   all: unfold v_inv in *.
@@ -2287,8 +2331,9 @@ Proof.
 Lemma env_ok_replace_head: forall vars vs curr xnew xold n v pmap,
   env_ok vars vs (Word xold :: curr) pmap →
   v_inv pmap v xnew →
-  index_of_opt n 0 vs = Some 0 →
+  index_of n 0 vs = 0 →
   0 < List.length vs →
+  index_of n 0 vs < (List.length vs) ->
   env_ok (IEnv.insert (n, Some v) vars) vs (Word xnew :: curr) pmap.
 Proof.
   intros.
@@ -2300,14 +2345,13 @@ Proof.
   - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
     rewrite IEnv.lookup_insert_eq in *; cleanup.
     spat `_ = S _` at rewrite <- spat.
-    eexists; split; try split; simpl; cleanup; eauto.
-    eexists; simpl; split; eauto.
+    split; try eexists; try split; simpl; cleanup; eauto.
+    all: pat `index_of _ _ _ = 0` at rewrite pat; eauto.
   - rewrite Nat.eqb_neq in *.
     rewrite IEnv.lookup_insert_neq in *; try assumption.
     spat `IEnv.lookup` at pose proof spat as Hlookup.
     pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
-    eexists; split; try split; simpl; cleanup; eauto.
-    eexists; simpl; split; eauto.
+    split; try eexists; try split; simpl; cleanup; eauto.
     destruct x.
     + spat `index_of_opt n` at pose proof spat as Hidx_of_n.
       spat `index_of_opt n0` at pose proof spat as Hidx_of_n0.
@@ -2339,52 +2383,17 @@ Proof.
   2: contradiction.
   unfold exp_res_rel in *; cleanup; subst.
   spat `env_ok` at pose proof spat as Henv_ok; unfold env_ok in spat; cleanup.
-  destruct index_of_opt eqn:?; cleanup.
-  2: {
-    rewrite app_comm_cons in *.
-    do 2 eexists; split.
-    1: eauto.
-    simpl.
-    repeat match goal with
-    | [ |- _ ∧ _ ] => split
-    | [ |- ∃_, _ ] => eexists
-    | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
-    | [ |- _ - _ = _ ] => lia
-    | _ => progress eauto
-    end.
-    unfold env_ok in *; cleanup.
-    split; [repeat rewrite length_cons; congruence|].
-    intros.
-    destruct (n =? n0) eqn:?.
-    - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
-      rewrite IEnv.lookup_insert_eq in *; cleanup.
-      eexists; split; try split; simpl; cleanup.
-      all: try rewrite Nat.eqb_refl; try reflexivity.
-      1: lia.
-      eexists; simpl; split; eauto.
-    - rewrite Nat.eqb_neq in *.
-      rewrite IEnv.lookup_insert_neq in *; try assumption.
-      spat `IEnv.lookup` at pose proof spat as Hlookup.
-      pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
-      eexists; split; try split; simpl; cleanup.
-      all: rewrite <- Nat.eqb_neq in *; try rewrite Heqb; simpl; try reflexivity.
-      1: spat `index_of_opt` at eapply index_of_opt_Some_any_k in spat; rewrite <- spat; reflexivity.
-      all: rewrite Nat.add_1_r; try lia.
-      eexists; simpl; split; eauto.
-  }
-  spat `index_of_opt` at pose proof spat.
-  spat `index_of_opt` at pose proof spat.
-  spat `index_of_opt` at eapply index_of_opt_Some_non_empty in spat.
-  spat `index_of_opt` at eapply index_of_opt_in_bounds in spat.
   spat `c_exp` at rwr ltac:(specialize (c_exp_length _ _ _ _ _ spat)).
   spat `steps` at rw ltac:(specialize (steps_instructions _ _ _ _ spat)).
   unfold has_stack in *|-; cleanup.
+  pat `binders_ok _ _` at specialize (pat n); simpl in *; specialize (pat (or_introl eq_refl)).
   destruct curr; cleanup.
   1: {
-    pat `Datatypes.length _ = Datatypes.length []` at rewrite pat in *.
-    pat `Datatypes.length [] > 0` at inversion pat.
+    pat `Datatypes.length _ = Datatypes.length []` at rewrite pat in *; simpl in *.
+    pat `List.length _ = 0` at eapply length_zero_iff_nil in pat; subst; simpl in *.
+    pat `0 < 0` at inversion pat.
   }
-  destruct n0 eqn:?.
+  destruct index_of eqn:?.
   1: {
     rewrite <- app_comm_cons in *.
     simpl in *; cleanup.
@@ -2408,9 +2417,10 @@ Proof.
     | _ => progress eauto
     end.
     1: pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity.
+    (* unfold env_ok; split; eauto; intros. *)
+    (* admit. *)
     eapply env_ok_replace_head; eauto.
   }
-  spat `index_of_opt` at specialize (index_of_opt_in_bounds _ _ _ spat) as ?.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl in *; cleanup.
   unfold has_stack in *|-; cleanup.
   pat `_ = S (List.length curr)` at rewrite pat in *.
@@ -2456,11 +2466,11 @@ Proof.
   unfold goal_cmd; intros.
   simpl c_cmd in *; unfold dlet in *.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
-  destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
-  destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
+  destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; subst; cleanup.
+  destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; subst; cleanup.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup.
-  pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ _ pat)).
-  pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ _ pat) as ?; subst.
+  pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ pat)).
+  pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ pat) as ?; subst.
   destruct (eval_cmd c1 _) eqn:?; simpl in *; cleanup.
   assert (s0.(steps_done) <= s1.(steps_done)).
   1: destruct o; cleanup; repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
@@ -2515,10 +2525,10 @@ Proof.
   Opaque c_cmd.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct (c_test_jump _ _ _ _ _) eqn:?; simpl in *; subst; cleanup.
-  destruct (c_cmd c _ _ _) eqn:?; simpl in *; destruct p eqn:?; subst; cleanup.
+  destruct (c_cmd c _ _ _) eqn:?; simpl in *; subst; cleanup.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
   spat `c_test_jump` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
-  spat `c_cmd c` at specialize (c_cmd_length c _ _ _ _ _ _ spat) as ?; subst.
+  spat `c_cmd c` at specialize (c_cmd_length c _ _ _ _ _ spat) as ?; subst.
   destruct eval_test eqn:?; cleanup.
   destruct o eqn:?; subst; cleanup.
   2: exfalso; destruct v eqn:?; spat `eval_test` at eapply eval_test_not_stop in spat; eauto; try congruence.
@@ -2695,7 +2705,7 @@ Proof.
   spat `_ < S _` at apply H0 in spat as Hgoal_While; clear H0.
   spat `eval_cmd (While t c)` at unfold goal_cmd in Hgoal_While; eapply Hgoal_While with (t := set_pc (pc t0) s2) in spat; clear Hgoal_While; cleanup.
   all: simpl; eauto.
-  3: {
+  2: {
     simpl; repeat rewrite code_in_append; cleanup; repeat split.
     all: pat `steps (_, _) (State s2, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: pat `steps (_, _) (State s3, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
@@ -2703,7 +2713,8 @@ Proof.
   }
   (* TODO(kπ): This is problematic. The body can declare new variables and then the stack contains new entries. *)
   (*           Should we drop the additional stuff from the stack after the body is executed? *)
-  2: admit. (* env_ok (vars s) vs' x x0 *)
+  (* env_ok (vars s) vs' x x0 *)
+  (* 2: admit. *)
   destruct x1.
   rewrite Nat.add_0_l in *.
   destruct (steps_done s1 - steps_done s) eqn:?.
@@ -2756,6 +2767,8 @@ Proof.
   (* steps (body) ~~> Halt *)
   simpl in *; cleanup.
   crunch_side_conditions_cmd.
+  Unshelve.
+  all: eauto.
 Admitted.
 
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),

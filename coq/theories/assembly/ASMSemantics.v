@@ -114,7 +114,7 @@ Definition set_pc (n : nat) (s : state) : state :=
 
 Inductive s_or_h :=
 | State : state -> s_or_h
-| Halt : word64 -> string -> s_or_h.
+| Halt : word64 -> list ascii -> s_or_h.
 
 Inductive take_branch : cond -> state -> bool -> Prop :=
 | take_branch_always : forall (s : state),
@@ -230,7 +230,7 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
     fetch s = Some Exit ->
     s.(regs) ARG_REG = Some exit_code ->
     (List.length s.(stack)) mod 2 = 0 ->
-    step (State s) (Halt exit_code (string_of_list_ascii s.(output))).
+    step (State s) (Halt exit_code s.(output)).
 
 Inductive steps : (s_or_h * nat) -> (s_or_h * nat) -> Prop :=
 | steps_refl : forall s n,
@@ -262,6 +262,13 @@ Proof.
   - eapply steps_trans; eauto.
 Qed.
 
+Theorem steps_determ: forall s fuel r1 s1 r2 s2,
+  steps (s, fuel) (r1, s1) ->
+  steps (s, fuel) (r2, s2) ->
+  r1 = r2 /\ s1 = s2.
+Proof.
+Admitted.
+
 Definition can_write_mem_at (m : word64 -> option (option word64)) (a : word64) : Prop :=
   m a = Some None.
 
@@ -285,7 +292,7 @@ Definition init_state_ok (t : state) (inp : llist ascii) (asm : asm) : Prop :=
     t.(regs) R15 = Some r15 /\
     memory_writable r14 r15 t.(memory).
 
-Definition asm_terminates (input : llist ascii) (asm : asm) (output : string) : Prop :=
+Definition asm_terminates (input: llist ascii) (asm: asm) (output: list ascii): Prop :=
   exists t,
     init_state_ok t input asm /\
     clos_refl_trans s_or_h step (State t) (Halt (word.of_Z 0) output).

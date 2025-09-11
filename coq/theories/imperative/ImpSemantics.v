@@ -351,12 +351,12 @@ Definition catch_return {A} (f: SRM A) (s: state): (outcome Value * state) :=
     | (Stop Abort,s) => stop Abort s
   end.
 
-(* TODO(kπ) set steps_done whenever we do another recursion *)
 Fixpoint eval_cmd (c : cmd)
   (EVAL_CMD : forall (c:cmd), SRM unit)
   { struct c } : SRM unit :=
   let eval_cmd c := eval_cmd c EVAL_CMD in
   match c with
+  | Skip => cont tt
   | Seq c1 c2 =>
     let+ _ := eval_cmd c1 in
     eval_cmd c2
@@ -477,7 +477,7 @@ Proof.
     lia.
 Qed.
 
-Definition init_state (inp: llist ascii) (funs: list func) (fuel: nat): state :=
+Definition init_state (inp: llist ascii) (funs: list func): state :=
   {| vars   := IEnv.empty;
      memory := [];
      funs   := funs;
@@ -485,13 +485,27 @@ Definition init_state (inp: llist ascii) (funs: list func) (fuel: nat): state :=
      output := [];
      steps_done := 0 |}.
 
+Fixpoint lookup_main_imp (fs: list func): cmd :=
+  match fs with
+  | (Func n ps c) :: fs =>
+    if n =? fun_name_of_string "main" then c else lookup_main_imp fs
+  | nil => Skip
+  end.
+
 Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome unit * state) :=
   match p with
-  | Program funs =>
-    let call_main_cmd: cmd := (Call 0 (name_of_string "main") []) in
-    let init_s := init_state input funs fuel in
-    eval_cmd call_main_cmd (EVAL_CMD fuel) init_s
+  | Program funcs =>
+    let main_c := lookup_main_imp funcs in
+    let s0 := init_state input funcs in
+    eval_cmd main_c (EVAL_CMD fuel) s0
   end.
+
+Definition prog_terminates (input: llist ascii) (p: prog) (fuel: nat) (output: list ascii) (steps_done: nat) :=
+  exists s r,
+    eval_from fuel input p = (r, s) /\
+      r = Stop (ImpSemantics.Return (ImpSyntax.Word (word.of_Z 0))) /\ (* TODO: is this correct? *)
+      s.(ImpSemantics.output) = output /\
+      s.(ImpSemantics.steps_done) = steps_done.
 
 Definition imp_avoids_crash (input: llist ascii) (p: prog) :=
   forall fuel res s, eval_from fuel input p = (res, s) -> res <> Stop Crash.

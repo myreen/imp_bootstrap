@@ -1,4 +1,4 @@
-From impboot Require Import utils.Core.
+(* From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
@@ -364,9 +364,13 @@ Ltac2 rec compile () : unit :=
         | (?x :: ?xs) =>
           app_lemma_fixed "auto_list_cons" [fenv; x; xs]
         | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
+          destruct $v0;
           app_lemma_fixed "auto_list_case" [fenv; v0; v1; v2]
         | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
-          app_lemma_fixed "auto_nat_case" [fenv; v0; v1; v2]
+          (* destruct $v0;
+          app_lemma_fixed "auto_nat_case" [fenv; v0; v1; v2] *)
+          destruct $v0;
+          refine open_constr:(_)
         | ?x =>
           if proper_const x then
             app_lemma_fixed "auto_nat_const" [fenv; x]
@@ -512,9 +516,9 @@ Function has_match (l: list nat) : nat :=
   | cons h t => h + 100
   end.
 
-(* TODO(kπ): lookups might grow Qed time. Might want to rewrite them to mul=lti-inserts *)
+(* TODO(kπ): lookups might grow Qed time. Might want to rewrite them to multi-inserts *)
 
-Derive has_match_prog in (forall s l,
+(* Derive has_match_prog in (forall s l,
   lookup_fun (name_enc "has_match") s.(funs) = Some ([name_enc "l"], has_match_prog) ->
   eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
 ) as has_match_proof.
@@ -531,7 +535,7 @@ Proof.
   all: eauto with fenvDb.
   simpl; ltac1:(repeat constructor).
   all: intro Hcont; unfold In in *; ltac1:(try contradiction); inversion Hcont; inversion H0.
-Qed.
+Qed. *)
 
 Fixpoint sum_n (n : nat) : nat :=
   match n with
@@ -542,13 +546,21 @@ Lemma sum_n_equation : ltac:(unfold_tpe sum_n).
 Proof. ltac1:(unfold_proof). Qed.
 About sum_n_equation.
 
-Derive sum_n_prog in (forall (s : state) (n : nat),
+Derive sum_n_prog in (forall (s: state),
     lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
-    eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
+    forall (n : nat),
+      eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
   as sum_n_prog_proof.
 Proof.
-  intros.
   subst sum_n_prog.
+  intros * H.
+  ltac1:(fix IH 1).
+  intros.
+  relcompile.
+  1: relcompile.
+
+  Guarded.
+
   induction n.
   2: { (* Inductive case *)
     relcompile.
@@ -573,6 +585,8 @@ Proof.
   2: exact "n"%string.
   eauto with fenvDb.
 Qed.
+Print sum_n_prog.
+Print sum_n_prog_proof.
 
 Definition bool_ops (b: bool): bool :=
   b && true.
@@ -723,4 +737,4 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-Qed.
+Qed. *)

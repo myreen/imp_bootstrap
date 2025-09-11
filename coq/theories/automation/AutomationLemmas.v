@@ -271,6 +271,12 @@ Theorem auto_nat_case : forall {A} `{Refinable A} env s x0 x1 x2 n (v0 : nat) (v
   (forall n', S n' = v0 ->
     (FEnv.insert (name_enc n, Some (encode n')) env) |-- ([x2], s) --->
       ([encode (v2 n')], s)) ->
+  (* (match v0 with
+  | 0%nat => env |-- ([x1], s) ---> ([encode v1], s)
+  | S n' =>
+    (FEnv.insert (name_enc n, Some (encode n')) env) |-- ([x2], s) --->
+      ([encode (v2 n')], s)
+  end) -> *)
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n)
         (Op Sub [x0; Const 1]) x2)], s) --->
@@ -792,6 +798,8 @@ Qed.
 
 Fixpoint encode_cmd (cmd : ImpSyntax.cmd) : Value :=
   match cmd with
+  | ImpSyntax.Skip =>
+    value_list_of_values [value_name "Skip"]
   | ImpSyntax.Seq c1 c2 =>
     value_list_of_values [value_name "Seq"; encode_cmd c1; encode_cmd c2]
   | ImpSyntax.Assign n e =>
@@ -819,7 +827,12 @@ Fixpoint encode_cmd (cmd : ImpSyntax.cmd) : Value :=
 Global Instance Refinable_cmd : Refinable ImpSyntax.cmd :=
   { encode := encode_cmd }.
 
-  Theorem auto_cmd_cons_Seq: forall env s x_c1 x_c2 c1 c2,
+Theorem auto_cmd_cons_Skip: forall env s,
+  env |-- ([Op Cons [Const (name_enc "Skip"); Const 0]], s) --->
+        ([encode ImpSyntax.Skip], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_cmd_cons_Seq: forall env s x_c1 x_c2 c1 c2,
   env |-- ([x_c1], s) ---> ([encode c1], s) ->
   env |-- ([x_c2], s) ---> ([encode c2], s) ->
   env |-- ([Op Cons [Const (name_enc "Seq");
@@ -905,12 +918,14 @@ Theorem auto_cmd_cons_Abort: forall env s,
 Proof. Eval_eq. Qed.
 
 Theorem auto_cmd_CASE: forall {A} `{Refinable A} env s x0 v0
-  Seq_case Assign_case Update_case If_case While_case
+  Skip_case Seq_case Assign_case Update_case If_case While_case
   Call_case Return_case Alloc_case GetChar_case PutChar_case Abort_case
-  f_Seq f_Assign f_Update f_If f_While f_Call f_Return f_Alloc f_GetChar f_PutChar f_Abort
+  f_Skip f_Seq f_Assign f_Update f_If f_While f_Call f_Return f_Alloc f_GetChar f_PutChar f_Abort
   n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 n16 n17 n18 n19 n20,
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
+
+  (env |-- ([Skip_case], s) ---> ([encode (f_Skip)], s)) ->
 
   (forall c1 c2, ImpSyntax.Seq c1 c2 = v0 ->
     (FEnv.insert (n2, Some (encode c2))
@@ -992,6 +1007,7 @@ Theorem auto_cmd_CASE: forall {A} `{Refinable A} env s x0 v0
 
       ([encode (
          match v0 with
+         | ImpSyntax.Skip => f_Skip
          | ImpSyntax.Seq c1 c2 => f_Seq c1 c2
          | ImpSyntax.Assign n e => f_Assign n e
          | ImpSyntax.Update a e e' => f_Update a e e'
@@ -1011,9 +1027,14 @@ Proof.
   destruct v0 eqn:?.
   all: simpl in *; unfold value_list_of_values in *; simpl in *; subst.
   all: Eval_eq.
+  (* ^^^ this probably picks the wrong constructor? *)
   all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
   all: simpl; try reflexivity.
-Qed.
+  Transparent name_enc.
+  all: cbn.
+  Opaque name_enc.
+  admit.
+Admitted.
 
 (* app_list *)
 

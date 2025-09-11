@@ -10,7 +10,7 @@ Open Scope app_list_scope.
 
 Notation asm_appl := (app_list instr).
 
-Notation v_stack := (list (option nat)).
+Notation v_stack := (list (option name)).
 Notation f_lookup := (list (name * nat)).
 
 (* Generates the initialization code for execution *)
@@ -317,6 +317,7 @@ Definition c_call (vs : v_stack) (target : nat)
 
 Function c_cmd (c : cmd) (l : nat) (fs : f_lookup) (vs : v_stack) : (asm_appl * nat) :=
   match c with
+  | Skip => (List [], l)
   | Seq c1 c2 =>
     let/d '(asm1, l1) := c_cmd c1 l fs vs in
     let/d '(asm2, l2) := c_cmd c2 l1 fs vs in
@@ -382,6 +383,7 @@ Function c_cmd (c : cmd) (l : nat) (fs : f_lookup) (vs : v_stack) : (asm_appl * 
 
 Fixpoint all_binders (body: cmd): list name :=
   match body with
+  | Skip => []
   | Seq c1 c2 => all_binders c1 ++ all_binders c2
   | Assign n e => [n]
   | Update a e e' => []
@@ -446,7 +448,7 @@ Function c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm_appl * list
   end.
 
 Definition lookup_main (fs : f_lookup) : nat :=
-  lookup 0 fs.
+  lookup (fun_name_of_string "main") fs.
 
 (* Generates the complete assembly code for a given program *)
 Definition codegen (prog : prog) : asm :=

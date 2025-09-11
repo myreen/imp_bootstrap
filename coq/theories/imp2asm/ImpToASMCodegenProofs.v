@@ -1,4 +1,5 @@
 Require Import impboot.utils.Core.
+Require Import impboot.utils.Llist.
 Require Import impboot.utils.Env.
 Require Import impboot.utils.AppList.
 Require Import coqutil.Word.Interface.
@@ -76,8 +77,7 @@ Definition opt_rel {A B} (P: A -> B -> Prop) (oa: option A) (ob: option B): Prop
   | _, _ => False
   end.
 
-Definition v_inv (pmap: nat -> option (word64 * nat))
-  (v: Value) (w: word64): Prop :=
+Definition v_inv (pmap: nat -> option (word64 * nat)) (v: Value) (w: word64): Prop :=
   match v with
   | ImpSyntax.Word v => w = v
   | Pointer p => exists length,
@@ -98,7 +98,7 @@ Definition mem_inv (pmap: nat -> option (word64 * nat))
           opt_rel (v_inv pmap) xopt yopt.
 
 (* Checks that environment variables map to valid locations and values on the stack in the ASM state. *)
-Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or_ret)
+Definition env_ok (env : IEnv.env) (vs : list (option name)) (curr : list word_or_ret)
   (pmap: nat -> option (word64 * nat)): Prop :=
   List.length vs = List.length curr /\
   forall n v,
@@ -108,10 +108,21 @@ Definition env_ok (env : IEnv.env) (vs : list (option nat)) (curr : list word_or
       nth_error curr (index_of n 0 vs) = Some (Word w) /\
       v_inv pmap v w.
 
-Definition binders_ok (c: cmd) (vs: list (option nat)) :=
-  forall (n: name),
-    In n (unique_binders c) ->
-      index_of n 0 vs < List.length vs.
+Fixpoint binders_ok (c: cmd) (vs: list (option name)) :=
+  match c with
+  | Skip => False
+  | Seq c1 c2 => binders_ok c1 vs /\ binders_ok c2 vs
+  | Assign n e => index_of n 0 vs < List.length vs
+  | Update a e e' => False
+  | If t c1 c2 => binders_ok c1 vs /\ binders_ok c2 vs
+  | While tst body => binders_ok body vs
+  | ImpSyntax.Call n f es => index_of n 0 vs < List.length vs
+  | ImpSyntax.Return e => False
+  | Alloc n e => index_of n 0 vs < List.length vs
+  | ImpSyntax.GetChar n => index_of n 0 vs < List.length vs
+  | ImpSyntax.PutChar e => False
+  | ImpSyntax.Abort => False
+  end.
 
 Definition cmd_res_rel (ri: outcome unit) (l1: nat)
   (rest: list word_or_ret) (vs: v_stack) (t1: ASMSemantics.state) (s1: ImpSemantics.state)
@@ -244,7 +255,7 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
       pmap_subsume pmap pmap1 /\
       match outcome with
       | (Halt ec output, ck) =>
-        prefix output (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
+        prefix (string_of_list_ascii output) (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
         (ec = (word.of_Z 1) \/ ec = (word.of_Z 4))
         (* TODO(kπ) do we need this? *)
         (* ∧ res <> Stop TimeOut *)
@@ -313,7 +324,7 @@ Theorem give_up: forall fs ds t w n,
   code_rel fs ds t.(instructions) ->
   t.(regs) R15 = Some w ->
   t.(pc) = give_up (odd (List.length t.(stack))) ->
-  steps (State t, n) (Halt (word.of_Z 4) (string_of_list_ascii t.(output)), n).
+  steps (State t, n) (Halt (word.of_Z 4) t.(output), n).
 Proof.
   intros.
   unfold give_up in *.
@@ -363,7 +374,7 @@ Theorem abort: forall fs ds t w n,
   code_rel fs ds t.(instructions) ->
   t.(regs) R15 = Some w ->
   t.(pc) = abort (odd (List.length t.(stack))) ->
-  steps (State t, n) (Halt (word.of_Z 1) (string_of_list_ascii t.(output)), n).
+  steps (State t, n) (Halt (word.of_Z 1) t.(output), n).
 Proof.
   intros.
   unfold abort in *.
@@ -907,14 +918,24 @@ Proof.
       assert (S (index_of nm2 k vs) = i) by (rewrite index_of_spec in *; lia).
       destruct i; [rewrite index_of_spec in *; lia|].
       ring_simplify in H1.
-      (* continue with this instantiate IHvs with the new i *)
-      specialize (IHvs _ _ _ _ H H0).
-      assumption.
+      specialize (IHvs nm1 nm2 k i).
+      pat `S _ = S _` at eapply eq_add_S in pat.
+      pat `S _ = S _` at eapply eq_add_S in pat.
+      eapply IHvs; eauto.
+      lia.
     }
     destruct (n =? nm1) eqn:?; destruct (n =? nm2) eqn:?.
     all: try rewrite Nat.eqb_eq in *; eauto; try congruence; cleanup.
-    all: spat `index_of_opt` at eapply index_of_opt_in_gt_k_str in spat.
-    all: lia.
+    all: try (spat `index_of` at rewrite index_of_spec in spat; lia).
+    assert (S (index_of nm1 k vs) = i) by (rewrite index_of_spec in *; lia).
+    assert (S (index_of nm2 k vs) = i) by (rewrite index_of_spec in *; lia).
+    destruct i; [rewrite index_of_spec in *; lia|].
+    ring_simplify in H1.
+    specialize (IHvs nm1 nm2 k i).
+    pat `S _ = S _` at eapply eq_add_S in pat.
+    pat `S _ = S _` at eapply eq_add_S in pat.
+    eapply IHvs; eauto.
+    lia.
 Qed.
 
 (* Lemma index_of_opt_spec: forall name vs k,
@@ -2283,9 +2304,6 @@ Proof.
   split; eauto.
   split; [eapply pmap_subsume_refl|].
   simpl; split; eauto; eauto.
-  pat `_ = output _` as r at rewrite <- r.
-  rewrite prefix_correct.
-  apply substring_noop.
 Qed.
 
 (* Theorem c_cmd_Return: forall (e: exp),
@@ -2352,12 +2370,77 @@ Proof.
     spat `IEnv.lookup` at pose proof spat as Hlookup.
     pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
     split; try eexists; try split; simpl; cleanup; eauto.
-    destruct x.
-    + spat `index_of_opt n` at pose proof spat as Hidx_of_n.
-      spat `index_of_opt n0` at pose proof spat as Hidx_of_n0.
-      specialize (index_of_opt_Some_inj _ _ _ _ _ (conj Hidx_of_n Hidx_of_n0)) as ?; congruence.
+    destruct (index_of n0 0 vs) eqn:?.
+    + spat `index_of n _ _ = _` at pose proof spat as Hidx_of_n.
+      spat `index_of n0 _ _ = _` at pose proof spat as Hidx_of_n0.
+      pat `0 < List.length vs` at pose proof pat as H0ltvs.
+      specialize (index_of_bound_inj _ _ _ _ _ Hidx_of_n Hidx_of_n0 H0ltvs) as ?; subst.
+      congruence.
     + simpl in *; assumption.
 Qed.
+
+Theorem list_update_append: forall {A: Type} (xs1 xs2 : list A) xnew n,
+  n < List.length xs1 ->
+  list_update n xnew (xs1 ++ xs2) = list_update n xnew xs1 ++ xs2.
+Proof.
+  intros *.
+  revert n.
+  induction xs1.
+  - intros.
+    destruct n; destruct xs2; simpl in *; eauto.
+    all: pat `_ < 0` at inversion pat.
+  - intros.
+    destruct n; eauto.
+    pat `forall _, _` at specialize (pat n).
+    simpl in *; f_equal.
+    eapply IHxs1.
+    lia.
+Qed.
+
+Theorem list_update_size_same: forall {A: Type} (xs: list A) n x,
+  List.length (list_update n x xs) = List.length xs.
+Proof.
+  induction xs; intros; simpl.
+  all: destruct n; simpl; eauto.
+Qed.
+
+Lemma env_ok_replace_list_update: forall vars vs curr xnew x0 n n0 v pmap,
+  env_ok vars vs (Word x0 :: curr) pmap →
+  v_inv pmap v xnew →
+  index_of n 0 vs = S n0 →
+  S n0 < List.length vs →
+  index_of n 0 vs < (List.length vs) ->
+  env_ok (IEnv.insert (n, Some v) vars) vs (Word x0 :: list_update n0 (Word xnew) curr) pmap.
+Proof.
+  intros.
+  unfold env_ok in *; cleanup.
+  simpl in *.
+  split.
+  1: rewrite list_update_size_same; eauto.
+  intros.
+  destruct (n =? n1) eqn:?.
+  - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
+    rewrite IEnv.lookup_insert_eq in *; cleanup.
+    split; try eexists; try split; simpl; cleanup; eauto.
+    all: pat `index_of _ _ _ = _` at rewrite pat; eauto.
+    1: rewrite list_update_size_same; eauto.
+    1: spat `_ = S (List.length curr)` at rewrite <- spat.
+    1: spat `index_of _ _ _ = _` at rewrite <- spat; eauto.
+    admit.
+  - rewrite Nat.eqb_neq in *.
+    rewrite IEnv.lookup_insert_neq in *; try assumption.
+    spat `IEnv.lookup` at pose proof spat as Hlookup.
+    pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
+    admit.
+    (* split; try eexists; try split; simpl; cleanup; eauto.
+    destruct (index_of n0 0 vs) eqn:?.
+    + spat `index_of n _ _ = _` at pose proof spat as Hidx_of_n.
+      spat `index_of n0 _ _ = _` at pose proof spat as Hidx_of_n0.
+      pat `0 < List.length vs` at pose proof pat as H0ltvs.
+      specialize (index_of_bound_inj _ _ _ _ _ Hidx_of_n Hidx_of_n0 H0ltvs) as ?; subst.
+      congruence.
+    + simpl in *; assumption. *)
+Admitted.
 
 Theorem c_cmd_Assign: forall (n: name) (e: exp) (fuel: nat),
   goal_cmd (ImpSyntax.Assign n e) fuel.
@@ -2374,11 +2457,6 @@ Proof.
   2: eval_exp_contr_stop_tac.
   spat `eval_exp` at specialize (eval_exp_pure e _ _ _ Heqp) as ?; subst.
   eval_exp_correct_tac.
-  (* pat `eval_exp _ _ = (?res, _)` as Heval at
-  assert (res <> Stop Crash) as Hneq by congruence;
-  eapply c_exp_correct in Heval;
-  [eapply Heval in Hneq; clear Heval; cleanup|..].
-  2: eauto. *)
   destruct x eqn:?; destruct s eqn:?; cleanup; subst.
   2: contradiction.
   unfold exp_res_rel in *; cleanup; subst.
@@ -2386,7 +2464,6 @@ Proof.
   spat `c_exp` at rwr ltac:(specialize (c_exp_length _ _ _ _ _ spat)).
   spat `steps` at rw ltac:(specialize (steps_instructions _ _ _ _ spat)).
   unfold has_stack in *|-; cleanup.
-  pat `binders_ok _ _` at specialize (pat n); simpl in *; specialize (pat (or_introl eq_refl)).
   destruct curr; cleanup.
   1: {
     pat `Datatypes.length _ = Datatypes.length []` at rewrite pat in *; simpl in *.
@@ -2417,9 +2494,8 @@ Proof.
     | _ => progress eauto
     end.
     1: pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity.
-    (* unfold env_ok; split; eauto; intros. *)
-    (* admit. *)
     eapply env_ok_replace_head; eauto.
+    pat `index_of _ _ _ = _` at rewrite pat; assumption.
   }
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl in *; cleanup.
   unfold has_stack in *|-; cleanup.
@@ -2451,12 +2527,13 @@ Proof.
   | _ => progress eauto
   end.
   3: lia.
-  (* has_stack (set_stack (list_update n1 (Word x0) (curr ++ rest)) (write_reg RAX x2 (inc (update_stack (S n1) x0
-(inc s1))))) (?curr1 ++ rest) *)
-  1: admit.
-  (* env_ok (IEnv.insert (n, Some v) (vars s0)) vs ?curr1 pmap *)
-  admit.
-Admitted.
+  1: rewrite list_update_append; try lia.
+  1: unfold has_stack; do 2 eexists; split; try split; simpl; try rewrite app_comm_cons; reflexivity.
+  eapply env_ok_replace_list_update; eauto.
+  all: pat `List.length vs = _` at rewrite pat; lia.
+  Unshelve.
+  eauto.
+Qed.
 
 Theorem c_cmd_Seq: forall (fuel: nat) (c1 c2: cmd),
   goal_cmd c1 fuel -> goal_cmd c2 fuel ->
@@ -2774,5 +2851,124 @@ Admitted.
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),
   goal_cmd c fuel.
 Proof.
-  induction c; induction fuel.
-Abort.
+  induction c.
+  - intros; admit.
+  - intros; eapply c_cmd_Seq; eauto.
+  - intros; eapply c_cmd_Assign; eauto.
+  - intros; admit.
+  - intros; admit.
+  - induction fuel; intros; eapply c_cmd_While; eauto; intros.
+    + inversion H.
+    + admit.
+  - intros; admit.
+  - intros; admit.
+  - intros; admit.
+  - intros; admit.
+  - intros; admit.
+  - intros; eapply c_cmd_Abort.
+Admitted.
+
+Definition init_state_ok_def (t: ASMSemantics.state) (input: llist ascii) (asm: asm) :=
+  ∃r14 r15,
+    t.(pc) = 0 ∧ t.(instructions) = asm ∧
+    t.(ASMSemantics.input) = input ∧ t.(output) = [] ∧
+    t.(stack) = [] ∧
+    t.(regs) R14 = Some r14 ∧
+    t.(regs) R15 = Some r15 ∧
+    memory_writable r14 r15 t.(memory).
+
+Definition asm_terminates (input: llist ascii) (asm: asm) (fuel: nat) (output: list ascii) :=
+  exists t fuel_left,
+    init_state_ok t input asm /\
+      steps (State t, fuel) (Halt (word.of_Z 0) output, fuel_left).
+
+Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
+  eval_cmd main_c (EVAL_CMD fuel) s = (res,s1) -> res ≠ Stop Crash ->
+  s.(funs) = funcs ->
+  t.(pc) = 0 ->
+  t.(instructions) = codegen (Program funcs) ->
+  lookup_main_imp funcs = main_c ->
+  t.(stack) = [] ->
+  t.(input) = s.(ImpSemantics.input) ->
+  t.(output) = s.(ImpSemantics.output) ->
+  t.(regs) R14 = Some r14 ->
+  t.(regs) R15 = Some r15 ->
+  memory_writable r14 r15 t.(memory) ->
+  exists outcome,
+    steps (State t, s1.(steps_done) - s.(steps_done)) outcome ∧
+    match outcome with
+    | (State t1, ck) =>
+      t1.(output) = s1.(ImpSemantics.output) ∧
+      ck = 0 ∧ (* Is 0 correct here? *)
+      res = Stop TimeOut
+    | (Halt ec output, ck) =>
+      if word.eqb ec (word.of_Z 0) then
+        output = s1.(ImpSemantics.output) ∧
+        exists v, res = Stop (Return v) (* should it be v = 0 ? *)
+      else
+        prefix (string_of_list_ascii output) (string_of_list_ascii s1.(ImpSemantics.output)) = true
+    end.
+Proof.
+  intros.
+  Opaque init.
+  unfold codegen, dlet in *.
+  simpl in *.
+
+  spat `eval_cmd` at eapply c_cmd_correct in spat as Hmain; cleanup.
+  pat `res <> _` at eapply Hmain in pat; clear Hmain.
+  2: {
+
+  }
+
+  pat `t.(instructions) = _` at rename pat into Htinstr.
+  pat `t.(pc) = _` at rename pat into Htpc.
+  eexists; split.
+  1: {
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_const.
+    1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_const.
+    1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_const.
+    1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_call.
+    1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+
+
+
+
+  }
+Admitted.
+
+Theorem codegen_terminates: forall fuel sd,
+  forall input prog output1 output2,
+    prog_terminates input prog fuel output1 sd /\
+    asm_terminates input (codegen prog) sd output2 ->
+      output1 = output2.
+Proof.
+  intros.
+  destruct prog; cleanup.
+  simpl in *; unfold prog_terminates, eval_from, asm_terminates, init_state_ok in *; cleanup; subst.
+  spat `eval_cmd` at eapply codegen_thm in spat; simpl; eauto; cleanup; [|congruence].
+  pat `let (_, _) := ?x in _` at destruct x.
+  pat `match ?s with _ => _ end` at destruct s.
+  all: cleanup; subst.
+  1: congruence.
+  pat `if ?cond then _ else _` at destruct cond eqn:?.
+  all: cleanup; subst.
+  all: unfold init_state in *; simpl in *.
+  all: rewrite Nat.sub_0_r in *.
+  all: spat `steps` at eapply steps_determ in spat; cleanup.
+  2,4: exact H1. (* TODO: reverse version of (s)pat? *)
+  all: subst.
+  all: spat `Halt` at inversion spat; subst.
+  2: rewrite Z.eqb_neq in *; congruence.
+  reflexivity.
+Qed.

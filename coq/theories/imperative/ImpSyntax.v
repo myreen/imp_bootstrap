@@ -60,6 +60,7 @@ Definition test_CASE {A} (t: test)
   end.
 
 Inductive cmd : Type :=
+| Skip
 | Seq (c1 : cmd) (c2 : cmd)                   (*  c1; c2                  *)
 | Assign (n: name) (e: exp)                   (*  n := e                  *)
 | Update (a: exp) (e: exp) (e': exp)          (*  a[e] := e'              *)
@@ -73,6 +74,7 @@ Inductive cmd : Type :=
 | Abort.                                      (*  exit(1)                 *)
 
 Definition cmd_CASE {A} (c: cmd)
+  (skcase: A)
   (scase: cmd -> cmd -> A)
   (acase: name -> exp -> A)
   (ucase: exp -> exp -> exp -> A)
@@ -85,6 +87,7 @@ Definition cmd_CASE {A} (c: cmd)
   (pcase: exp -> A)
   (abcase: A) : A :=
   match c with
+  | Skip => skcase
   | Seq c1 c2 => scase c1 c2
   | Assign n e => acase n e
   | Update a e e' => ucase a e e'
@@ -122,6 +125,12 @@ Definition get_funcs (p: prog) : list func :=
 Definition name_of_func (f: func) : name :=
   match f with
   | Func n _ _ => n
+  end.
+
+Fixpoint fun_name_of_string (str: string): name :=
+  match str with
+  | EmptyString => 0
+  | String c s => (nat_of_ascii c) * 256 + fun_name_of_string s
   end.
 
 (* Values *)

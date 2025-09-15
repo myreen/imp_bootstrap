@@ -485,19 +485,22 @@ Definition init_state (inp: llist ascii) (funs: list func): state :=
      output := [];
      steps_done := 0 |}.
 
-Fixpoint lookup_main_imp (fs: list func): cmd :=
+Fixpoint lookup_main_imp (fs: list func): option cmd :=
   match fs with
   | (Func n ps c) :: fs =>
-    if n =? fun_name_of_string "main" then c else lookup_main_imp fs
-  | nil => Skip
+    if n =? fun_name_of_string "main" then Some c else lookup_main_imp fs
+  | nil => None
   end.
 
 Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome unit * state) :=
   match p with
   | Program funcs =>
-    let main_c := lookup_main_imp funcs in
     let s0 := init_state input funcs in
-    eval_cmd main_c (EVAL_CMD fuel) s0
+    match lookup_main_imp funcs with
+    | None => crash s0
+    | Some main_c =>
+      eval_cmd main_c (EVAL_CMD fuel) s0
+    end
   end.
 
 Definition prog_terminates (input: llist ascii) (p: prog) (fuel: nat) (output: list ascii) (steps_done: nat) :=

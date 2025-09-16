@@ -128,17 +128,18 @@ Definition cmd_res_rel (ri: outcome unit) (l1: nat)
   (rest: list word_or_ret) (vs: v_stack) (t1: ASMSemantics.state) (s1: ImpSemantics.state)
   (pmap: nat -> option (word64 * nat)) : Prop :=
   match ri with
-  | Stop (Return v) => exists curr1 w,
+  | Stop (Return v) => exists w,
     v_inv pmap v w /\
     mem_inv pmap t1.(memory) s1.(ImpSemantics.memory) /\
-    has_stack t1 (Word w :: curr1 ++ rest) /\
+    has_stack t1 (Word w :: rest) /\
     fetch t1 = Some Ret
     (* t1.(pc) = l1 *)
-  | Cont _ => exists curr1,
+  | Cont _ => exists curr1, (* value in Cont is always unit for commands *)
     has_stack t1 (curr1 ++ rest) /\
     mem_inv pmap t1.(memory) s1.(ImpSemantics.memory) /\
     env_ok s1.(vars) vs curr1 pmap /\
     t1.(pc) = l1
+  | Stop (ImpSemantics.Abort) => False
   (* | Stop TimeOut =>  *)
   | _ => True (* TODO(kπ) is this correct? *)
   end.
@@ -2900,6 +2901,9 @@ Lemma c_fundefs_fs_same: forall funs lstart f_lookup a1 a2 fs1 fs2 l1 l2,
 Proof.
 Admitted.
 
+(* evaluating a function body results in a return *)
+(* should I just call main by literally calling main? *)
+
 (* TODO: need to know that main_c ends with a return, should follow from the fact that its a function *)
 Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
   eval_cmd main_c (EVAL_CMD fuel) s = (res,s1) -> res ≠ Stop Crash ->
@@ -2923,8 +2927,8 @@ Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
     | (Halt ec output, ck) =>
       if word.eqb ec (word.of_Z 0) then
         output = s1.(ImpSemantics.output) ∧
-        exists v, res = Cont v
-        (* exists v, res = Stop (Return v) *)
+        (* exists v, res = Cont v *)
+        exists v, res = Stop (Return v)
         (* should it be v = 0 ? *)
       else
         prefix (string_of_list_ascii output) (string_of_list_ascii s1.(ImpSemantics.output)) = true
@@ -2952,16 +2956,173 @@ Proof.
   | |- steps (State ?tnow, _) (_, _) =>
     eapply Hccorrect with (t := tnow) in Heval_cmd as Hmain; clear Hccorrect; cleanup
   end. *)
-  eapply Hccorrect in Heval_cmd as Hmain; clear Hccorrect; cleanup.
+  eapply Hccorrect with (curr := [Word (word.of_Z 0)]) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
   all: simpl in *.
-  1: {
-    pat `let (_, _) := ?x in _` at destruct x.
+  1: { (* main goal *)
+    destruct_pair.
     pat `t.(instructions) = _` at rename pat into Htinstr.
     pat `t.(pc) = _` at rename pat into Htpc.
     Transparent init.
     pat `_ = init _ ++ _` at unfold init in pat.
     Opaque init.
     unfold cmd_res_rel in * ; cleanup.
+    pat `eval_cmd _ _ _ = (?res, _)` at destruct res; cleanup.
+    2: { (* res = Stop v *)
+      pat `match ?s with _ => _ end` at destruct s; cleanup.
+      1: { (* s0 = State *)
+        pat `eval_cmd _ _ _ = (Stop ?v, _)` at destruct v; cleanup; [| |congruence|pat `False` at inversion pat].
+        1: { (*res = Stop (Return v)*)
+          eexists; split.
+          1: {
+            eapply steps_trans.
+            1: eapply steps_step_same; eapply step_const.
+            1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+            eapply steps_trans.
+            1: eapply steps_step_same; eapply step_const.
+            1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+            eapply steps_trans.
+            1: eapply steps_step_same; eapply step_const.
+            1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+            eapply steps_trans.
+            1: eapply steps_step_same; eapply step_call.
+            1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+            eapply steps_trans.
+            1: simpl in *; eauto.
+            pat `steps _ _` at specialize (steps_instructions _ _ _ _ pat) as Hs0instr; simpl in Hs0instr; rewrite Htinstr in Hs0instr.
+            eapply steps_trans.
+            1: eapply steps_step_same; eapply step_ret.
+            1: eauto.
+            1: unfold has_stack in *; cleanup; eauto.
+            subst; simpl.
+            eapply steps_trans.
+            1: eapply steps_step_same; eapply step_const.
+            1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
+            eapply steps_step_same; eapply step_exit.
+            1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
+            1: simpl; reflexivity.
+            simpl; rewrite Nat.Div0.mod_0_l; reflexivity.
+          }
+          simpl.
+          rewrite Properties.word.eqb_eq; [|simpl;reflexivity].
+          unfold state_rel in *; cleanup.
+          split; eauto.
+        }
+        (* res = Stop TimeOut *)
+        eexists; split.
+        1: {
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_const.
+          1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_const.
+          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_const.
+          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_call.
+          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+          (* eapply steps_trans. *)
+          eauto.
+        }
+        simpl.
+        unfold state_rel in *; cleanup.
+        split; eauto.
+      }
+      (* s0 = Halt *)
+      pat `eval_cmd _ _ _ = (Stop ?v, _)` at destruct v; cleanup. [| |congruence|pat `False` at inversion pat].
+
+      (* Some of them shouldn't be possible *)
+      (* Crash isn't possible *)
+      (* Return v ??? *)
+      (* TimeOut ??? *)
+      (* Abort ??? *)
+
+      (* Q: Do we even use Abort? (Abort in semantics vs Abort as a command) *)
+
+
+      1: { (*res = Stop (Return v)*)
+        eexists; split.
+        1: {
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_const.
+          1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_const.
+          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_const.
+          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_call.
+          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+          eauto.
+        }
+        simpl.
+        destruct (word.eqb)%Z eqn:?; cleanup; eauto.
+        pat `_ ∨ _` at destruct pat.
+        all: spat `word.eqb` at eapply Properties.word.eqb_true in spat; subst.
+        all: rewrite Properties.word.eq_of_Z_iff in *.
+        all: do 2 rewrite Z.mod_small in *; [|lia|lia|lia].
+        all: spat `_ = 0%Z` at inversion spat.
+      }
+
+      (* res = Stop TimeOut *)
+      eexists; split.
+      1: {
+        eapply steps_trans.
+        1: eapply steps_step_same; eapply step_const.
+        1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        eapply steps_trans.
+        1: eapply steps_step_same; eapply step_const.
+        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        eapply steps_trans.
+        1: eapply steps_step_same; eapply step_const.
+        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        eapply steps_trans.
+        1: eapply steps_step_same; eapply step_call.
+        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        (* eapply steps_trans. *)
+        eauto.
+      }
+      simpl.
+      unfold state_rel in *; cleanup.
+      split; eauto.
+    }
+    }
+  }
+
+
+
+      eexists; split.
+      1: {
+        eapply steps_trans.
+        1: eapply steps_step_same.
+        1: eapply step_const.
+        1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        eapply steps_trans.
+        1: eapply steps_step_same.
+        1: eapply step_const.
+        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        eapply steps_trans.
+        1: eapply steps_step_same.
+        1: eapply step_const.
+        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        eapply steps_trans.
+        1: eapply steps_step_same.
+        1: eapply step_call.
+        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        simpl; eauto.
+      }
+      simpl.
+      destruct (word.eqb)%Z eqn:?; cleanup; eauto.
+      pat `_ ∨ _` at destruct pat.
+      all: spat `word.eqb` at eapply Properties.word.eqb_true in spat; subst.
+      all: rewrite Properties.word.eq_of_Z_iff in *.
+      all: do 2 rewrite Z.mod_small in *; [|lia|lia|lia].
+      all: spat `_ = 0%Z` at inversion spat.
+    }
+
     pat `match ?s with _ => _ end` at destruct s; cleanup.
     1: { (* main ~> State *)
       pat `match ?res with _ => _ end` at destruct res eqn:?; cleanup.
@@ -3027,8 +3188,7 @@ Proof.
 
     }
   }
-  all: simpl.
-  1: { (* post-condition *)
+  (* 1: { (* post-condition *)
     pat `match ?s with _ => _ end` at destruct s; cleanup.
     1: {
       unfold cmd_res_rel in *; cleanup.
@@ -3042,13 +3202,13 @@ Proof.
     all: rewrite Properties.word.eq_of_Z_iff in *.
     all: do 2 rewrite Z.mod_small in *; [|lia|lia|lia].
     all: spat `_ = 0%Z` at inversion spat.
-  }
+  } *)
+  1: admit.
   1: eauto.
   5: { (* has_stack *)
     unfold has_stack.
     do 2 eexists.
     repeat split.
-    simpl.
     pat `stack t = _` at rewrite pat.
     pat `pc t = _` at rewrite pat.
     (* ?curr ++ ?rest = Word (word.of_Z 0) :: RetAddr (pc t + 1 + 1 + 1 + 1) :: stack t

@@ -32,7 +32,7 @@ Ltac2 get_test_ref() :=
   let refs := Env.expand (ident_of_fqn ["auto_bool_not"]) in
   List.hd refs.
 
-(* TODO(kπ): this version doesn't work - loops infinitely *)
+(* TODO(kπ): this version doesn't work - loops indefinitely *)
 Ltac2 rec split_thm (c: constr): constr list :=
   lazy_match! c with
   | (∀ x, @?f x) =>
@@ -40,11 +40,25 @@ Ltac2 rec split_thm (c: constr): constr list :=
   | _ => []
   end.
 
+Ltac2 rec string_of_relevance (r: Binder.relevance): string :=
+  match r with
+  | Binder.Relevant => "Relevant"
+  | Binder.Irrelevant => "Irrelevant"
+  | Binder.RelevanceVar (_) => "RelevanceVar"
+  end.
+
 Ltac2 rec split_thm_args (c: constr): constr list :=
   match Unsafe.kind c with
   | Prod b c1 =>
     (Binder.type b) :: split_thm_args c1
   | _ => []
+  end.
+
+Ltac2 maybe_thm_binder (c: constr): binder option :=
+  match Unsafe.kind (Constr.type c) with
+  | Prod b _ =>
+    Some b
+  | _ => None
   end.
 
 Ltac2 intro_then_refine (nm: string) (k: constr -> constr): constr :=
@@ -166,6 +180,36 @@ Ltac2 rec apply_continuations (lemma_inst: constr) (lname: string) (thm_parts: c
   | _, [] => Control.throw (Oopsie (fprintf "Not enough continuations passed when compiling with lemma %s" lname))
   end.
 
+Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (extracted_terms: constr option list)
+                         (continuations: (unit -> unit) list): constr :=
+  let lemma_inst := eval_cbv beta lemma_inst in
+  match maybe_thm_binder lemma_inst with
+  | None => lemma_inst
+  | Some b =>
+    printf "before Binder.name for constr: %t" lemma_inst;
+    match Binder.name b with
+    | Some _nm =>
+      (* named binder -> term *)
+      match extracted_terms with
+      | (Some ext) :: extracted_terms =>
+        (* TODO: check the $extr                vvvvv *)
+        assemble_lemma open_constr:($lemma_inst $ext) lname extracted_terms continuations
+      | None :: extracted_terms =>
+        assemble_lemma open_constr:($lemma_inst _) lname extracted_terms continuations
+      | _ =>
+        Control.throw (Oopsie (fprintf "Not enough extracted terms passed when compiling with lemma %s" lname))
+      end
+    | None =>
+      (* unnamed binder -> use continuations *)
+      match continuations with
+      | k :: continuations =>
+        assemble_lemma open_constr:($lemma_inst ltac2:(Control.enter k)) lname extracted_terms continuations
+      | _ =>
+        Control.throw (Oopsie (fprintf "Not enough continuations passed when compiling with lemma %s" lname))
+      end
+    end
+  end.
+
 Ltac2 rec pair_thm_parts (thm_parts: constr list) (extracted: constr list)
                          (acc: (constr * constr) option list): (constr * constr) option list :=
   match thm_parts with
@@ -182,14 +226,15 @@ Ltac2 rec pair_thm_parts (thm_parts: constr list) (extracted: constr list)
 (* Apply lemma named `lname`, use compilaiton funciton `compile_fn` to compile "eval" premises of the lemma *)
 (*   Fill in `extracted` terms for term premises *)
 (*   (Also make sure to update the `cenv` while recursing) *)
-Ltac2 app_lemma (lname: string) (continuations: (unit -> unit) list): unit :=
+Ltac2 app_lemma (lname: string) (extracted_terms: constr option list)
+                (continuations: (unit -> unit) list): unit :=
   let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
   let lemma_inst: constr := Env.instantiate lemma_ref in
-  let lemma_tpe: constr := type lemma_inst in
-  let thm_parts := split_thm_args lemma_tpe in
+  (* let lemma_tpe: constr := type lemma_inst in *)
+  (* let thm_parts := split_thm_args lemma_tpe in *)
   (* TODO(kπ): we assume that `env` is the first argument, can we just special case fenv and pass it to every `FEnv.env` premise? *)
   (*           Otherwise, just pass it as a normal "extracted_terms" parameter to this function? *)
-  refine (apply_continuations lemma_inst lname thm_parts continuations).
+  refine (assemble_lemma lemma_inst lname extracted_terms continuations).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)
 Ltac2 is_in_loopkup (f_lookup : (string * constr) list) (fname : string) : bool :=
@@ -391,7 +436,8 @@ Ltac2 rec compile () : unit :=
           app_lemma "last_bool_if" [fenv; b; t; f] *)
         (* nat *)
         | (?n1 + ?n2) =>
-          app_lemma "auto_nat_add" [(fun () => refine fenv); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine n1); (fun () => refine n2); compile; compile]
+          app_lemma "auto_nat_add" [Some fenv; None; None; None; None; None; Some n1; Some n2]
+                                   [compile; compile]
         (* | (?n1 - ?n2) =>
           app_lemma "auto_nat_sub" [fenv; n1; n2]
         | (?n1 / ?n2) =>
@@ -408,10 +454,12 @@ Ltac2 rec compile () : unit :=
         | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
           app_lemma "auto_list_case" [fenv; v0; v1; v2] *)
         | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
-          app_lemma "auto_nat_case" [(fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine fenv); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine v0); (fun () => refine v1); (fun () => refine v2); compile; (fun () => destruct $v0; (Control.enter compile))]
+          app_lemma "auto_nat_case" [None; None; Some fenv; None; None; None; None; None; Some v0; Some v1; Some v2]
+                                    [compile; (fun () => destruct $v0; (Control.enter compile))]
+          (* [(fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine fenv); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine v0); (fun () => refine v1); (fun () => refine v2)] *)
         | ?x =>
           if proper_const x then
-            app_lemma "auto_nat_const" [(fun () => refine fenv); (fun () => refine open_constr:(_)); (fun () => refine x)]
+            app_lemma "auto_nat_const" [Some fenv; None; Some x] []
           else
             Control.throw (Oopsie (fprintf
               "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
@@ -448,7 +496,7 @@ Ltac2 rec compile () : unit :=
       end
     end
   | ?fenv |-- (_, _) ---> ([], _) =>
-    app_lemma "trans_nil" [(fun () => refine fenv); (fun () => refine open_constr:(_))]
+    app_lemma "trans_nil" [Some fenv; None] []
   | ?fenv |-- (_, _) ---> ((encode ?e) :: ?es, _) =>
     refine open_constr:(trans_cons
     (* env *) $fenv

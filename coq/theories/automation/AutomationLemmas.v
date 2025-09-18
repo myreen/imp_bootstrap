@@ -265,7 +265,7 @@ Hint Resolve auto_nat_if_less : automation.
     ([encode (v2 n')], s)
 end) ->
 *)
-Theorem auto_nat_case : forall {A} `{Refinable A} env s x0 x1 x2 n (v0 : nat) (v1 : A) v2,
+Theorem auto_nat_case : forall {A} `{Refinable A} env s x0 x1 x2 n (v0: nat) (v1: A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   (* env |-- ([x1], s) ---> ([encode v1], s) ->
   (forall n', S n' = v0 ->

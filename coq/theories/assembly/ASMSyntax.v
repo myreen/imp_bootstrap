@@ -48,6 +48,7 @@ Inductive instr :=
 | Pop (r : reg)
 | Push (r : reg)
 | Add_RSP (n : nat)
+| Sub_RSP (n : nat)
 | Load_RSP (r : reg) (n : nat)
 | Store_RSP (r : reg) (n : nat)
   (* memory *)

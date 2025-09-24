@@ -410,15 +410,24 @@ Definition unique_binders (body: cmd): list name :=
   let/d binds := all_binders body in
   names_unique binds [].
 
+Function make_vs_from_binders (binders: list name): v_stack :=
+  match binders with
+  | nil => nil
+  | b :: binders => (Some b) :: make_vs_from_binders binders
+  end.
+
 (** Compiles a single function definition into assembly code. *)
-Definition c_fundef (fundef : func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
+Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
   match fundef with
   | Func n v_names body =>
     let/d '(asm0, vs0, l0) := c_pushes v_names l in
     let/d binders := unique_binders body in
-    let/d '(asm1, l1, vs1) := c_declare_binders binders l0 vs0 in
-    let/d '(asm2, l2) := c_cmd body l0 fs vs1 in
-    (asm0 +++ asm1 +++ asm2, l2)
+    let/d vs_binders := make_vs_from_binders binders in
+    let/d asm1 := List [Sub_RSP (List.length vs_binders)] in
+    let/d '(asm2, l2) := c_cmd body (l0 + 1) fs (vs_binders ++ vs0) in
+    let/d '(asm3, l3) := make_ret (vs_binders ++ vs0) l2 in
+    (* Maybe need a [Const 0] before the [Ret], so that it's a `return 0;` *)
+    (asm0 +++ asm1 +++ asm2 +++ asm3, l3)
   end.
 
 (* TODO(kπ) termination is unobvious to Coq, super unimportant function, hacked for now *)
@@ -444,14 +453,11 @@ Function c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm_appl * list
     (comment +++ c1 +++ c2, (fname, l + 1) :: fs', l2)
   end.
 
-Definition lookup_main (fs : f_lookup) : nat :=
-  lookup (fun_name_of_string "main") fs.
-
 (* Generates the complete assembly code for a given program *)
 Definition codegen (prog : prog) : asm :=
   let/d funs := get_funcs prog in
   let/d init_l := app_list_length (List (init 0)) in
   let/d '(_, fs, _) := c_fundefs funs init_l [] in
   let/d '(asm1, _, _) := c_fundefs funs init_l fs in
-  let/d main_l := lookup_main fs in
+  let/d main_l := lookup (fun_name_of_string "main") fs in
   flatten ((List (init main_l)) +++ asm1).

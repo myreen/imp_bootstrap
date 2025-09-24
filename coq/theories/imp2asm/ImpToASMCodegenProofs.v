@@ -2901,8 +2901,60 @@ Lemma c_fundefs_fs_same: forall funs lstart f_lookup a1 a2 fs1 fs2 l1 l2,
 Proof.
 Admitted.
 
-(* evaluating a function body results in a return *)
-(* should I just call main by literally calling main? *)
+(* lookup_main f_lookup is a result of c_fundef (and so it has a ret at the end) *)
+Lemma main_is_c_fundef: forall funcs f_lookup main_l main_c defs_asm defs_l,
+  find_fun (fun_name_of_string "main") funcs = Some ([], main_c) ->
+  c_fundefs funcs (Datatypes.length (init 0)) f_lookup = (defs_asm, f_lookup, defs_l) ->
+  lookup (fun_name_of_string "main") f_lookup = main_l ->
+  exists main_l1 main_asm f_lookup1,
+    c_fundef (Func (fun_name_of_string "main") [] main_c) main_l f_lookup1 = (main_asm, main_l1).
+Proof.
+  intros.
+  Opaque fun_name_of_string.
+  Opaque c_fundef.
+  induction funcs; simpl in *.
+  1: pat `None = Some _` at inversion pat.
+  destruct a.
+  unfold dlet in *.
+  destruct (c_fundefs funcs _ _) eqn:?.
+  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  simpl in *.
+  destruct (c_fundef _ _ _) eqn:?.
+  simpl in *.
+  pat ` (_, _, _) = (_, _, _)` at inversion pat; subst.
+  destruct (fun_name_of_string "main" =? _) eqn:?.
+  - rewrite Nat.eqb_eq in *; subst.
+    do 3 eexists.
+    eauto.
+    admit.
+  - intros.
+    admit.
+  Transparent c_fundef.
+Admitted.
+
+(* TODO: Lemma that c_fundef implies code_in ??? *)
+(* Lemma c_fundef_code_in:
+  c_fundef f_c1 l1 f_lookup1 = (asm1, l2) ->
+  code_in l1 asm1 t.(instructions). *)
+
+Lemma init_length_same: forall l1 l2,
+  List.length (init l1) = List.length (init l2).
+Proof.
+  unfold init.
+  reflexivity.
+Qed.
+
+Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
+    c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
+    find_fun n funcs = Some (params, body) ->
+    exists pos,
+      lookup n fs = pos ∧ (* No fail case here... (<> 0) ? *)
+      code_in pos (flatten (fst (c_fundef (Func n params body) pos fs0)))
+        (xs ++ flatten asm1).
+Proof.
+Admitted.
+
+(* evaluating a function body results in a return (or rather doesn't result in a Cont) *)
 
 (* TODO: need to know that main_c ends with a return, should follow from the fact that its a function *)
 Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
@@ -2910,7 +2962,7 @@ Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
   s.(funs) = funcs ->
   t.(pc) = 0 ->
   t.(instructions) = codegen (Program funcs) ->
-  lookup_main_imp funcs = Some main_c ->
+  find_fun (fun_name_of_string "main") funcs = Some ([], main_c) ->
   t.(stack) = [] ->
   t.(input) = s.(ImpSemantics.input) ->
   t.(output) = s.(ImpSemantics.output) ->
@@ -2927,8 +2979,8 @@ Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
     | (Halt ec output, ck) =>
       if word.eqb ec (word.of_Z 0) then
         output = s1.(ImpSemantics.output) ∧
-        (* exists v, res = Cont v *)
-        exists v, res = Stop (Return v)
+        exists v, res = Cont v
+        (* exists v, res = Stop (Return v) *)
         (* should it be v = 0 ? *)
       else
         prefix (string_of_list_ascii output) (string_of_list_ascii s1.(ImpSemantics.output)) = true
@@ -2940,31 +2992,56 @@ Proof.
   unfold codegen, dlet in *.
   Opaque fun_name_of_string.
   simpl in *.
-  destruct (c_fundefs funcs _ _) eqn:?.
+  unfold catch_return in *.
+  (* spat `let (_, _) := ?x in _` at destruct x eqn:?; unfold_outcome. *)
+  destruct (c_fundefs funcs _ _) eqn:Heqcfuns0.
   spat `c_fundefs _ _ _ = (?p, _)` at destruct p.
   simpl in *.
-  destruct (c_fundefs funcs _ l) eqn:?.
+  destruct (c_fundefs funcs _ l) eqn:Heqcfuns.
   spat `c_fundefs _ _ _ = (?p, _)` at destruct p.
   simpl in *.
   spat `eval_cmd` at rename spat into Heval_cmd.
-  specialize (c_fundefs_l_same _ _ _ _ _ _ _ _ _ Heqp0 Heqp) as ?; subst.
-  specialize (c_fundefs_fs_same _ _ _ _ _ _ _ _ _ Heqp0 Heqp) as ?; subst.
+  specialize (c_fundefs_l_same _ _ _ _ _ _ _ _ _ Heqcfuns Heqcfuns0) as ?; subst.
+  specialize (c_fundefs_fs_same _ _ _ _ _ _ _ _ _ Heqcfuns Heqcfuns0) as ?; subst.
+  pat `c_fundefs _ _ [] = (_, _, _)` at clear pat.
+  remember (lookup _ l) as lookup_main_l.
+
+  spat `c_fundefs` at rewrite init_length_same with (l2 := lookup_main_l) in spat.
+  pat `find_fun _ _ = _` at rename pat into Hfind_fun.
+  pat `c_fundefs _ _ _ = (_, _, _)` at specialize (c_fundefs_code_in _ _ _ _ _ _ _ _ _ pat Hfind_fun) as ?; cleanup.
+  
+  specialize (main_is_c_fundef s.(funs) l (lookup_main_l) main_c) as ?.
+  pat `find_fun _ _ = _` at pose proof pat as Hlookupmainimp.
+  pat `forall _, _` at eapply pat in Hlookupmainimp; eauto; clear pat; cleanup.
+  unfold c_fundef, dlet in *.
+  destruct (c_pushes _ _) eqn:?.
+  destruct (c_cmd _ _) eqn:?.
+  simpl in *.
+  pat ` (_, _) = (_, _)` at inversion pat; clear pat.
+  pat `c_pushes _ _ = (?p, _)` at destruct p.
+  unfold c_pushes, dlet in *; simpl in *.
+  pat ` (_, _, _) = (_, _, _)` at inversion pat; subst; clear pat.
+  remember (lookup _ l) as lookup_main_l.
+  repeat (rewrite code_in_append in *; simpl in *); cleanup.
+  rewrite Nat.add_0_r in *.
+  remember (make_vs_from_binders _) as vs_binders.
+  assert (List.length vs_binders = List.length (List.map (fun _ => Word (word.of_Z 0)) vs_binders)) as Hlengthbinders by (rewrite length_map; reflexivity).
+  (* spat `Sub_RSP` at rewrite Hlengthbinders in spat.
+  spat `c_cmd` at specialize (c_cmd_length _ _ _ _ _ _ spat) as Hmain_c_l; rewrite Hmain_c_l in *. *)
 
   pose proof c_cmd_correct as Hccorrect; unfold goal_cmd in Hccorrect.
-
-  (* match goal with
-  | |- steps (State ?tnow, _) (_, _) =>
-    eapply Hccorrect with (t := tnow) in Heval_cmd as Hmain; clear Hccorrect; cleanup
-  end. *)
-  eapply Hccorrect with (curr := [Word (word.of_Z 0)]) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
+  eapply Hccorrect with (curr := (List.map (fun _ => Word (word.of_Z 0)) vs_binders) ++ [Word (word.of_Z 0)]) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
   all: simpl in *.
   1: { (* main goal *)
     destruct_pair.
-    pat `t.(instructions) = _` at rename pat into Htinstr.
+    pat `t.(instructions) = _` at rename pat into Htinstrfolded.
     pat `t.(pc) = _` at rename pat into Htpc.
     Transparent init.
+    pat `_ = init _ ++ _` at pose proof pat as Htinstr.
     pat `_ = init _ ++ _` at unfold init in pat.
     Opaque init.
+    simpl in *.
+    remember (Comment "malloc" :: _) as init_rest; clear Heqinit_rest.
     unfold cmd_res_rel in * ; cleanup.
     pat `eval_cmd _ _ _ = (?res, _)` at destruct res; cleanup.
     2: { (* res = Stop v *)
@@ -2986,6 +3063,11 @@ Proof.
             eapply steps_trans.
             1: eapply steps_step_same; eapply step_call.
             1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+            eapply steps_trans.
+            1: simpl in *.
+            1: eapply steps_step_same; eapply step_sub_rsp.
+            1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
+            1: reflexivity.
             eapply steps_trans.
             1: simpl in *; eauto.
             pat `steps _ _` at specialize (steps_instructions _ _ _ _ pat) as Hs0instr; simpl in Hs0instr; rewrite Htinstr in Hs0instr.
@@ -3022,7 +3104,11 @@ Proof.
           eapply steps_trans.
           1: eapply steps_step_same; eapply step_call.
           1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-          (* eapply steps_trans. *)
+          eapply steps_trans.
+          1: simpl in *.
+          1: eapply steps_step_same; eapply step_sub_rsp.
+          1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
+          1: reflexivity.
           eauto.
         }
         simpl.
@@ -3030,44 +3116,6 @@ Proof.
         split; eauto.
       }
       (* s0 = Halt *)
-      pat `eval_cmd _ _ _ = (Stop ?v, _)` at destruct v; cleanup. [| |congruence|pat `False` at inversion pat].
-
-      (* Some of them shouldn't be possible *)
-      (* Crash isn't possible *)
-      (* Return v ??? *)
-      (* TimeOut ??? *)
-      (* Abort ??? *)
-
-      (* Q: Do we even use Abort? (Abort in semantics vs Abort as a command) *)
-
-
-      1: { (*res = Stop (Return v)*)
-        eexists; split.
-        1: {
-          eapply steps_trans.
-          1: eapply steps_step_same; eapply step_const.
-          1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-          eapply steps_trans.
-          1: eapply steps_step_same; eapply step_const.
-          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-          eapply steps_trans.
-          1: eapply steps_step_same; eapply step_const.
-          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-          eapply steps_trans.
-          1: eapply steps_step_same; eapply step_call.
-          1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-          eauto.
-        }
-        simpl.
-        destruct (word.eqb)%Z eqn:?; cleanup; eauto.
-        pat `_ ∨ _` at destruct pat.
-        all: spat `word.eqb` at eapply Properties.word.eqb_true in spat; subst.
-        all: rewrite Properties.word.eq_of_Z_iff in *.
-        all: do 2 rewrite Z.mod_small in *; [|lia|lia|lia].
-        all: spat `_ = 0%Z` at inversion spat.
-      }
-
-      (* res = Stop TimeOut *)
       eexists; split.
       1: {
         eapply steps_trans.
@@ -3082,37 +3130,12 @@ Proof.
         eapply steps_trans.
         1: eapply steps_step_same; eapply step_call.
         1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        (* eapply steps_trans. *)
+        eapply steps_trans.
+        1: simpl in *.
+        1: eapply steps_step_same; eapply step_sub_rsp.
+        1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
+        1: reflexivity.
         eauto.
-      }
-      simpl.
-      unfold state_rel in *; cleanup.
-      split; eauto.
-    }
-    }
-  }
-
-
-
-      eexists; split.
-      1: {
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_const.
-        1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_const.
-        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_const.
-        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_call.
-        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        simpl; eauto.
       }
       simpl.
       destruct (word.eqb)%Z eqn:?; cleanup; eauto.
@@ -3122,88 +3145,84 @@ Proof.
       all: do 2 rewrite Z.mod_small in *; [|lia|lia|lia].
       all: spat `_ = 0%Z` at inversion spat.
     }
-
+    (* res = Cont v *)
     pat `match ?s with _ => _ end` at destruct s; cleanup.
-    1: { (* main ~> State *)
-      pat `match ?res with _ => _ end` at destruct res eqn:?; cleanup.
-      all: eexists; split.
-      3: destruct v eqn:?; cleanup.
-      3: {
+    1: { (* s0 = State *)
+      eexists; split.
+      1: {
         eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_const.
+        1: eapply steps_step_same; eapply step_const.
         1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
         eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_const.
+        1: eapply steps_step_same; eapply step_const.
         1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
         eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_const.
+        1: eapply steps_step_same; eapply step_const.
         1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
         eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_call.
+        1: eapply steps_step_same; eapply step_call.
         1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+        eapply steps_trans.
+        1: simpl in *.
+        1: eapply steps_step_same; eapply step_sub_rsp.
+        1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
+        1: simpl; reflexivity.
         eapply steps_trans.
         1: simpl in *; eauto.
         pat `steps _ _` at specialize (steps_instructions _ _ _ _ pat) as Hs0instr; simpl in Hs0instr; rewrite Htinstr in Hs0instr.
-        (* unfold cmd_res_rel in *; cleanup. *)
+        pat `steps _ _` at specialize (steps_instructions _ _ _ _ pat) as Hs0instrfolded; simpl in Hs0instrfolded; rewrite Htinstrfolded in Hs0instrfolded.
         eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_ret.
-        1: eauto.
-        1: unfold has_stack in *; cleanup.
-        1: pat `_ = stack s0` at rewrite <- pat.
-        (* 1: pat `pc s0 = _` at rewrite pat. *)
-        
-        rewrite Htpc; simpl; eauto.
-        
+        1: eapply steps_step_same; eapply step_add_rsp.
+        1: unfold fetch; simpl; rewrite <- Hs0instrfolded; simpl; eauto.
+        1: pat `pc s0 = _` at rewrite pat; eauto.
+        1: exact H11.
+        (* add_RSP before *)
+        1: eapply steps_step_same; eapply step_ret.
+        1: unfold fetch; simpl; rewrite <- Hs0instrfolded; simpl; eauto.
+        1: pat `pc s0 = _` at rewrite pat; eauto.
+        1: unfold has_stack in *; cleanup; eauto.
+        1: pat `stack s0 = _` at rewrite <- pat in *|-.
+        subst; simpl.
+        eapply steps_trans.
+        1: eapply steps_step_same; eapply step_const.
+        1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
+        eapply steps_step_same; eapply step_exit.
+        1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
+        1: simpl; reflexivity.
+        simpl; rewrite Nat.Div0.mod_0_l; reflexivity.
       }
-      unfold cmd_res_rel in *; cleanup.
-      repeat split; eauto.
-      all: unfold state_rel in *; cleanup; eauto.
-      admit. (* res = Stop TimeOut *) (* Have to think about this :thinking: *)
+      simpl.
+      admit.
+      (* rewrite Properties.word.eqb_eq; [|simpl;reflexivity].
+      unfold state_rel in *; cleanup.
+      split; eauto. *)
     }
-    (* main ~> Halt *)
-    1: { (* steps *)
+    (* res = Stop TimeOut *)
+    eexists; split.
+    1: {
       eapply steps_trans.
-      1: eapply steps_step_same.
-      1: eapply step_const.
+      1: eapply steps_step_same; eapply step_const.
       1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
       eapply steps_trans.
-      1: eapply steps_step_same.
-      1: eapply step_const.
+      1: eapply steps_step_same; eapply step_const.
       1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
       eapply steps_trans.
-      1: eapply steps_step_same.
-      1: eapply step_const.
+      1: eapply steps_step_same; eapply step_const.
       1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
       eapply steps_trans.
-      1: eapply steps_step_same.
-      1: eapply step_call.
+      1: eapply steps_step_same; eapply step_call.
       1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-      eapply steps_trans.
-      1: simpl in *; eauto.
-
+      eauto.
     }
-  }
-  (* 1: { (* post-condition *)
-    pat `match ?s with _ => _ end` at destruct s; cleanup.
-    1: {
-      unfold cmd_res_rel in *; cleanup.
-      repeat split; eauto.
-      all: unfold state_rel in *; cleanup; eauto.
-      admit. (* res = Stop TimeOut *) (* Have to think about this :thinking: *)
-    }
+    simpl.
+    unfold state_rel in *; cleanup.
     destruct (word.eqb)%Z eqn:?; cleanup; eauto.
     pat `_ ∨ _` at destruct pat.
     all: spat `word.eqb` at eapply Properties.word.eqb_true in spat; subst.
     all: rewrite Properties.word.eq_of_Z_iff in *.
     all: do 2 rewrite Z.mod_small in *; [|lia|lia|lia].
     all: spat `_ = 0%Z` at inversion spat.
-  } *)
-  1: admit.
+  }
   1: eauto.
   5: { (* has_stack *)
     unfold has_stack.
@@ -3213,12 +3232,14 @@ Proof.
     pat `pc t = _` at rewrite pat.
     (* ?curr ++ ?rest = Word (word.of_Z 0) :: RetAddr (pc t + 1 + 1 + 1 + 1) :: stack t
  *)
-    admit.
+    simpl.
+    reflexivity.
   }
   3: { (* env_ok *)
     unfold env_ok.
     repeat split.
-
+    all: simpl.
+    all: admit.
   }
 
 Admitted.

@@ -1,4 +1,4 @@
-From impboot Require Import utils.Core.
+(* From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
@@ -186,7 +186,6 @@ Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (extracted_terms: 
   match maybe_thm_binder lemma_inst with
   | None => lemma_inst
   | Some b =>
-    printf "before Binder.name for constr: %t" lemma_inst;
     match Binder.name b with
     | Some _nm =>
       (* named binder -> term *)
@@ -422,41 +421,47 @@ Ltac2 rec compile () : unit :=
           (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
           )
         (* bool *)
-        (* | true =>
-          app_lemma "auto_bool_T" [(fun () => refine fenv); (fun () => refine open_constr:(_))]
+        | true =>
+          app_lemma "auto_bool_T" [Some fenv; None] []
         | false =>
-          app_lemma "auto_bool_F" [fenv]
+          app_lemma "auto_bool_F" [Some fenv; None] []
         | (negb ?b) =>
-          app_lemma "auto_bool_not" [fenv; b]
+          app_lemma "auto_bool_not" [Some fenv; None; None; Some b] [compile]
         | (andb ?bA ?bB) =>
-          app_lemma "auto_bool_and" [fenv; bA; bB]
+          app_lemma "auto_bool_and" [Some fenv; None; None; None; Some bA; Some bB] [compile; compile]
         | (eqb ?bA ?bB) =>
-          app_lemma "auto_bool_iff" [fenv; bA; bB]
+          app_lemma "auto_bool_iff" [Some fenv; None; None; None; Some bA; Some bB] [compile; compile]
         | (if ?b then ?t else ?f) =>
-          app_lemma "last_bool_if" [fenv; b; t; f] *)
+          app_lemma "last_bool_if" [None; None; Some fenv; None; None; None; None; Some b; Some t; Some f]
+                                   [compile; compile; compile]
         (* nat *)
         | (?n1 + ?n2) =>
           app_lemma "auto_nat_add" [Some fenv; None; None; None; None; None; Some n1; Some n2]
                                    [compile; compile]
-        (* | (?n1 - ?n2) =>
-          app_lemma "auto_nat_sub" [fenv; n1; n2]
+        | (?n1 - ?n2) =>
+          app_lemma "auto_nat_sub" [Some fenv; None; None; None; Some n1; Some n2] [compile; compile]
         | (?n1 / ?n2) =>
-          app_lemma "auto_nat_div" [fenv; n1; n2]
+          app_lemma "auto_nat_div" [Some fenv; None; None; None; Some n1; Some n2] [compile; compile]
         | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
-          app_lemma "auto_nat_if_eq" [fenv; n1; n2; t; f]
+          app_lemma "auto_nat_if_eq" [Some fenv; None; None; None; Some n1; Some n2; Some t; Some f]
+                                     [compile; compile]
         | (if ?n1 <? ?n2 then ?t else ?f) =>
-          app_lemma "auto_nat_if_less" [fenv; n1; n2; t; f] *)
+          app_lemma "auto_nat_if_less" [Some fenv; None; None; None; Some n1; Some n2; Some t; Some f]
+                                       [compile; compile]
         (* list *)
-        (* | [] =>
-          app_lemma "auto_list_nil" [fenv]
+        | [] =>
+          app_lemma "auto_list_nil" [Some fenv; None] []
         | (?x :: ?xs) =>
-          app_lemma "auto_list_cons" [fenv; x; xs]
+          app_lemma "auto_list_cons" [None; None; Some fenv; None; None; Some x; Some xs] [compile; compile]
         | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
-          app_lemma "auto_list_case" [fenv; v0; v1; v2] *)
+          app_lemma "auto_list_case" [None; None; None; None; Some fenv; None; None; None; None; None; None; Some v0; Some v1; Some v2]
+                                     [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ())]
+        (* TODO: see if we can use pairs (name -> tactic/term) *)
+        (*       End-goal: extesible table of all compilation lemmas -> (name, tactic to apply) *)
+        (*       We can use names to hae subsets of tactics (e.g. arithmetic only) *)
         | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
           app_lemma "auto_nat_case" [None; None; Some fenv; None; None; None; None; None; Some v0; Some v1; Some v2]
                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
-          (* [(fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine fenv); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine open_constr:(_)); (fun () => refine v0); (fun () => refine v1); (fun () => refine v2)] *)
         | ?x =>
           if proper_const x then
             app_lemma "auto_nat_const" [Some fenv; None; Some x] []
@@ -645,28 +650,7 @@ Proof.
   intros.
   relcompile.
   Show Proof.
-  (* 1: relcompile. *)
-
   Guarded.
-
-  induction n.
-  2: { (* Inductive case *)
-    relcompile.
-    1: cbv iota.
-    Show Proof.
-    Unshelve.
-    1: {
-      inversion x_nm0; subst.
-      assumption ().
-    }
-    all: ltac1:(shelve).
-  }
-  (* TODO(kπ): What should we do in the 0 case of induction? *)
-  (*       kπ: Do we just symbolically evaluate? *)
-  1: {
-    eapply trans_app; eauto; eauto; unfold make_env.
-    ltac1:(repeat (econstructor; eauto with fenvDb)).
-  }
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
   2: exact "n1"%string.
@@ -714,10 +698,11 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  2: exact "n"%string.
-  2: exact "n1"%string.
-  2: exact "n"%string.
-  eauto with fenvDb.
+  3: exact "n"%string.
+  3: exact "n1"%string.
+  3: exact "n2"%string.
+  3: exact "n2"%string.
+  all: eauto with fenvDb.
 Qed.
 
 Definition has_cases_list (l : list nat) : nat :=
@@ -825,4 +810,4 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-Qed.
+Qed. *)

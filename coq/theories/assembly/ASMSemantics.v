@@ -9,7 +9,8 @@ From Stdlib Require Import Program.Equality.
 
 Inductive word_or_ret :=
 | Word : word64 -> word_or_ret
-| RetAddr : nat -> word_or_ret.
+| RetAddr : nat -> word_or_ret
+| Uninit.
 
 Record state := mkState {
   instructions : asm;
@@ -199,6 +200,12 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
     fetch s = Some (Add_RSP (List.length xs)) ->
     s.(stack) = xs ++ ys ->
     step (State s) (State (set_stack ys (inc s)))
+(* TODO: add a new stack value type UNINIT *)
+(*       Then this should add UNINIT values to the stack *)
+| step_sub_rsp : forall {A} s (xs: list A) ys,
+    fetch s = Some (Sub_RSP (List.length xs)) ->
+    s.(stack) = ys ->
+    step (State s) (State (set_stack ((List.map (fun _ => Uninit) xs) ++ ys) (inc s)))
 | step_store : forall s src ra imm wa w s',
     fetch s = Some (Store src ra imm) ->
     s.(regs) ra = Some wa ->

@@ -94,7 +94,7 @@ Definition env_ok (env : IEnv.env) (vs : list (option name)) (curr : list word_o
   List.length vs = List.length curr /\
   forall n v,
     IEnv.lookup env n = Some v ->
-    index_of n 0 vs < List.length curr /\
+    In (Some n) vs /\
     exists w,
       nth_error curr (index_of n 0 vs) = Some (Word w) /\
       v_inv pmap v w.
@@ -103,14 +103,14 @@ Fixpoint binders_ok (c: cmd) (vs: list (option name)) :=
   match c with
   | Skip => True
   | Seq c1 c2 => binders_ok c1 vs /\ binders_ok c2 vs
-  | Assign n e => index_of n 0 vs < List.length vs
+  | Assign n e => In (Some n) vs
   | Update a e e' => True
   | If t c1 c2 => binders_ok c1 vs /\ binders_ok c2 vs
   | While tst body => binders_ok body vs
   | ImpSyntax.Call n f es => True
   | ImpSyntax.Return e => True
-  | Alloc n e => index_of n 0 vs < List.length vs
-  | ImpSyntax.GetChar n => index_of n 0 vs < List.length vs
+  | Alloc n e => In (Some n) vs
+  | ImpSyntax.GetChar n => In (Some n) vs
   | ImpSyntax.PutChar e => True
   | ImpSyntax.Abort => True
   end.
@@ -124,7 +124,6 @@ Definition cmd_res_rel (ri: outcome unit) (l1: nat)
     mem_inv pmap t1.(memory) s1.(ImpSemantics.memory) /\
     has_stack t1 (Word w :: rest) /\
     fetch t1 = Some Ret
-    (* t1.(pc) = l1 *)
   | Cont _ => exists curr1, (* value in Cont is always unit for commands *)
     has_stack t1 (curr1 ++ rest) /\
     mem_inv pmap t1.(memory) s1.(ImpSemantics.memory) /\
@@ -1175,7 +1174,7 @@ Proof.
   all: simpl.
   all: try rewrite index_of_spec.
   all: unfold v_inv in *.
-  1: lia.
+  1: eauto.
   1: simpl; eauto.
   destruct v; [assumption|].
   cleanup.
@@ -1366,12 +1365,14 @@ Proof.
     eapply steps_step_same.
     rewrite Nat.eqb_neq in *.
     simpl code_in in *; cleanup.
+    pat `In _ _` at rewrite <- index_of_In with (k := 0) in pat; rewrite Nat.add_0_l in pat.
     eapply step_load_rsp; eauto.
     all: unfold_stack; eauto.
     2: {
       rewrite <- H4 in *.
       rewrite nth_error_app.
       rewrite <- Nat.ltb_lt in *.
+      pat `List.length vs = _` at rewrite <- pat.
       rewrite H1.
       eauto.
     }
@@ -2438,9 +2439,11 @@ Proof.
   destruct (n =? n0) eqn:?.
   - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
     rewrite IEnv.lookup_insert_eq in *; cleanup.
-    spat `_ = S _` at rewrite <- spat.
+    rewrite <- index_of_In with (k := 0); rewrite Nat.add_0_l.
+    spat `_ = S _` at rewrite spat.
     split; try eexists; try split; simpl; cleanup; eauto.
     all: pat `index_of _ _ _ = 0` at rewrite pat; eauto.
+    lia.
   - rewrite Nat.eqb_neq in *.
     rewrite IEnv.lookup_insert_neq in *; try assumption.
     spat `IEnv.lookup` at pose proof spat as Hlookup.
@@ -2494,14 +2497,15 @@ Proof.
   split.
   1: rewrite list_update_size_same; eauto.
   intros.
+  rewrite <- index_of_In with (k := 0); rewrite Nat.add_0_l.
   destruct (n =? n1) eqn:?.
   - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
     rewrite IEnv.lookup_insert_eq in *; cleanup.
     split; try eexists; try split; simpl; cleanup; eauto.
     all: pat `index_of _ _ _ = _` at rewrite pat; eauto.
-    1: rewrite list_update_size_same; eauto.
+    (* 1: rewrite list_update_size_same; eauto.
     1: spat `_ = S (List.length curr)` at rewrite <- spat.
-    1: spat `index_of _ _ _ = _` at rewrite <- spat; eauto.
+    1: spat `index_of _ _ _ = _` at rewrite <- spat; eauto. *)
     admit.
   - rewrite Nat.eqb_neq in *.
     rewrite IEnv.lookup_insert_neq in *; try assumption.
@@ -2540,6 +2544,7 @@ Proof.
   spat `c_exp` at rwr ltac:(specialize (c_exp_length _ _ _ _ _ spat)).
   spat `steps` at rw ltac:(specialize (steps_instructions _ _ _ _ spat)).
   unfold has_stack in *|-; cleanup.
+  rewrite <- index_of_In with (k := 0) in *; rewrite Nat.add_0_l in *.
   destruct curr; cleanup.
   1: {
     pat `Datatypes.length _ = Datatypes.length []` at rewrite pat in *; simpl in *.
@@ -2982,6 +2987,100 @@ Proof.
   reflexivity.
 Qed.
 
+Lemma binders_ok_append: forall c b1 b2,
+  binders_ok c b1 ->
+    binders_ok c (b1 ++ b2).
+Proof.
+  intros.
+  induction c; simpl in *; cleanup; eauto.
+  all: eapply in_or_app; eauto.
+Qed.
+
+Lemma binders_ok_append2: forall c b1 b2,
+  binders_ok c b2 ->
+    binders_ok c (b1 ++ b2).
+Proof.
+  intros.
+  induction c; simpl in *; cleanup; eauto.
+  all: eapply in_or_app; eauto.
+Qed.
+
+Lemma make_vs_from_binders_length: forall l,
+  List.length (make_vs_from_binders l) = List.length l.
+Proof.
+  induction l; simpl in *; eauto.
+Qed.
+
+Lemma make_vs_from_binders_spec: forall ns,
+  make_vs_from_binders ns = List.map (fun n => Some n) ns.
+Proof.
+  induction ns; eauto.
+Qed.
+
+Lemma binders_ok_all_binders: forall c,
+  binders_ok c (make_vs_from_binders (all_binders c)).
+Proof.
+  induction c; simpl in *; eauto.
+  all: split.
+  all: rewrite make_vs_from_binders_spec.
+  all: rewrite map_app.
+  1,3: eapply binders_ok_append; eauto.
+  all: eapply binders_ok_append2; eauto.
+Qed.
+
+Theorem names_contain_spec: forall x ns,
+  names_contain ns x = true <-> In x ns.
+Proof.
+  induction ns; simpl in *; eauto.
+  - split; intros; [congruence|eauto].
+  - destruct (_ =? _) eqn:?; simpl; eauto.
+    + rewrite Nat.eqb_eq in *; split; eauto.
+    + rewrite Nat.eqb_neq in *.
+      split; intros; [rewrite <- IHns|rewrite IHns]; eauto.
+      pat `_ \/ _` at destruct H; congruence.
+Qed.
+
+Lemma names_unique_In: forall ns x acc,
+  (In x ns \/ In x acc) -> In x (names_unique ns acc).
+Proof.
+  induction ns; intros; simpl in *; eauto.
+  1: pat `_ \/ _` at destruct pat; eauto.
+  1: pat `False` at inversion pat.
+  destruct (names_contain acc a) eqn:?.
+  - rewrite names_contain_spec in *; cleanup.
+    pat `_ \/ _` at destruct pat; eauto.
+    pat `_ \/ _` at destruct pat; eauto.
+    eapply IHns; subst; eauto.
+  - subst.
+    eapply IHns; subst; eauto; simpl in *; cleanup.
+    pat `_ \/ _` at destruct pat; eauto.
+    pat `_ \/ _` at destruct pat; eauto.
+Qed.
+
+Lemma binders_ok_names_unique: forall c ns,
+  binders_ok c (make_vs_from_binders ns) ->
+    binders_ok c (make_vs_from_binders (names_unique ns [])).
+Proof.
+  induction c; intros; simpl in *; cleanup; eauto.
+  all: rewrite make_vs_from_binders_spec in *.
+  all: rewrite in_map_iff in *; cleanup; eexists; split; eauto.
+  all: eapply names_unique_In; eauto.
+Qed.
+
+Theorem binders_ok_unique_binders: forall c,
+  binders_ok c (make_vs_from_binders (unique_binders c)).
+Proof.
+  induction c; simpl in *; eauto.
+  all: try split.
+  all: unfold unique_binders, dlet in *; simpl.
+  all: eapply binders_ok_names_unique.
+  all: rewrite make_vs_from_binders_spec; rewrite map_app.
+  1,3: eapply binders_ok_append.
+  3,4: eapply binders_ok_append2.
+  all: rewrite <- make_vs_from_binders_spec.
+  all: eapply binders_ok_all_binders.
+Qed.
+
 Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
     c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
     find_fun n funcs = Some (params, body) ->
@@ -2992,50 +3091,6 @@ Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
 Proof.
 Admitted.
 
-Lemma binders_ok_append: forall c b1 b2,
-  binders_ok c b1 ->
-    binders_ok c (b1 ++ b2).
-Proof.
-  intros.
-  induction c; simpl in *; cleanup; eauto.
-  all: rewrite <- index_of_app; eauto.
-  all: rewrite length_app.
-  all: lia.
-Qed.
-
-Lemma make_vs_from_binders_length: forall l,
-  List.length (make_vs_from_binders l) = List.length l.
-Proof.
-  induction l; simpl in *; eauto.
-Qed.
-
-(* Lemma binders_ok_unique_binders_append: forall c b1 b2,
-  binders_ok c (make_vs_from_binders (names_unique b1 [])) ->
-    binders_ok c (make_vs_from_binders (names_unique (b1 ++ b2) [])).
-Proof.
-  intros.
-  induction c; simpl in *; cleanup; eauto.
-  all: rewrite index_of_In in *.
-  1: {
-    assert (List.length (names_unique b1 []) <= List.length (names_unique (b1 ++ b2) [])) by admit.
-    rewrite make_vs_from_binders_length in *.
-  }
-  all: rewrite <- index_of_app; eauto.
-  all: rewrite length_app.
-  all: lia.
-Qed. *)
-
-Lemma binders_ok_unique_binders: forall c,
-  binders_ok c (make_vs_from_binders (unique_binders c)).
-Proof.
-  induction c; simpl in *; eauto.
-  all: try split.
-  all: try rewrite Nat.eqb_refl; try lia.
-  all: unfold unique_binders, dlet in *; simpl.
-  all: admit.
-Admitted.
-
-(* TODO: need to know that main_c ends with a return, should follow from the fact that its a function *)
 Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
   catch_return (eval_cmd main_c (EVAL_CMD fuel)) s = (res,s1) -> res ≠ Stop Crash ->
   s.(vars) = IEnv.empty ->
@@ -3086,11 +3141,9 @@ Proof.
   specialize (c_fundefs_fs_same _ _ _ _ _ _ _ _ _ Heqcfuns Heqcfuns0) as ?; subst.
   pat `c_fundefs _ _ [] = (_, _, _)` at clear pat.
   remember (lookup _ l) as lookup_main_l.
-
   spat `c_fundefs` at rewrite init_length_same with (l2 := lookup_main_l) in spat.
   pat `find_fun _ _ = _` at rename pat into Hfind_fun.
   pat `c_fundefs _ _ _ = (_, _, _)` at specialize (c_fundefs_code_in _ _ _ _ _ _ _ _ _ pat Hfind_fun) as ?; cleanup.
-
   unfold c_fundef, dlet in *.
   destruct (c_pushes _ _) eqn:?.
   destruct (c_cmd _ _) eqn:?.
@@ -3105,7 +3158,6 @@ Proof.
   repeat (rewrite code_in_append in *; simpl in * ); cleanup.
   rewrite Nat.add_0_r in *.
   remember (make_vs_from_binders _) as vs_binders.
-
   pose proof c_cmd_correct as Hccorrect; unfold goal_cmd in Hccorrect.
   eapply Hccorrect with (curr := (Word (word.of_Z 0)) :: (List.map (fun _ => Uninit) vs_binders)) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
   all: simpl in *.

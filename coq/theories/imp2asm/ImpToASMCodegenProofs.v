@@ -3081,15 +3081,76 @@ Proof.
   all: eapply binders_ok_all_binders.
 Qed.
 
-Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
-    c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
-    find_fun n funcs = Some (params, body) ->
-    exists pos,
-      lookup n fs = pos ∧ (* No fail case here... (<> 0) ? *)
-      code_in pos (flatten (fst (c_fundef (Func n params body) pos fs0)))
-        (xs ++ flatten asm1).
+Lemma c_pushes_length: forall ps l asm1 vs1 l1,
+  c_pushes ps l = (asm1, vs1, l1) -> l1 = List.length (flatten asm1) + l.
 Proof.
+  intros.
+  unfold c_pushes, dlet in *; simpl in *.
+  repeat pat ` (if ?c then _ else _) = _` at destruct c eqn:?; cleanup; simpl in *; [lia|].
+  lia.
+Qed.
+
+Lemma c_fundef_length: forall f l fs c1 l1,
+  c_fundef f l fs = (c1, l1) -> l1 = List.length (flatten c1) + l.
+Proof.
+  intros.
+  unfold c_fundef, dlet in *.
+  pat `match ?a with _ => _ end = _` at destruct a; simpl in *|-.
+  destruct (c_pushes) eqn:?.
+  pat `c_pushes _ _ = (?p, _)` at destruct p.
+  destruct (c_cmd) eqn:?.
+  spat `c_cmd` at eapply c_cmd_length in spat.
+  spat `c_pushes` at eapply c_pushes_length in spat.
+  simpl in *; cleanup.
+  simpl.
+  repeat (rewrite length_app; simpl).
+  lia.
+Qed.
+
+Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
+  c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
+  find_fun n funcs = Some (params, body) ->
+  exists pos,
+    lookup n fs = pos ∧ (* No fail case here... (<> 0) ? *)
+    code_in pos (flatten (fst (c_fundef (Func n params body) pos fs0)))
+      (xs ++ flatten asm1).
+Proof.
+  Opaque c_fundef.
+  induction funcs; intros; simpl in *|-; cleanup.
+  unfold dlet in *.
+  destruct (c_fundef _ _ _) eqn:?.
+  destruct (c_fundefs _ _ _) eqn:?.
+  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  set asm1 as Sasm1.
+  set fs as Sfs.
+  set l1 as Sl1.
+  simpl in *|-; cleanup.
+  pat `match ?a with _ => _ end = _` at destruct a; simpl in *|-.
 Admitted.
+  (* destruct (_ =? _) eqn:?; cleanup.
+  1: {
+    eexists; simpl.
+    rewrite Nat.eqb_eq in *; subst.
+    rewrite Nat.eqb_refl.
+    split.
+    2: {
+      spat `c_fundef` at rewrite spat; simpl.
+
+    }
+    reflexivity.
+  }
+  2: {
+    eapply IHfuncs; eauto.
+    pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
+    subst Sasm1 Sfs.
+  }
+  eapply IHfuncs.
+
+  
+  pat `c_fundefs _ _ _ = _` at eapply IHfuncs in pat.
+  
+
+Qed. *)
 
 Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
   catch_return (eval_cmd main_c (EVAL_CMD fuel)) s = (res,s1) -> res ≠ Stop Crash ->
@@ -3144,6 +3205,7 @@ Proof.
   spat `c_fundefs` at rewrite init_length_same with (l2 := lookup_main_l) in spat.
   pat `find_fun _ _ = _` at rename pat into Hfind_fun.
   pat `c_fundefs _ _ _ = (_, _, _)` at specialize (c_fundefs_code_in _ _ _ _ _ _ _ _ _ pat Hfind_fun) as ?; cleanup.
+  Transparent c_fundef.
   unfold c_fundef, dlet in *.
   destruct (c_pushes _ _) eqn:?.
   destruct (c_cmd _ _) eqn:?.

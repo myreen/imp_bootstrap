@@ -485,13 +485,13 @@ Definition init_state (inp: llist ascii) (funs: list func): state :=
      output := [];
      steps_done := 0 |}.
 
-Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome unit * state) :=
+Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome Value * state) :=
   match p with
   | Program funcs =>
     let s0 := init_state input funcs in
     match find_fun (fun_name_of_string "main") funcs with
     | Some ([], main_c) =>
-      eval_cmd main_c (EVAL_CMD fuel) s0
+      catch_return (eval_cmd main_c (EVAL_CMD fuel)) s0
     | _ => crash s0
     end
   end.
@@ -521,4 +521,4 @@ Definition imp_output (fuel: nat) (input: llist ascii) (p: prog) :=
 Definition imp_weak_termination (input: llist ascii) (p: prog) (out: list ascii) :=
   exists fuel outcome s,
     eval_from fuel input p = (outcome, s) /\
-    (outcome <> Stop Abort -> outcome = Cont tt /\ s.(output) = out).
+    (outcome <> Stop Abort -> exists v, outcome = Cont v /\ s.(output) = out).

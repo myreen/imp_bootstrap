@@ -24,21 +24,12 @@ Fixpoint code_in (n : nat) (xs : list instr) (code : list instr) : Prop :=
 Definition init_code_in (instructions : list instr) : Prop :=
   exists start, code_in 0 (init start) instructions.
 
-(* Looks up the function with identifier n in a list of funcs and returns its parameters and body if found. *)
-Fixpoint lookup_fun (n : nat) (ds : list func) : option (list name * cmd) :=
-  match ds with
-  | [] => None
-  | (Func fname params body) :: ds =>
-    if eqb fname n then Some (params, body)
-    else lookup_fun n ds
-  end.
-
 (* Finds the position of function n in f_lookup if it exists. *)
 Fixpoint lookup_f (n : nat) (fs : f_lookup) : option nat :=
   match fs with
   | [] => None
   | (fname, pos) :: fs =>
-    if eqb fname n then Some pos
+    if fname =? n then Some pos
     else lookup_f n fs
   end.
 
@@ -46,9 +37,9 @@ Fixpoint lookup_f (n : nat) (fs : f_lookup) : option nat :=
 Definition code_rel (fs : f_lookup) (ds : list func) (instructions : list instr) : Prop :=
   init_code_in instructions /\
   forall n params body,
-    lookup_fun n ds = Some (params, body) ->
+    find_fun n ds = Some (params, body) ->
     exists pos,
-      lookup_f n fs = Some pos /\
+      lookup n fs = pos /\
       code_in pos (flatten (fst (c_fundef (Func n params body) pos fs))) instructions.
 
 (* Establishes a relation between an imperative state and an ASM state, including code alignment and register setup. *)
@@ -110,18 +101,18 @@ Definition env_ok (env : IEnv.env) (vs : list (option name)) (curr : list word_o
 
 Fixpoint binders_ok (c: cmd) (vs: list (option name)) :=
   match c with
-  | Skip => False
+  | Skip => True
   | Seq c1 c2 => binders_ok c1 vs /\ binders_ok c2 vs
   | Assign n e => index_of n 0 vs < List.length vs
-  | Update a e e' => False
+  | Update a e e' => True
   | If t c1 c2 => binders_ok c1 vs /\ binders_ok c2 vs
   | While tst body => binders_ok body vs
-  | ImpSyntax.Call n f es => index_of n 0 vs < List.length vs
-  | ImpSyntax.Return e => False
+  | ImpSyntax.Call n f es => True
+  | ImpSyntax.Return e => True
   | Alloc n e => index_of n 0 vs < List.length vs
   | ImpSyntax.GetChar n => index_of n 0 vs < List.length vs
-  | ImpSyntax.PutChar e => False
-  | ImpSyntax.Abort => False
+  | ImpSyntax.PutChar e => True
+  | ImpSyntax.Abort => True
   end.
 
 Definition cmd_res_rel (ri: outcome unit) (l1: nat)
@@ -675,6 +666,10 @@ Proof.
       eauto.
 Qed.
 
+(* Lemma code_in_append_2: forall n xs code1 code2,
+  code_in n xs (code1 ++ code2) <->
+    (code_in n xs code ∧ code_in (n + List.length xs) ys code). *)
+
 Theorem eval_exp_not_stop: forall e s res s1 v,
   eval_exp e s = (res, s1) ->
   res ≠ Stop Crash ->
@@ -882,14 +877,90 @@ Proof.
     reflexivity.
 Qed.
 
+Theorem index_of_spec_add: forall name vs k i,
+  index_of name (k + i) vs = i + index_of name k vs.
+Proof.
+  intros.
+  rewrite index_of_spec.
+  symmetry.
+  rewrite index_of_spec.
+  lia.
+Qed.
+
 Theorem index_of_bounds: forall name vs k,
-  index_of name k vs ≤ k + (List.length vs).
+  index_of name k vs ≤ k + List.length vs.
 Proof.
   induction vs; intros; simpl.
   1: rewrite Nat.add_0_r; constructor.
   simpl; destruct a.
   - destruct (_ =? _) eqn:?; simpl; try rewrite IHvs; lia.
   - try rewrite IHvs; lia.
+Qed.
+
+Theorem index_of_In: forall name vs k,
+  index_of name k vs < k + List.length vs <-> In (Some name) vs.
+Proof.
+  induction vs; intros; simpl.
+  1: rewrite Nat.add_0_r.
+  1: split; intros H; [lia|inversion H].
+  simpl; destruct a.
+  - destruct (_ =? _) eqn:?; simpl; split; intros H.
+    all: try rewrite Nat.eqb_eq in *; subst; eauto.
+    all: try lia.
+    1: right; rewrite <- IHvs.
+    1: pat `index_of _ _ _ < _` at rewrite index_of_spec_add in pat.
+    1: pat `_ < _ + S _` at rewrite Nat.add_succ_r in pat; rewrite Nat.add_1_l in pat; eapply PeanoNat.lt_S_n in pat.
+    1: eauto.
+    rewrite index_of_spec_add.
+    rewrite Nat.add_succ_r.
+    rewrite Nat.add_1_l.
+    rewrite <- Nat.succ_lt_mono.
+    rewrite IHvs.
+    pat `_ \/ _` at destruct pat.
+    1: pat `Some _ = Some _` at inversion pat; rewrite Nat.eqb_neq in *|-; congruence.
+    eauto.
+  - split; intros.
+    1: right; rewrite <- IHvs.
+    1: pat `index_of _ _ _ < _` at rewrite index_of_spec_add in pat.
+    1: pat `_ < _ + S _` at rewrite Nat.add_succ_r in pat; rewrite Nat.add_1_l in pat; eapply PeanoNat.lt_S_n in pat.
+    1: eauto.
+    rewrite index_of_spec_add.
+    rewrite Nat.add_succ_r.
+    rewrite Nat.add_1_l.
+    rewrite <- Nat.succ_lt_mono.
+    rewrite IHvs.
+    pat `_ \/ _` at destruct pat.
+    1: pat `None = Some _` at inversion pat.
+    eauto.
+Qed.
+
+Theorem index_of_app: forall name k vs1 vs2,
+  index_of name k vs1 < (List.length vs1) ->
+    index_of name k vs1 = index_of name k (vs1 ++ vs2).
+Proof.
+  intros.
+  induction vs1; simpl in *.
+  - inversion H.
+  - destruct a.
+    + destruct (_ =? _); try reflexivity.
+      assert (index_of name k vs1 = index_of name k (vs1 ++ vs2)).
+      2: {
+        do 2 (rewrite index_of_spec; symmetry).
+        pat `index_of name k vs1 = index_of name k (vs1 ++ vs2)` at do 2 (rewrite index_of_spec in pat; symmetry in pat).
+        lia.
+      }
+      rewrite IHvs1; eauto.
+      rewrite index_of_spec in *.
+      lia.
+    + assert (index_of name k vs1 = index_of name k (vs1 ++ vs2)).
+      2: {
+        do 2 (rewrite index_of_spec; symmetry).
+        pat `index_of name k vs1 = index_of name k (vs1 ++ vs2)` at do 2 (rewrite index_of_spec in pat; symmetry in pat).
+        lia.
+      }
+      rewrite IHvs1; eauto.
+      rewrite index_of_spec in *.
+      lia.
 Qed.
 
 Theorem index_of_lbound: forall name vs k,
@@ -1167,9 +1238,9 @@ Ltac apply_IEnv_lookup :=
     eapply H2 in H1; cleanup
   end.
 
-Ltac apply_lookup_fun :=
+Ltac apply_find_fun :=
   match goal with
-  | [ H1 : lookup_fun _ _ = _, H2: context[lookup_fun _ _] |- _ ] =>
+  | [ H1 : find_fun _ _ = _, H2: context[find_fun _ _] |- _ ] =>
     eapply H2 in H1; cleanup
   end.
 
@@ -1212,7 +1283,7 @@ Proof.
     cleanup.
     eauto.
   - unfold code_rel in *; cleanup.
-    apply_lookup_fun.
+    apply_find_fun.
     eexists.
     split; eauto.
   - eexists; eexists.
@@ -2306,6 +2377,9 @@ Proof.
   split; eauto.
   split; [eapply pmap_subsume_refl|].
   simpl; split; eauto; eauto.
+  pat `ImpSemantics.output _ = _` at rewrite pat.
+  rewrite prefix_correct.
+  eapply substring_noop.
 Qed.
 
 (* Theorem c_cmd_Return: forall (e: exp),
@@ -2901,42 +2975,6 @@ Lemma c_fundefs_fs_same: forall funs lstart f_lookup a1 a2 fs1 fs2 l1 l2,
 Proof.
 Admitted.
 
-(* lookup_main f_lookup is a result of c_fundef (and so it has a ret at the end) *)
-Lemma main_is_c_fundef: forall funcs f_lookup main_l main_c defs_asm defs_l,
-  find_fun (fun_name_of_string "main") funcs = Some ([], main_c) ->
-  c_fundefs funcs (Datatypes.length (init 0)) f_lookup = (defs_asm, f_lookup, defs_l) ->
-  lookup (fun_name_of_string "main") f_lookup = main_l ->
-  exists main_l1 main_asm f_lookup1,
-    c_fundef (Func (fun_name_of_string "main") [] main_c) main_l f_lookup1 = (main_asm, main_l1).
-Proof.
-  intros.
-  Opaque fun_name_of_string.
-  Opaque c_fundef.
-  induction funcs; simpl in *.
-  1: pat `None = Some _` at inversion pat.
-  destruct a.
-  unfold dlet in *.
-  destruct (c_fundefs funcs _ _) eqn:?.
-  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
-  simpl in *.
-  destruct (c_fundef _ _ _) eqn:?.
-  simpl in *.
-  pat ` (_, _, _) = (_, _, _)` at inversion pat; subst.
-  destruct (fun_name_of_string "main" =? _) eqn:?.
-  - rewrite Nat.eqb_eq in *; subst.
-    do 3 eexists.
-    eauto.
-    admit.
-  - intros.
-    admit.
-  Transparent c_fundef.
-Admitted.
-
-(* TODO: Lemma that c_fundef implies code_in ??? *)
-(* Lemma c_fundef_code_in:
-  c_fundef f_c1 l1 f_lookup1 = (asm1, l2) ->
-  code_in l1 asm1 t.(instructions). *)
-
 Lemma init_length_same: forall l1 l2,
   List.length (init l1) = List.length (init l2).
 Proof.
@@ -2954,11 +2992,54 @@ Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
 Proof.
 Admitted.
 
-(* evaluating a function body results in a return (or rather doesn't result in a Cont) *)
+Lemma binders_ok_append: forall c b1 b2,
+  binders_ok c b1 ->
+    binders_ok c (b1 ++ b2).
+Proof.
+  intros.
+  induction c; simpl in *; cleanup; eauto.
+  all: rewrite <- index_of_app; eauto.
+  all: rewrite length_app.
+  all: lia.
+Qed.
+
+Lemma make_vs_from_binders_length: forall l,
+  List.length (make_vs_from_binders l) = List.length l.
+Proof.
+  induction l; simpl in *; eauto.
+Qed.
+
+(* Lemma binders_ok_unique_binders_append: forall c b1 b2,
+  binders_ok c (make_vs_from_binders (names_unique b1 [])) ->
+    binders_ok c (make_vs_from_binders (names_unique (b1 ++ b2) [])).
+Proof.
+  intros.
+  induction c; simpl in *; cleanup; eauto.
+  all: rewrite index_of_In in *.
+  1: {
+    assert (List.length (names_unique b1 []) <= List.length (names_unique (b1 ++ b2) [])) by admit.
+    rewrite make_vs_from_binders_length in *.
+  }
+  all: rewrite <- index_of_app; eauto.
+  all: rewrite length_app.
+  all: lia.
+Qed. *)
+
+Lemma binders_ok_unique_binders: forall c,
+  binders_ok c (make_vs_from_binders (unique_binders c)).
+Proof.
+  induction c; simpl in *; eauto.
+  all: try split.
+  all: try rewrite Nat.eqb_refl; try lia.
+  all: unfold unique_binders, dlet in *; simpl.
+  all: admit.
+Admitted.
 
 (* TODO: need to know that main_c ends with a return, should follow from the fact that its a function *)
 Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
-  eval_cmd main_c (EVAL_CMD fuel) s = (res,s1) -> res ≠ Stop Crash ->
+  catch_return (eval_cmd main_c (EVAL_CMD fuel)) s = (res,s1) -> res ≠ Stop Crash ->
+  s.(vars) = IEnv.empty ->
+  s.(ImpSemantics.memory) = [] ->
   s.(funs) = funcs ->
   t.(pc) = 0 ->
   t.(instructions) = codegen (Program funcs) ->
@@ -2993,7 +3074,7 @@ Proof.
   Opaque fun_name_of_string.
   simpl in *.
   unfold catch_return in *.
-  (* spat `let (_, _) := ?x in _` at destruct x eqn:?; unfold_outcome. *)
+  spat `let (_, _) := ?x in _` at destruct x eqn:?; unfold_outcome.
   destruct (c_fundefs funcs _ _) eqn:Heqcfuns0.
   spat `c_fundefs _ _ _ = (?p, _)` at destruct p.
   simpl in *.
@@ -3009,28 +3090,24 @@ Proof.
   spat `c_fundefs` at rewrite init_length_same with (l2 := lookup_main_l) in spat.
   pat `find_fun _ _ = _` at rename pat into Hfind_fun.
   pat `c_fundefs _ _ _ = (_, _, _)` at specialize (c_fundefs_code_in _ _ _ _ _ _ _ _ _ pat Hfind_fun) as ?; cleanup.
-  
-  specialize (main_is_c_fundef s.(funs) l (lookup_main_l) main_c) as ?.
-  pat `find_fun _ _ = _` at pose proof pat as Hlookupmainimp.
-  pat `forall _, _` at eapply pat in Hlookupmainimp; eauto; clear pat; cleanup.
+
   unfold c_fundef, dlet in *.
   destruct (c_pushes _ _) eqn:?.
   destruct (c_cmd _ _) eqn:?.
   simpl in *.
-  pat ` (_, _) = (_, _)` at inversion pat; clear pat.
+  repeat (rewrite code_in_append in *; simpl in * ); cleanup.
+  assert (s0 = s1) by do 2 (spat `match ?o with _ => _ end` at destruct o; inversion spat; try congruence).
+  (* pat ` (_, _) = (_, _)` at inversion pat; clear pat. *)
   pat `c_pushes _ _ = (?p, _)` at destruct p.
   unfold c_pushes, dlet in *; simpl in *.
   pat ` (_, _, _) = (_, _, _)` at inversion pat; subst; clear pat.
   remember (lookup _ l) as lookup_main_l.
-  repeat (rewrite code_in_append in *; simpl in *); cleanup.
+  repeat (rewrite code_in_append in *; simpl in * ); cleanup.
   rewrite Nat.add_0_r in *.
   remember (make_vs_from_binders _) as vs_binders.
-  assert (List.length vs_binders = List.length (List.map (fun _ => Word (word.of_Z 0)) vs_binders)) as Hlengthbinders by (rewrite length_map; reflexivity).
-  (* spat `Sub_RSP` at rewrite Hlengthbinders in spat.
-  spat `c_cmd` at specialize (c_cmd_length _ _ _ _ _ _ spat) as Hmain_c_l; rewrite Hmain_c_l in *. *)
 
   pose proof c_cmd_correct as Hccorrect; unfold goal_cmd in Hccorrect.
-  eapply Hccorrect with (curr := (List.map (fun _ => Word (word.of_Z 0)) vs_binders) ++ [Word (word.of_Z 0)]) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
+  eapply Hccorrect with (curr := (Word (word.of_Z 0)) :: (List.map (fun _ => Uninit) vs_binders)) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
   all: simpl in *.
   1: { (* main goal *)
     destruct_pair.
@@ -3044,52 +3121,12 @@ Proof.
     remember (Comment "malloc" :: _) as init_rest; clear Heqinit_rest.
     unfold cmd_res_rel in * ; cleanup.
     pat `eval_cmd _ _ _ = (?res, _)` at destruct res; cleanup.
-    2: { (* res = Stop v *)
-      pat `match ?s with _ => _ end` at destruct s; cleanup.
-      1: { (* s0 = State *)
-        pat `eval_cmd _ _ _ = (Stop ?v, _)` at destruct v; cleanup; [| |congruence|pat `False` at inversion pat].
-        1: { (*res = Stop (Return v)*)
-          eexists; split.
-          1: {
-            eapply steps_trans.
-            1: eapply steps_step_same; eapply step_const.
-            1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-            eapply steps_trans.
-            1: eapply steps_step_same; eapply step_const.
-            1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-            eapply steps_trans.
-            1: eapply steps_step_same; eapply step_const.
-            1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-            eapply steps_trans.
-            1: eapply steps_step_same; eapply step_call.
-            1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-            eapply steps_trans.
-            1: simpl in *.
-            1: eapply steps_step_same; eapply step_sub_rsp.
-            1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
-            1: reflexivity.
-            eapply steps_trans.
-            1: simpl in *; eauto.
-            pat `steps _ _` at specialize (steps_instructions _ _ _ _ pat) as Hs0instr; simpl in Hs0instr; rewrite Htinstr in Hs0instr.
-            eapply steps_trans.
-            1: eapply steps_step_same; eapply step_ret.
-            1: eauto.
-            1: unfold has_stack in *; cleanup; eauto.
-            subst; simpl.
-            eapply steps_trans.
-            1: eapply steps_step_same; eapply step_const.
-            1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
-            eapply steps_step_same; eapply step_exit.
-            1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
-            1: simpl; reflexivity.
-            simpl; rewrite Nat.Div0.mod_0_l; reflexivity.
-          }
-          simpl.
-          rewrite Properties.word.eqb_eq; [|simpl;reflexivity].
-          unfold state_rel in *; cleanup.
-          split; eauto.
-        }
-        (* res = Stop TimeOut *)
+    1: congruence.
+    (* res = Stop v *)
+    pat `match ?s with _ => _ end` at destruct s; cleanup.
+    1: { (* s0 = State *)
+      pat `eval_cmd _ _ _ = (Stop ?v, _)` at destruct v; cleanup; [| |congruence|pat `False` at inversion pat].
+      1: { (*res = Stop (Return v)*)
         eexists; split.
         1: {
           eapply steps_trans.
@@ -3109,13 +3146,28 @@ Proof.
           1: eapply steps_step_same; eapply step_sub_rsp.
           1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
           1: reflexivity.
-          eauto.
+          eapply steps_trans.
+          1: simpl in *; eauto.
+          pat `steps _ _` at specialize (steps_instructions _ _ _ _ pat) as Hs0instr; simpl in Hs0instr; rewrite Htinstr in Hs0instr.
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_ret.
+          1: eauto.
+          1: unfold has_stack in *; cleanup; eauto.
+          subst; simpl.
+          eapply steps_trans.
+          1: eapply steps_step_same; eapply step_const.
+          1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
+          eapply steps_step_same; eapply step_exit.
+          1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
+          1: simpl; reflexivity.
+          simpl; rewrite Nat.Div0.mod_0_l; reflexivity.
         }
         simpl.
+        rewrite Properties.word.eqb_eq; [|simpl;reflexivity].
         unfold state_rel in *; cleanup.
         split; eauto.
       }
-      (* s0 = Halt *)
+      (* res = Stop TimeOut *)
       eexists; split.
       1: {
         eapply steps_trans.
@@ -3138,66 +3190,10 @@ Proof.
         eauto.
       }
       simpl.
-      destruct (word.eqb)%Z eqn:?; cleanup; eauto.
-      pat `_ ∨ _` at destruct pat.
-      all: spat `word.eqb` at eapply Properties.word.eqb_true in spat; subst.
-      all: rewrite Properties.word.eq_of_Z_iff in *.
-      all: do 2 rewrite Z.mod_small in *; [|lia|lia|lia].
-      all: spat `_ = 0%Z` at inversion spat.
-    }
-    (* res = Cont v *)
-    pat `match ?s with _ => _ end` at destruct s; cleanup.
-    1: { (* s0 = State *)
-      eexists; split.
-      1: {
-        eapply steps_trans.
-        1: eapply steps_step_same; eapply step_const.
-        1: unfold fetch; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same; eapply step_const.
-        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same; eapply step_const.
-        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same; eapply step_call.
-        1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
-        eapply steps_trans.
-        1: simpl in *.
-        1: eapply steps_step_same; eapply step_sub_rsp.
-        1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
-        1: simpl; reflexivity.
-        eapply steps_trans.
-        1: simpl in *; eauto.
-        pat `steps _ _` at specialize (steps_instructions _ _ _ _ pat) as Hs0instr; simpl in Hs0instr; rewrite Htinstr in Hs0instr.
-        pat `steps _ _` at specialize (steps_instructions _ _ _ _ pat) as Hs0instrfolded; simpl in Hs0instrfolded; rewrite Htinstrfolded in Hs0instrfolded.
-        eapply steps_trans.
-        1: eapply steps_step_same; eapply step_add_rsp.
-        1: unfold fetch; simpl; rewrite <- Hs0instrfolded; simpl; eauto.
-        1: pat `pc s0 = _` at rewrite pat; eauto.
-        1: exact H11.
-        (* add_RSP before *)
-        1: eapply steps_step_same; eapply step_ret.
-        1: unfold fetch; simpl; rewrite <- Hs0instrfolded; simpl; eauto.
-        1: pat `pc s0 = _` at rewrite pat; eauto.
-        1: unfold has_stack in *; cleanup; eauto.
-        1: pat `stack s0 = _` at rewrite <- pat in *|-.
-        subst; simpl.
-        eapply steps_trans.
-        1: eapply steps_step_same; eapply step_const.
-        1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
-        eapply steps_step_same; eapply step_exit.
-        1: unfold fetch; simpl; rewrite <- Hs0instr; simpl; eauto.
-        1: simpl; reflexivity.
-        simpl; rewrite Nat.Div0.mod_0_l; reflexivity.
-      }
-      simpl.
-      admit.
-      (* rewrite Properties.word.eqb_eq; [|simpl;reflexivity].
       unfold state_rel in *; cleanup.
-      split; eauto. *)
+      split; eauto.
     }
-    (* res = Stop TimeOut *)
+    (* s0 = Halt *)
     eexists; split.
     1: {
       eapply steps_trans.
@@ -3212,10 +3208,17 @@ Proof.
       eapply steps_trans.
       1: eapply steps_step_same; eapply step_call.
       1: unfold fetch; simpl; rewrite Htinstr; rewrite Htpc; simpl; eauto.
+      eapply steps_trans.
+      1: simpl in *.
+      1: eapply steps_step_same; eapply step_sub_rsp.
+      1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
+      1: simpl in *; reflexivity.
+      simpl in *.
+      pat `vs_binders = _` at rewrite <- pat in *.
+      pat `lookup_main_l = _` at rewrite <- pat in *.
       eauto.
     }
     simpl.
-    unfold state_rel in *; cleanup.
     destruct (word.eqb)%Z eqn:?; cleanup; eauto.
     pat `_ ∨ _` at destruct pat.
     all: spat `word.eqb` at eapply Properties.word.eqb_true in spat; subst.
@@ -3223,26 +3226,70 @@ Proof.
     all: do 2 rewrite Z.mod_small in *; [|lia|lia|lia].
     all: spat `_ = 0%Z` at inversion spat.
   }
-  1: eauto.
+  all: simpl in *.
+  1: do 2 (spat `match ?o with _ => _ end` at destruct o; inversion spat; try congruence).
   5: { (* has_stack *)
     unfold has_stack.
     do 2 eexists.
     repeat split.
     pat `stack t = _` at rewrite pat.
     pat `pc t = _` at rewrite pat.
-    (* ?curr ++ ?rest = Word (word.of_Z 0) :: RetAddr (pc t + 1 + 1 + 1 + 1) :: stack t
- *)
     simpl.
+    pat `vs_binders = _` at rewrite pat.
     reflexivity.
   }
-  3: { (* env_ok *)
-    unfold env_ok.
-    repeat split.
-    all: simpl.
-    all: admit.
+  1: { (* c_cmd main_c *)
+    pat `lookup_main_l = _` at rewrite <- pat.
+    eauto.
   }
-
-Admitted.
+  1: { (* state_rel *)
+    unfold state_rel; simpl.
+    repeat split; eauto.
+    - unfold init_code_in.
+      eexists.
+      pat `instructions t = _` at rewrite pat.
+      Transparent init.
+      simpl; repeat (split; eauto).
+    - intros.
+      spat `find_fun` at eapply c_fundefs_code_in in spat; eauto.
+      pat `instructions t = _` at rewrite pat.
+      cleanup; eexists.
+      split; eauto.
+    - spat `memory_writable` at pose proof memory_writable as ?.
+      spat `memory_writable` at unfold memory_writable in spat; cleanup.
+      do 2 eexists.
+      repeat split; eauto.
+  }
+  2: { (* binders_ok *)
+    pat `vs_binders = _` at rewrite pat.
+    eapply binders_ok_append.
+    eapply binders_ok_unique_binders.
+  }
+  4: unfold odd, even; simpl; reflexivity.
+  4: { (* code_in *)
+    pat `lookup_main_l = _` at rewrite <- pat.
+    pat `instructions t = _` at rewrite pat.
+    eauto.
+  }
+  3: { (* pmap_ok *)
+    instantiate (1 := (fun _ => None)).
+    unfold pmap_ok.
+    intros; cleanup.
+  }
+  1: { (* env_ok *)
+    pat `vars s = _` at rewrite pat.
+    unfold env_ok; simpl.
+    Opaque init.
+    repeat split.
+    1: pat `vs_binders = _` at rewrite pat.
+    1: rewrite length_app; simpl in *; rewrite length_map; lia.
+    all: rewrite IEnv.lookup_empty in *; cleanup.
+  }
+  (* mem_inv *)
+  pat `ImpSemantics.memory s = _` at rewrite pat.
+  unfold mem_inv; intros.
+  rewrite nth_error_nil in *; cleanup.
+Qed.
 
 Theorem codegen_terminates: forall fuel sd,
   forall input prog output1 output2,
@@ -3253,6 +3300,9 @@ Proof.
   intros.
   destruct prog; cleanup.
   simpl in *; unfold prog_terminates, eval_from, asm_terminates, init_state_ok in *; cleanup; subst.
+  pat `match ?s with _ => _ end = _` at destruct s eqn:?; unfold_outcome; cleanup.
+  pat ` (let (_, _) := ?x in _) = _` at destruct x.
+  pat `match ?s with _ => _ end = _` at destruct s; unfold_outcome; cleanup.
   spat `eval_cmd` at eapply codegen_thm in spat; simpl; eauto; cleanup; [|congruence].
   pat `let (_, _) := ?x in _` at destruct x.
   pat `match ?s with _ => _ end` at destruct s.
@@ -3263,9 +3313,9 @@ Proof.
   all: unfold init_state in *; simpl in *.
   all: rewrite Nat.sub_0_r in *.
   all: spat `steps` at eapply steps_determ in spat; cleanup.
-  2,4: exact H1. (* TODO: add a reverse version of (s)pat? *)
+  2,4: pat`steps _ (Halt (word.of_Z 0) _, _)` at exact pat.
   all: subst.
   all: spat `Halt` at inversion spat; subst.
-  2: rewrite Z.eqb_neq in *; congruence.
+  2: spat `word.eqb` at eapply Properties.word.eqb_false in spat; congruence.
   reflexivity.
 Qed.

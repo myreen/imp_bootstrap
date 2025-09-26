@@ -194,10 +194,6 @@ Definition c_store : asm_appl :=
     ASMSyntax.Add RDI RDX;
     ASMSyntax.Store RAX RDI (word.of_Z 0) ].
 
-(* TODO(kπ)
-- check Equations – ask Yawen – Yawen says "probably not"
-- otherwise, use the Ltac rewriting tactic (Fixpoint + Definition := unfold_once_fix )
-*)
 Function c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
   match e with
   | Var n => c_var n l vs
@@ -425,9 +421,7 @@ Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
     let/d vs_binders := make_vs_from_binders binders in
     let/d asm1 := List [Sub_RSP (List.length vs_binders)] in
     let/d '(asm2, l2) := c_cmd body (l0 + 1) fs (vs_binders ++ vs0) in
-    let/d '(asm3, l3) := make_ret (vs_binders ++ vs0) l2 in
-    (* Maybe need a [Const 0] before the [Ret], so that it's a `return 0;` *)
-    (asm0 +++ asm1 +++ asm2 +++ asm3, l3)
+    (asm0 +++ asm1 +++ asm2, l2)
   end.
 
 (* TODO(kπ) termination is unobvious to Coq, super unimportant function, hacked for now *)

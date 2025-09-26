@@ -2966,20 +2966,6 @@ Definition asm_terminates (input: llist ascii) (asm: asm) (fuel: nat) (output: l
 Ltac destruct_pair :=
   pat `let (_, _) := ?x in _` at destruct x.
 
-Lemma c_fundefs_l_same: forall funs lstart f_lookup a1 a2 fs1 fs2 l1 l2,
-  c_fundefs funs lstart f_lookup = (a1, fs1, l1) ->
-  c_fundefs funs lstart [] = (a2, fs2, l2) ->
-  l1 = l2.
-Proof.
-Admitted.
-
-Lemma c_fundefs_fs_same: forall funs lstart f_lookup a1 a2 fs1 fs2 l1 l2,
-  c_fundefs funs lstart f_lookup = (a1, fs1, l1) ->
-  c_fundefs funs lstart [] = (a2, fs2, l2) ->
-  fs1 = fs2.
-Proof.
-Admitted.
-
 Lemma init_length_same: forall l1 l2,
   List.length (init l1) = List.length (init l2).
 Proof.
@@ -3107,6 +3093,98 @@ Proof.
   lia.
 Qed.
 
+Lemma c_cmd_l_same: forall c lstart f_lookup a1 a2 vs l1 l2,
+  c_cmd c lstart f_lookup vs = (a1, l1) ->
+  c_cmd c lstart [] vs = (a2, l2) ->
+  l1 = l2.
+Proof.
+  induction c; intros.
+  Transparent c_cmd.
+  all: simpl in *; unfold dlet in *; cleanup; eauto.
+  Opaque c_cmd.
+  - destruct c_cmd eqn:?.
+    destruct (c_cmd c1) eqn:?.
+    destruct (c_cmd _ _ []) eqn:?.
+    destruct (c_cmd c1 _ []) eqn:?.
+    simpl in *.
+    eapply IHc1 in Heqp0; eauto; subst.
+    eapply IHc2; eauto.
+  - destruct c_cmd eqn:?.
+    destruct (c_cmd c1) eqn:?.
+    destruct (c_cmd _ _ []) eqn:?.
+    destruct (c_cmd c1 _ []) eqn:?.
+    simpl in *.
+    eapply IHc1 in Heqp0; eauto; subst.
+    eapply IHc2; eauto.
+  - destruct c_cmd eqn:?.
+    destruct (c_test_jump) eqn:?.
+    destruct (c_cmd _ _ []) eqn:?.
+    simpl in *.
+    f_equal.
+    eapply IHc; eauto.
+  - destruct c_var eqn:?.
+    destruct (c_var _ (_ + _ + app_list_length (align (even_len vs) (List [Call 0]))) _) eqn:?.
+    destruct c_exps eqn:?.
+    simpl in *.
+    destruct even_len eqn:?; simpl in *.
+    all: spat `c_var` at rewrite spat in *; cleanup.
+    all: reflexivity.
+Qed.
+
+Lemma c_fundef_l_same: forall f lstart f_lookup a1 a2 l1 l2,
+  c_fundef f lstart f_lookup = (a1, l1) ->
+  c_fundef f lstart [] = (a2, l2) ->
+  l1 = l2.
+Proof.
+  intros.
+  unfold c_fundef,dlet in *.
+  pat `match ?f with _ => _ end = _` at destruct f.
+  destruct c_pushes eqn:?.
+  pat `c_pushes _ _ = (?p, _)` at destruct p.
+  destruct c_cmd eqn:?.
+  destruct (c_cmd _ _ []_) eqn:?.
+  simpl in *; cleanup.
+  eapply c_cmd_l_same; eauto.
+Qed.
+
+(* Lemma c_fundefs_l_same: forall funs lstart f_lookup a1 a2 fs1 fs2 l1 l2,
+  c_fundefs funs lstart f_lookup = (a1, fs1, l1) ->
+  c_fundefs funs lstart [] = (a2, fs2, l2) ->
+  l1 = l2.
+Proof.
+  induction funs; intros; simpl in *; cleanup; eauto.
+  unfold dlet in *.
+  destruct c_fundef eqn:?.
+  destruct (c_fundef _ _ []) eqn:?.
+  destruct c_fundefs eqn:?.
+  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  destruct (c_fundefs _ _ []) eqn:?.
+  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  simpl in *; cleanup; subst.
+  eapply c_fundef_l_same in Heqp; eauto; subst.
+  eapply IHfuns; eauto.
+Qed.
+
+Lemma c_fundefs_fs_same: forall funs lstart a1 a2 fs1 fs2 l1 l2,
+  c_fundefs funs lstart [] = (a1, fs1, l1) ->
+  c_fundefs funs lstart fs1 = (a2, fs2, l2) ->
+  fs1 = fs2.
+Proof.
+  induction funs; intros; simpl in *; cleanup; eauto.
+  unfold dlet in *.
+  destruct c_fundef eqn:?.
+  destruct (c_fundef _ _ []) eqn:?.
+  destruct c_fundefs eqn:?.
+  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  destruct (c_fundefs _ _ []) eqn:?.
+  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  simpl in *; cleanup; subst.
+  
+Admitted. *)
+  (* eapply c_fundef_l_same in Heqp; eauto; subst.
+  eapply IHfuns; eauto.
+Admitted. *)
+
 Theorem code_in_append_left: forall ys xs k,
   k = List.length xs -> code_in k ys (xs ++ ys).
 Proof.
@@ -3138,6 +3216,26 @@ Proof.
       rewrite length_app; simpl.
       lia.
 Qed.
+
+Lemma lookup_append: forall n fs1 fs0 l,
+  exists pos,
+    lookup n (fs1 ++ (n, l) :: fs0) = pos.
+Proof.
+  induction fs1; intros; simpl in *.
+  - eexists.
+    rewrite Nat.eqb_refl.
+    reflexivity.
+  - destruct a.
+    destruct (_ =? _) eqn:?.
+    + rewrite Nat.eqb_eq in *; subst; eauto.
+    + eauto.
+Qed.
+
+Lemma c_fundefs_fs_extended: forall funcs l fs0 fs asm1 l1,
+  c_fundefs funcs l fs0 = (asm1, fs, l1) ->
+    exists fs1, fs = fs1 ++ fs0.
+Proof.
+Admitted.
 
 Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
   c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->

@@ -420,7 +420,6 @@ Fixpoint EVAL_CMD (fuel: nat) (c : cmd) {struct fuel} : SRM unit :=
 Theorem eval_cmd_steps_done_ge_fuel: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit) (v: Value),
   eval_cmd c (EVAL_CMD fuel) s = (o, s1) -> o = Stop TimeOut -> (s1.(steps_done) - s.(steps_done) >= fuel).
 Proof.
-  admit.
 Admitted.
 
 Theorem eval_cmd_steps_done_steps_up: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
@@ -448,7 +447,6 @@ Proof.
   | _ => eapply Nat.le_refl
   | _ => lia
   end.
-  all: admit.
 Admitted.
 
 Theorem EVAL_CMD_steps_done_steps_up: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),

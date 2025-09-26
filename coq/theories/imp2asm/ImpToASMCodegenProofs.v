@@ -3093,9 +3093,9 @@ Proof.
   lia.
 Qed.
 
-Lemma c_cmd_l_same: forall c lstart f_lookup a1 a2 vs l1 l2,
+Lemma c_cmd_l_same: forall c lstart f_lookup f_lookup0 a1 a2 vs l1 l2,
   c_cmd c lstart f_lookup vs = (a1, l1) ->
-  c_cmd c lstart [] vs = (a2, l2) ->
+  c_cmd c lstart f_lookup0 vs = (a2, l2) ->
   l1 = l2.
 Proof.
   induction c; intros.
@@ -3104,26 +3104,26 @@ Proof.
   Opaque c_cmd.
   - destruct c_cmd eqn:?.
     destruct (c_cmd c1) eqn:?.
-    destruct (c_cmd _ _ []) eqn:?.
-    destruct (c_cmd c1 _ []) eqn:?.
+    destruct (c_cmd _ _ f_lookup0) eqn:?.
+    destruct (c_cmd c1 _ f_lookup0) eqn:?.
     simpl in *.
     eapply IHc1 in Heqp0; eauto; subst.
     eapply IHc2; eauto.
   - destruct c_cmd eqn:?.
     destruct (c_cmd c1) eqn:?.
-    destruct (c_cmd _ _ []) eqn:?.
-    destruct (c_cmd c1 _ []) eqn:?.
+    destruct (c_cmd _ _ f_lookup0) eqn:?.
+    destruct (c_cmd c1 _ f_lookup0) eqn:?.
     simpl in *.
     eapply IHc1 in Heqp0; eauto; subst.
     eapply IHc2; eauto.
   - destruct c_cmd eqn:?.
     destruct (c_test_jump) eqn:?.
-    destruct (c_cmd _ _ []) eqn:?.
+    destruct (c_cmd _ _ f_lookup0) eqn:?.
     simpl in *.
     f_equal.
     eapply IHc; eauto.
   - destruct c_var eqn:?.
-    destruct (c_var _ (_ + _ + app_list_length (align (even_len vs) (List [Call 0]))) _) eqn:?.
+    destruct (c_var n (snd (c_exps es lstart vs) + app_list_length (c_pops es vs) + app_list_length (align (even_len vs) (List [Call (lookup f f_lookup0)])))) eqn:?.
     destruct c_exps eqn:?.
     simpl in *.
     destruct even_len eqn:?; simpl in *.
@@ -3131,9 +3131,9 @@ Proof.
     all: reflexivity.
 Qed.
 
-Lemma c_fundef_l_same: forall f lstart f_lookup a1 a2 l1 l2,
+Lemma c_fundef_l_same: forall f lstart f_lookup f_lookup0 a1 a2 l1 l2,
   c_fundef f lstart f_lookup = (a1, l1) ->
-  c_fundef f lstart [] = (a2, l2) ->
+  c_fundef f lstart f_lookup0 = (a2, l2) ->
   l1 = l2.
 Proof.
   intros.
@@ -3142,48 +3142,28 @@ Proof.
   destruct c_pushes eqn:?.
   pat `c_pushes _ _ = (?p, _)` at destruct p.
   destruct c_cmd eqn:?.
-  destruct (c_cmd _ _ []_) eqn:?.
+  destruct (c_cmd _ _ f_lookup0) eqn:?.
   simpl in *; cleanup.
   eapply c_cmd_l_same; eauto.
 Qed.
 
-(* Lemma c_fundefs_l_same: forall funs lstart f_lookup a1 a2 fs1 fs2 l1 l2,
+Lemma c_fundefs_l_same: forall funs lstart f_lookup f_lookup0 a1 a2 fs1 fs2 l1 l2,
   c_fundefs funs lstart f_lookup = (a1, fs1, l1) ->
-  c_fundefs funs lstart [] = (a2, fs2, l2) ->
+  c_fundefs funs lstart f_lookup0 = (a2, fs2, l2) ->
   l1 = l2.
 Proof.
   induction funs; intros; simpl in *; cleanup; eauto.
   unfold dlet in *.
   destruct c_fundef eqn:?.
-  destruct (c_fundef _ _ []) eqn:?.
+  destruct (c_fundef _ _ f_lookup0) eqn:?.
   destruct c_fundefs eqn:?.
   pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
-  destruct (c_fundefs _ _ []) eqn:?.
+  destruct (c_fundefs _ _ f_lookup0) eqn:?.
   pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
   simpl in *; cleanup; subst.
   eapply c_fundef_l_same in Heqp; eauto; subst.
   eapply IHfuns; eauto.
 Qed.
-
-Lemma c_fundefs_fs_same: forall funs lstart a1 a2 fs1 fs2 l1 l2,
-  c_fundefs funs lstart [] = (a1, fs1, l1) ->
-  c_fundefs funs lstart fs1 = (a2, fs2, l2) ->
-  fs1 = fs2.
-Proof.
-  induction funs; intros; simpl in *; cleanup; eauto.
-  unfold dlet in *.
-  destruct c_fundef eqn:?.
-  destruct (c_fundef _ _ []) eqn:?.
-  destruct c_fundefs eqn:?.
-  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
-  destruct (c_fundefs _ _ []) eqn:?.
-  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
-  simpl in *; cleanup; subst.
-  
-Admitted. *)
-  (* eapply c_fundef_l_same in Heqp; eauto; subst.
-  eapply IHfuns; eauto.
-Admitted. *)
 
 Theorem code_in_append_left: forall ys xs k,
   k = List.length xs -> code_in k ys (xs ++ ys).
@@ -3231,11 +3211,34 @@ Proof.
     + eauto.
 Qed.
 
-Lemma c_fundefs_fs_extended: forall funcs l fs0 fs asm1 l1,
-  c_fundefs funcs l fs0 = (asm1, fs, l1) ->
-    exists fs1, fs = fs1 ++ fs0.
+Lemma c_fundefs_lookup_same: forall funcs fs0 fs1 fs2 fs3 asm1 asm2 l1 l2 n params body l,
+  c_fundefs funcs l fs0 = (asm1, fs1, l1) ->
+  c_fundefs funcs l fs2 = (asm2, fs3, l2) ->
+  find_fun n funcs = Some (params, body) ->
+  lookup n fs1 = lookup n fs3.
 Proof.
-Admitted.
+  Opaque c_fundef.
+  induction funcs; intros; simpl in *; eauto; cleanup.
+  unfold dlet in *; cleanup.
+  destruct (c_fundef _ _ _) eqn:?.
+  destruct (c_fundefs _ _ _) eqn:?.
+  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  simpl in *; cleanup.
+  destruct (c_fundef _ _ fs2) eqn:?.
+  destruct (c_fundefs _ _ fs2) eqn:?.
+  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  (* set asm1 as Sasm1. *)
+  (* set fs as Sfs. *)
+  (* set l1 as Sl1. *)
+  simpl in *|-; cleanup; subst.
+  pat `match ?a with _ => _ end = _` at destruct a; simpl in *.
+  rewrite Nat.eqb_sym.
+  destruct (_ =? _) eqn:?.
+  - reflexivity.
+  - eapply IHfuncs; eauto.
+    spat `c_fundef` at eapply c_fundef_l_same in spat; [|exact Heqp]; subst.
+    pat `c_fundefs _ _ _ = (_, l0, _)` at eapply c_fundefs_l_same in pat; eauto.
+Qed.
 
 Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
   c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
@@ -3335,14 +3338,13 @@ Proof.
   spat `c_fundefs _ _ _ = (?p, _)` at destruct p.
   simpl in *.
   spat `eval_cmd` at rename spat into Heval_cmd.
-  specialize (c_fundefs_l_same _ _ _ _ _ _ _ _ _ Heqcfuns Heqcfuns0) as ?; subst.
-  specialize (c_fundefs_fs_same _ _ _ _ _ _ _ _ _ Heqcfuns Heqcfuns0) as ?; subst.
-  pat `c_fundefs _ _ [] = (_, _, _)` at clear pat.
+  specialize c_fundefs_l_same with (1 := Heqcfuns) (2 := Heqcfuns0) as ?; subst.
   remember (lookup _ l) as lookup_main_l.
   spat `c_fundefs` at rewrite init_length_same with (l2 := lookup_main_l) in spat.
   pat `find_fun _ _ = _` at rename pat into Hfind_fun.
-  pat `c_fundefs _ _ _ = (_, _, _)` at specialize (c_fundefs_code_in _ _ _ _ _ _ _ _ _ pat Hfind_fun) as ?; cleanup.
+  pat `c_fundefs _ _ _ = (_, _, _)` at specialize c_fundefs_code_in with (1 := pat) (2 := Hfind_fun) as ?; cleanup.
   Transparent c_fundef.
+  rewrite c_fundefs_lookup_same with (fs1 := l0) (fs3 := l) (n := fun_name_of_string "main") (1 := Heqcfuns) (2 := Heqcfuns0) (3 := Hfind_fun) in *.
   unfold c_fundef, dlet in *.
   destruct (c_pushes _ _) eqn:?.
   destruct (c_cmd _ _) eqn:?.
@@ -3502,10 +3504,12 @@ Proof.
       Transparent init.
       simpl; repeat (split; eauto).
     - intros.
-      spat `find_fun` at eapply c_fundefs_code_in in spat; eauto.
+      spat `find_fun` at pose proof spat as Hfind_fun_n0; eapply c_fundefs_code_in in spat; eauto.
       pat `instructions t = _` at rewrite pat.
       cleanup; eexists.
       split; eauto.
+      rewrite c_fundefs_lookup_same with (1 := Heqcfuns) (2 := Heqcfuns0) (3 := Hfind_fun_n0) in *; subst.
+      eauto.
     - spat `memory_writable` at pose proof memory_writable as ?.
       spat `memory_writable` at unfold memory_writable in spat; cleanup.
       do 2 eexists.

@@ -3107,6 +3107,38 @@ Proof.
   lia.
 Qed.
 
+Theorem code_in_append_left: forall ys xs k,
+  k = List.length xs -> code_in k ys (xs ++ ys).
+Proof.
+  induction ys as [|h ys' IH]; intros xs k Hk; subst.
+  - simpl; constructor.
+  - simpl; split.
+    + rewrite nth_error_app2.
+      * rewrite Nat.sub_diag; simpl; reflexivity.
+      * lia.
+    + assert (xs ++ h :: ys' = (xs ++ [h]) ++ ys') as ->.
+      1: induction xs; simpl; congruence.
+      apply IH.
+      rewrite length_app; simpl.
+      lia.
+Qed.
+
+Theorem code_in_append_left2: forall ys xs zs k,
+  k = List.length xs -> code_in k ys (xs ++ ys ++ zs).
+Proof.
+  induction ys as [|h ys' IH]; intros xs zs k Hk; subst.
+  - simpl; constructor.
+  - simpl; split.
+    + rewrite nth_error_app2.
+      * rewrite Nat.sub_diag; simpl; reflexivity.
+      * lia.
+    + assert (xs ++ h :: ys' ++ zs = (xs ++ [h]) ++ ys' ++ zs) as ->.
+      1: induction xs; simpl; congruence.
+      apply IH.
+      rewrite length_app; simpl.
+      lia.
+Qed.
+
 Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
   c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
   find_fun n funcs = Some (params, body) ->
@@ -3126,8 +3158,7 @@ Proof.
   set l1 as Sl1.
   simpl in *|-; cleanup.
   pat `match ?a with _ => _ end = _` at destruct a; simpl in *|-.
-Admitted.
-  (* destruct (_ =? _) eqn:?; cleanup.
+  destruct (_ =? _) eqn:?; cleanup.
   1: {
     eexists; simpl.
     rewrite Nat.eqb_eq in *; subst.
@@ -3135,22 +3166,30 @@ Admitted.
     split.
     2: {
       spat `c_fundef` at rewrite spat; simpl.
-
+      assert (xs ++ Comment (name2str n1 "") :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1 "")]) ++ flatten a0 ++ flatten a1) as ->.
+      1: induction xs; simpl; try rewrite <- app_assoc; eauto.
+      eapply code_in_append_left2.
+      rewrite length_app; simpl.
+      lia.
     }
     reflexivity.
   }
-  2: {
-    eapply IHfuncs; eauto.
-    pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-    subst Sasm1 Sfs.
+  subst Sasm1 Sfs.
+  pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
+  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1 "")] +++ a0))) as Hrwlength.
+  1: simpl; repeat rewrite length_app; simpl; lia.
+  rewrite Hrwlength in *.
+  spat `c_fundefs` at eapply IHfuncs in spat; eauto; cleanup.
+  eexists; split; simpl.
+  1: {
+    destruct (n1 =? n) eqn:?; try rewrite Nat.eqb_neq in *; try rewrite Nat.eqb_eq in *.
+    - congruence.
+    - eauto.
   }
-  eapply IHfuncs.
-
-  
-  pat `c_fundefs _ _ _ = _` at eapply IHfuncs in pat.
-  
-
-Qed. *)
+  simpl in *.
+  rewrite app_comm_cons; rewrite app_assoc.
+  eauto.
+Qed.
 
 Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
   catch_return (eval_cmd main_c (EVAL_CMD fuel)) s = (res,s1) -> res ≠ Stop Crash ->

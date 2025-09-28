@@ -156,11 +156,15 @@ Definition builtin_def:
         Return (Var $ name "ret")])]
 End
 
+Definition func_name_def[simp]:
+  func_name (Defun fname params body) = fname
+End
+
 Definition to_imp_def:
-  to_imp (Program l e) =
-    if EXISTS (λx. MEM (get_name x) (name "main" :: MAP FST builtin)) l then NONE else
+  to_imp (source_syntax$Program l e) =
+    if EXISTS (λx. MEM (func_name x) (name "main" :: MAP FST builtin)) l then NONE else
     case to_funs (Defun (name "main") [] e :: l) of
-    | SOME fs => SOME (Program $ MAP (λ(n,vs,b). Func n vs b) builtin ++ fs)
+    | SOME fs => SOME (imp_source_syntax$Program $ MAP (λ(n,vs,b). Func n vs b) builtin ++ fs)
     | NONE => NONE
 End
 
@@ -975,7 +979,7 @@ QED
 
 Theorem to_funs_names:
   ∀l xs funs.
-    EVERY (λx. ¬MEM (get_name x) (MAP get_name xs)) l ∧
+    EVERY (λx. ¬MEM (func_name x) (MAP get_name xs)) (l:dec list) ∧
     to_funs l = SOME funs ⇒
     ∀fname params body.
       lookup_fun fname l = SOME (params,body) ⇒

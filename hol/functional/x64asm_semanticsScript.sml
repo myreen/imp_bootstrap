@@ -9,7 +9,7 @@ Libs
 (* semantics *)
 
 Datatype:
-  word_or_ret = Word word64 | RetAddr num
+  word_or_ret = Word word64 | RetAddr num | Undefined
 End
 
 Datatype:
@@ -162,10 +162,20 @@ Inductive step:
     EL offset s.stack = Word w ⇒
     step (State s) (State (write_reg r w (inc s))))
   ∧
+  (∀s r w offset.
+    fetch s = SOME (Store_RSP r offset) ∧
+    offset < LENGTH s.stack ∧
+    s.regs r = SOME w ⇒
+    step (State s) (State (set_stack (LUPDATE (Word w) offset s.stack) (inc s))))
+  ∧
   (∀s xs ys.
     fetch s = SOME (Add_RSP (LENGTH xs)) ∧
     s.stack = xs ++ ys ⇒
     step (State s) (State (set_stack ys (inc s))))
+  ∧
+  (∀s n.
+    fetch s = SOME (Sub_RSP n) ⇒
+    step (State s) (State (set_stack (REPLICATE n Undefined ++ s.stack) (inc s))))
   ∧
   (∀s src ra imm wa w s'.
     fetch s = SOME (Store src ra imm) ∧

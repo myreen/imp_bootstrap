@@ -36,7 +36,9 @@ Datatype:
    | Pop reg
    | Push reg
    | Add_RSP num
+   | Sub_RSP num
    | Load_RSP reg num
+   | Store_RSP reg num
      (* memory *)
    | Load reg reg word4
    | Store reg reg word4
@@ -98,7 +100,9 @@ val inst_tm = (rand o concl o REWRITE_CONV [APPEND])
   inst (Pop r) s = "popq " ++ reg r s ∧
   inst (Push r) s = "pushq " ++ reg r s ∧
   inst (Load_RSP r n) s = "movq " ++ num (8 * n) ("(%rsp), " ++ reg r s) ∧
+  inst (Store_RSP r n) s = "movq " ++ reg r s ++ ", " ++ num (8 * n) ("(%rsp)") ∧
   inst (Add_RSP n) s = "addq $" ++ num (8 * n) (", %rsp" ++ s) ∧
+  inst (Sub_RSP n) s = "subq $" ++ num (8 * n) (", %rsp" ++ s) ∧
   inst (Store src a w) s =
     "movq " ++ reg src (", " ++ num (w2n w) ("(" ++ reg a (")" ++ s))) ∧
   inst (Load dst a w) s =

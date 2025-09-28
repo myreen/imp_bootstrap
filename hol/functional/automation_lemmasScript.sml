@@ -708,7 +708,9 @@ Definition inst_def[simp]:
   inst (Pop r1)        = list [Name "Pop"; reg r1] ∧
   inst (Push r1)       = list [Name "Push"; reg r1] ∧
   inst (Add_RSP n)     = list [Name "Add_RSP"; Num n] ∧
+  inst (Sub_RSP n)     = list [Name "Sub_RSP"; Num n] ∧
   inst (Load_RSP r n)  = list [Name "Load_RSP"; reg r; Num n] ∧
+  inst (Store_RSP r n) = list [Name "Store_RSP"; reg r; Num n] ∧
   inst (Load r1 r2 i)  = list [Name "Load"; reg r1; reg r2; word i] ∧
   inst (Store r1 r2 i) = list [Name "Store"; reg r1; reg r2; word i] ∧
   inst (GetChar)       = list [Name "GetChar"] ∧

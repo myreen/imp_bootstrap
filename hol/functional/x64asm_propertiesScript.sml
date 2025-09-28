@@ -125,7 +125,7 @@ Proof
 QED
 
 Theorem step_determ:
-  step x y ∧ step x z ==> y = z
+  step x y ∧ step x z ⇒ y = z
 Proof
   once_rewrite_tac [step_cases] \\ rw [] \\ gvs[]
   \\ ntac 2 (fs [take_branch_cases] \\ gvs [])

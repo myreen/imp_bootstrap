@@ -1,10 +1,9 @@
-
-open HolKernel Parse boolLib bossLib BasicProvers;
-open arithmeticTheory listTheory llistTheory pairTheory finite_mapTheory;
-open source_valuesTheory imp_source_syntaxTheory stringTheory lprefix_lubTheory;
-
-val _ = new_theory "imp_source_semantics";
-
+Theory imp_source_semantics
+Ancestors
+  arithmetic list llist pair finite_map string lprefix_lub
+  source_values imp_source_syntax
+Libs
+  BasicProvers
 
 (* types *)
 
@@ -527,5 +526,3 @@ Definition imp_weak_termination_def:
     eval_from k input prog = (outcome, s) ∧
     (outcome ≠ Stop Abort ⇒ outcome = Cont () ∧ s.output = output)
 End
-
-val _ = export_theory();

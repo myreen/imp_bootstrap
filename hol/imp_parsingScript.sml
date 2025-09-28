@@ -1,9 +1,8 @@
+Theory imp_parsing
+Ancestors
+  arithmetic list pair finite_map string words
+  source_values imp_source_syntax
 
-open HolKernel Parse boolLib bossLib;
-open arithmeticTheory listTheory pairTheory finite_mapTheory stringTheory;
-open source_valuesTheory wordsTheory imp_source_syntaxTheory;
-
-val _ = new_theory "imp_parsing";
 
 Datatype:
   keyword = If | While | Else | Return | Abort | Add | Sub | Div |
@@ -274,5 +273,3 @@ Definition get_name_def[simp]:
 End
 
 *)
-
-val _ = export_theory();

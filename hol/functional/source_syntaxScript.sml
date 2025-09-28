@@ -1,9 +1,6 @@
-
-open HolKernel Parse boolLib bossLib;
-open arithmeticTheory listTheory pairTheory finite_mapTheory stringTheory;
-open source_valuesTheory;
-
-val _ = new_theory "source_syntax";
+Theory source_syntax
+Ancestors
+  arithmetic list pair finite_map string source_values
 
 
 (* abstract syntax *)
@@ -34,9 +31,3 @@ End
 Datatype:                         (* a complete program is a list of   *)
   prog = Program (dec list) exp   (* function declarations followed by *)
 End                               (* an expression to evaluate         *)
-
-Definition get_name_def[simp]:
-  get_name (Defun n _ _) = n
-End
-
-val _ = export_theory();

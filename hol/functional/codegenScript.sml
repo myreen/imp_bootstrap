@@ -1,9 +1,9 @@
-
-open HolKernel Parse boolLib bossLib;
-open arithmeticTheory listTheory pairTheory finite_mapTheory stringTheory;
-open source_valuesTheory source_syntaxTheory x64asm_syntaxTheory;
-
-val _ = new_theory "codegen";
+Theory codegen
+Ancestors
+  arithmetic list pair finite_map string
+  source_values source_syntax x64asm_syntax parsing
+Libs
+  wordsLib
 
 (* we return lists with explicit appends to avoid "bad append" performance *)
 
@@ -53,7 +53,7 @@ Overload AllocLoc[inferior] = “7:num”;
        vs - a model of the stack: the ith element is SOME v if the value
             of source variable v is at stack index i; positions containing
             NONE do not correspond to a source-level variable; this information
-            is used when compiling Var (in the c_var function)
+            is used by when compiling Var (in the c_var function)
        fs - an a-list with locations for all the function locations,
             compilation of Call (in c_exp) uses this information
 *)
@@ -188,12 +188,12 @@ End
 Definition c_call_def:
   c_call t vs target xs (c,l) =
     let ys = c_pops xs vs in
-    if t then
-      (Append c (Append (List ys)
-        (List [Add_RSP (LENGTH vs); Jump Always target])), l + LENGTH ys + 2)
-    else
-      let cs = align (even_len vs) [Call target] in
-        (Append c (Append (List ys) (List cs)), l + LENGTH ys + LENGTH cs)
+      if t then
+        (Append c (Append (List ys)
+          (List [Add_RSP (LENGTH vs); Jump Always target])), l + LENGTH ys + 2)
+      else
+        let cs = align (even_len vs) [Call target] in
+          (Append c (Append (List ys) (List cs)), l + LENGTH ys + LENGTH cs)
 End
 
 Definition lookup_def:
@@ -250,7 +250,7 @@ Definition c_exp_def:
 Termination
   WF_REL_TAC ‘inv_image (measure I LEX measure I)
     (λx. case x of INL (t,l,vs,fs,x) => (exp_size x,if t then 1 else 0)
-                 | INR (l,vs,fs,xs) => (exp1_size xs,0))’
+                 | INR (l,vs,fs,xs) => (list_size exp_size xs,0))’
 End
 
 Definition c_exp'_def: (* rephrasing that is better for proofs *)
@@ -283,7 +283,7 @@ Definition c_exp'_def: (* rephrasing that is better for proofs *)
 Termination
   WF_REL_TAC ‘inv_image (measure I LEX measure I)
     (λx. case x of INL (t,l,vs,fs,x) => (exp_size x,if t then 1 else 0)
-                 | INR (l,vs,fs,xs) => (exp1_size xs,0))’
+                 | INR (l,vs,fs,xs) => (list_size exp_size xs,0))’
 End
 
 Theorem c_exp'[simp]:
@@ -313,10 +313,6 @@ Definition name2str_def:
     if n = 0 then acc else name2str (n DIV 256) (CHR (n MOD 256) :: acc)
 End
 
-(* Goes through the declarations and:
-- appends a comment with the function name
-- compiles the function
-*)
 Definition c_decs_def:
   c_decs l fs [] = (List [],[],l) ∧
   c_decs l fs (d::ds) =
@@ -337,4 +333,7 @@ Definition codegen_def:
       flatten (Append (List (init (k+1))) c) []
 End
 
-val _ = export_theory();
+Definition compiler_def:
+  compiler input =
+    asm2str (codegen (parser (lexer input)))
+End

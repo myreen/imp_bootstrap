@@ -1,9 +1,7 @@
-
-open HolKernel Parse boolLib bossLib;
-open arithmeticTheory listTheory pairTheory finite_mapTheory stringTheory;
-open source_valuesTheory source_syntaxTheory mp_then;
-
-val _ = new_theory "printing";
+Theory printing
+Ancestors
+  arithmetic list pair finite_map string
+  source_values source_syntax
 
 
 (* pretty printing v *)
@@ -84,7 +82,7 @@ Definition v2pretty_def:
                (Append (Str " . ") T (v2pretty e)))
 Termination
   WF_REL_TAC ‘measure v_size’ \\ rw []
-  \\ imp_res_tac dest_list_size \\ fs [v_size_def,isNum_def]
+  \\ imp_res_tac dest_list_size \\ fs [isNum_def]
 End
 
 Definition get_size_def:
@@ -203,15 +201,14 @@ Definition dest_cons_chain_def:
 End
 
 Theorem dest_cons_chain_size:
-  ∀x vs. dest_cons_chain x = SOME vs ⇒ exp1_size vs + op_size Cons + 1 ≤ exp_size x
+  ∀x vs. dest_cons_chain x = SOME vs ⇒ list_size exp_size vs + op_size Cons + 1 ≤ exp_size x
 Proof
   completeInduct_on ‘exp_size x’ \\ rw [] \\ fs [PULL_FORALL]
   \\ qpat_x_assum ‘dest_cons_chain _ = SOME _’ mp_tac
   \\ once_rewrite_tac [DefnBase.one_line_ify NONE dest_cons_chain_def]
-  \\ fs [AllCaseEqs()] \\ rw []
-  THEN1 (rw [] \\ fs [] \\ fs [exp_size_def])
+  \\ fs [AllCaseEqs()] \\ rw [] >> rw[]
   \\ first_assum (first_assum o mp_then Any mp_tac)
-  \\ strip_tac \\ fs [exp_size_def]
+  \\ strip_tac \\ fs []
 QED
 
 Definition up_const_def:
@@ -228,16 +225,6 @@ Theorem exp_size_non_zero:
   exp_size y ≠ 0
 Proof
   Cases_on ‘y’ \\ fs [exp_size_def]
-QED
-
-Triviality FRONT_exp1_size:
-  ¬NULL v ⇒ exp1_size (FRONT v) ≤ exp1_size v
-Proof
-  Cases_on ‘v = []’ \\ fs []
-  \\ qspec_then ‘v’ mp_tac SNOC_CASES \\ asm_rewrite_tac []
-  \\ strip_tac \\ full_simp_tac std_ss [FRONT_SNOC]
-  \\ rw [] \\ fs [SNOC_APPEND]
-  \\ Induct_on ‘l’ \\ fs [exp_size_def]
 QED
 
 Definition dest_case_lets_def:
@@ -293,24 +280,18 @@ Definition enum2v_def:
 End
 
 Theorem dest_case_enum_exp_size:
-  ∀z a t xs y rows.
-    dest_case_enum a (If t xs y z) = SOME rows ⇒
-    (MEM (x,e) rows ⇒ exp_size e < exp_size y + exp_size z)
+  ∀a x rows t h h' y z.
+    dest_case_enum a x = SOME rows ∧
+    x = If t [h; h'] y z ⇒
+    list_size exp_size (MAP SND rows) <
+    exp_size h + exp_size h' + exp_size y + exp_size z
 Proof
-  gen_tac \\ completeInduct_on ‘exp_size z’
-  \\ gen_tac \\ strip_tac \\ fs [PULL_FORALL]
-  \\ simp [Once (DefnBase.one_line_ify NONE dest_case_enum_def), AllCaseEqs()]
-  \\ fs [PULL_EXISTS]
-  \\ rpt gen_tac \\ strip_tac
-  \\ rpt BasicProvers.var_eq_tac
-  \\ rw [] \\ fs [exp_size_def]
-  \\ TRY (Cases_on ‘z’ \\ fs [exp_size_def] \\ NO_TAC)
-  \\ Cases_on ‘z’ \\ fs [dest_case_enum_def]
-  \\ rw [] \\ fs [exp_size_def]
-  \\ rename [‘If _ _ _ e4’]
-  \\ first_x_assum (qspec_then ‘e4’ mp_tac)
-  \\ fs [exp_size_def]
-  \\ disch_then drule \\ fs []
+  ho_match_mp_tac dest_case_enum_ind
+  \\ simp [dest_case_enum_def,AllCaseEqs()] \\ rw []
+  \\ gvs []
+  \\ qpat_x_assum ‘_ = SOME _’ mp_tac
+  \\ simp [Once (oneline dest_case_enum_def), AllCaseEqs()]
+  \\ strip_tac \\ gvs []
 QED
 
 Theorem dest_case_lets_exp_size:
@@ -318,15 +299,14 @@ Theorem dest_case_lets_exp_size:
 Proof
   ho_match_mp_tac dest_case_lets_ind
   \\ fs [dest_case_lets_def]
-  \\ rw [] \\ pairarg_tac \\ fs [] \\ rw []
-  \\ fs [exp_size_def]
+  \\ rw [] \\ pairarg_tac \\ gvs[]
 QED
 
 Theorem dest_case_tree_exp_size:
   ∀z a t xs y rows.
     dest_case_tree a (If t xs y z) = SOME rows ⇒
-    (MEM (x,vs,e) rows ⇒ exp_size e < exp_size y + exp_size z) ∧
-    exp_size a < exp1_size xs
+    list_size exp_size (MAP SND (MAP SND rows)) ≤ exp_size y + exp_size z ∧
+    exp_size a < list_size exp_size xs
 Proof
   gen_tac \\ completeInduct_on ‘exp_size z’
   \\ gen_tac \\ strip_tac \\ fs [PULL_FORALL]
@@ -335,17 +315,20 @@ Proof
   \\ rpt gen_tac \\ strip_tac
   \\ pairarg_tac \\ fs []
   \\ rpt BasicProvers.var_eq_tac
-  \\ rw [] \\ fs [exp_size_def]
-  THEN1
-   (‘exp_size z ≠ 0’ by (Cases_on ‘z’ \\ fs [exp_size_def])
-    \\ imp_res_tac dest_case_lets_exp_size \\ fs [])
+  \\ rw [] \\ fs []
+  \\ ‘exp_size z ≠ 0’ by (Cases_on ‘z’ \\ fs [])
+  \\ imp_res_tac dest_case_lets_exp_size \\ fs []
   \\ Cases_on ‘z’ \\ fs [dest_case_tree_def]
   \\ rw [] \\ fs []
   \\ rename [‘If _ _ _ e4’]
   \\ first_x_assum (qspec_then ‘e4’ mp_tac)
-  \\ fs [exp_size_def]
+  \\ fs []
   \\ disch_then drule \\ fs []
 QED
+
+Definition is_protected_def:
+  is_protected n ⇔ MEM n (MAP name protected_names) ∨ is_upper n
+End
 
 Definition exp2v_def:
   exp2v (Var v) =
@@ -357,51 +340,56 @@ Definition exp2v_def:
      | SOME es =>
          if ~NULL es ∧ LAST es = Const 0 then
            (case up_const es of
-            | NONE => list ([Name "list"] ++ MAP exp2v (FRONT es))
-            | SOME k => list (Num k :: MAP exp2v (FRONT (TL es))))
-         else list ([Name "cons"] ++ MAP exp2v es)
-     | NONE => list ([Name (op2str op)] ++ MAP exp2v es)) ∧
+            | NONE => list ([Name "list"] ++ FRONT (exps2v es))
+            | SOME k => list (Num k :: FRONT (exps2v (TL es))))
+         else list ([Name "cons"] ++ exps2v es)
+     | NONE => list ([Name (op2str op)] ++ exps2v es)) ∧
   exp2v (If t xs y z) =
-    (case dest_case_enum (HD xs) (If t xs y z) of
-     | SOME rows => cons (Name "case") (cons (exp2v (HD xs))
-                      (enum2v (MAP (λ(x,e). (x,exp2v e)) rows)))
-     | NONE =>
-       case dest_case_tree (get_Op_Head (EL 1 xs)) (If t xs y z) of
-       | SOME rows => cons (Name "case") (cons (exp2v (get_Op_Head (EL 1 xs)))
-                        (row2v (MAP (λ(x,vs,e). (x,vs,exp2v e)) rows)))
-       | NONE =>
-          list [Num (name "if");
-                list (Num (name (test2str t)) :: MAP exp2v xs); exp2v y; exp2v z]) ∧
+    (if LENGTH xs = 2 then
+       let x0 = HD xs in
+       let x1 = EL 1 xs in
+        (case dest_case_enum x0 (If t xs y z) of
+         | SOME rows =>
+             let xs = exps2v (MAP SND rows) in
+             let ys = ZIP (MAP FST rows, xs) in
+               cons (Name "case") (cons (exp2v x0) (enum2v ys))
+         | NONE =>
+           case dest_case_tree (get_Op_Head x1) (If t xs y z) of
+           | SOME rows =>
+               let xs = exps2v (MAP SND (MAP SND rows)) in
+               let ys = ZIP (MAP FST rows, ZIP (MAP (FST o SND) rows, xs)) in
+                 cons (Name "case") (cons (exp2v (get_Op_Head x1)) (row2v ys))
+           | NONE =>
+              list [Num (name "if");
+                    list (Num (name (test2str t)) :: exps2v xs);
+                    exp2v y; exp2v z])
+     else
+       list [Num (name "if");
+             list (Num (name (test2str t)) :: exps2v xs);
+             exp2v y; exp2v z]) ∧
   exp2v (Let v x y) =
     (cons (Name "let") (lets2v (Let v x y))) ∧
   exp2v (Call n es) =
-    (if MEM n (MAP name protected_names) ∨ is_upper n then
-       list ([Num (name "call"); Num n] ++ MAP exp2v es)
-     else list ([Num n] ++ MAP exp2v es)) ∧
+    (if is_protected n then
+       list ([Num (name "call"); Num n] ++ exps2v es)
+     else list ([Num n] ++ exps2v es)) ∧
+  exps2v [] = [] ∧
+  exps2v (v::vs) = exp2v v :: exps2v vs ∧
   lets2v (Let v x y) = (cons (list [Num v; exp2v x])
                              (if is_Let y then lets2v y else list [exp2v y])) ∧
   lets2v _ = Num 0
 Termination
   WF_REL_TAC ‘measure (λx. case x of INL v => exp_size v + 1
-                                   | INR v => exp_size v)’ \\ rw []
-  \\ imp_res_tac dest_cons_chain_size
-  \\ fs [exp_size_def]
-  \\ ‘∀es a. MEM a es ⇒ exp_size a ≤ exp1_size es’
-       by (Induct \\ rw [] \\ res_tac \\ fs [exp_size_def])
-  \\ TRY (rw [] \\ res_tac \\ fs [] \\ NO_TAC)
-  \\ res_tac \\ fs []
-  \\ imp_res_tac dest_case_enum_exp_size \\ fs [exp_size_def]
-  \\ imp_res_tac dest_case_tree_exp_size \\ fs [exp_size_def]
-  \\ TRY (Cases_on ‘op’) \\ fs [dest_cons_chain_def]
+                                   | INR (INL v) => list_size exp_size v + 1
+                                   | INR (INR v) => exp_size v)’ \\ rw []
+  \\ gvs [LENGTH_EQ_NUM_compute]
   \\ ‘exp_size x ≠ 0 ∧ exp_size y ≠ 0’ by fs [exp_size_non_zero] \\ fs []
-  \\ imp_res_tac FRONT_exp1_size \\ fs []
-  THEN1 (Cases_on ‘xs’ \\ fs [dest_case_enum_def,exp_size_def])
-  \\ Cases_on ‘v’ \\ fs []
-  \\ Cases_on ‘NULL t’
-  \\ imp_res_tac FRONT_exp1_size \\ fs [exp_size_def]
-  \\ Cases_on ‘t’ \\ fs []
-  \\ fs [DefnBase.one_line_ify NONE up_const_def, AllCaseEqs()]
-  \\ rw [] \\ fs [EVAL “is_upper 0”]
+  \\ imp_res_tac dest_case_enum_exp_size \\ fs []
+  \\ imp_res_tac dest_case_tree_exp_size \\ fs []
+  \\ imp_res_tac dest_cons_chain_size \\ gvs []
+  \\ fs [dest_cons_chain_def]
+  \\ TRY (Cases_on ‘op’) \\ fs [dest_cons_chain_def]
+  \\ Cases_on ‘v’ \\ gvs []
 End
 
 Definition dec2v_def:
@@ -420,5 +408,3 @@ End
 Definition prog2str_def:
   prog2str p = vs2str (prog2vs p)
 End
-
-val _ = export_theory();

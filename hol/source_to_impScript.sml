@@ -1,10 +1,9 @@
-
-open HolKernel Parse boolLib bossLib;
-open arithmeticTheory listTheory pairTheory finite_mapTheory stringTheory;
-open source_syntaxTheory imp_source_syntaxTheory pred_setTheory combinTheory;
-open source_semanticsTheory imp_source_semanticsTheory wordsLib;
-
-val _ = new_theory "source_to_imp";
+Theory source_to_imp
+Ancestors
+  arithmetic list pair finite_map string pred_set combin
+  source_syntax imp_source_syntax source_semantics imp_source_semantics
+Libs
+  wordsLib
 
 (* definition of a very partial compilation from source to imp_source *)
 
@@ -1027,5 +1026,3 @@ Proof
   \\ Cases_on ‘r1’ \\ gvs [res_rel_def]
   \\ Cases_on ‘r’ \\ gvs [res_rel_def,state_rel_def]
 QED
-
-val _ = export_theory();

@@ -31,3 +31,7 @@ End
 Datatype:                         (* a complete program is a list of   *)
   prog = Program (dec list) exp   (* function declarations followed by *)
 End                               (* an expression to evaluate         *)
+
+Definition func_name_def[simp]:
+  func_name (Defun fname params body) = fname
+End

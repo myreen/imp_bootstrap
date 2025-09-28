@@ -156,10 +156,6 @@ Definition builtin_def:
         Return (Var $ name "ret")])]
 End
 
-Definition func_name_def[simp]:
-  func_name (Defun fname params body) = fname
-End
-
 Definition to_imp_def:
   to_imp (source_syntax$Program l e) =
     if EXISTS (λx. MEM (func_name x) (name "main" :: MAP FST builtin)) l then NONE else

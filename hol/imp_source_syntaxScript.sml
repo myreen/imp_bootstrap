@@ -49,3 +49,7 @@ End                             (*   of function definitions        *)
 Definition get_name_def[simp]:
   get_name (Func n _ _) = n
 End
+
+Definition get_funcs_def[simp]:
+  get_funcs (Program funcs) = funcs
+End

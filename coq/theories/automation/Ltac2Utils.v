@@ -3,10 +3,7 @@ Import Ltac2.Constr.Unsafe.
 From Coq Require Import derive.Derive.
 From Coq Require Import Recdef.
 
-From coqutil Require Import
-  Tactics.reference_to_string
-  Tactics.ident_of_string
-  Tactics.ident_to_string.
+From coqutil Require Import Tactics.reference_to_string.
 
 From impboot Require Import utils.Core.
 From impboot Require Import AutomationLemmas.

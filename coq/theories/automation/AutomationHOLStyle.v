@@ -1,4 +1,4 @@
-(* From impboot Require Import utils.Core.
+From impboot Require Import utils.Core.
 From coqutil Require Import dlet.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
@@ -180,29 +180,27 @@ Ltac2 rec apply_continuations (lemma_inst: constr) (lname: string) (thm_parts: c
   | _, [] => Control.throw (Oopsie (fprintf "Not enough continuations passed when compiling with lemma %s" lname))
   end.
 
-Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (extracted_terms: constr option list)
-                         (continuations: (unit -> unit) list): constr :=
+Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (named_conts: (ident * (unit -> unit)) list)
+                         (conts: (unit -> unit) list): constr :=
   let lemma_inst := eval_cbv beta lemma_inst in
   match maybe_thm_binder lemma_inst with
   | None => lemma_inst
   | Some b =>
     match Binder.name b with
-    | Some _nm =>
+    | Some nm =>
       (* named binder -> term *)
-      match extracted_terms with
-      | (Some ext) :: extracted_terms =>
+      match List.find_opt (fun n => Ident.equal (fst n) nm) named_conts with
+      | Some (_, ext) =>
         (* TODO: check the $extr                vvvvv *)
-        assemble_lemma open_constr:($lemma_inst $ext) lname extracted_terms continuations
-      | None :: extracted_terms =>
-        assemble_lemma open_constr:($lemma_inst _) lname extracted_terms continuations
-      | _ =>
-        Control.throw (Oopsie (fprintf "Not enough extracted terms passed when compiling with lemma %s" lname))
+        assemble_lemma open_constr:($lemma_inst ltac2:(ext ())) lname named_conts conts
+      | None =>
+        assemble_lemma open_constr:($lemma_inst _) lname named_conts conts
       end
     | None =>
       (* unnamed binder -> use continuations *)
-      match continuations with
-      | k :: continuations =>
-        assemble_lemma open_constr:($lemma_inst ltac2:(Control.enter k)) lname extracted_terms continuations
+      match conts with
+      | k :: conts =>
+        assemble_lemma open_constr:($lemma_inst ltac2:(Control.enter k)) lname named_conts conts
       | _ =>
         Control.throw (Oopsie (fprintf "Not enough continuations passed when compiling with lemma %s" lname))
       end
@@ -225,15 +223,19 @@ Ltac2 rec pair_thm_parts (thm_parts: constr list) (extracted: constr list)
 (* Apply lemma named `lname`, use compilaiton funciton `compile_fn` to compile "eval" premises of the lemma *)
 (*   Fill in `extracted` terms for term premises *)
 (*   (Also make sure to update the `cenv` while recursing) *)
-Ltac2 app_lemma (lname: string) (extracted_terms: constr option list)
-                (continuations: (unit -> unit) list): unit :=
+Ltac2 app_lemma (lname: string) (named_conts: (string * (unit -> unit)) list)
+                (conts: (unit -> unit) list): unit :=
   let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
   let lemma_inst: constr := Env.instantiate lemma_ref in
   (* let lemma_tpe: constr := type lemma_inst in *)
   (* let thm_parts := split_thm_args lemma_tpe in *)
-  (* TODO(kπ): we assume that `env` is the first argument, can we just special case fenv and pass it to every `FEnv.env` premise? *)
-  (*           Otherwise, just pass it as a normal "extracted_terms" parameter to this function? *)
-  refine (assemble_lemma lemma_inst lname extracted_terms continuations).
+  let named_conts_id :=
+    List.flat_map (fun p =>
+      match Ident.of_string (fst p) with
+      | Some i => [(i, snd p)]
+      | _ => []
+      end) named_conts in
+  refine (assemble_lemma lemma_inst lname named_conts_id conts).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)
 Ltac2 is_in_loopkup (f_lookup : (string * constr) list) (fname : string) : bool :=
@@ -302,24 +304,38 @@ Ltac2 rec constr_list_of_encode_constr (c : constr) : constr list :=
   | (encode ?x) :: ?xs => x :: constr_list_of_encode_constr xs
   end.
 
-Ltac2 rec constr_list_of_constr (c : constr) : constr list :=
+Ltac2 name_enc_of_constr (c: constr): constr option :=
   match! c with
-  | [] => []
-  | ?x :: ?xs => x :: constr_list_of_constr xs
+  | name_enc ?x => Some x
+  | _ => None
   end.
 
-Ltac2 rec get_cenv_from_fenv_constr (fenv: constr) : constr list :=
+(* TODO: this may depend on name_enc being Opaque *)
+Ltac2 rec name_enc_constr_list_of_constr (c : constr) : constr option list :=
+  match! c with
+  | [] => []
+  | ?x :: ?xs =>
+    name_enc_of_constr x :: name_enc_constr_list_of_constr xs
+  end.
+
+Ltac2 rec list_zip (xs: 'a list) (ys: 'b list): ('a * 'b) list :=
+  match xs, ys with
+  | x :: xs, y :: ys => (x, y) :: list_zip xs ys
+  | _ => []
+  end.
+
+Ltac2 rec get_cenv_from_fenv_constr (fenv: constr): (constr option * constr) list :=
   lazy_match! fenv with
-  | FEnv.insert (?_n, Some (encode ?v)) ?fenv =>
+  | FEnv.insert (?n, Some (encode ?v)) ?fenv =>
     let acc := get_cenv_from_fenv_constr fenv in
-    v :: acc
+    (name_enc_of_constr n, v) :: acc
   | FEnv.insert (?_n, None) ?fenv =>
     get_cenv_from_fenv_constr fenv
-  | make_env ?_ns ?vs ?fenv =>
+  | make_env ?ns ?vs ?fenv =>
     let acc := get_cenv_from_fenv_constr fenv in
-    (* let names := List.map (fun c => string_of_constr_string c) (constr_list_of_constr ns) in *)
+    let names := name_enc_constr_list_of_constr ns in
     let values := constr_list_of_encode_constr vs in
-    List.append values acc
+    List.append (list_zip names values) acc
   | _ => []
   end.
 
@@ -360,8 +376,6 @@ Ltac2 fname_if_in_f_lookup (f_lookup: (string * constr) list) (f: constr) :=
 
 (* TODO:
 - maybe make continuations to options and do open_constr:(_) as default
-- be more clever about which arguments are implicit and only provide continuations for non impicit parameters?
-- ask Clement about that. Is there a convention of what should be impicit?
 - automate the setup for fix and everything around that (Would be cool to just run `relcompile` and for it to just work)
 *)
 
@@ -379,13 +393,14 @@ Ltac2 rec compile () : unit :=
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
     let cenv := get_cenv_from_fenv_constr fenv in
-    printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_list (List.map Message.of_constr cenv)) cenv;
-    match List.find_opt (Constr.equal e) cenv with
-    | Some _ =>
+    printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_list (List.map (fun p => fprintf "(_, %t)" (* (fst p) *) (snd p)) cenv)) cenv;
+    match List.find_opt (fun p => Constr.equal e (snd p)) cenv with
+    | Some (name_constr_opt, _) =>
+      let name_constr := Option.default open_constr:(_) name_constr_opt in
       refine open_constr:(trans_Var
       (* env *) _
       (* s *) _
-      (* n *) _
+      (* n *) $name_constr
       (* v *) $e
       (* FEnv.lookup *) _
       )
@@ -422,49 +437,49 @@ Ltac2 rec compile () : unit :=
           )
         (* bool *)
         | true =>
-          app_lemma "auto_bool_T" [Some fenv; None] []
+          app_lemma "auto_bool_T" [("env", fun () => exact $fenv)] []
         | false =>
-          app_lemma "auto_bool_F" [Some fenv; None] []
+          app_lemma "auto_bool_F" [("env", fun () => exact $fenv)] []
         | (negb ?b) =>
-          app_lemma "auto_bool_not" [Some fenv; None; None; Some b] [compile]
+          app_lemma "auto_bool_not" [("env", fun () => exact $fenv); ("b", fun () => exact $b)] [compile]
         | (andb ?bA ?bB) =>
-          app_lemma "auto_bool_and" [Some fenv; None; None; None; Some bA; Some bB] [compile; compile]
+          app_lemma "auto_bool_and" [("env", fun () => exact $fenv); ("bA", fun () => exact $bA); ("bB", fun () => exact $bB)] [compile; compile]
         | (eqb ?bA ?bB) =>
-          app_lemma "auto_bool_iff" [Some fenv; None; None; None; Some bA; Some bB] [compile; compile]
+          app_lemma "auto_bool_iff" [("env", fun () => exact $fenv); ("bA", fun () => exact $bA); ("bB", fun () => exact $bB)] [compile; compile]
         | (if ?b then ?t else ?f) =>
-          app_lemma "last_bool_if" [None; None; Some fenv; None; None; None; None; Some b; Some t; Some f]
+          app_lemma "last_bool_if" [("env", fun () => exact $fenv); ("b", fun () => exact $b); ("t", fun () => exact $t); ("f", fun () => exact $f)]
                                    [compile; compile; compile]
         (* nat *)
         | (?n1 + ?n2) =>
-          app_lemma "auto_nat_add" [Some fenv; None; None; None; None; None; Some n1; Some n2]
+          app_lemma "auto_nat_add" [("env", fun () => exact $fenv); ("n1", fun () => exact $n1); ("n2", fun () => exact $n2)]
                                    [compile; compile]
         | (?n1 - ?n2) =>
-          app_lemma "auto_nat_sub" [Some fenv; None; None; None; Some n1; Some n2] [compile; compile]
+          app_lemma "auto_nat_sub" [("env", fun () => exact $fenv); ("n1", fun () => exact $n1); ("n2", fun () => exact $n2)] [compile; compile]
         | (?n1 / ?n2) =>
-          app_lemma "auto_nat_div" [Some fenv; None; None; None; Some n1; Some n2] [compile; compile]
+          app_lemma "auto_nat_div" [("env", fun () => exact $fenv); ("n1", fun () => exact $n1); ("n2", fun () => exact $n2)] [compile; compile]
         | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
-          app_lemma "auto_nat_if_eq" [Some fenv; None; None; None; Some n1; Some n2; Some t; Some f]
+          app_lemma "auto_nat_if_eq" [("env", fun () => exact $fenv); ("n1", fun () => exact $n1); ("n2", fun () => exact $n2); ("t", fun () => exact $t); ("f", fun () => exact $f)]
                                      [compile; compile]
         | (if ?n1 <? ?n2 then ?t else ?f) =>
-          app_lemma "auto_nat_if_less" [Some fenv; None; None; None; Some n1; Some n2; Some t; Some f]
+          app_lemma "auto_nat_if_less" [("env", fun () => exact $fenv); ("n1", fun () => exact $n1); ("n2", fun () => exact $n2); ("t", fun () => exact $t); ("f", fun () => exact $f)]
                                        [compile; compile]
         (* list *)
         | [] =>
-          app_lemma "auto_list_nil" [Some fenv; None] []
+          app_lemma "auto_list_nil" [("env", fun () => exact $fenv)] []
         | (?x :: ?xs) =>
-          app_lemma "auto_list_cons" [None; None; Some fenv; None; None; Some x; Some xs] [compile; compile]
+          app_lemma "auto_list_cons" [("env", fun () => exact $fenv); ("x", fun () => exact $x); ("xs", fun () => exact $xs)] [compile; compile]
         | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
-          app_lemma "auto_list_case" [None; None; None; None; Some fenv; None; None; None; None; None; None; Some v0; Some v1; Some v2]
+          app_lemma "auto_list_case" [("env", fun () => exact $fenv); ("v0", fun () => exact $v0); ("v1", fun () => exact $v1); ("v2", fun () => exact $v2)]
                                      [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ())]
         (* TODO: see if we can use pairs (name -> tactic/term) *)
         (*       End-goal: extesible table of all compilation lemmas -> (name, tactic to apply) *)
-        (*       We can use names to hae subsets of tactics (e.g. arithmetic only) *)
+        (*       We can use names to have subsets of tactics (e.g. arithmetic only) *)
         | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
-          app_lemma "auto_nat_case" [None; None; Some fenv; None; None; None; None; None; Some v0; Some v1; Some v2]
+          app_lemma "auto_nat_case" [("env", fun () => exact $fenv); ("v0", fun () => exact $v0); ("v1", fun () => exact $v1); ("v2", fun () => exact $v2)]
                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
         | ?x =>
           if proper_const x then
-            app_lemma "auto_nat_const" [Some fenv; None; Some x] []
+            app_lemma "auto_nat_const" [("env", fun () => exact $fenv); ("x", fun () => exact $x)] []
           else
             Control.throw (Oopsie (fprintf
               "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
@@ -501,7 +516,7 @@ Ltac2 rec compile () : unit :=
       end
     end
   | ?fenv |-- (_, _) ---> ([], _) =>
-    app_lemma "trans_nil" [Some fenv; None] []
+    app_lemma "trans_nil" [("env", fun () => exact $fenv)] []
   | ?fenv |-- (_, _) ---> ((encode ?e) :: ?es, _) =>
     refine open_constr:(trans_cons
     (* env *) $fenv
@@ -654,7 +669,6 @@ Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
   2: exact "n1"%string.
-  2: exact "n"%string.
   eauto with fenvDb.
 Qed.
 Print sum_n_prog.
@@ -698,9 +712,7 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  3: exact "n"%string.
   3: exact "n1"%string.
-  3: exact "n2"%string.
   3: exact "n2"%string.
   all: eauto with fenvDb.
 Qed.
@@ -730,8 +742,6 @@ Proof.
   5: exact "tl"%string.
   5: exact "hdtl"%string.
   5: exact "tltl"%string.
-  5: exact "hd"%string.
-  5: exact "hdtl"%string.
   all: eauto with fenvDb.
   all: simpl; ltac1:(repeat constructor).
   all: intro Hcont; unfold In in *; ltac1:(try contradiction); inversion Hcont; inversion H0.
@@ -754,8 +764,8 @@ Proof.
   Unshelve.
   2: exact "x"%string.
   2: exact "y"%string.
-  2: exact "n"%string.
-  eauto with fenvDb.
+  (* 2: exact "n"%string. *)
+  all: eauto with fenvDb.
 Qed.
 
 Definition bar (n : nat) : nat :=
@@ -790,9 +800,7 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  2: exact "n"%string.
-  2: exact "n"%string.
-  all: eauto with fenvDb.
+  exact "z"%string.
 Qed.
 
 Definition baz2 (n : nat) : nat :=
@@ -810,4 +818,4 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-Qed. *)
+Qed.

@@ -256,21 +256,8 @@ Proof.
 Qed.
 Hint Resolve auto_nat_if_less : automation.
 
-(* Consider making the "compilable" premises as one big match. e.g. *)
-(*
-(match v0 with
-| 0 => env |-- ([x1], s) ---> ([encode v1], s)
-| S n' =>
-  (FEnv.insert (name_enc n, Some (encode n')) env) |-- ([x2], s) --->
-    ([encode (v2 n')], s)
-end) ->
-*)
 Theorem auto_nat_case : forall {A} `{Refinable A} env s x0 x1 x2 n (v0: nat) (v1: A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
-  (* env |-- ([x1], s) ---> ([encode v1], s) ->
-  (forall n', S n' = v0 ->
-    (FEnv.insert (name_enc n, Some (encode n')) env) |-- ([x2], s) --->
-      ([encode (v2 n')], s)) -> *)
   (match v0 with
   | 0%nat => env |-- ([x1], s) ---> ([encode v1], s)
   | S n' =>

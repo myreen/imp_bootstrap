@@ -374,9 +374,24 @@ Ltac2 fname_if_in_f_lookup (f_lookup: (string * constr) list) (f: constr) :=
   let f_name_str := Option.bind f_name_r reference_to_string in
   Option.bind f_name_str (fun n => if is_in_loopkup f_lookup n then Some n else None).
 
+Ltac2 rec binders_names_of_constr_lambda (c: constr): constr list :=
+  match Unsafe.kind c with
+  | Lambda b c1 =>
+    match Binder.name b with
+    | Some n =>
+      constr_string_of_string (Ident.to_string n) :: binders_names_of_constr_lambda c1
+    | None =>
+      constr:("_"%string) :: binders_names_of_constr_lambda c1
+    end
+  | _ => []
+  end.
+
 (* TODO:
-- maybe make continuations to options and do open_constr:(_) as default
 - automate the setup for fix and everything around that (Would be cool to just run `relcompile` and for it to just work)
+- add a helper for `fun () => exact $constr`
+- include a tactic for postconditions – maybe just Unshelve; eauto with fenvDb
+- include fix setup in relcompile (maybe also intros and subst program)
+- write a crush tactic for NoDup.
 *)
 
 (* The priority of lemmas is as follows: *)
@@ -413,24 +428,28 @@ Ltac2 rec compile () : unit :=
             compile ()
           )
         | (dlet ?val ?body) =>
+          let binders_of_body := binders_names_of_constr_lambda body in
+          let let_n_constr := List.nth binders_of_body 0 in
           refine open_constr:(auto_let
           (* env *) $fenv
           (* x1 y1 *) _ _
           (* s1 s2 s3 *) _ _ _
           (* v1 *) $val
-          (* let_n *) _
+          (* let_n *) $let_n_constr
           (* f *) $body
           (* eval v1 *) ltac2:(Control.enter compile)
           (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
           )
         | (let x := ?val in @?body x) =>
           (* might work, but normal `let`s get inlined before (maybe because of the "cbv beta" after unfolding) *)
+          let binders_of_body := binders_names_of_constr_lambda body in
+          let let_n_constr := List.nth binders_of_body 0 in
           refine open_constr:(auto_let
           (* env *) $fenv
           (* x1 y1 *) _ _
           (* s1 s2 s3 *) _ _ _
           (* v1 *) $val
-          (* let_n *) _
+          (* let_n *) $let_n_constr
           (* f *) $body
           (* eval v1 *) ltac2:(Control.enter compile)
           (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
@@ -469,13 +488,18 @@ Ltac2 rec compile () : unit :=
         | (?x :: ?xs) =>
           app_lemma "auto_list_cons" [("env", fun () => exact $fenv); ("x", fun () => exact $x); ("xs", fun () => exact $xs)] [compile; compile]
         | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
-          app_lemma "auto_list_case" [("env", fun () => exact $fenv); ("v0", fun () => exact $v0); ("v1", fun () => exact $v1); ("v2", fun () => exact $v2)]
+          let binders_of_v2 := binders_names_of_constr_lambda v2 in
+          let n1_constr := List.nth binders_of_v2 0 in
+          let n2_constr := List.nth binders_of_v2 1 in
+          app_lemma "auto_list_case" [("env", fun () => exact $fenv); ("v0", fun () => exact $v0); ("v1", fun () => exact $v1); ("v2", fun () => exact $v2); ("n1", fun () => exact $n1_constr); ("n2", fun () => exact $n2_constr)]
                                      [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ())]
         (* TODO: see if we can use pairs (name -> tactic/term) *)
         (*       End-goal: extesible table of all compilation lemmas -> (name, tactic to apply) *)
         (*       We can use names to have subsets of tactics (e.g. arithmetic only) *)
         | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
-          app_lemma "auto_nat_case" [("env", fun () => exact $fenv); ("v0", fun () => exact $v0); ("v1", fun () => exact $v1); ("v2", fun () => exact $v2)]
+          let binders_of_v2 := binders_names_of_constr_lambda v2 in
+          let n_constr := List.nth binders_of_v2 0 in
+          app_lemma "auto_nat_case" [("env", fun () => exact $fenv); ("v0", fun () => exact $v0); ("v1", fun () => exact $v1); ("v2", fun () => exact $v2); ("n", fun () => exact $n_constr)]
                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
         | ?x =>
           if proper_const x then
@@ -615,6 +639,10 @@ Ltac2 rec docompile () :=
 Ltac2 Notation relcompile :=
   docompile ().
 
+(* *********************************************** *)
+(*                Examples/Tests                   *)
+(* *********************************************** *)
+
 Function has_match (l: list nat) : nat :=
   1 +
   match l with
@@ -624,7 +652,7 @@ Function has_match (l: list nat) : nat :=
 
 (* TODO(kπ): lookups might grow Qed time. Might want to rewrite them to multi-inserts *)
 
-(* Derive has_match_prog in (forall s l,
+Derive has_match_prog in (forall s l,
   lookup_fun (name_enc "has_match") s.(funs) = Some ([name_enc "l"], has_match_prog) ->
   eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
 ) as has_match_proof.
@@ -635,13 +663,9 @@ Proof.
   Show Proof.
   Unshelve.
   all: subst; unfold make_env; eauto with fenvDb.
-  3: exact "h"%string.
-  3: exact "t"%string.
-  3: exact "h"%string.
-  all: eauto with fenvDb.
-  simpl; ltac1:(repeat constructor).
+  all: simpl; ltac1:(repeat constructor).
   all: intro Hcont; unfold In in *; ltac1:(try contradiction); inversion Hcont; inversion H0.
-Qed. *)
+Qed.
 
 Fixpoint sum_n (n : nat) : nat :=
   match n with
@@ -668,8 +692,6 @@ Proof.
   Guarded.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  2: exact "n1"%string.
-  eauto with fenvDb.
 Qed.
 Print sum_n_prog.
 Print sum_n_prog_proof.
@@ -712,9 +734,6 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  3: exact "n1"%string.
-  3: exact "n2"%string.
-  all: eauto with fenvDb.
 Qed.
 
 Definition has_cases_list (l : list nat) : nat :=
@@ -738,11 +757,6 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  5: exact "hd"%string.
-  5: exact "tl"%string.
-  5: exact "hdtl"%string.
-  5: exact "tltl"%string.
-  all: eauto with fenvDb.
   all: simpl; ltac1:(repeat constructor).
   all: intro Hcont; unfold In in *; ltac1:(try contradiction); inversion Hcont; inversion H0.
 Qed.
@@ -762,9 +776,6 @@ Proof.
   relcompile.
   Show Proof.
   Unshelve.
-  2: exact "x"%string.
-  2: exact "y"%string.
-  (* 2: exact "n"%string. *)
   all: eauto with fenvDb.
 Qed.
 
@@ -800,7 +811,6 @@ Proof.
   Show Proof.
   Unshelve.
   all: unfold make_env; eauto with fenvDb.
-  exact "z"%string.
 Qed.
 
 Definition baz2 (n : nat) : nat :=

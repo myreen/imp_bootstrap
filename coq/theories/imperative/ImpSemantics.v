@@ -1,5 +1,6 @@
 Require Import impboot.utils.Core.
 Require Import impboot.utils.Llist.
+Import Llist.
 Require Import impboot.utils.Env.
 From Stdlib Require Import ListDec.
 Require Import impboot.imperative.ImpSyntax.
@@ -509,44 +510,18 @@ Definition imp_timesout (fuel: nat) (input: llist ascii) (p: prog) :=
 
 Definition imp_output (fuel: nat) (input: llist ascii) (p: prog) :=
     let (res, s) := eval_from fuel input p in
-    llist_of_list s.(output).
+    Llist.of_list s.(output).
 
-(*
-val build_lprefix_lub_def = Define `
-  build_lprefix_lub ls =
-    LUNFOLD (build_lprefix_lub_f ls) 0`;
+(* TODO: check this *)
+Definition output_ok (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
+  ∀ i,
+    (∃ k, Llist.defined_at i (imp_output k input p) ∧ Llist.nth i (imp_output k input p) = Llist.nth i output) ∨
+    not (Llist.defined_at i output).
 
-val build_lprefix_lub_f_def = Define`
-  build_lprefix_lub_f ls n =
-    OPTION_MAP (λx. (n+1, x)) (lprefix_chain_nth n ls)`;
-
-val lprefix_chain_nth_def = Define `
-  lprefix_chain_nth n ls =
-    some x. ?l. l ∈ ls ∧ LNTH n l = SOME x`;
-
-val LUNFOLD = Q.store_thm (
-  "LUNFOLD",
-  `!f x.
-     LUNFOLD f x =
-       case f x of NONE => [||] | SOME (v1,v2) => v2 ::: LUNFOLD f v1`,
-  ...) ;
-
-  LUNFOLD (build_lprefix_lub_f ls) 0
-  ====>
-  LUNFOLD (λn. OPTION_MAP (λx. (n+1, x)) (lprefix_chain_nth n ls)) 0
-  ====>
-  LUNFOLD (λn.
-    OPTION_MAP
-      (λx. (n+1, x))
-      (some x. ?l. l ∈ ls ∧ LNTH n l = SOME x)
-  )
-  0
-*)
-
-(* TODO(kπ) for divergence proofs *)
-Definition imp_diverges (input: llist ascii) (p: prog) (output: list ascii) :=
-    (forall fuel, imp_timesout fuel input prog) /\
-    output = build_lprefix_lub { imp_output fuel input p | k IN UNIV }.
+(* TODO: check this *)
+Definition imp_diverges (input: llist ascii) (p: prog) (output: llist ascii) :=
+    (forall fuel, imp_timesout fuel input p) ∧
+    output_ok input p output.
 
 Definition imp_weak_termination (input: llist ascii) (p: prog) (out: list ascii) :=
   exists fuel outcome s,

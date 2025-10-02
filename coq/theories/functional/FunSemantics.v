@@ -3,6 +3,7 @@ Require Export impboot.utils.Env.
 Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunValues.
 Require Import impboot.utils.Llist.
+Import Llist.
 
 Hint Resolve FEnv.lookup_insert_eq : fenvDb.
 Hint Resolve FEnv.lookup_insert_neq : fenvDb.

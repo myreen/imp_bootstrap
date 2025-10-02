@@ -1,6 +1,7 @@
 From impboot Require Import
   utils.Core
   utils.Llist.
+Import Llist.
 Require Import impboot.assembly.ASMSyntax.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.

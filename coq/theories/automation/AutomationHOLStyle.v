@@ -6,7 +6,7 @@ Require Import impboot.functional.FunSemantics.
 Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
 From impboot Require Import automation.Ltac2Utils.
-From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf.
+From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf Fresh.
 Import Ltac2.Constr.Unsafe.
 From coqutil Require Import
   Tactics.reference_to_string
@@ -17,7 +17,7 @@ From Coq Require Import FunInd.
 
 Open Scope nat.
 
-Definition empty_state : state := init_state Lnil [].
+Definition empty_state : state := init_state Llist.Lnil [].
 
 Ltac2 automation_lemmas () := List.flat_map (fun s => opt_to_list (Env.get [Option.get (Ident.of_string s)])) [
   "auto_let";
@@ -674,6 +674,53 @@ Ltac2 relcompile_impl () :=
 Ltac2 Notation relcompile :=
   relcompile_impl ().
 
+Ltac2 rec mk_constr_list (args: constr list): constr :=
+  match args with
+  | [] => open_constr:([])
+  | h :: t =>
+    let t_constr := mk_constr_list t in
+    open_constr:($h :: $t_constr)
+  end.
+
+Ltac2 rec gen_eval_app (acc: constr) (args: constr list) (f_constr_name: constr) (f: constr) (): constr :=
+  match Unsafe.kind (Constr.type acc) with
+  | Prod b _ =>
+      let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
+      let b := Binder.make (Some name) (Binder.type b) in 
+      let cont := Constr.in_context name (Binder.type b) (fun () =>
+        let b_hyp := Control.hyp name in
+        Control.refine (gen_eval_app open_constr:($acc _) (b_hyp :: args) f_constr_name f)
+      ) in
+      match Constr.Unsafe.kind cont with
+      | Lambda _ body' => make (Prod b body')
+      | _ => Control.throw_invalid_argument ""
+      end
+  | _ =>
+      printf "acc(_): %t" acc;
+      let encode_list_constr := mk_constr_list (List.map (fun c => open_constr:(encode $c)) args) in
+      printf "encode_list_constr: %t" encode_list_constr;
+      let applied_f := apply_to_args f args in
+      printf "applied_f: %t" applied_f;
+      open_constr:(eval_app (name_enc $f_constr_name) $encode_list_constr &s (encode $applied_f, &s))
+  end.
+
+
+(* TODO:
+- support deps
+- support arguments
+*)
+Ltac2 relcompile_tpe (prog: constr) (f: constr) (_deps: constr list): unit :=
+  let f_constr_name := constr_string_of_string (Option.get (Option.bind (reference_of_constr_opt f) reference_to_string)) in
+  let eval_app_cont := gen_eval_app f [] f_constr_name f in
+  Control.refine (fun () =>
+    open_constr:(forall (s: state),
+      lookup_fun (name_enc $f_constr_name) s.(funs) = Some ([name_enc "l"], $prog) ->
+      ltac2:(Control.refine
+        eval_app_cont
+      )
+    )
+  ).
+
 (* TODO:
 - automation for intros + subst *_prog?
 - automation for writing Derivation statements?
@@ -693,9 +740,23 @@ Function has_match (l: list nat) : nat :=
   | cons h t => h + 100
   end.
 
-Derive has_match_prog in (forall s l,
+Require Import impboot.utils.Env.
+
+(* User-land wish: *)
+(* TODO: the typeclass instance isn't resolved? maybe because of the open_constr? *)
+Derive has_match_prog in ltac2:(relcompile_tpe 'has_match_prog 'has_match []) as has_match_proof.
+Proof.
+  intros.
+  subst has_match_prog.
+  Opaque encode.
+  relcompile.
+  eauto with fenvDb.
+Qed.
+
+Derive has_match_prog in (forall s,
   lookup_fun (name_enc "has_match") s.(funs) = Some ([name_enc "l"], has_match_prog) ->
-  eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
+  forall l,
+    eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
 ) as has_match_proof.
 Proof.
   intros.
@@ -746,9 +807,10 @@ Definition has_cases (n : nat) : nat :=
   end.
 Print has_cases.
 
-Derive has_cases_prog in (forall (s : state) (n : nat),
+Derive has_cases_prog in (forall (s : state),
     lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
-    eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s))
+    forall (n: nat),
+      eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s))
   as has_cases_proof.
 Proof.
   intros.
@@ -766,9 +828,10 @@ Definition has_cases_list (l : list nat) : nat :=
     end
   end.
 
-Derive has_cases_list_prog in (forall (s : state) (l : list nat),
+Derive has_cases_list_prog in (forall (s : state),
     lookup_fun (name_enc "has_cases_list") s.(funs) = Some ([name_enc "l"], has_cases_list_prog) ->
-    eval_app (name_enc "has_cases_list") [encode l] s (encode (has_cases_list l), s))
+    forall (l : list nat),
+      eval_app (name_enc "has_cases_list") [encode l] s (encode (has_cases_list l), s))
   as has_cases_list_proof.
 Proof.
   intros.
@@ -781,9 +844,10 @@ Definition foo (n : nat) : nat :=
   let/d y := n + x in
   y.
 
-Derive foo_prog in (forall (s : state) (n : nat),
+Derive foo_prog in (forall (s : state),
     lookup_fun (name_enc "foo") s.(funs) = Some ([name_enc "n"], foo_prog) ->
-    eval_app (name_enc "foo") [encode n] s (encode (foo n), s))
+    forall (n : nat),
+      eval_app (name_enc "foo") [encode n] s (encode (foo n), s))
   as foo_prog_proof.
 Proof.
   intros.
@@ -794,10 +858,11 @@ Qed.
 Definition bar (n : nat) : nat :=
   foo (n + 1).
 
-Derive bar_prog in (forall (s : state) (n : nat),
+Derive bar_prog in (forall (s : state),
     (forall m, eval_app (name_enc "foo") [encode m] s (encode (foo m), s)) ->
     lookup_fun (name_enc "bar") s.(funs) = Some ([name_enc "n"], bar_prog) ->
-    eval_app (name_enc "bar") [encode n] s (encode (bar n), s))
+    forall (n : nat),
+      eval_app (name_enc "bar") [encode n] s (encode (bar n), s))
   as bar_prog_proof.
 Proof.
   intros.
@@ -809,9 +874,10 @@ Definition baz (n m : nat) : nat :=
   let/d z := n + m in
   z.
 
-Derive baz_prog in (forall (s : state) (n m : nat),
+Derive baz_prog in (forall (s : state),
     lookup_fun (name_enc "baz") s.(funs) = Some ([name_enc "n"; name_enc "m"], baz_prog) ->
-    eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s))
+    forall (n m : nat),
+      eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s))
   as baz_prog_proof.
 Proof.
   intros.
@@ -822,10 +888,11 @@ Qed.
 Definition baz2 (n : nat) : nat :=
   baz (n + 1) n.
 
-Derive baz2_prog in (forall (s : state) (n : nat),
+Derive baz2_prog in (forall (s : state),
     (forall n m, eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s)) ->
     lookup_fun (name_enc "baz2") s.(funs) = Some ([name_enc "n"], baz2_prog) ->
-    eval_app (name_enc "baz2") [encode n] s (encode (baz2 n), s))
+    forall (n : nat),
+      eval_app (name_enc "baz2") [encode n] s (encode (baz2 n), s))
   as baz2_prog_proof.
 Proof.
   intros.

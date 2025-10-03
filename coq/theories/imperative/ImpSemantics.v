@@ -508,20 +508,24 @@ Definition imp_avoids_crash (input: llist ascii) (p: prog) :=
 Definition imp_timesout (fuel: nat) (input: llist ascii) (p: prog) :=
   exists s, eval_from fuel input p = (Stop TimeOut, s).
 
-Definition imp_output (fuel: nat) (input: llist ascii) (p: prog) :=
-    let (res, s) := eval_from fuel input p in
-    Llist.of_list s.(output).
+Definition imp_output (fuel: nat) (input: llist ascii) (p: prog): list ascii :=
+  let (res, s) := eval_from fuel input p in
+  s.(output).
+
+Definition prog_avoids_crash (input: llist ascii) (p: prog): Prop :=
+  ∀ fuel res s, eval_from fuel input p = (res, s) ->
+    res ≠ Stop Crash.
 
 (* TODO: check this *)
-Definition output_ok (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
+Definition output_ok_imp (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
   ∀ i,
-    (∃ k, Llist.defined_at i (imp_output k input p) ∧ Llist.nth i (imp_output k input p) = Llist.nth i output) ∨
+    (∃ k, List.nth_error (imp_output k input p) i <> None ∧ List.nth_error (imp_output k input p) i = Llist.nth i output) ∨
     not (Llist.defined_at i output).
 
 (* TODO: check this *)
-Definition imp_diverges (input: llist ascii) (p: prog) (output: llist ascii) :=
-    (forall fuel, imp_timesout fuel input p) ∧
-    output_ok input p output.
+Definition prog_diverges (input: llist ascii) (p: prog) (output: llist ascii) :=
+  (forall fuel, imp_timesout fuel input p) ∧
+  output_ok_imp input p output.
 
 Definition imp_weak_termination (input: llist ascii) (p: prog) (out: list ascii) :=
   exists fuel outcome s,

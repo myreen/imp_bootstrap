@@ -305,8 +305,30 @@ Definition asm_terminates (input: llist ascii) (asm: asm) (output: list ascii): 
     init_state_ok t input asm /\
     clos_refl_trans s_or_h step (State t) (Halt (word.of_Z 0) output).
 
-(* Definition asm_diverges (input : llist ascii) (asm : asm) (output : string) : Prop :=
+(* Definition asm_diverges_def:
+  (input, asm) asm_diverges output =
+    ∃t. init_state_ok t input asm ∧
+      (* repeated application of step never halts or gets stuck: *)
+      (∀k. ∃t'. NRC step k (State t) (State t')) ∧
+      (* the output is the least upper bound of all reachable output *)
+      output = build_lprefix_lub { fromList t'.output | step꙳ (State t) (State t') }
+End *)
+
+Fixpoint NRC {A} (R: A -> A -> Prop) (n: nat) x y :=
+  match n with
+  | 0 => x = y
+  | S n =>
+    exists z, R x z /\ NRC R n z y
+  end.
+
+Definition output_ok_asm (t: state) (out: llist ascii): Prop :=
+  ∀ i,
+    (∃ k t1, NRC step k (State t) (State t1) ∧ List.nth_error t1.(output) i <> None ∧ List.nth_error t1.(output) i = Llist.nth i out) ∨
+    not (Llist.defined_at i out).
+
+Definition asm_diverges (input: llist ascii) (asm: asm) (output: llist ascii) : Prop :=
   exists t,
     init_state_ok t input asm /\
-    (forall k, exists t', clos_refl_trans_n step k (State t) (State t')) /\
-    output = build_lprefix_lub (fun t' => exists t'', clos_refl_trans step (State t) (State t') /\ t'.(output) = t''.(output)). *)
+    (forall k, exists t1, NRC step k (State t) (State t1)) /\
+    output_ok_asm t output.
+    (* output = build_lprefix_lub (fun t' => exists t'', clos_refl_trans step (State t) (State t') /\ t'.(output) = t''.(output)). *)

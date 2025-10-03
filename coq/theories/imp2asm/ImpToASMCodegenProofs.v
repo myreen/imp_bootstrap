@@ -1,5 +1,6 @@
 Require Import impboot.utils.Core.
 Require Import impboot.utils.Llist.
+Import Llist.
 Require Import impboot.utils.Env.
 Require Import impboot.utils.AppList.
 Require Import coqutil.Word.Interface.
@@ -3292,6 +3293,7 @@ Proof.
   eauto.
 Qed.
 
+(* TODO: use eval_from here? *)
 Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
   catch_return (eval_cmd main_c (EVAL_CMD fuel)) s = (res,s1) -> res ≠ Stop Crash ->
   s.(vars) = IEnv.empty ->
@@ -3573,4 +3575,74 @@ Proof.
   all: spat `Halt` at inversion spat; subst.
   2: spat `word.eqb` at eapply Properties.word.eqb_false in spat; congruence.
   reflexivity.
+Qed.
+
+Theorem codegen_diverges: forall input prog output,
+  prog_avoids_crash input prog ->
+  asm_diverges input (codegen prog) output ->
+  prog_diverges input prog output.
+Proof.
+  intros.
+  unfold prog_avoids_crash, prog_diverges, asm_diverges, init_state_ok in *; cleanup; split; intros.
+  1: { (* imp_timesout *)
+    unfold imp_timesout; cleanup.
+    destruct eval_from eqn:?.
+    spat `_ <> Stop Crash` at specialize spat with (fuel := fuel) (res := o) (s := s) as Hnocrash; clear spat.
+    pat `eval_from _ _ _ = _` at specialize (Hnocrash pat).
+    eexists; f_equal.
+    destruct prog.
+    unfold eval_from in *.
+    destruct find_fun eqn:?; unfold_outcome; cleanup.
+    2: congruence.
+    pat ` (let (l, _) := ?p in _) = _` at destruct p; destruct l.
+    2: congruence.
+    spat `eval_cmd` at eapply codegen_thm in spat; eauto; cleanup.
+    simpl in *; rewrite Nat.sub_0_r in *.
+    assert (exists t1, steps (State x, steps_done s) (State t1, 0)).
+    1: { (* NRC ==> steps *)
+      pat `let (_, _) := ?x in _` at destruct x; clear pat.
+      pat `forall _, _` at specialize pat with (k := s.(steps_done)); cleanup.
+      induction s.(steps_done); simpl in *; cleanup.
+      - intros; eexists; subst.
+        spat `steps` at eapply steps_determ in spat; cleanup; eauto.
+        eapply steps_refl.
+      - eexists.
+        eapply steps_trans.
+        1: eapply steps_step_succ.
+        1: eauto.
+        
+        pat `NRC _ _ ?x _` at destruct x.
+        2: {
+          destruct n0; try congruence.
+          simpl in *; cleanup.
+          pat `step (Halt _ _) _` at inversion pat.
+        }
+        
+        eauto.
+      admit.
+    }
+    cleanup.
+    all: spat `steps` at eapply steps_determ in spat; cleanup.
+    2: pat`steps _ (s0, _)` at exact pat.
+    subst; cleanup.
+    eauto.
+    (* (CCONTR_TAC \\ fs [prog_timesout_def]
+    \\ last_x_assum (qspec_then ‘k’ assume_tac)
+    \\ Cases_on ‘eval_from k t.input prog’ \\ fs []
+    \\ reverse (Cases_on ‘q’)
+    THEN1 (Cases_on ‘e’ \\ fs [] \\ rw [] \\ fs []) \\ fs []
+    \\ rw [] \\ Cases_on ‘prog’ \\ fs [eval_from_def]
+    \\ drule codegen_thm \\ fs []
+    \\ fs [init_state_def]
+    \\ goal_assum (first_assum o mp_then Any mp_tac) \\ fs []
+    \\ CCONTR_TAC \\ fs []
+    \\ Cases_on ‘outcome’ \\ fs []
+    \\ Cases_on ‘q’ \\ fs []
+    \\ drule steps_IMP_NRC_step \\ strip_tac
+    \\ rename [‘NRC _ kk’]
+    \\ first_x_assum (qspec_then ‘kk’ mp_tac) \\ strip_tac
+    \\ imp_res_tac NRC_step_determ \\ fs []) *)
+  }
+  (* output_ok_imp *)
+  admit.
 Qed.

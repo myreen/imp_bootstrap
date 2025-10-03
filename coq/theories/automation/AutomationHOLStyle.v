@@ -5,6 +5,7 @@ Require Import impboot.functional.FunValues.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
+Require Import impboot.utils.Env.
 From impboot Require Import automation.Ltac2Utils.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf Fresh.
 Import Ltac2.Constr.Unsafe.
@@ -832,10 +833,6 @@ Function has_match (l: list nat) : nat :=
   | nil => 0
   | cons h t => h + 100
   end.
-
-Require Import impboot.utils.Env.
-Set Printing Existential Instances.
-
 (* User-land wish: *)
 (* TODO: the typeclass instance isn't resolved? maybe because of the open_constr? *)
 Derive has_match_prog in ltac2:(relcompile_tpe 'has_match_prog 'has_match []) as has_match_proof.

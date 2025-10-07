@@ -16,7 +16,7 @@ Record state := mkState {
   memory : list mem_block;
   funs: list ImpSyntax.func;
   input: llist ascii;
-  output: list ascii;
+  output: string;
   steps_done: nat
 }.
 
@@ -121,7 +121,7 @@ Definition set_input (inp : llist ascii) (s : state) : state :=
      output := s.(output);
      steps_done := s.(steps_done) |}.
 
-Definition set_output (out : list ascii) (s : state) : state :=
+Definition set_output (out : string) (s : state) : state :=
   {| vars := s.(vars);
      funs := s.(funs);
      memory := s.(memory);
@@ -314,7 +314,7 @@ Definition put_char (v: Value) (s: state): (outcome unit * state) :=
   | (Pointer p) => crash s
   | (Word w) =>
     if w2n w <? 256 then
-      cont tt (set_output (s.(output) ++ [ascii_of_nat (w2n w)]) s)
+      cont tt (set_output (String.append s.(output) (String (ascii_of_nat (w2n w)) EmptyString)) s)
     else crash s
   end.
 
@@ -418,8 +418,13 @@ Fixpoint EVAL_CMD (fuel: nat) (c : cmd) {struct fuel} : SRM unit :=
     We increase the number of steps done by the imperative evaluator ->
       The assembly also does more steps
 *)
-Theorem eval_cmd_steps_done_ge_fuel: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit) (v: Value),
+Theorem eval_cmd_steps_done_ge_fuel: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
   eval_cmd c (EVAL_CMD fuel) s = (o, s1) -> o = Stop TimeOut -> (s1.(steps_done) - s.(steps_done) >= fuel).
+Proof.
+Admitted.
+
+Theorem catch_return_steps_done_ge_fuel: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome Value),
+  catch_return (eval_cmd c (EVAL_CMD fuel)) s = (o, s1) -> o = Stop TimeOut -> (s1.(steps_done) - s.(steps_done) >= fuel).
 Proof.
 Admitted.
 
@@ -481,7 +486,7 @@ Definition init_state (inp: llist ascii) (funs: list func): state :=
      memory := [];
      funs   := funs;
      input  := inp;
-     output := [];
+     output := EmptyString;
      steps_done := 0 |}.
 
 Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome Value * state) :=
@@ -495,7 +500,7 @@ Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome Value 
     end
   end.
 
-Definition prog_terminates (input: llist ascii) (p: prog) (fuel: nat) (output: list ascii) (steps_done: nat) :=
+Definition prog_terminates (input: llist ascii) (p: prog) (fuel: nat) (output: string) (steps_done: nat) :=
   exists s r,
     eval_from fuel input p = (r, s) /\
       r = Stop (ImpSemantics.Return (ImpSyntax.Word (word.of_Z 0))) /\ (* TODO: is this correct? *)
@@ -508,7 +513,7 @@ Definition imp_avoids_crash (input: llist ascii) (p: prog) :=
 Definition imp_timesout (fuel: nat) (input: llist ascii) (p: prog) :=
   exists s, eval_from fuel input p = (Stop TimeOut, s).
 
-Definition imp_output (fuel: nat) (input: llist ascii) (p: prog): list ascii :=
+Definition imp_output (fuel: nat) (input: llist ascii) (p: prog): string :=
   let (res, s) := eval_from fuel input p in
   s.(output).
 
@@ -519,7 +524,7 @@ Definition prog_avoids_crash (input: llist ascii) (p: prog): Prop :=
 (* TODO: check this *)
 Definition output_ok_imp (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
   ∀ i,
-    (∃ k, List.nth_error (imp_output k input p) i <> None ∧ List.nth_error (imp_output k input p) i = Llist.nth i output) ∨
+    (∃ k, String.get i (imp_output k input p) <> None ∧ String.get i (imp_output k input p) = Llist.nth i output) ∨
     not (Llist.defined_at i output).
 
 (* TODO: check this *)
@@ -527,7 +532,7 @@ Definition prog_diverges (input: llist ascii) (p: prog) (output: llist ascii) :=
   (forall fuel, imp_timesout fuel input p) ∧
   output_ok_imp input p output.
 
-Definition imp_weak_termination (input: llist ascii) (p: prog) (out: list ascii) :=
+Definition imp_weak_termination (input: llist ascii) (p: prog) (out: string) :=
   exists fuel outcome s,
     eval_from fuel input p = (outcome, s) /\
     (outcome <> Stop Abort -> exists v, outcome = Cont v /\ s.(output) = out).

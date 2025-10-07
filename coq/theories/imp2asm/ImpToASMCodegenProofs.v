@@ -248,7 +248,7 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
       pmap_subsume pmap pmap1 /\
       match outcome with
       | (Halt ec output, ck) =>
-        prefix (string_of_list_ascii output) (string_of_list_ascii s1.(ImpSemantics.output)) = true /\
+        prefix output s1.(ImpSemantics.output) = true /\
         (ec = (word.of_Z 1) \/ ec = (word.of_Z 4))
         (* TODO(kπ) do we need this? *)
         (* ∧ res <> Stop TimeOut *)
@@ -2953,13 +2953,13 @@ Admitted.
 Definition init_state_ok_def (t: ASMSemantics.state) (input: llist ascii) (asm: asm) :=
   ∃r14 r15,
     t.(pc) = 0 ∧ t.(instructions) = asm ∧
-    t.(ASMSemantics.input) = input ∧ t.(output) = [] ∧
+    t.(ASMSemantics.input) = input ∧ t.(output) = EmptyString ∧
     t.(stack) = [] ∧
     t.(regs) R14 = Some r14 ∧
     t.(regs) R15 = Some r15 ∧
     memory_writable r14 r15 t.(memory).
 
-Definition asm_terminates (input: llist ascii) (asm: asm) (fuel: nat) (output: list ascii) :=
+Definition asm_terminates (input: llist ascii) (asm: asm) (fuel: nat) (output: string) :=
   exists t fuel_left,
     init_state_ok t input asm /\
       steps (State t, fuel) (Halt (word.of_Z 0) output, fuel_left).
@@ -3319,10 +3319,8 @@ Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
       if word.eqb ec (word.of_Z 0) then
         output = s1.(ImpSemantics.output) ∧
         exists v, res = Cont v
-        (* exists v, res = Stop (Return v) *)
-        (* should it be v = 0 ? *)
       else
-        prefix (string_of_list_ascii output) (string_of_list_ascii s1.(ImpSemantics.output)) = true
+        prefix output s1.(ImpSemantics.output) = true
     end.
 Proof.
   intros.
@@ -3572,11 +3570,142 @@ Proof.
   all: spat `steps` at eapply steps_determ in spat; cleanup.
   2,4: pat`steps _ (Halt (word.of_Z 0) _, _)` at exact pat.
   all: subst.
-  all: spat `Halt` at inversion spat; subst.
   2: spat `word.eqb` at eapply Properties.word.eqb_false in spat; congruence.
   reflexivity.
 Qed.
 
+Lemma NRC_to_State_is_State: forall n x s1,
+  NRC step n x (State s1) ->
+  ∃s, x = State s.
+Proof.
+  destruct n; intros; simpl in *; cleanup.
+  - eexists; eauto.
+  - destruct x.
+    1: eauto.
+    pat `step (Halt _ _) _` at inversion pat.
+Qed.
+
+Theorem NRC_step_IMP_steps: forall n t0 t1,
+  NRC step n (State t0) (State t1) ->
+  steps (State t0, n) (State t1, 0).
+Proof.
+  induction n; simpl in *; intros; cleanup.
+  - pat `_ = _` at inversion pat; subst.
+    eapply steps_refl.
+  - pat `NRC _ _ ?x _` at specialize NRC_to_State_is_State with (1 := pat) as ?; cleanup; subst.
+    eapply steps_trans.
+    1: eapply steps_step_succ.
+    1: eauto.
+    eauto.
+Qed.
+
+Theorem steps_IMP_NRC_step: ∀s k res r,
+  steps (s,k) (res,r) -> ∃k, NRC step k s res.
+Proof.
+  (* Induct_on ‘steps’ \\ rw[]
+  THEN1 (qexists_tac ‘0’ \\ fs [])
+  THEN1 (qexists_tac ‘SUC 0’ \\ fs [])
+  THEN1 (qexists_tac ‘SUC 0’ \\ fs [])
+  \\ metis_tac [NRC_ADD_I] *)
+Admitted.
+
+Lemma NRC_step_add: forall n m x y,
+  NRC step (n + m) (State x) (State y) ->
+  ∃z, NRC step n (State x) (State z) ∧ NRC step m (State z) (State y).
+Proof.
+  induction n; intros; simpl in *; cleanup.
+  - eexists; split; eauto.
+  - pat `NRC _ _ _ (State _)` at specialize NRC_to_State_is_State with (1 := pat) as ?; cleanup; subst.
+    pat `NRC _ (_ + _) _ _` at eapply IHn in pat; cleanup.
+    eexists; split; eauto.
+Qed.
+
+Theorem NRC_step_determ: ∀k s res1 res2,
+  NRC step k s res1 -> NRC step k s res2 -> res1 = res2.
+Proof.
+  induction k; intros; simpl in *.
+  - congruence.
+  - destruct H as [z1 [Hz1a Hz1b]].
+    destruct H0 as [z2 [Hz2a Hz2b]].
+    assert (z1 = z2) as Heq.
+    1: {
+      eapply step_determ.
+      split; eauto.
+    }
+    subst z2.
+    eapply IHk; eauto.
+Qed.
+
+Theorem steps_NRC: ∀s1 n1 s2 n2,
+  steps (s1,n1) (s2,n2) -> ∃k, NRC step (n1 - n2 + k) s1 s2 ∧ n2 ≤ n1.
+Proof.
+  (* Induct_on ‘steps’ \\ rw [] \\ gvs []
+  THEN1 (qexists_tac ‘0’ \\ fs [])
+  THEN1 (qexists_tac ‘SUC 0’ \\ fs [])
+  THEN1 (qexists_tac ‘0’ \\ fs [])
+  \\ qexists_tac ‘k+k'’
+  \\ ‘k + k' + n1 − n3 = (k + n1 − n2) + (k' + n2 − n3)’ by fs []
+  \\ metis_tac [NRC_ADD_I] *)
+Admitted.
+
+Theorem NRC_step_mono: ∀n t1 t2,
+  NRC step n (State t1) (State t2) -> prefix t1.(output) t2.(output) = true.
+Proof.
+  (* Induct \\ fs [NRC_SUC_RECURSE_LEFT] \\ rw []
+  \\ Cases_on ‘z’ \\ fs [] \\ res_tac
+  \\ imp_res_tac step_mono
+  \\ imp_res_tac rich_listTheory.IS_PREFIX_TRANS *)
+Admitted.
+
+Theorem get_prefix_correct: forall i s1 s2,
+  prefix s1 s2 = true ->
+  get i s1 <> None ->
+  get i s2 = get i s1.
+Proof.
+  intros i s1. revert i.
+  induction s1 as [|a s1' IH]; intros i s2 Hpre Hget.
+  - simpl in Hget. contradiction.
+  - simpl in Hpre.
+    destruct s2 as [|b s2'].
+    + discriminate Hpre.
+    + destruct (ascii_dec a b) as [Heq|Hneq].
+      * subst b.
+        simpl in Hget.
+        destruct i.
+        -- simpl. reflexivity.
+        -- simpl. eapply IH; eauto.
+      * discriminate Hpre.
+Qed.
+
+Theorem prefix_trans: forall s1 s2 s3,
+  prefix s1 s2 = true ->
+  prefix s2 s3 = true ->
+  prefix s1 s3 = true.
+Proof.
+  intros s1 s2. revert s1.
+  induction s2 as [|b s2' IH]; intros s1 s3 H1 H2.
+  - destruct s1 as [|a s1'].
+    + simpl. assumption.
+    + simpl in H1. discriminate H1.
+  - destruct s1 as [|a s1'].
+    + destruct s3 as [|c s3']; simpl; reflexivity.
+    + simpl in H1.
+      destruct (ascii_dec a b) as [Heq|Hneq].
+      * subst b.
+        destruct s3 as [|c s3'].
+        -- simpl in H2.
+           destruct (ascii_dec a a) as [_|Hcontr]; [discriminate H2|contradiction].
+        -- simpl in H2.
+           destruct (ascii_dec a c) as [Heq2|Hneq2].
+           ++ subst c.
+              simpl.
+              destruct (ascii_dec a a) as [_|Hcontr]; [|contradiction].
+              eapply IH; eassumption.
+           ++ discriminate H2.
+      * discriminate H1.
+Qed.
+
+(* TODO: not sure, but we might need the output_ok implication also going the other way *)
 Theorem codegen_diverges: forall input prog output,
   prog_avoids_crash input prog ->
   asm_diverges input (codegen prog) output ->
@@ -3598,51 +3727,61 @@ Proof.
     2: congruence.
     spat `eval_cmd` at eapply codegen_thm in spat; eauto; cleanup.
     simpl in *; rewrite Nat.sub_0_r in *.
-    assert (exists t1, steps (State x, steps_done s) (State t1, 0)).
-    1: { (* NRC ==> steps *)
-      pat `let (_, _) := ?x in _` at destruct x; clear pat.
-      pat `forall _, _` at specialize pat with (k := s.(steps_done)); cleanup.
-      induction s.(steps_done); simpl in *; cleanup.
-      - intros; eexists; subst.
-        spat `steps` at eapply steps_determ in spat; cleanup; eauto.
-        eapply steps_refl.
-      - eexists.
-        eapply steps_trans.
-        1: eapply steps_step_succ.
-        1: eauto.
-        
-        pat `NRC _ _ ?x _` at destruct x.
-        2: {
-          destruct n0; try congruence.
-          simpl in *; cleanup.
-          pat `step (Halt _ _) _` at inversion pat.
-        }
-        
-        eauto.
-      admit.
-    }
-    cleanup.
-    all: spat `steps` at eapply steps_determ in spat; cleanup.
-    2: pat`steps _ (s0, _)` at exact pat.
-    subst; cleanup.
+    pat ` let (_, _) := ?p in _` at destruct p.
+    spat `steps` at eapply steps_IMP_NRC_step in spat; cleanup.
+    pat `forall _, _` at specialize pat with (k := x2); cleanup.
+    spat `NRC _ _ _ (State _)` at eapply NRC_step_determ in spat; eauto; subst; cleanup.
     eauto.
-    (* (CCONTR_TAC \\ fs [prog_timesout_def]
-    \\ last_x_assum (qspec_then ‘k’ assume_tac)
-    \\ Cases_on ‘eval_from k t.input prog’ \\ fs []
-    \\ reverse (Cases_on ‘q’)
-    THEN1 (Cases_on ‘e’ \\ fs [] \\ rw [] \\ fs []) \\ fs []
-    \\ rw [] \\ Cases_on ‘prog’ \\ fs [eval_from_def]
-    \\ drule codegen_thm \\ fs []
-    \\ fs [init_state_def]
-    \\ goal_assum (first_assum o mp_then Any mp_tac) \\ fs []
-    \\ CCONTR_TAC \\ fs []
-    \\ Cases_on ‘outcome’ \\ fs []
-    \\ Cases_on ‘q’ \\ fs []
-    \\ drule steps_IMP_NRC_step \\ strip_tac
-    \\ rename [‘NRC _ kk’]
-    \\ first_x_assum (qspec_then ‘kk’ mp_tac) \\ strip_tac
-    \\ imp_res_tac NRC_step_determ \\ fs []) *)
   }
   (* output_ok_imp *)
-  admit.
+  unfold output_ok_asm, output_ok_imp, imp_output in *; intros; cleanup.
+  pat `forall _, _` at specialize pat with (i := i); cleanup; destruct pat.
+  2: right; eauto.
+  left; cleanup.
+  exists x2.
+  destruct eval_from eqn:?.
+  spat `_ <> Stop Crash` at specialize spat with (res := o) (s := s) as Hnocrash; clear spat.
+  pat `eval_from _ _ _ = _` at specialize (Hnocrash _ pat).
+  destruct prog.
+  unfold eval_from in *.
+  destruct find_fun eqn:?; unfold_outcome; cleanup.
+  2: congruence.
+  pat ` (let (l, _) := ?p in _) = _` at destruct p; destruct l.
+  2: congruence.
+  assert (o = Stop TimeOut) as HoTimeOut.
+  1: {
+    spat `eval_cmd` at eapply codegen_thm in spat; eauto; cleanup.
+    simpl in *; rewrite Nat.sub_0_r in *.
+    pat ` let (_, _) := ?p in _` at destruct p.
+    spat `steps` at eapply steps_IMP_NRC_step in spat; cleanup.
+    pat `forall _, _` at specialize pat with (k := x4); cleanup.
+    spat `NRC _ x4 _ (State _)` at eapply NRC_step_determ in spat; eauto; subst; cleanup.
+    eauto.
+  }
+  spat `catch_return (eval_cmd ?c (_ ?f)) ?s1` at specialize catch_return_steps_done_ge_fuel with (c := c) (fuel := f) (1 := spat) (2 := HoTimeOut) as ?.
+  spat `eval_cmd` at eapply codegen_thm with (s := init_state input funcs) in spat; eauto; cleanup.
+  simpl in *; rewrite Nat.sub_0_r in *.
+  pat ` let (_, _) := ?p in _` at destruct p.
+  pat `match ?s0 with _ => _ end` at destruct s0.
+  2: {
+    spat `steps` at eapply steps_IMP_NRC_step in spat; cleanup.
+    pat `forall _, _` at specialize pat with (k := x4); cleanup.
+    spat `NRC _ x4 _ (State _)` at eapply NRC_step_determ in spat; eauto; cleanup.
+    pat `Halt _ _ = State _` at inversion pat.
+  }
+  cleanup; subst.
+  pat `_ = ImpSemantics.output s` at rewrite <- pat.
+  spat `steps` at eapply steps_NRC in spat; cleanup.
+  simpl in *; rewrite Nat.sub_0_r in *.
+  assert (exists k_diff, steps_done s = x2 + k_diff) as [k_diff Hk_diff] by (exists (steps_done s - x2); lia).
+  pat `NRC step (_ + _) (State x) _` at eapply NRC_step_add in pat; cleanup.
+  pat `NRC _ x4 _ _` at eapply NRC_step_mono in pat.
+  pat `steps_done s = _` at rewrite pat in *.
+  pat `NRC step (_ + _) (State x) _` at eapply NRC_step_add in pat; cleanup.
+  pat `NRC _ k_diff _ _` at eapply NRC_step_mono in pat.
+  spat `NRC step x2` at eapply NRC_step_determ in spat.
+  2: pat `NRC step x2 (State _) (State x3)` at exact pat; subst.
+  pat `State _ = State _` at inversion pat; subst; clear pat.
+  rewrite get_prefix_correct with (s1 := ASMSemantics.output x6); eauto.
+  eapply prefix_trans; eauto.
 Qed.

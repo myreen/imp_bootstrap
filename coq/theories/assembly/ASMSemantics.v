@@ -20,7 +20,7 @@ Record state := mkState {
   stack : list word_or_ret;
   memory : word64 -> option (option word64);
   input : llist ascii;  (* input can be an infinite stream *)
-  output : list ascii    (* at each point output must be finite *)
+  output : string       (* at each point output must be finite *)
 }.
 
 Definition fetch (s : state) : option instr :=
@@ -65,7 +65,7 @@ Definition put_ascii (c : ascii) (s : state) : state :=
      stack := s.(stack);
      memory := s.(memory);
      input := s.(input);
-     output := s.(output) ++ [c] |}.
+     output := String.append s.(output) (String c EmptyString) |}.
 
 Definition read_mem (a : word64) (s : state) : option word64 :=
   match s.(memory) a with
@@ -116,7 +116,7 @@ Definition set_pc (n : nat) (s : state) : state :=
 
 Inductive s_or_h :=
 | State : state -> s_or_h
-| Halt : word64 -> list ascii -> s_or_h.
+| Halt : word64 -> string -> s_or_h.
 
 Inductive take_branch : cond -> state -> bool -> Prop :=
 | take_branch_always : forall (s : state),
@@ -270,10 +270,15 @@ Proof.
   - eapply steps_trans; eauto.
 Qed.
 
-Theorem steps_determ: forall s fuel r1 s1 r2 s2,
-  steps (s, fuel) (r1, s1) ->
-  steps (s, fuel) (r2, s2) ->
-  r1 = r2 /\ s1 = s2.
+Theorem step_determ: forall x y z,
+  step x y ∧ step x z -> y = z.
+Proof.
+Admitted.
+
+Theorem steps_determ: forall s fuel s1 s2 e1 e2 o1 o2,
+  steps (s, fuel) (Halt e1 o1, s1) ->
+  steps (s, fuel) (Halt e2 o2, s2) ->
+  e1 = e2 /\ o1 = o2.
 Proof.
 Admitted.
 
@@ -294,13 +299,13 @@ Definition init_state_ok (t : state) (inp : llist ascii) (asm : asm) : Prop :=
     t.(pc) = 0 /\
     t.(instructions) = asm /\
     t.(input) = inp /\
-    t.(output) = [] /\
+    t.(output) = EmptyString /\
     t.(stack) = [] /\
     t.(regs) R14 = Some r14 /\
     t.(regs) R15 = Some r15 /\
     memory_writable r14 r15 t.(memory).
 
-Definition asm_terminates (input: llist ascii) (asm: asm) (output: list ascii): Prop :=
+Definition asm_terminates (input: llist ascii) (asm: asm) (output: string): Prop :=
   exists t,
     init_state_ok t input asm /\
     clos_refl_trans s_or_h step (State t) (Halt (word.of_Z 0) output).
@@ -323,7 +328,7 @@ Fixpoint NRC {A} (R: A -> A -> Prop) (n: nat) x y :=
 
 Definition output_ok_asm (t: state) (out: llist ascii): Prop :=
   ∀ i,
-    (∃ k t1, NRC step k (State t) (State t1) ∧ List.nth_error t1.(output) i <> None ∧ List.nth_error t1.(output) i = Llist.nth i out) ∨
+    (∃ k t1, NRC step k (State t) (State t1) ∧ String.get i t1.(output) <> None ∧ String.get i t1.(output) = Llist.nth i out) ∨
     not (Llist.defined_at i out).
 
 Definition asm_diverges (input: llist ascii) (asm: asm) (output: llist ascii) : Prop :=

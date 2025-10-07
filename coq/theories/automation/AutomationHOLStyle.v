@@ -18,29 +18,6 @@ From Coq Require Import FunInd.
 
 Open Scope nat.
 
-Definition empty_state : state := init_state Llist.Lnil [].
-
-Ltac2 automation_lemmas () := List.flat_map (fun s => opt_to_list (Env.get [Option.get (Ident.of_string s)])) [
-  "auto_let";
-  "auto_bool_T";
-  "auto_bool_F";
-  "auto_bool_and";
-  "auto_bool_iff";
-  "auto_bool_not"
-].
-
-Ltac2 get_test_ref() :=
-  let refs := Env.expand (ident_of_fqn ["auto_bool_not"]) in
-  List.hd refs.
-
-(* TODO(kπ): this version doesn't work - loops indefinitely *)
-Ltac2 rec split_thm (c: constr): constr list :=
-  lazy_match! c with
-  | (∀ x, @?f x) =>
-    x :: split_thm f
-  | _ => []
-  end.
-
 Ltac2 rec string_of_relevance (r: Binder.relevance): string :=
   match r with
   | Binder.Relevant => "Relevant"

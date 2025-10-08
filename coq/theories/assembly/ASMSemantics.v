@@ -282,6 +282,11 @@ Theorem steps_determ: forall s fuel s1 s2 e1 e2 o1 o2,
 Proof.
 Admitted.
 
+Theorem step_mono: forall s0 s1,
+  step (State s0) (State s1) -> prefix s0.(output) s1.(output) = true.
+Proof.
+Admitted.
+
 Definition can_write_mem_at (m : word64 -> option (option word64)) (a : word64) : Prop :=
   m a = Some None.
 

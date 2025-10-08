@@ -10,6 +10,8 @@ Require Import impboot.imperative.ImpSemantics.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.assembly.ASMSemantics.
 
+Require Import Stdlib.Program.Equality.
+
 Require Import Patat.Patat.
 
 (* Definitions of invariants and relations *)
@@ -3574,7 +3576,7 @@ Proof.
   reflexivity.
 Qed.
 
-Lemma NRC_to_State_is_State: forall n x s1,
+Lemma NRC_from_is_State: forall n x s1,
   NRC step n x (State s1) ->
   ∃s, x = State s.
 Proof.
@@ -3585,6 +3587,20 @@ Proof.
     pat `step (Halt _ _) _` at inversion pat.
 Qed.
 
+Lemma steps_from_is_State: forall n x s1 n1,
+  steps (x, n) (State s1, n1) ->
+  ∃s, x = State s.
+Proof.
+  intros * H.
+  dependent induction H; intros; simpl in *; cleanup.
+  - eexists; eauto.
+  - spat `step` at inversion spat; eauto.
+  - spat `step` at inversion spat; eauto.
+  - specialize (IHsteps2 n2 s2 s1 n1 eq_refl eq_refl); cleanup; subst.
+    specialize (IHsteps1 n x x0 n2 eq_refl eq_refl); cleanup; subst.
+    eauto.
+Qed.
+
 Theorem NRC_step_IMP_steps: forall n t0 t1,
   NRC step n (State t0) (State t1) ->
   steps (State t0, n) (State t1, 0).
@@ -3592,22 +3608,59 @@ Proof.
   induction n; simpl in *; intros; cleanup.
   - pat `_ = _` at inversion pat; subst.
     eapply steps_refl.
-  - pat `NRC _ _ ?x _` at specialize NRC_to_State_is_State with (1 := pat) as ?; cleanup; subst.
+  - pat `NRC _ _ ?x _` at specialize NRC_from_is_State with (1 := pat) as ?; cleanup; subst.
     eapply steps_trans.
     1: eapply steps_step_succ.
     1: eauto.
     eauto.
 Qed.
 
-Theorem steps_IMP_NRC_step: ∀s k res r,
-  steps (s,k) (res,r) -> ∃k, NRC step k s res.
+Lemma NRC_step_add_inv: forall n m x y z,
+  NRC step n (State x) (State z) -> NRC step m (State z) y ->
+  NRC step (n + m) (State x) y.
 Proof.
-  (* Induct_on ‘steps’ \\ rw[]
-  THEN1 (qexists_tac ‘0’ \\ fs [])
-  THEN1 (qexists_tac ‘SUC 0’ \\ fs [])
-  THEN1 (qexists_tac ‘SUC 0’ \\ fs [])
-  \\ metis_tac [NRC_ADD_I] *)
-Admitted.
+  induction n; intros; simpl in *; cleanup.
+  - pat `_ = _` at inversion pat; subst.
+    eauto.
+  - pat `NRC _ _ x0 (State _)` at specialize NRC_from_is_State with (1 := pat) as ?; cleanup; subst.
+    eexists; split; eauto.
+Qed.
+
+Theorem steps_from_Halt_is_Halt: forall w o n s n1,
+  steps (Halt w o, n) (s, n1) ->
+    s = (Halt w o) ∧ n1 = n.
+Proof.
+  intros * H.
+  dependent induction H; subst; eauto.
+  all: try spat `step` at inversion spat.
+  eapply IHsteps2; eauto.
+  f_equal.
+  all: specialize (IHsteps1 w o n s2 n2 eq_refl eq_refl) as ?; cleanup; subst.
+  all: eauto.
+Qed.
+
+Theorem steps_IMP_NRC_step: ∀s k res r,
+  steps (s, k) (res, r) -> ∃k, NRC step k s res.
+Proof.
+  intros * H.
+  dependent induction H.
+  - exists 0; simpl; reflexivity.
+  - exists 1; simpl.
+    eexists; cleanup; eauto.
+  - exists 1; simpl.
+    eexists; cleanup; eauto.
+  - destruct s2.
+    2: {
+      pat `steps (Halt _ _, _) _` at specialize steps_from_Halt_is_Halt with (1 := pat) as ?; cleanup; subst.
+      eapply IHsteps1; eauto.
+    }
+    pat `steps _ (State _, _)` at specialize steps_from_is_State with (1 := pat) as ?; cleanup; subst.
+    specialize (IHsteps1 (State x) k (State s0) n2 eq_refl eq_refl) as ?.
+    specialize (IHsteps2 (State s0) n2 res r eq_refl eq_refl) as ?.
+    cleanup.
+    exists (x1 + x0).
+    eapply NRC_step_add_inv; eauto.
+Qed.
 
 Lemma NRC_step_add: forall n m x y,
   NRC step (n + m) (State x) (State y) ->
@@ -3615,7 +3668,7 @@ Lemma NRC_step_add: forall n m x y,
 Proof.
   induction n; intros; simpl in *; cleanup.
   - eexists; split; eauto.
-  - pat `NRC _ _ _ (State _)` at specialize NRC_to_State_is_State with (1 := pat) as ?; cleanup; subst.
+  - pat `NRC _ _ _ (State _)` at specialize NRC_from_is_State with (1 := pat) as ?; cleanup; subst.
     pat `NRC _ (_ + _) _ _` at eapply IHn in pat; cleanup.
     eexists; split; eauto.
 Qed.
@@ -3637,45 +3690,23 @@ Proof.
 Qed.
 
 Theorem steps_NRC: ∀s1 n1 s2 n2,
-  steps (s1,n1) (s2,n2) -> ∃k, NRC step (n1 - n2 + k) s1 s2 ∧ n2 ≤ n1.
+  steps (s1, n1) (State s2, n2) -> ∃k, NRC step (n1 - n2 + k) s1 (State s2) ∧ n2 ≤ n1.
 Proof.
-  (* Induct_on ‘steps’ \\ rw [] \\ gvs []
-  THEN1 (qexists_tac ‘0’ \\ fs [])
-  THEN1 (qexists_tac ‘SUC 0’ \\ fs [])
-  THEN1 (qexists_tac ‘0’ \\ fs [])
-  \\ qexists_tac ‘k+k'’
-  \\ ‘k + k' + n1 − n3 = (k + n1 − n2) + (k' + n2 − n3)’ by fs []
-  \\ metis_tac [NRC_ADD_I] *)
-Admitted.
-
-Theorem NRC_step_mono: ∀n t1 t2,
-  NRC step n (State t1) (State t2) -> prefix t1.(output) t2.(output) = true.
-Proof.
-  (* Induct \\ fs [NRC_SUC_RECURSE_LEFT] \\ rw []
-  \\ Cases_on ‘z’ \\ fs [] \\ res_tac
-  \\ imp_res_tac step_mono
-  \\ imp_res_tac rich_listTheory.IS_PREFIX_TRANS *)
-Admitted.
-
-Theorem get_prefix_correct: forall i s1 s2,
-  prefix s1 s2 = true ->
-  get i s1 <> None ->
-  get i s2 = get i s1.
-Proof.
-  (* intros i s1. revert i.
-  induction s1 as [|a s1' IH]; intros i s2 Hpre Hget.
-  - simpl in Hget. contradiction.
-  - simpl in Hpre.
-    destruct s2 as [|b s2'].
-    + discriminate Hpre.
-    + destruct (ascii_dec a b) as [Heq|Hneq].
-      * subst b.
-        simpl in Hget.
-        destruct i.
-        -- simpl. reflexivity.
-        -- simpl. eapply IH; eauto.
-      * discriminate Hpre. *)
-Admitted.
+  intros * H.
+  dependent induction H.
+  - exists 0; split; eauto; rewrite Nat.sub_diag, Nat.add_0_r; simpl; reflexivity.
+  - exists 1; split; eauto; rewrite Nat.sub_diag, Nat.add_1_r; simpl; eauto.
+  - exists 0; split; eauto; rewrite Nat.sub_succ_l, Nat.sub_diag, Nat.add_0_r; simpl; [eauto|lia].
+  - pat `steps _ (State _, _)` at specialize steps_from_is_State with (1 := pat) as ?; cleanup; subst.
+    specialize (IHsteps1 s1 n1 x n4 eq_refl eq_refl); cleanup; subst.
+    specialize (IHsteps2 (State x) n4 s2 n2 eq_refl eq_refl); cleanup; subst.
+    eauto.
+    exists (x0 + x1).
+    assert (n1 - n2 + (x0 + x1) = (n1 - n4 + x0) + (n4 - n2 + x1)) as -> by lia.
+    pat `NRC _ _ s1 _` at specialize NRC_from_is_State with (1 := pat) as ?; cleanup; subst.
+    split; [|lia].
+    eapply NRC_step_add_inv; eauto.
+Qed.
 
 Theorem prefix_trans: forall s1 s2 s3,
   prefix s1 s2 = true ->
@@ -3705,7 +3736,42 @@ Proof.
       * discriminate H1.
 Qed.
 
-(* TODO: not sure, but we might need the output_ok implication also going the other way *)
+Theorem NRC_step_mono: ∀n t1 t2,
+  NRC step n (State t1) (State t2) -> prefix t1.(output) t2.(output) = true.
+Proof.
+  induction n; simpl; intros; cleanup.
+  - pat `_ = _` at inversion pat; subst; cleanup.
+    eapply prefix_correct.
+    eapply substring_noop.
+  - pat `NRC _ _ _ _` at specialize NRC_from_is_State with (1 := pat) as ?; cleanup; subst.
+    pat `step _ _` at eapply step_mono in pat.
+    eapply prefix_trans; [eauto|].
+    eapply IHn; eauto.
+Qed.
+
+Lemma get_Some_IMP_lt: forall s i,
+  get i s <> None -> i < length s.
+Proof.
+  induction s; simpl; intros; try congruence.
+  destruct i; simpl in *; try lia.
+  rewrite <- Nat.succ_lt_mono.
+  eauto.
+Qed.
+
+Theorem get_prefix_correct: forall s1 s2 i,
+  prefix s1 s2 = true ->
+  get i s1 <> None ->
+  get i s2 = get i s1.
+Proof.
+  intros.
+  rewrite prefix_correct in *.
+  pat `_ = s1` at rewrite <- pat.
+  rewrite substring_correct1.
+  1: rewrite Nat.add_0_r; eauto.
+  eapply get_Some_IMP_lt.
+  assumption.
+Qed.
+
 Theorem codegen_diverges: forall input prog output,
   prog_avoids_crash input prog ->
   asm_diverges input (codegen prog) output ->

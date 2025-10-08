@@ -326,10 +326,11 @@ Fixpoint NRC {A} (R: A -> A -> Prop) (n: nat) x y :=
     exists z, R x z /\ NRC R n z y
   end.
 
+(* TODO: define as in IMP *)
 Definition output_ok_asm (t: state) (out: llist ascii): Prop :=
   ∀ i,
     (∃ k t1, NRC step k (State t) (State t1) ∧ String.get i t1.(output) <> None ∧ String.get i t1.(output) = Llist.nth i out) ∨
-    not (Llist.defined_at i out).
+    (not (Llist.defined_at i out) ∧ (∀k t1, NRC step k (State t) (State t1) ∧ String.get i t1.(output) = None)).
 
 Definition asm_diverges (input: llist ascii) (asm: asm) (output: llist ascii) : Prop :=
   exists t,

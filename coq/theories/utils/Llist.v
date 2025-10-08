@@ -1,3 +1,6 @@
+Require Import String Ascii.
+From Coq.Unicode Require Import Utf8.
+
 Module Llist.
 
 CoInductive llist {A : Type} : Type :=
@@ -17,6 +20,12 @@ Fixpoint of_list {A: Type} (l: list A): llist A :=
   | cons x xs => Lcons x (of_list xs)
   end.
 
+Fixpoint of_string (l: string): llist ascii :=
+  match l with
+  | EmptyString => Lnil
+  | String x xs => Lcons x (of_string xs)
+  end.
+
 Fixpoint nth {A: Type} (n: nat) (l: llist A): option A :=
   match l with
   | Lnil => None
@@ -29,6 +38,18 @@ Fixpoint nth {A: Type} (n: nat) (l: llist A): option A :=
 
 Definition defined_at {A: Type} (n: nat) (l: llist A): Prop :=
   nth n l <> None.
+
+Inductive lprefix {A: Type} : llist A -> llist A -> Prop :=
+| lprefix_empty (o: llist A): lprefix Lnil o
+| lprefix_cons (c: A) (p: llist A) (o: llist A):
+  lprefix p o -> lprefix (Lcons c p) (Lcons c o).
+
+Definition is_upper_bound {A: Type} (eval: nat -> llist A) (output: llist A): Prop :=
+  ∀k, lprefix (eval k) output.
+
+Definition is_least_upper_bound {A: Type} (eval: nat -> llist A) (output: llist A): Prop :=
+  is_upper_bound eval output ∧
+  ∀other, is_upper_bound eval other -> lprefix output other.
 
 CoFixpoint LUNFOLD {A: Type} (f: nat -> option (nat * A)) (n: nat): llist A :=
   match f n with

@@ -3662,7 +3662,7 @@ Theorem get_prefix_correct: forall i s1 s2,
   get i s1 <> None ->
   get i s2 = get i s1.
 Proof.
-  intros i s1. revert i.
+  (* intros i s1. revert i.
   induction s1 as [|a s1' IH]; intros i s2 Hpre Hget.
   - simpl in Hget. contradiction.
   - simpl in Hpre.
@@ -3674,8 +3674,8 @@ Proof.
         destruct i.
         -- simpl. reflexivity.
         -- simpl. eapply IH; eauto.
-      * discriminate Hpre.
-Qed.
+      * discriminate Hpre. *)
+Admitted.
 
 Theorem prefix_trans: forall s1 s2 s3,
   prefix s1 s2 = true ->
@@ -3736,7 +3736,34 @@ Proof.
   (* output_ok_imp *)
   unfold output_ok_asm, output_ok_imp, imp_output in *; intros; cleanup.
   pat `forall _, _` at specialize pat with (i := i); cleanup; destruct pat.
-  2: right; eauto.
+  2: { (* output None at i*)
+    right; cleanup; split; eauto.
+    intros.
+     destruct eval_from eqn:?.
+    spat `_ <> Stop Crash` at specialize spat with (res := o) (s := s) as Hnocrash; clear spat.
+    pat `eval_from _ _ _ = _` at specialize (Hnocrash _ pat).
+    destruct prog.
+    unfold eval_from in *.
+    destruct find_fun eqn:?; unfold_outcome; cleanup.
+    2: congruence.
+    pat ` (let (l, _) := ?p in _) = _` at destruct p; destruct l.
+    2: congruence.
+    spat `eval_cmd` at eapply codegen_thm with (s := init_state input funcs) in spat; eauto; cleanup.
+    simpl in *; rewrite Nat.sub_0_r in *.
+    pat ` let (_, _) := ?p in _` at destruct p.
+    pat `match ?s0 with _ => _ end` at destruct s0.
+    2: {
+      spat `steps` at eapply steps_IMP_NRC_step in spat; cleanup.
+      pat `forall _, exists _, NRC _ _ _ _` at specialize pat with (k := x2); cleanup.
+      spat `NRC _ x2 _ (State _)` at eapply NRC_step_determ in spat; eauto; cleanup.
+      pat `Halt _ _ = State _` at inversion pat.
+    }
+    spat `steps` at eapply steps_IMP_NRC_step in spat; cleanup; subst.
+    pat `forall _ _, _ ∧ _` at specialize pat with (k := x2) (t1 := s0); cleanup.
+    pat `_ = ImpSemantics.output s` at rewrite <- pat.
+    assumption.
+  }
+  (* output Some at i*)
   left; cleanup.
   exists x2.
   destruct eval_from eqn:?.

@@ -366,6 +366,8 @@ Fixpoint eval_cmd (c : cmd)
     assign n v
   | ImpSyntax.Abort => stop Abort
   | PutChar e =>
+    (* Consider: tick on every IO output to have all traces, not just modulo clock increase *)
+    (* let+ _ := inc_steps_done in *)
     let+ v := eval_exp e in
     put_char v
   | GetChar n =>
@@ -521,16 +523,23 @@ Definition prog_avoids_crash (input: llist ascii) (p: prog): Prop :=
   ∀ fuel res s, eval_from fuel input p = (res, s) ->
     res ≠ Stop Crash.
 
-(* TODO: check this *)
 Definition output_ok_imp (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
   ∀ i,
     (∃ k, String.get i (imp_output k input p) <> None ∧ String.get i (imp_output k input p) = Llist.nth i output) ∨
-    not (Llist.defined_at i output).
+    (not (Llist.defined_at i output) ∧ (∀k, String.get i (imp_output k input p) = None)).
 
-(* TODO: check this *)
+(* lprefix *)
+(* Definition is_upper_bound (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
+  ∀k, lprefix (imp_output k input p) output.
+
+Definition is_least_upper_bound (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
+  is_upper_bound input p output ∧
+  ∀other, is_upper_bound input p other -> lprefix output other. *)
+
 Definition prog_diverges (input: llist ascii) (p: prog) (output: llist ascii) :=
   (forall fuel, imp_timesout fuel input p) ∧
   output_ok_imp input p output.
+  (* is_least_upper_bound (fun k => Llist.of_string (imp_output k input p)) output. *)
 
 Definition imp_weak_termination (input: llist ascii) (p: prog) (out: string) :=
   exists fuel outcome s,

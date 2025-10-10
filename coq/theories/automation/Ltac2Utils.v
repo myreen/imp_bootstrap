@@ -192,9 +192,10 @@ Ltac2 rewrite_with_equation (fconstr: constr): unit :=
     rewrite0 false [make_rw instance] None None;
     simpl analyze;
     cbv beta
+  | [] =>
+    Control.throw (Oopsie (fprintf "No _equation lemmas found for definition %t" fconstr))
   | _ =>
-    (* TODO(kπ) Add fconstr name or sth *)
-    Control.throw (Oopsie (fprintf "No (or too many) _equation lemmas found for definition %t" fconstr))
+    Control.throw (Oopsie (fprintf "Too many _equation lemmas found for definition %t" fconstr))
   end.
 
 Ltac2 unfold_once (fconstr: constr) (exprconstr: constr): constr :=

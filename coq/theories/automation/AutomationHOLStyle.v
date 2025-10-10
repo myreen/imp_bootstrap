@@ -1,5 +1,7 @@
 From impboot Require Import utils.Core.
+From impboot Require Import utils.AppList.
 From coqutil Require Import dlet.
+From coqutil Require Import Word.Interface.
 Require Import impboot.functional.FunValues.
 (* Require Import impboot.functional.FunSyntax. *)
 Require Import impboot.functional.FunSemantics.
@@ -395,6 +397,7 @@ Ltac2 rec compile () : unit :=
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
     let cenv := get_cenv_from_fenv_constr fenv in
     printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_cenv cenv) cenv;
+    (* printf "Goal: %t" c; *)
     match List.find_opt (fun p => Constr.equal e (snd p)) cenv with
     | Some (name_constr_opt, _) =>
       let name_constr := Option.default open_constr:(_) name_constr_opt in
@@ -440,6 +443,39 @@ Ltac2 rec compile () : unit :=
           (* eval v1 *) ltac2:(Control.enter compile)
           (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
           )
+        (* char *)
+        | (ascii_of_N (N_of_nat ?x)) =>
+          app_lemma "auto_char_CHR" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
+        | (nat_of_N (N_of_ascii ?x)) =>
+          app_lemma "auto_char_ORD" [("env", exactk fenv); ("x", exactk x)] [compile]
+        (* word *)
+        | (@word.of_Z 4 _ (Z.of_nat ?x)) =>
+          app_lemma "auto_word4_n2w" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
+        | (@word.of_Z 64 _ (Z.of_nat ?x)) =>
+          app_lemma "auto_word64_n2w" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
+        | (Z.to_N (@word.unsigned 4 _ ?x)) =>
+          app_lemma "auto_word4_w2n" [("env", exactk fenv); ("x", exactk x)] [compile]
+        | (Z.to_N (@word.unsigned 64 _ ?x)) =>
+          app_lemma "auto_word64_w2n" [("env", exactk fenv); ("x", exactk x)] [compile]
+        (* nat *)
+        | (?n1 + ?n2)%nat =>
+          app_lemma "auto_nat_add" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)]
+                                   [compile; compile]
+        | (?n1 - ?n2)%nat =>
+          app_lemma "auto_nat_sub" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
+        | (?n1 / ?n2)%nat =>
+          app_lemma "auto_nat_div" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
+        | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
+          app_lemma "auto_nat_if_eq" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+                                     [compile; compile; compile; compile]
+        | (if Nat.ltb ?n1 ?n2 then ?t else ?f) =>
+          app_lemma "auto_nat_if_less" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+                                       [compile; compile; compile; compile]
+        | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
+          let binders_of_v2 := binders_names_of_constr_lambda v2 in
+          let n_constr := List.nth binders_of_v2 0 in
+          app_lemma "auto_nat_case" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
+                                    [compile; (fun () => destruct $v0; (Control.enter compile))]
         (* bool *)
         | true =>
           app_lemma "auto_bool_T" [("env", exactk fenv)] []
@@ -454,20 +490,6 @@ Ltac2 rec compile () : unit :=
         | (if ?b then ?t else ?f) =>
           app_lemma "last_bool_if" [("env", exactk fenv); ("b", exactk b); ("t", exactk t); ("f", exactk f)]
                                    [compile; compile; compile]
-        (* nat *)
-        | (?n1 + ?n2) =>
-          app_lemma "auto_nat_add" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)]
-                                   [compile; compile]
-        | (?n1 - ?n2) =>
-          app_lemma "auto_nat_sub" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
-        | (?n1 / ?n2) =>
-          app_lemma "auto_nat_div" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
-        | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
-          app_lemma "auto_nat_if_eq" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
-                                     [compile; compile]
-        | (if ?n1 <? ?n2 then ?t else ?f) =>
-          app_lemma "auto_nat_if_less" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
-                                       [compile; compile]
         (* list *)
         | [] =>
           app_lemma "auto_list_nil" [("env", exactk fenv)] []
@@ -479,22 +501,487 @@ Ltac2 rec compile () : unit :=
           let n2_constr := List.nth binders_of_v2 1 in
           app_lemma "auto_list_case" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n1", exactk n1_constr); ("n2", exactk n2_constr)]
                                      [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ())]
+        (* option *)
+        | None =>
+          app_lemma "auto_option_none" [("env", exactk fenv)] []
+        | (Some ?x) =>
+          app_lemma "auto_option_some" [("env", exactk fenv); ("x", exactk x)] [compile]
+        | (match ?v0 with | None => ?v1 | Some x => @?v2 x end) =>
+          let binders_of_v2 := binders_names_of_constr_lambda v2 in
+          let n_constr := List.nth binders_of_v2 0 in
+          app_lemma "auto_option_case" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
+                                       [compile; (fun () => destruct $v0; (Control.enter compile))]
+        (* pair *)
+        | (fst ?x) =>
+          app_lemma "auto_pair_fst" [("env", exactk fenv); ("x", exactk x)] [compile]
+        | (snd ?x) =>
+          app_lemma "auto_pair_snd" [("env", exactk fenv); ("x", exactk x)] [compile]
+        | (?x, ?y) =>
+          app_lemma "auto_pair_cons" [("env", exactk fenv); ("x", exactk x); ("y", exactk y)] [compile; compile]
+        | (match ?v0 with | (x, y) => @?v2 x y end) =>
+          let binders_of_v2 := binders_names_of_constr_lambda v2 in
+          let n1_constr := List.nth binders_of_v2 0 in
+          let n2_constr := List.nth binders_of_v2 1 in
+          app_lemma "auto_pair_case" [("env", exactk fenv); ("v0", exactk v0); ("v2", exactk v2); ("n1", exactk n1_constr); ("n2", exactk n2_constr)]
+                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
+        (* app_list *)
+        | List ?xs =>
+          app_lemma "auto_app_list_cons_List" [("env", exactk fenv); ("xs", exactk xs)] [compile]
+        | Append ?l1 ?l2 =>
+          app_lemma "auto_app_list_cons_Append" [("env", exactk fenv); ("l1", exactk l1); ("l2", exactk l2)] [compile; compile]
+        | (match ?v0 with
+           | List xs => @?v1 xs
+           | Append l1 l2 => @?v2 l1 l2
+           end) =>
+          let binders_v1 := binders_names_of_constr_lambda v1 in
+          let binders_v2 := binders_names_of_constr_lambda v2 in
+          let n1 := List.nth binders_v1 0 in
+          let n2 := List.nth binders_v2 0 in
+          let n3 := List.nth binders_v2 1 in
+          app_lemma "auto_app_list_CASE" [("env", exactk fenv); ("v0", exactk v0);
+                                           ("v1", exactk v1); ("v2", exactk v2);
+                                           ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3)]
+                                         [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ())]
+        (* cmp *)
+        | ImpSyntax.Less =>
+          app_lemma "auto_cmp_cons_Less" [("env", exactk fenv)] []
+        | ImpSyntax.Equal =>
+          app_lemma "auto_cmp_cons_Equal" [("env", exactk fenv)] []
+        | (match ?v0 with | ImpSyntax.Less => ?v1 | ImpSyntax.Equal => ?v2 end) =>
+          app_lemma "auto_cmp_CASE" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2)]
+                                    [compile; (fun () => destruct $v0; (Control.enter compile))]
+        (* cmd *)
+        | ImpSyntax.Skip =>
+          app_lemma "auto_cmd_cons_Skip" [("env", exactk fenv)] []
+        | ImpSyntax.Seq ?c1 ?c2 =>
+          app_lemma "auto_cmd_cons_Seq" [("env", exactk fenv); ("c1", exactk c1); ("c2", exactk c2)] [compile; compile]
+        | ImpSyntax.Assign ?n ?e =>
+          app_lemma "auto_cmd_cons_Assign" [("env", exactk fenv); ("n", exactk n); ("e", exactk e)] [compile; compile]
+        | ImpSyntax.Update ?a ?e ?e' =>
+          app_lemma "auto_cmd_cons_Update" [("env", exactk fenv); ("a", exactk a); ("e", exactk e); ("e'", exactk e')] [compile; compile; compile]
+        | ImpSyntax.If ?t ?c1 ?c2 =>
+          app_lemma "auto_cmd_cons_If" [("env", exactk fenv); ("t", exactk t); ("c1", exactk c1); ("c2", exactk c2)] [compile; compile; compile]
+        | ImpSyntax.While ?t ?c =>
+          app_lemma "auto_cmd_cons_While" [("env", exactk fenv); ("t", exactk t); ("c", exactk c)] [compile; compile]
+        | ImpSyntax.Call ?n ?f ?es =>
+          app_lemma "auto_cmd_cons_Call" [("env", exactk fenv); ("n", exactk n); ("f", exactk f); ("es", exactk es)] [compile; compile; compile]
+        | ImpSyntax.Return ?e =>
+          app_lemma "auto_cmd_cons_Return" [("env", exactk fenv); ("e", exactk e)] [compile]
+        | ImpSyntax.Alloc ?n ?e =>
+          app_lemma "auto_cmd_cons_Alloc" [("env", exactk fenv); ("n", exactk n); ("e", exactk e)] [compile; compile]
+        | ImpSyntax.GetChar ?n =>
+          app_lemma "auto_cmd_cons_GetChar" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ImpSyntax.PutChar ?e =>
+          app_lemma "auto_cmd_cons_PutChar" [("env", exactk fenv); ("e", exactk e)] [compile]
+        | ImpSyntax.Abort =>
+          app_lemma "auto_cmd_cons_Abort" [("env", exactk fenv)] []
+        | (match ?v0 with
+           | ImpSyntax.Skip => ?v1
+           | ImpSyntax.Seq c1 c2 => @?v2 c1 c2
+           | ImpSyntax.Assign n e => @?v3 n e
+           | ImpSyntax.Update a e e' => @?v4 a e e'
+           | ImpSyntax.If t c1 c2 => @?v5 t c1 c2
+           | ImpSyntax.While t c => @?v6 t c
+           | ImpSyntax.Call n f es => @?v7 n f es
+           | ImpSyntax.Return e => @?v8 e
+           | ImpSyntax.Alloc n e => @?v9 n e
+           | ImpSyntax.GetChar n => @?v10 n
+           | ImpSyntax.PutChar e => @?v11 e
+           | ImpSyntax.Abort => ?v12
+           end) =>
+          let binders_v2 := binders_names_of_constr_lambda v2 in
+          let binders_v3 := binders_names_of_constr_lambda v3 in
+          let binders_v4 := binders_names_of_constr_lambda v4 in
+          let binders_v5 := binders_names_of_constr_lambda v5 in
+          let binders_v6 := binders_names_of_constr_lambda v6 in
+          let binders_v7 := binders_names_of_constr_lambda v7 in
+          let binders_v8 := binders_names_of_constr_lambda v8 in
+          let binders_v9 := binders_names_of_constr_lambda v9 in
+          let binders_v10 := binders_names_of_constr_lambda v10 in
+          let binders_v11 := binders_names_of_constr_lambda v11 in
+          let n1 := List.nth binders_v2 0 in
+          let n2 := List.nth binders_v2 1 in
+          let n3 := List.nth binders_v3 0 in
+          let n4 := List.nth binders_v3 1 in
+          let n5 := List.nth binders_v4 0 in
+          let n6 := List.nth binders_v4 1 in
+          let n7 := List.nth binders_v4 2 in
+          let n8 := List.nth binders_v5 0 in
+          let n9 := List.nth binders_v5 1 in
+          let n10 := List.nth binders_v5 2 in
+          let n11 := List.nth binders_v6 0 in
+          let n12 := List.nth binders_v6 1 in
+          let n13 := List.nth binders_v7 0 in
+          let n14 := List.nth binders_v7 1 in
+          let n15 := List.nth binders_v7 2 in
+          let n16 := List.nth binders_v8 0 in
+          let n17 := List.nth binders_v9 0 in
+          let n18 := List.nth binders_v9 1 in
+          let n19 := List.nth binders_v10 0 in
+          let n20 := List.nth binders_v11 0 in
+          app_lemma "auto_cmd_CASE" [("env", exactk fenv); ("v0", exactk v0);
+                                      ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3); ("v4", exactk v4);
+                                      ("v5", exactk v5); ("v6", exactk v6); ("v7", exactk v7); ("v8", exactk v8);
+                                      ("v9", exactk v9); ("v10", exactk v10); ("v11", exactk v11); ("v12", exactk v12);
+                                      ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4);
+                                      ("n5", exactk n5); ("n6", exactk n6); ("n7", exactk n7); ("n8", exactk n8);
+                                      ("n9", exactk n9); ("n10", exactk n10); ("n11", exactk n11); ("n12", exactk n12);
+                                      ("n13", exactk n13); ("n14", exactk n14); ("n15", exactk n15); ("n16", exactk n16);
+                                      ("n17", exactk n17); ("n18", exactk n18); ("n19", exactk n19); ("n20", exactk n20)]
+                                    [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ());
+                                     (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
+                                     (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
+        (* cond *)
+        | ASMSyntax.Always =>
+          app_lemma "auto_cond_cons_Always" [("env", exactk fenv)] []
+        | ASMSyntax.Less ?r1 ?r2 =>
+          app_lemma "auto_cond_cons_Less" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | ASMSyntax.Equal ?r1 ?r2 =>
+          app_lemma "auto_cond_cons_Equal" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | (match ?v0 with
+           | ASMSyntax.Always => ?v1
+           | ASMSyntax.Less r1 r2 => @?v2 r1 r2
+           | ASMSyntax.Equal r1 r2 => @?v3 r1 r2
+           end) =>
+          let binders_v2 := binders_names_of_constr_lambda v2 in
+          let binders_v3 := binders_names_of_constr_lambda v3 in
+          let n1 := List.nth binders_v2 0 in
+          let n2 := List.nth binders_v2 1 in
+          let n3 := List.nth binders_v3 0 in
+          let n4 := List.nth binders_v3 1 in
+          app_lemma "auto_cond_CASE" [("env", exactk fenv); ("v0", exactk v0);
+                                       ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3);
+                                       ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4)]
+                                     [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ())]
+        (* exp *)
+        | ImpSyntax.Var ?n =>
+          app_lemma "auto_exp_cons_Var" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ImpSyntax.Const ?n =>
+          app_lemma "auto_exp_cons_Const" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ImpSyntax.Add ?e1 ?e2 =>
+          app_lemma "auto_exp_cons_Add" [("env", exactk fenv); ("e1", exactk e1); ("e2", exactk e2)] [compile; compile]
+        | ImpSyntax.Sub ?e1 ?e2 =>
+          app_lemma "auto_exp_cons_Sub" [("env", exactk fenv); ("e1", exactk e1); ("e2", exactk e2)] [compile; compile]
+        | ImpSyntax.Div ?e1 ?e2 =>
+          app_lemma "auto_exp_cons_Div" [("env", exactk fenv); ("e1", exactk e1); ("e2", exactk e2)] [compile; compile]
+        | ImpSyntax.Read ?e1 ?e2 =>
+          app_lemma "auto_exp_cons_Read" [("env", exactk fenv); ("e1", exactk e1); ("e2", exactk e2)] [compile; compile]
+        | (match ?v0 with
+           | ImpSyntax.Var n => @?v1 n
+           | ImpSyntax.Const n => @?v2 n
+           | ImpSyntax.Add e1 e2 => @?v3 e1 e2
+           | ImpSyntax.Sub e1 e2 => @?v4 e1 e2
+           | ImpSyntax.Div e1 e2 => @?v5 e1 e2
+           | ImpSyntax.Read e1 e2 => @?v6 e1 e2
+           end) =>
+          let binders_v1 := binders_names_of_constr_lambda v1 in
+          let binders_v2 := binders_names_of_constr_lambda v2 in
+          let binders_v3 := binders_names_of_constr_lambda v3 in
+          let binders_v4 := binders_names_of_constr_lambda v4 in
+          let binders_v5 := binders_names_of_constr_lambda v5 in
+          let binders_v6 := binders_names_of_constr_lambda v6 in
+          let n1 := List.nth binders_v1 0 in
+          let n2 := List.nth binders_v2 0 in
+          let n3 := List.nth binders_v3 0 in
+          let n4 := List.nth binders_v3 1 in
+          let n5 := List.nth binders_v4 0 in
+          let n6 := List.nth binders_v4 1 in
+          let n7 := List.nth binders_v5 0 in
+          let n8 := List.nth binders_v5 1 in
+          let n9 := List.nth binders_v6 0 in
+          let n10 := List.nth binders_v6 1 in
+          app_lemma "auto_exp_CASE" [("env", exactk fenv); ("v0", exactk v0);
+                                      ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3);
+                                      ("v4", exactk v4); ("v5", exactk v5); ("v6", exactk v6);
+                                      ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3);
+                                      ("n4", exactk n4); ("n5", exactk n5); ("n6", exactk n6);
+                                      ("n7", exactk n7); ("n8", exactk n8); ("n9", exactk n9);
+                                      ("n10", exactk n10)]
+                                    [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
+        (* func *)
+        | ImpSyntax.Func ?n ?params ?body =>
+          app_lemma "auto_func_cons_Func" [("env", exactk fenv); ("n", exactk n); ("params", exactk params); ("body", exactk body)] [compile; compile; compile]
+        | (match ?v0 with | ImpSyntax.Func n params body => @?v1 n params body end) =>
+          let binders_v1 := binders_names_of_constr_lambda v1 in
+          let n1 := List.nth binders_v1 0 in
+          let n2 := List.nth binders_v1 1 in
+          let n3 := List.nth binders_v1 2 in
+          app_lemma "auto_func_CASE" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1);
+                                       ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3)]
+                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
+        (* instr *)
+        | ASMSyntax.Const ?r ?w =>
+          app_lemma "auto_instr_cons_Const" [("env", exactk fenv); ("r", exactk r); ("w", exactk w)] [compile; compile]
+        | ASMSyntax.Add ?r1 ?r2 =>
+          app_lemma "auto_instr_cons_Add" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | ASMSyntax.Sub ?r1 ?r2 =>
+          app_lemma "auto_instr_cons_Sub" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | ASMSyntax.Div ?r =>
+          app_lemma "auto_instr_cons_Div" [("env", exactk fenv); ("r", exactk r)] [compile]
+        | ASMSyntax.Jump ?c ?n =>
+          app_lemma "auto_instr_cons_Jump" [("env", exactk fenv); ("c", exactk c); ("n", exactk n)] [compile; compile]
+        | ASMSyntax.Call ?n =>
+          app_lemma "auto_instr_cons_Call" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ASMSyntax.Mov ?r1 ?r2 =>
+          app_lemma "auto_instr_cons_Mov" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | ASMSyntax.Ret =>
+          app_lemma "auto_instr_cons_Ret" [("env", exactk fenv)] []
+        | ASMSyntax.Pop ?r =>
+          app_lemma "auto_instr_cons_Pop" [("env", exactk fenv); ("r", exactk r)] [compile]
+        | ASMSyntax.Push ?r =>
+          app_lemma "auto_instr_cons_Push" [("env", exactk fenv); ("r", exactk r)] [compile]
+        | ASMSyntax.Add_RSP ?n =>
+          app_lemma "auto_instr_cons_Add_RSP" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ASMSyntax.Sub_RSP ?n =>
+          app_lemma "auto_instr_cons_Sub_RSP" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ASMSyntax.Load_RSP ?r ?n =>
+          app_lemma "auto_instr_cons_Load_RSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
+        | ASMSyntax.Store_RSP ?r ?n =>
+          app_lemma "auto_instr_cons_Store_RSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
+        | ASMSyntax.Load ?r1 ?r2 ?w =>
+          app_lemma "auto_instr_cons_Load" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2); ("w", exactk w)] [compile; compile; compile]
+        | ASMSyntax.Store ?r1 ?r2 ?w =>
+          app_lemma "auto_instr_cons_Store" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2); ("w", exactk w)] [compile; compile; compile]
+        | ASMSyntax.GetChar =>
+          app_lemma "auto_instr_cons_GetChar" [("env", exactk fenv)] []
+        | ASMSyntax.PutChar =>
+          app_lemma "auto_instr_cons_PutChar" [("env", exactk fenv)] []
+        | ASMSyntax.Exit =>
+          app_lemma "auto_instr_cons_Exit" [("env", exactk fenv)] []
+        | ASMSyntax.Comment ?str =>
+          app_lemma "auto_instr_cons_Comment" [("env", exactk fenv); ("str", exactk str)] [compile]
+        | (match ?v0 with
+           | ASMSyntax.Const r w => @?v1 r w
+           | ASMSyntax.Add r1 r2 => @?v2 r1 r2
+           | ASMSyntax.Sub r1 r2 => @?v3 r1 r2
+           | ASMSyntax.Div r => @?v4 r
+           | ASMSyntax.Jump c n => @?v5 c n
+           | ASMSyntax.Call n => @?v6 n
+           | ASMSyntax.Mov r1 r2 => @?v7 r1 r2
+           | ASMSyntax.Ret => ?v8
+           | ASMSyntax.Pop r => @?v9 r
+           | ASMSyntax.Push r => @?v10 r
+           | ASMSyntax.Add_RSP n => @?v11 n
+           | ASMSyntax.Sub_RSP n => @?v12 n
+           | ASMSyntax.Load_RSP r n => @?v13 r n
+           | ASMSyntax.Store_RSP r n => @?v14 r n
+           | ASMSyntax.Load r1 r2 w => @?v15 r1 r2 w
+           | ASMSyntax.Store r1 r2 w => @?v16 r1 r2 w
+           | ASMSyntax.GetChar => ?v17
+           | ASMSyntax.PutChar => ?v18
+           | ASMSyntax.Exit => ?v19
+           | ASMSyntax.Comment s => @?v20 s
+           end) =>
+          let binders_v1 := binders_names_of_constr_lambda v1 in
+          let binders_v2 := binders_names_of_constr_lambda v2 in
+          let binders_v3 := binders_names_of_constr_lambda v3 in
+          let binders_v4 := binders_names_of_constr_lambda v4 in
+          let binders_v5 := binders_names_of_constr_lambda v5 in
+          let binders_v6 := binders_names_of_constr_lambda v6 in
+          let binders_v7 := binders_names_of_constr_lambda v7 in
+          let binders_v9 := binders_names_of_constr_lambda v9 in
+          let binders_v10 := binders_names_of_constr_lambda v10 in
+          let binders_v11 := binders_names_of_constr_lambda v11 in
+          let binders_v12 := binders_names_of_constr_lambda v12 in
+          let binders_v13 := binders_names_of_constr_lambda v13 in
+          let binders_v14 := binders_names_of_constr_lambda v14 in
+          let binders_v15 := binders_names_of_constr_lambda v15 in
+          let binders_v16 := binders_names_of_constr_lambda v16 in
+          let binders_v20 := binders_names_of_constr_lambda v20 in
+          let n1 := List.nth binders_v1 0 in
+          let n2 := List.nth binders_v1 1 in
+          let n3 := List.nth binders_v2 0 in
+          let n4 := List.nth binders_v2 1 in
+          let n5 := List.nth binders_v3 0 in
+          let n6 := List.nth binders_v3 1 in
+          let n7 := List.nth binders_v4 0 in
+          let n8 := List.nth binders_v5 0 in
+          let n9 := List.nth binders_v5 1 in
+          let n10 := List.nth binders_v6 0 in
+          let n11 := List.nth binders_v7 0 in
+          let n12 := List.nth binders_v7 1 in
+          let n13 := List.nth binders_v9 0 in
+          let n14 := List.nth binders_v10 0 in
+          let n15 := List.nth binders_v11 0 in
+          let n16 := List.nth binders_v12 0 in
+          let n17 := List.nth binders_v13 0 in
+          let n18 := List.nth binders_v13 1 in
+          let n19 := List.nth binders_v14 0 in
+          let n20 := List.nth binders_v14 1 in
+          let n21 := List.nth binders_v15 0 in
+          let n22 := List.nth binders_v15 1 in
+          let n23 := List.nth binders_v15 2 in
+          let n24 := List.nth binders_v16 0 in
+          let n25 := List.nth binders_v16 1 in
+          let n26 := List.nth binders_v16 2 in
+          let n27 := List.nth binders_v20 0 in
+          app_lemma "auto_instr_CASE" [("env", exactk fenv); ("v0", exactk v0);
+                                        ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3); ("v4", exactk v4);
+                                        ("v5", exactk v5); ("v6", exactk v6); ("v7", exactk v7); ("v8", exactk v8);
+                                        ("v9", exactk v9); ("v10", exactk v10); ("v11", exactk v11); ("v12", exactk v12);
+                                        ("v13", exactk v13); ("v14", exactk v14); ("v15", exactk v15); ("v16", exactk v16);
+                                        ("v17", exactk v17); ("v18", exactk v18); ("v19", exactk v19); ("v20", exactk v20);
+                                        ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4);
+                                        ("n5", exactk n5); ("n6", exactk n6); ("n7", exactk n7); ("n8", exactk n8);
+                                        ("n9", exactk n9); ("n10", exactk n10); ("n11", exactk n11); ("n12", exactk n12);
+                                        ("n13", exactk n13); ("n14", exactk n14); ("n15", exactk n15); ("n16", exactk n16);
+                                        ("n17", exactk n17); ("n18", exactk n18); ("n19", exactk n19); ("n20", exactk n20);
+                                        ("n21", exactk n21); ("n22", exactk n22); ("n23", exactk n23); ("n24", exactk n24);
+                                        ("n25", exactk n25); ("n26", exactk n26); ("n27", exactk n27)]
+                                       [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ());
+                                        (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
+                                        (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
+                                        (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
+                                        (fun () => ()); (fun () => ())]
+        (* prog *)
+        | ImpSyntax.Program ?funcs =>
+          app_lemma "auto_prog_cons_Program" [("env", exactk fenv); ("funcs", exactk funcs)] [compile]
+        | (match ?v0 with | ImpSyntax.Program funcs => @?v1 funcs end) =>
+          let binders_v1 := binders_names_of_constr_lambda v1 in
+          let n1 := List.nth binders_v1 0 in
+          app_lemma "auto_prog_CASE" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("n1", exactk n1)]
+                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
+        (* reg *)
+        | ASMSyntax.RAX =>
+          app_lemma "auto_reg_cons_RAX" [("env", exactk fenv)] []
+        | ASMSyntax.RDI =>
+          app_lemma "auto_reg_cons_RDI" [("env", exactk fenv)] []
+        | ASMSyntax.RBX =>
+          app_lemma "auto_reg_cons_RBX" [("env", exactk fenv)] []
+        | ASMSyntax.RBP =>
+          app_lemma "auto_reg_cons_RBP" [("env", exactk fenv)] []
+        | ASMSyntax.R12 =>
+          app_lemma "auto_reg_cons_R12" [("env", exactk fenv)] []
+        | ASMSyntax.R13 =>
+          app_lemma "auto_reg_cons_R13" [("env", exactk fenv)] []
+        | ASMSyntax.R14 =>
+          app_lemma "auto_reg_cons_R14" [("env", exactk fenv)] []
+        | ASMSyntax.R15 =>
+          app_lemma "auto_reg_cons_R15" [("env", exactk fenv)] []
+        | ASMSyntax.RDX =>
+          app_lemma "auto_reg_cons_RDX" [("env", exactk fenv)] []
+        | (match ?v0 with
+           | ASMSyntax.RAX => ?v1 | ASMSyntax.RDI => ?v2 | ASMSyntax.RBX => ?v3
+           | ASMSyntax.RBP => ?v4 | ASMSyntax.R12 => ?v5 | ASMSyntax.R13 => ?v6
+           | ASMSyntax.R14 => ?v7 | ASMSyntax.R15 => ?v8 | ASMSyntax.RDX => ?v9
+           end) =>
+          app_lemma "auto_reg_CASE" [("env", exactk fenv); ("v0", exactk v0);
+                                      ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3);
+                                      ("v4", exactk v4); ("v5", exactk v5); ("v6", exactk v6);
+                                      ("v7", exactk v7); ("v8", exactk v8); ("v9", exactk v9)]
+                                    [compile; (fun () => destruct $v0; (Control.enter compile))]
+        (* test *)
+        | ImpSyntax.Test ?c ?e1 ?e2 =>
+          app_lemma "auto_test_cons_Test" [("env", exactk fenv); ("c", exactk c); ("e1", exactk e1); ("e2", exactk e2)] [compile; compile; compile]
+        | ImpSyntax.And ?t1 ?t2 =>
+          app_lemma "auto_test_cons_And" [("env", exactk fenv); ("t1", exactk t1); ("t2", exactk t2)] [compile; compile]
+        | ImpSyntax.Or ?t1 ?t2 =>
+          app_lemma "auto_test_cons_Or" [("env", exactk fenv); ("t1", exactk t1); ("t2", exactk t2)] [compile; compile]
+        | ImpSyntax.Not ?t =>
+          app_lemma "auto_test_cons_Not" [("env", exactk fenv); ("t", exactk t)] [compile]
+        | (match ?v0 with
+           | ImpSyntax.Test c e1 e2 => @?v1 c e1 e2
+           | ImpSyntax.And t1 t2 => @?v2 t1 t2
+           | ImpSyntax.Or t1 t2 => @?v3 t1 t2
+           | ImpSyntax.Not t => @?v4 t
+           end) =>
+          let binders_v1 := binders_names_of_constr_lambda v1 in
+          let binders_v2 := binders_names_of_constr_lambda v2 in
+          let binders_v3 := binders_names_of_constr_lambda v3 in
+          let binders_v4 := binders_names_of_constr_lambda v4 in
+          let n1 := List.nth binders_v1 0 in
+          let n2 := List.nth binders_v1 1 in
+          let n3 := List.nth binders_v1 2 in
+          let n4 := List.nth binders_v2 0 in
+          let n5 := List.nth binders_v2 1 in
+          let n6 := List.nth binders_v3 0 in
+          let n7 := List.nth binders_v3 1 in
+          let n8 := List.nth binders_v4 0 in
+          app_lemma "auto_test_CASE" [("env", exactk fenv); ("v0", exactk v0);
+                                       ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3); ("v4", exactk v4);
+                                       ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3);
+                                       ("n4", exactk n4); ("n5", exactk n5); ("n6", exactk n6);
+                                       ("n7", exactk n7); ("n8", exactk n8)]
+                                     [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ()); (fun () => ())]
         (* TODO: see if we can use pairs (name -> tactic/term) *)
         (*       End-goal: extesible table of all compilation lemmas -> (name, tactic to apply) *)
         (*       We can use names to have subsets of tactics (e.g. arithmetic only) *)
-        | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
-          let binders_of_v2 := binders_names_of_constr_lambda v2 in
-          let n_constr := List.nth binders_of_v2 0 in
-          app_lemma "auto_nat_case" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
-                                    [compile; (fun () => destruct $v0; (Control.enter compile))]
-        | ?x =>
-          if proper_const x then
-            app_lemma "auto_nat_const" [("env", exactk fenv); ("x", exactk x)] []
+        (* nat const *)
+        | ASMSyntax.R14 =>
+          app_lemma "auto_reg_cons_R14" [("env", exactk fenv)] []
+        | ASMSyntax.R15 =>
+          app_lemma "auto_reg_cons_R15" [("env", exactk fenv)] []
+        | ASMSyntax.RDX =>
+          app_lemma "auto_reg_cons_RDX" [("env", exactk fenv)] []
+        (* cond *)
+        | ASMSyntax.Always =>
+          app_lemma "auto_cond_cons_Always" [("env", exactk fenv)] []
+        | ASMSyntax.Less ?r1 ?r2 =>
+          app_lemma "auto_cond_cons_Less" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | ASMSyntax.Equal ?r1 ?r2 =>
+          app_lemma "auto_cond_cons_Equal" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        (* instr *)
+        | ASMSyntax.Const ?r ?w =>
+          app_lemma "auto_instr_cons_Const" [("env", exactk fenv); ("r", exactk r); ("w", exactk w)] [compile; compile]
+        | ASMSyntax.Add ?r1 ?r2 =>
+          app_lemma "auto_instr_cons_Add" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | ASMSyntax.Sub ?r1 ?r2 =>
+          app_lemma "auto_instr_cons_Sub" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | ASMSyntax.Div ?r =>
+          app_lemma "auto_instr_cons_Div" [("env", exactk fenv); ("r", exactk r)] [compile]
+        | ASMSyntax.Jump ?c ?n =>
+          app_lemma "auto_instr_cons_Jump" [("env", exactk fenv); ("c", exactk c); ("n", exactk n)] [compile; compile]
+        | ASMSyntax.Call ?n =>
+          app_lemma "auto_instr_cons_Call" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ASMSyntax.Mov ?r1 ?r2 =>
+          app_lemma "auto_instr_cons_Mov" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | ASMSyntax.Ret =>
+          app_lemma "auto_instr_cons_Ret" [("env", exactk fenv)] []
+        | ASMSyntax.Pop ?r =>
+          app_lemma "auto_instr_cons_Pop" [("env", exactk fenv); ("r", exactk r)] [compile]
+        | ASMSyntax.Push ?r =>
+          app_lemma "auto_instr_cons_Push" [("env", exactk fenv); ("r", exactk r)] [compile]
+        | ASMSyntax.Add_RSP ?n =>
+          app_lemma "auto_instr_cons_Add_RSP" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ASMSyntax.Sub_RSP ?n =>
+          app_lemma "auto_instr_cons_Sub_RSP" [("env", exactk fenv); ("n", exactk n)] [compile]
+        | ASMSyntax.Load_RSP ?r ?n =>
+          app_lemma "auto_instr_cons_Load_RSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
+        | ASMSyntax.Store_RSP ?r ?n =>
+          app_lemma "auto_instr_cons_Store_RSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
+        | ASMSyntax.Load ?r1 ?r2 ?w =>
+          app_lemma "auto_instr_cons_Load" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2); ("w", exactk w)] [compile; compile; compile]
+        | ASMSyntax.Store ?r1 ?r2 ?w =>
+          app_lemma "auto_instr_cons_Store" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2); ("w", exactk w)] [compile; compile; compile]
+        | ASMSyntax.GetChar =>
+          app_lemma "auto_instr_cons_GetChar" [("env", exactk fenv)] []
+        | ASMSyntax.PutChar =>
+          app_lemma "auto_instr_cons_PutChar" [("env", exactk fenv)] []
+        | ASMSyntax.Exit =>
+          app_lemma "auto_instr_cons_Exit" [("env", exactk fenv)] []
+        | ASMSyntax.Comment ?s =>
+          app_lemma "auto_instr_cons_Comment" [("env", exactk fenv); ("s", exactk s)] [compile]
+        (* TODO: see if we can use pairs (name -> tactic/term) *)
+        (*       End-goal: extesible table of all compilation lemmas -> (name, tactic to apply) *)
+        (*       We can use names to have subsets of tactics (e.g. arithmetic only) *)
+        (* nat const *)
+        | ?n =>
+          if proper_const n then
+            if Constr.equal (Constr.type n) constr:(nat) then
+              app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk n)] []
+            else if Constr.equal (Constr.type n) constr:(string) then
+              app_lemma "auto_string_const" [("env", exactk fenv); ("str", exactk n)] []
+            else
+              Control.throw (Oopsie (fprintf
+                "Error: Tried to compile a constant of unsupported type: namely: %t of type %t"
+                n
+                (Constr.type n)
+              ))
           else
             Control.throw (Oopsie (fprintf
               "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
-              x
-              (kind_string_of_constr x)
+              n
+              (kind_string_of_constr n)
             ))
         end
       in
@@ -560,6 +1047,12 @@ Ltac2 rec var_ident_of_constr (c: constr): ident :=
     Control.throw (Oopsie (fprintf "Error: Expected the argument of a compiled function to be an variable reference, got: %t" c))
   end.
 
+Ltac2 opt_is_empty (opt: 'a option): bool :=
+  match opt with
+  | None => true
+  | _ => false
+  end.
+
 (* Top level tactic that compiles a program into FunLang *)
 (* Handles expression evaluation and function evaluation as goals *)
 Ltac2 rec docompile () :=
@@ -575,16 +1068,21 @@ Ltac2 rec docompile () :=
     match extract_fun c with
     (* function reference --> unfold *)
     | Some (fconstr, fargs) =>
-      let f_name_r := reference_of_constr fconstr in
+      let f_name_r := reference_of_constr_opt fconstr in
+      (if opt_is_empty f_name_r then
+        Control.throw (Oopsie (fprintf "Error: Expected a named function application, got: %t" fconstr))
+      else ());
+      let f_name_r := Option.get f_name_r in
       let fn_name_str := (Option.get (reference_to_string f_name_r)) in
       let fn_encoded_name_str := (string_of_constr_string fname) in
       (*  Check if the encoded name is the same as the compiled top level function *)
       if String.equal fn_encoded_name_str fn_name_str then
         (* If its a fixpoint apply `fname_equation`, otherwise unfold `fname` *)
         (if isFix fconstr then
-          let arg1 := List.nth fargs 0 in
-          let arg1_ident := var_ident_of_constr arg1 in
-          revert $arg1_ident;
+          (* let arg1 := List.nth fargs 0 in *)
+          let fargs_ids := List.map var_ident_of_constr fargs in
+          (* let arg1_ident := var_ident_of_constr arg1 in *)
+          Std.revert fargs_ids;
           ltac1:(let Hname := fresh "IH" in fix Hname 1);
           intros;
           rewrite_with_equation fconstr
@@ -644,10 +1142,19 @@ Ltac2 crush_NoDup () :=
     end)
   ).
 
+Ltac2 crush_side_conditions () :=
+  ltac1:(
+    repeat (match goal with
+    | |- context[ FEnv.lookup _ _ ] => progress eauto with fenvDb
+    (* | |- context[ FEnv.lookup _ _ ] => cbn; try congruence; try reflexivity *)
+    | _ => progress eauto with fenvDb
+    end)
+  ).
+
 Ltac2 relcompile_impl () :=
   unshelve (docompile ());
   crush_NoDup ();
-  eauto with fenvDb.
+  crush_side_conditions ().
 
 Ltac2 Notation relcompile :=
   relcompile_impl ().
@@ -670,12 +1177,17 @@ Ltac2 collect_prod_binders (c: constr): binder list :=
   collect_prod_binders_impl (Constr.type c).
 
 Ltac2 rec gen_eval_app_impl (bs: binder list) (args: constr list) (f_constr_name: constr) (f: constr) (): constr :=
+  (* printf "gen_eval_app_impl bs: %a args: %a f_constr_name: %t f: %t"
+    (fun () x => message_of_list (List.map (fun b => fprintf "%I %t" (Option.default (Option.get (Ident.of_string "dummy")) (Binder.name b)) (Binder.type b)) x)) bs
+    (fun () x => message_of_list (List.map Message.of_constr x)) args
+    f_constr_name
+    f; *)
   match bs with
   | b :: bs =>
     let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
     let cont := Constr.in_context name (Binder.type b) (fun () =>
       let b_hyp := Control.hyp name in
-      Control.refine (gen_eval_app_impl bs (b_hyp :: args) f_constr_name f)
+      Control.refine (gen_eval_app_impl bs (List.append args [b_hyp]) f_constr_name f)
     ) in
     match Constr.Unsafe.kind cont with
     | Lambda b body' => make (Prod b body')
@@ -772,6 +1284,7 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
     constr_string_of_string (Ident.to_string n)
   ) f_binders in
   let encoded_b_names := mk_constr_list (List.map (fun n => constr:(name_enc $n)) f_binder_names) in
+  (* printf "encoded_b_names: %t" encoded_b_names; *)
   let eval_app_cont := gen_eval_app f in
   (* TODO: this might be easier to use, if we exclude some spurious deps, like "add" *)
   (* let _deps: constr list := get_fun_deps f in *)
@@ -920,11 +1433,7 @@ Proof.
   intros.
   subst foo_prog.
   relcompile.
-
-  (* FEnv.lookup (FEnv.insert (30720%N, Some (encode 1)) (FEnv.insert (28160%N, Some (encode n)) FEnv.empty)) 28160%N = Some (encode n) *)
-  eauto with fenvDb. (* TODO: this doesn't prove it! *)
-  rewrite FEnv.lookup_insert_neq; try ltac1:(congruence).
-  rewrite FEnv.lookup_insert_eq; reflexivity ().
+  ltac1:(cbn; try congruence; try reflexivity).
 Qed.
 
 Definition bar (n : nat) : nat :=
@@ -957,10 +1466,7 @@ Proof.
   intros.
   subst baz_prog.
   relcompile.
-
-  eauto with fenvDb. (* TODO: this doesn't prove it! *)
-  rewrite FEnv.lookup_insert_neq; try ltac1:(congruence).
-  rewrite FEnv.lookup_insert_eq; reflexivity ().
+  ltac1:(cbn; try congruence; try reflexivity).
 Qed.
 
 Definition baz2 (n : nat) : nat :=
@@ -976,5 +1482,48 @@ Derive baz2_prog in ltac2:(relcompile_tpe 'baz2_prog 'baz2 ['baz]) as baz2_prog_
 Proof.
   intros.
   subst baz2_prog.
+  relcompile.
+Qed.
+
+Function sum_acc (n: nat) (acc: nat) :=
+  match n with
+  | 0 => acc
+  | S n => sum_acc n (1 + acc)
+  end.
+
+Derive sum_acc_prog
+  in ltac2:(relcompile_tpe 'sum_acc_prog 'sum_acc [])
+  as sum_acc_prog_proof.
+Proof.
+  intros.
+  subst sum_acc_prog.
+  relcompile.
+Qed.
+
+Fixpoint sum_acc1 (n: nat) (acc: nat) :=
+  match n with
+  | 0 => acc
+  | S n => sum_acc1 n (acc + 1)
+  end.
+Lemma sum_acc1_equation: ltac:(unfold_tpe sum_acc1).
+Proof. ltac1:(unfold_proof). Qed.
+Print sum_acc1.
+
+(* TODO *)
+(* genrated _equation rewrites to this: *)
+(*
+  (eval_app (name_enc "sum_acc1") [encode n; encode acc] s
+  (encode (match n with
+  | 0 => λ acc : nat, acc
+  | S n' => λ acc : nat, sum_acc1 n' (acc + 1)
+  end acc), s))
+*)
+
+Derive sum_acc1_prog
+  in ltac2:(relcompile_tpe 'sum_acc1_prog 'sum_acc1 [])
+  as sum_acc1_prog_proof.
+Proof.
+  intros.
+  subst sum_acc1_prog.
   relcompile.
 Qed.

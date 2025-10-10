@@ -16,13 +16,13 @@ Notation f_lookup := (list (name * nat)).
 (* Generates the initialization code for execution *)
 Definition init (k : nat) : asm :=
   [
-    (*  0 *) ASMSyntax.Const RAX (word.of_Z 0);
-    (*  1 *) ASMSyntax.Const R12 (word.of_Z 16);
-    (*  2 *) ASMSyntax.Const R13 (word.of_Z (2^63 - 1));
+    (*  0 *) ASMSyntax.Const RAX (word.of_Z (Z.of_nat 0));
+    (*  1 *) ASMSyntax.Const R12 (word.of_Z (Z.of_nat 16));
+    (*  2 *) ASMSyntax.Const R13 (word.of_Z (Z.of_nat (2^63 - 1)));
     (* jump to main function *)
     (*  3 *) ASMSyntax.Call k;
     (* return to exit 0 *)
-    (*  4 *) ASMSyntax.Const RDI (word.of_Z 0);
+    (*  4 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 0));
     (*  5 *) ASMSyntax.Exit;
     (* alloc routine starts here: *)
     (*  6 *) ASMSyntax.Comment "malloc";
@@ -35,19 +35,18 @@ Definition init (k : nat) : asm :=
     (* give up: *)
     (* 13 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
     (* 14 *) ASMSyntax.Push R15; (* align stack *)
-    (* 15 *) ASMSyntax.Const RDI (word.of_Z 4);
+    (* 15 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 4));
     (* 16 *) ASMSyntax.Exit;
     (* abort: *)
     (* 17 *) ASMSyntax.Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
     (* 18 *) ASMSyntax.Push R15; (* align stack *)
-    (* 19 *) ASMSyntax.Const RDI (word.of_Z 1);
+    (* 19 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 1));
     (* 20 *) ASMSyntax.Exit
   ].
 
 Definition AllocLoc : nat := 7.
 
-(* Checks if a list has an even length *)
-Function even_len {A} (xs : list A): bool :=
+Function even_len (xs: v_stack): bool :=
   match xs with
   | nil => true
   | _ :: ys =>
@@ -57,7 +56,17 @@ Function even_len {A} (xs : list A): bool :=
     end
   end.
 
-Function odd_len {A} (xs : list A) : bool :=
+Function even_len_exp (xs: list exp): bool :=
+  match xs with
+  | nil => true
+  | _ :: ys =>
+    match ys with
+    | nil => false
+    | _ :: zs => even_len_exp zs
+    end
+  end.
+
+Function odd_len (xs: v_stack) : bool :=
   match xs with
   | nil => false
   | _ :: ys =>
@@ -78,8 +87,8 @@ Definition give_up (b : bool) : nat := if b then 14 else 15.
 Definition abort (b : bool) : nat := if b then 18 else 19.
 
 (* Compiles a constant value into assembly instructions *)
-Definition c_const (n : word64) (l : nat) (vs : v_stack) : asm_appl * nat :=
-  (List [ASMSyntax.Push RAX; ASMSyntax.Const RAX n], l+2).
+Definition c_const (n : word64) (l : nat) : asm_appl * nat :=
+  (List [ASMSyntax.Push RAX; ASMSyntax.Const RAX n], l + 2).
 
 (* Finds the index of a variable in a stack representation *)
 Function index_of (n : name) (k : nat) (vs : v_stack) : nat :=
@@ -87,8 +96,8 @@ Function index_of (n : name) (k : nat) (vs : v_stack) : nat :=
   | nil => k
   | x :: xs =>
     match x with
-      | None => index_of n (k+1) xs
-      | Some v => if Nat.eqb v n then k else index_of n (k+1) xs
+      | None => index_of n (k + 1) xs
+      | Some v => if Nat.eqb v n then k else index_of n (k + 1) xs
     end
   end.
 
@@ -97,8 +106,8 @@ Function index_of_opt (n : name) (k : nat) (vs : v_stack) : option nat :=
   | nil => None
   | x :: xs =>
     match x with
-    | None => index_of_opt n (k+1) xs
-    | Some v => if Nat.eqb v n then Some k else index_of_opt n (k+1) xs
+    | None => index_of_opt n (k + 1) xs
+    | Some v => if Nat.eqb v n then Some k else index_of_opt n (k + 1) xs
     end
   end.
 
@@ -117,7 +126,7 @@ Fixpoint c_declare_binders_rec (binders: list name) (l: nat) (vs: v_stack) (acc_
 
 Definition c_declare_binders (binders: list name) (l: nat) (vs: v_stack): (asm_appl * nat * v_stack) :=
   let/d '(asm1, l1, vs1) := c_declare_binders_rec binders (l + 1) vs (List []) in
-  (asm1 +++ List [ASMSyntax.Const RDI (word.of_Z 0)], l1, vs1).
+  (asm1 +++ List [ASMSyntax.Const RDI (word.of_Z (Z.of_nat 0))], l1, vs1).
 
 (* assign variable with name `n`, based on stack *)
 Definition c_assign (n : name) (l : nat) (vs : v_stack) : (asm_appl * nat) :=
@@ -149,7 +158,7 @@ Definition c_sub (l : nat) : asm_appl :=
 Definition c_div : asm_appl :=
   List [ ASMSyntax.Mov RDI RAX;
     ASMSyntax.Pop RAX;
-    ASMSyntax.Const RDX (word.of_Z 0);
+    ASMSyntax.Const RDX (word.of_Z (Z.of_nat 0));
     ASMSyntax.Div RDI ].
 
 Definition c_alloc (vs : v_stack) : asm_appl :=
@@ -170,7 +179,7 @@ Definition c_read (vs : v_stack) (l : nat) : (asm_appl * nat) :=
   (asm1, l + app_list_length asm1).
 
 Definition c_write (vs : v_stack) (l : nat) : (asm_appl * nat) :=
-  let/d asm1 := align (even_len vs) (List [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z 0)]) in
+  let/d asm1 := align (even_len vs) (List [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z (Z.of_nat 0))]) in
   (asm1, l + app_list_length asm1).
 
 (*
@@ -182,7 +191,7 @@ Definition c_write (vs : v_stack) (l : nat) : (asm_appl * nat) :=
 Definition c_load : asm_appl :=
   List [ ASMSyntax.Pop RDI;
     ASMSyntax.Add RDI RAX;
-    ASMSyntax.Load RAX RDI (word.of_Z 0) ].
+    ASMSyntax.Load RAX RDI (word.of_Z (Z.of_nat 0)) ].
 
 (*
   input : RAX, top_of_stack, snd_top_of_stack
@@ -192,12 +201,12 @@ Definition c_store : asm_appl :=
   List [ ASMSyntax.Pop RDI;
     ASMSyntax.Pop RDX;
     ASMSyntax.Add RDI RDX;
-    ASMSyntax.Store RAX RDI (word.of_Z 0) ].
+    ASMSyntax.Store RAX RDI (word.of_Z (Z.of_nat 0)) ].
 
 Function c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
   match e with
   | Var n => c_var n l vs
-  | Const n => c_const n l vs
+  | Const n => c_const n l
   | Add e1 e2 =>
       let/d '(asm1, l1) := c_exp e1 l vs in
       let/d '(asm2, l2) := c_exp e2 l1 (None :: vs) in
@@ -284,7 +293,7 @@ Definition c_pops (xs : list exp) (vs : v_stack) : asm_appl :=
   if k =? 3 then List [Pop RDI; Pop RDX] else
   if k =? 4 then List [Pop RDI; Pop RDX; Pop RBX] else
   if k =? 5 then List [Pop RDI; Pop RDX; Pop RBX; Pop RBP] else
-  List [Jump Always (give_up (xorb (negb (even_len xs)) (even_len vs)))].
+  List [Jump Always (give_up (xorb (negb (even_len_exp xs)) (even_len vs)))].
 
 (** Builds a stack representation for parameters of a function *)
 Function call_v_stack (xs: list name) (acc: v_stack): v_stack :=

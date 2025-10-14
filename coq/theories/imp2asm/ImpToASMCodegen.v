@@ -91,29 +91,29 @@ Definition c_const (n : word64) (l : nat) : asm_appl * nat :=
   (List [ASMSyntax.Push RAX; ASMSyntax.Const RAX n], l + 2).
 
 (* Finds the index of a variable in a stack representation *)
-Function index_of (n : name) (k : nat) (vs : v_stack) : nat :=
+Function index_of (vs: v_stack) (n: name) (k: nat): nat :=
   match vs with
   | nil => k
-  | x :: xs =>
+  | x :: vs =>
     match x with
-      | None => index_of n (k + 1) xs
-      | Some v => if Nat.eqb v n then k else index_of n (k + 1) xs
+      | None => index_of vs n (k + 1)
+      | Some v => if Nat.eqb v n then k else index_of vs n (k + 1)
     end
   end.
 
-Function index_of_opt (n : name) (k : nat) (vs : v_stack) : option nat :=
+Function index_of_opt (vs: v_stack) (n: name) (k: nat): option nat :=
   match vs with
   | nil => None
-  | x :: xs =>
+  | x :: vs =>
     match x with
-    | None => index_of_opt n (k + 1) xs
-    | Some v => if Nat.eqb v n then Some k else index_of_opt n (k + 1) xs
+    | None => index_of_opt vs n (k + 1)
+    | Some v => if Nat.eqb v n then Some k else index_of_opt vs n (k + 1)
     end
   end.
 
 (* lookup variable with name `n`, based on stack `vs` *)
-Definition c_var (n : name) (l : nat) (vs : v_stack) : asm_appl * nat :=
-  let/d k := (index_of n 0 vs) in
+Definition c_var (n: name) (l: nat) (vs: v_stack): asm_appl * nat :=
+  let/d k := (index_of vs n 0) in
   if k =? 0 then (List [ASMSyntax.Push RAX], l+1)
   else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2).
 
@@ -130,7 +130,7 @@ Definition c_declare_binders (binders: list name) (l: nat) (vs: v_stack): (asm_a
 
 (* assign variable with name `n`, based on stack *)
 Definition c_assign (n : name) (l : nat) (vs : v_stack) : (asm_appl * nat) :=
-  let/d k := index_of n 0 vs in
+  let/d k := index_of vs n 0 in
   match k return (asm_appl * nat) with
   | 0 => (List [ASMSyntax.Pop RDI], l+1)
   | S _ => (List [ASMSyntax.Store_RSP RAX k; ASMSyntax.Pop RAX], l+2)
@@ -203,7 +203,7 @@ Definition c_store : asm_appl :=
     ASMSyntax.Add RDI RDX;
     ASMSyntax.Store RAX RDI (word.of_Z (Z.of_nat 0)) ].
 
-Function c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
+Fixpoint c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
   match e with
   | Var n => c_var n l vs
   | Const n => c_const n l
@@ -227,7 +227,7 @@ Function c_exp (e : exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
       (asm1 +++ asm2 +++ c_load, l2 + app_list_length c_load)
   end.
 
-Function c_exps (es: list exp) (l : nat) (vs : v_stack) : asm_appl * nat :=
+Fixpoint c_exps (es: list exp) (l: nat) (vs: v_stack): asm_appl * nat :=
   match es with
   | [] => (List [], l)
   | e :: es' =>
@@ -245,8 +245,8 @@ Definition c_cmp (c : cmp) : cond :=
     | Equal => ASMSyntax.Equal RDI RBX
   end.
 
-Function c_test_jump (t : test) (pos_label : nat) (neg_label : nat)
-  (l : nat) (vs : v_stack) : asm_appl * nat :=
+Fixpoint c_test_jump (t: test) (pos_label: nat) (neg_label: nat)
+  (l: nat) (vs: v_stack): asm_appl * nat :=
   match t with
   | Test c e1 e2 =>
     let/d '(asm1, l1) := c_exp e1 l vs in
@@ -272,11 +272,11 @@ Function c_test_jump (t : test) (pos_label : nat) (neg_label : nat)
   end.
 
 (* Looks up a function name in a list of function addresses *)
-Function lookup (n : nat) (fs : f_lookup) : nat :=
+Function lookup (fs: f_lookup) (n: nat): nat :=
   match fs with
   | [] => 0
   | (x, y) :: xs =>
-    if Nat.eqb x n then y else lookup n xs
+    if Nat.eqb x n then y else lookup xs n
   end.
 
 (* Drop the current stack frame - elements corresponding to `vs` *)
@@ -303,7 +303,7 @@ Function call_v_stack (xs: list name) (acc: v_stack): v_stack :=
   end.
 
 (** Push a list of variables onto the stack *)
-Definition c_pushes (v_names: list name) (l : nat): (asm_appl * v_stack * nat) :=
+Definition c_pushes (v_names: list name) (l: nat): (asm_appl * v_stack * nat) :=
   let/d k := List.length v_names in
   let/d e := call_v_stack v_names [] in
   if k =? 0 then (List [], [None], l) else
@@ -314,13 +314,13 @@ Definition c_pushes (v_names: list name) (l : nat): (asm_appl * v_stack * nat) :
   (List [Push RBP; Push RBX; Push RDX; Push RDI], e, l + 4).
 
 (* Call the given function, passing the arguments in registers*)
-Definition c_call (vs : v_stack) (target : nat)
-  (xs : list exp) (l : nat) : asm_appl * nat :=
+Definition c_call (vs: v_stack) (target: nat)
+  (xs: list exp) (l: nat): asm_appl * nat :=
   let/d asm_pops := c_pops xs vs in
   let/d asm1 := align (even_len vs) (List [ASMSyntax.Call target]) in
   (asm_pops +++ asm1, l + app_list_length asm_pops + app_list_length asm1).
 
-Function c_cmd (c : cmd) (l : nat) (fs : f_lookup) (vs : v_stack) : (asm_appl * nat) :=
+Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) :=
   match c with
   | Skip => (List [], l)
   | Seq c1 c2 =>
@@ -357,7 +357,7 @@ Function c_cmd (c : cmd) (l : nat) (fs : f_lookup) (vs : v_stack) : (asm_appl * 
     let/d asmres := jump_to_tst +++ jump_to_body +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_beginning in
     (asmres, l2+1)
   | Call n f es =>
-    let/d target := lookup f fs in
+    let/d target := lookup fs f in
     let/d '(asms, l1) := c_exps es l vs in
     let/d '(asm1, l2) := c_call vs target es l1 in
     let/d '(asm2, l3) := c_var n l2 vs in
@@ -383,7 +383,7 @@ Function c_cmd (c : cmd) (l : nat) (fs : f_lookup) (vs : v_stack) : (asm_appl * 
     (List [Jump Always (abort (odd_len vs))], l+1)
   end.
 
-Fixpoint all_binders (body: cmd): list name :=
+Function all_binders (body: cmd): list name :=
   match body with
   | Skip => []
   | Seq c1 c2 => all_binders c1 ++ all_binders c2
@@ -399,7 +399,7 @@ Fixpoint all_binders (body: cmd): list name :=
   | Abort => []
   end.
 
-Fixpoint names_contain (l: list name) (a: name): bool :=
+Function names_contain (l: list name) (a: name): bool :=
   match l with
   | nil => false
   | x :: l => (x =? a) || names_contain l a
@@ -435,17 +435,17 @@ Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
 
 (* TODO(kπ) termination is unobvious to Coq, super unimportant function, hacked for now *)
 (* Converts a numeric name to a string representation *)
-Fail Function name2str (n : nat) (acc : string) : string :=
+Fail Function name2str (n: nat) (acc: string): string :=
   if n =? 0 then
     acc
   else
     name2str (n / 256) (String (ascii_of_nat (n mod 256)) acc).
 
-Definition name2str (n : nat) (acc : string) : string :=
+Definition name2str (n: nat) (acc: string): string :=
   String (ascii_of_nat (n mod 256)) acc.
 
 (* Compiles a list of function declarations into assembly instructions *)
-Function c_fundefs (ds : list func) (l : nat) (fs : f_lookup) : (asm_appl * list (name * nat) * nat) :=
+Fixpoint c_fundefs (ds: list func) (l: nat) (fs: f_lookup): (asm_appl * list (name * nat) * nat) :=
   match ds with
   | [] => (List [], fs, l)
   | d :: ds' =>
@@ -462,5 +462,5 @@ Definition codegen (prog : prog) : asm :=
   let/d init_l := app_list_length (List (init 0)) in
   let/d '(_, fs, _) := c_fundefs funs init_l [] in
   let/d '(asm1, _, _) := c_fundefs funs init_l fs in
-  let/d main_l := lookup (fun_name_of_string "main") fs in
+  let/d main_l := lookup fs (fun_name_of_string "main") in
   flatten ((List (init main_l)) +++ asm1).

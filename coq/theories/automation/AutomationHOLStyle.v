@@ -41,23 +41,27 @@ Ltac2 maybe_thm_binder (c: constr): binder option :=
   | _ => None
   end.
 
-Ltac2 intro_then_refine (nm: string) (k: constr -> constr): constr :=
-  open_constr:(ltac2:(Control.enter (fun () =>
-    let x := Fresh.in_goal (Option.get (Ident.of_string nm)) in
-    Std.intros false [IntroNaming (IntroFresh x)];
-    let x_constr := (Control.hyp x) in
-    Control.refine (fun () =>
-      k x_constr
-    )
-  ))).
-
-Ltac2 intro_then (nm: string) (k: constr -> unit): unit :=
+Ltac2 intro_then (nm: ident) (k: constr -> unit): unit :=
   Control.enter (fun () =>
-    let x := Fresh.in_goal (Option.get (Ident.of_string nm)) in
+    let x := Fresh.in_goal nm in
     Std.intros false [IntroNaming (IntroFresh x)];
     let x_constr := (Control.hyp x) in
     k x_constr
   ).
+
+Ltac2 intro_then_refine (nm: ident) (k: constr -> constr): constr :=
+  open_constr:(ltac2:(
+    intro_then nm (fun c => Control.refine (fun () => k c))
+  )).
+
+Ltac2 rec intros_then_refine (nms: ident list) (hyps_acc: constr list) (k: constr list -> constr): constr :=
+  match nms with
+  | [] => k hyps_acc
+  | nm :: nms =>
+    intro_then_refine nm (fun h =>
+      intros_then_refine nms (List.append hyps_acc [h]) k
+    )
+  end.
 
 Ltac2 rec apply_thm (thm: constr) (args: (unit -> unit) list): constr :=
   match args with
@@ -80,7 +84,7 @@ Ltac2 rec compile_if_needed (compile_fn: unit -> unit): unit :=
       compile_fn ()
     )
   | (forall _, _) =>
-    intro_then "x_nm" (fun _ =>
+    intro_then (Option.get (Ident.of_string "x_nm")) (fun _ =>
       compile_if_needed compile_fn
     )
   | _ => 
@@ -366,8 +370,23 @@ Ltac2 rec binders_names_of_constr_lambda (c: constr): constr list :=
   | _ => []
   end.
 
+Ltac2 rec binders_of_constr_lambda (c: constr): binder list :=
+  match Unsafe.kind c with
+  | Lambda b c1 =>
+    b :: binders_of_constr_lambda c1
+  | _ => []
+  end.
+
 Ltac2 message_of_option (opt: message option): message :=
   Option.default (fprintf "None") opt.
+
+Ltac2 message_of_binder (b: binder): message :=
+  match Binder.name b with
+  | None =>
+    fprintf "(_, %t)" (Binder.type b)
+  | Some n =>
+    fprintf "(%I, %t)" n (Binder.type b)
+  end.
 
 Ltac2 message_of_cenv (cenv: (constr option * constr) list): message :=
   message_of_list (
@@ -413,7 +432,7 @@ Ltac2 rec compile () : unit :=
         lazy_match! e with
         | (fun x => @?_f x) =>
           printf "POTENTIAL ERROR: trying to compile a function in the wild, namely %t" e;
-          intro_then "x_nm" (fun _ =>
+          intro_then (Option.get (Ident.of_string "x_nm")) (fun _ =>
             compile ()
           )
         | (dlet ?val ?body) =>
@@ -1433,6 +1452,7 @@ Proof.
   intros.
   subst foo_prog.
   relcompile.
+  (* eauto with fenvDb. *)
   ltac1:(cbn; try congruence; try reflexivity).
 Qed.
 
@@ -1500,14 +1520,238 @@ Proof.
   relcompile.
 Qed.
 
-Fixpoint sum_acc1 (n: nat) (acc: nat) :=
+Ltac2 rec in_contexts (bs: binder list) (c: unit -> constr) (): constr :=
+  match bs with
+  | [] => c ()
+  | b :: bs =>
+    (* let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in *)
+    let name := Option.get (Binder.name b) in
+    Constr.in_context name (Binder.type b) (fun () =>
+      (* let b_hyp := Control.hyp name in *)
+      let r := in_contexts bs c in
+      Control.refine r
+    )
+  end.
+
+Ltac2 rec lambda_to_prod (c: constr): constr :=
+  match Unsafe.kind c with
+  | Lambda b body => make (Prod b (lambda_to_prod body))
+  | _ => c
+  end.
+
+Ltac2 rec constr_transform_simple (f: constr -> constr) (c: constr): constr :=
+  printf "transform: %t" c;
+  match kind c with
+  | Rel _ => f c
+  | Meta _ | Var _ | Sort _ | Constant _ _ | Ind _ _
+  | Constructor _ _ | Uint63 _ | Float _ | String _ => c
+  | Cast c k t =>
+      let c := constr_transform_simple f c
+      with t := constr_transform_simple f t in
+      make (Cast c k t)
+  | Prod b c =>
+    (* shouldn't matter in our case *)
+    make (Prod b c)
+  | Lambda b _ =>
+      let name := Fresh.fresh (Free.of_goal ()) (Option.get (Binder.name b)) in
+      printf "name: %I" name;
+      Constr.in_context name (Binder.type b) (fun () =>
+        let h := Control.hyp name in
+        printf "%t" c;
+        let c := apply_to_args c [h] in
+        printf "%t" c;
+        let c := Std.eval_cbv beta c in
+        printf "%t" c;
+        Control.refine (fun () =>
+          constr_transform_simple f c
+        )
+      )
+  | LetIn b t c =>
+      (* let t := constr_transform_simple f t in
+      let b_id := Option.get (Binder.name b) in
+      let c := Constr.in_context b_id (Binder.type b) (fun () =>
+        Control.refine (fun () => constr_transform_simple f c)
+      ) in
+      let b_var := Unsafe.make (Var b_id) in
+      let c := Std.eval_cbv beta open_constr:($c $b_var) in *)
+      make (LetIn b t c)
+  | App c l =>
+      let c := constr_transform_simple f c
+      with l := Array.map (constr_transform_simple f) l in
+      make (App c l)
+  | Evar e l =>
+      let l := Array.map (constr_transform_simple f) l in
+      make (Evar e l)
+  | Case info x iv y bl =>
+      let y := constr_transform_simple f y
+      with bl := Array.map (constr_transform_simple f) bl in
+      make (Case info x iv y bl)
+  | Proj p r c =>
+      let c := constr_transform_simple f c in
+      make (Proj p r c)
+  | Fix structs which tl bl =>
+      (* unsupported *)
+      let bl := Array.map (constr_transform_simple f) bl in
+      make (Fix structs which tl bl)
+  | CoFix which tl bl =>
+      (* unsupported *)
+      let bl := Array.map (constr_transform_simple f) bl in
+      make (CoFix which tl bl)
+  | Array u t def ty =>
+      let ty := constr_transform_simple f ty
+      with t := Array.map (constr_transform_simple f) t
+      with def := constr_transform_simple f def in
+      make (Array u t def ty)
+end.
+
+Ltac2 unfold_tpe (fconstr: constr): unit :=
+  let fref := reference_of_constr fconstr in
+  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
+  match Unsafe.kind unfolded with
+  | Fix structs i bs cs =>
+    if Int.equal (Array.length cs) 1 then
+      let body := Array.get cs 0 in
+      let _struct := Array.get structs 0 in
+      let fix_b := Array.get bs 0 in
+      let fix_name := Option.get (Binder.name fix_b) in
+      printf "unfolded: %t" unfolded;
+      printf "Fix with which = %i, body = [%t]" i body;
+      Message.print (message_of_list (Array.to_list (Array.map Message.of_int structs)));
+      Message.print (message_of_list (Array.to_list (Array.map message_of_binder bs)));
+      let body_bs := binders_of_constr_lambda body in
+      let res :=
+      Constr.in_context fix_name (Binder.type fix_b) (fun () =>
+        let _fix_hyp := Control.hyp fix_name in
+        Control.refine (in_contexts body_bs (fun () =>
+          let hyps := List.map Control.hyp (List.map (fun b => Option.get (Binder.name b)) body_bs) in
+          let f_applied := apply_to_args fconstr hyps in
+          let f_applied1 := Std.eval_cbv beta (apply_to_args body hyps) in
+          printf "%t" f_applied1;
+          let f_applied1 := constr_transform_simple (fun _c =>
+            (* printf "%t" c;
+            printf "%t" (Constr.type c);
+            Message.print (Message.of_string (kind_string_of_constr c)); *)
+            fconstr
+          ) f_applied1 in
+          printf "f_applied1: %t" f_applied1;
+          (* let f_applied1 := apply_to_args fconstr hyps *)
+          open_constr:($f_applied = $f_applied1)
+        ))
+      ) in
+      let r := lambda_to_prod res in
+      printf "%t" r;
+      Control.refine (fun () => r)
+    else
+      Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
+  | _ => Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
+  end.
+
+(* ************************* *)
+(*        Playground         *)
+(* ************************* *)
+
+Ltac2 struct_of_fix (fconstr: constr): int :=
+  let fref := reference_of_constr fconstr in
+  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
+  match Unsafe.kind unfolded with
+  | Fix structs _ _ _ =>
+    Array.get structs 0
+  | _ =>
+    Control.throw (Oopsie (fprintf "not a fix; %t" fconstr))
+  end.
+
+Ltac2 unfold_fix_impl (fconstr: constr): unit :=
+  let fref := reference_of_constr fconstr in
+  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
+  match Unsafe.kind unfolded with
+  | Fix structs _i bs cs =>
+    let body := Array.get cs 0 in
+    let struct := Array.get structs 0 in
+    let fix_b := Array.get bs 0 in
+    let _fix_name := Option.get (Binder.name fix_b) in
+    (* printf "unfolded: %t" unfolded;
+    printf "Fix with which = %i, body = [%t]" _i body;
+    Message.print (message_of_list (Array.to_list (Array.map Message.of_int structs)));
+    Message.print (message_of_list (Array.to_list (Array.map message_of_binder bs))); *)
+    let body_bs := binders_of_constr_lambda body in
+    let body_bs_names := List.map (fun b => Option.get (Binder.name b)) body_bs in
+    let struct_name := List.nth body_bs_names struct in
+    let res := in_contexts body_bs (fun () =>
+      let outer_args := List.map Control.hyp body_bs_names in
+      let fconstr_applied := apply_to_args fconstr outer_args in
+      let rhs := fun () => Control.enter (fun () =>
+        let ind_clause := {
+          indcl_arg := (ElimOnIdent struct_name);
+          indcl_eqn := None;
+          indcl_as := None;
+          indcl_in := None;
+        } in
+        Std.destruct false [ind_clause] None;
+        Control.refine (fun () => open_constr:(_))
+      ) in
+      open_constr:($fconstr_applied = ltac2:(rhs ()))
+    ) in
+    let res := fun () => Std.eval_cbv beta (res ()) in
+    let r := lambda_to_prod (res ()) in
+    (* printf "end of unfold_fix2: %t" r; *)
+    Control.refine (fun () => r)
+  | _ => Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
+  end.
+
+Ltac2 unfold_fix_gen (fconstr: constr): unit :=
+  let fref := reference_of_constr fconstr in
+  let unfolded_fix_template := open_constr:(ltac2:(unfold_fix_impl fconstr)) in
+  ltac1:(unfolded_fix_template |- instantiate(1 := unfolded_fix_template)) (Ltac1.of_constr unfolded_fix_template);
+  (* printf "%t" (Control.goal ()); *)
+  let bs := collect_prod_binders_impl (Control.goal ()) in
+  Message.print (message_of_list (List.map message_of_binder bs));
+  let nms := List.map (fun b => Fresh.in_goal (Option.get (Binder.name b))) bs in
+  Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
+  (* printf "%t" (Control.goal ()); *)
+  let struct_name := List.nth nms (struct_of_fix fconstr) in
+  let struct_hyp := Control.hyp struct_name in
+  destruct $struct_hyp;
+  Control.enter (fun () =>
+    (* printf "enter: %t" (Control.goal ()); *)
+    unfold $fref; fold $fconstr;
+    (* printf "folded: %t" (Control.goal ()); *)
+    reflexivity ()
+  ).
+
+Ltac2 unfold_fix2_type fn :=
+  let unfolded := open_constr:(ltac2:(Control.enter (fun () => unfold_fix_gen fn))) in
+  let t := Constr.type unfolded in
+  Control.refine (fun () => open_constr:($t)).
+
+Ltac2 unfold_fix_proof (fconstr: constr): unit :=
+  let fref := reference_of_constr fconstr in
+  let bs := collect_prod_binders_impl (Control.goal ()) in
+  let nms := List.map (fun b => Fresh.in_goal (Option.get (Binder.name b))) bs in
+  Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
+  let struct_name := List.nth nms (struct_of_fix fconstr) in
+  let struct_hyp := Control.hyp struct_name in
+  destruct $struct_hyp;
+  Control.enter (fun () =>
+    unfold $fref; fold $fconstr;
+    reflexivity ()
+  ).
+
+Fixpoint length (l: list bool) : nat :=
+  match l with
+  | nil => 0
+  | cons hd tl => 1 + length tl
+  end.
+Goal ltac2:(unfold_fix2_type 'length).
+Proof. unfold_fix_proof 'length. Qed.
+
+Fixpoint sum_acc1 (acc: nat) (n: nat) :=
   match n with
   | 0 => acc
-  | S n => sum_acc1 n (acc + 1)
+  | S n => sum_acc1 (acc + 1) n
   end.
-Lemma sum_acc1_equation: ltac:(unfold_tpe sum_acc1).
-Proof. ltac1:(unfold_proof). Qed.
-Print sum_acc1.
+Lemma sum_acc1_equation: ltac2:(unfold_fix2_type 'sum_acc1).
+Proof. unfold_fix_proof 'sum_acc1. Qed.
+About sum_acc1_equation.
 
 (* TODO *)
 (* genrated _equation rewrites to this: *)
@@ -1518,6 +1762,8 @@ Print sum_acc1.
   | S n' => λ acc : nat, sum_acc1 n' (acc + 1)
   end acc), s))
 *)
+
+(* TODO: automation always assumes that the first param is decreasing *)
 
 Derive sum_acc1_prog
   in ltac2:(relcompile_tpe 'sum_acc1_prog 'sum_acc1 [])

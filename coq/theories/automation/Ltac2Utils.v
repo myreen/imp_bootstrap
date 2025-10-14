@@ -264,3 +264,7 @@ Proof.
   (* unfolded_def constr:(has_match). *)
   (* ltac1:(unfold_fix has_match). *)
 Abort. *)
+
+Ltac2 mutable db: int list := [].
+Ltac2 Set db as olddb := (1 :: olddb).
+Ltac2 Eval db.

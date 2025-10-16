@@ -151,6 +151,8 @@ Notation "w1 >w w2" := (word.gtu w1 w2) (at level 70, no associativity, only par
 Notation "w1 <sw w2" := (word.lts w1 w2) (at level 70, no associativity, only parsing): word.
 Definition w2n (w: word64): nat :=
   Z.to_nat (word.unsigned w).
+Definition w2n4 (w: word4): nat :=
+  Z.to_nat (word.unsigned w).
 Open Scope word.
 
 (* List *)

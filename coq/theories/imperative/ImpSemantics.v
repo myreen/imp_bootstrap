@@ -234,9 +234,8 @@ Definition eval_cmp (c: cmp) (v1 v2: Value): SRM bool :=
     cont (w1 <w w2)
   | Equal, Word w1, Word w2 =>
     cont (w1 =w w2)
-  (* TODO(kπ) Ask Magnus or Clement? I removed this. Dunno how to distinguish
-  pointer vs word in asm. *)
-  (* assume that every allocated address is greater than zero *)
+  (* TODO(kπ) *)
+  (* assume that every allocated address is greater than zero (we should know that) *)
   (* | Equal, Pointer p, Word w =>
     (if w =w (word.of_Z 0) then cont false else stop Crash) *)
   | _, _, _ => stop Crash

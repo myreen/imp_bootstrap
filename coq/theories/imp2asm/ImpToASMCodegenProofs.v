@@ -42,7 +42,7 @@ Definition code_rel (fs : f_lookup) (ds : list func) (instructions : list instr)
   forall n params body,
     find_fun n ds = Some (params, body) ->
     exists pos,
-      lookup n fs = pos /\
+      lookup fs n = pos /\
       code_in pos (flatten (fst (c_fundef (Func n params body) pos fs))) instructions.
 
 (* Establishes a relation between an imperative state and an ASM state, including code alignment and register setup. *)
@@ -99,7 +99,7 @@ Definition env_ok (env : IEnv.env) (vs : list (option name)) (curr : list word_o
     IEnv.lookup env n = Some v ->
     In (Some n) vs /\
     exists w,
-      nth_error curr (index_of n 0 vs) = Some (Word w) /\
+      nth_error curr (index_of vs n 0) = Some (Word w) /\
       v_inv pmap v w.
 
 Fixpoint binders_ok (c: cmd) (vs: list (option name)) :=
@@ -315,6 +315,8 @@ Proof.
         assumption.
 Qed.
 
+Opaque Nat.pow.
+
 Theorem give_up: forall fs ds t w n,
   code_rel fs ds t.(instructions) ->
   t.(regs) R15 = Some w ->
@@ -415,13 +417,13 @@ Proof.
     tauto.
 Qed.
 
-Theorem even_len_spec_str: forall {A} (l: list A),
-  (forall x, even_len (x :: l) = even (List.length (x :: l))) ∧
-  even_len l = even (List.length l).
+Theorem even_len_v_stack_spec_str: forall (l: v_stack),
+  (forall x, even_len_v_stack (x :: l) = even (List.length (x :: l))) ∧
+  even_len_v_stack l = even (List.length l).
 Proof.
   induction l.
   - split; reflexivity.
-  - simpl even_len.
+  - simpl even_len_v_stack.
     destruct l; try reflexivity; split.
     all: unfold list_CASE; cbv beta.
     all: cleanup; try reflexivity; intros.
@@ -435,20 +437,20 @@ Proof.
     eapply H with (x := a).
 Qed.
 
-Theorem even_len_spec: forall {A} (l: list A),
-  even_len l = even (List.length l).
+Theorem even_len_v_stack_spec: forall (l: v_stack),
+  even_len_v_stack l = even (List.length l).
 Proof.
   intros.
-  eapply even_len_spec_str.
+  eapply even_len_v_stack_spec_str.
 Qed.
 
-Theorem odd_len_spec_str: forall {A} (l: list A),
-  (forall x, odd_len (x :: l) = odd (List.length (x :: l))) ∧
-  odd_len l = odd (List.length l).
+Theorem odd_len_v_stack_spec_str: forall (l: v_stack),
+  (forall x, odd_len_v_stack (x :: l) = odd (List.length (x :: l))) ∧
+  odd_len_v_stack l = odd (List.length l).
 Proof.
   induction l.
   - split; reflexivity.
-  - simpl odd_len.
+  - simpl odd_len_v_stack.
     destruct l; try reflexivity; split.
     all: unfold list_CASE; cbv beta.
     all: cleanup; try reflexivity; intros.
@@ -462,11 +464,11 @@ Proof.
     eapply H with (x := a).
 Qed.
 
-Theorem odd_len_spec: forall {A} (l: list A),
-  odd_len l = odd (List.length l).
+Theorem odd_len_v_stack_spec: forall (l: v_stack),
+  odd_len_v_stack l = odd (List.length l).
 Proof.
   intros.
-  eapply odd_len_spec_str.
+  eapply odd_len_v_stack_spec_str.
 Qed.
 
 Theorem has_stack_even: forall t xs,
@@ -616,6 +618,15 @@ Proof.
   reflexivity.
 Qed.
 
+Theorem app_list_length_asm_spec: forall (l: app_list instr),
+  app_list_length_asm l = List.length (flatten l).
+Proof.
+  induction l; simpl; eauto.
+  rewrite IHl1; rewrite IHl2.
+  rewrite length_app.
+  reflexivity.
+Qed.
+
 Theorem c_cmd_length: forall c l fs vs l1 asm1,
   c_cmd c l fs vs = (asm1, l1) -> l1 = l + List.length (flatten asm1).
 Proof.
@@ -641,7 +652,7 @@ Proof.
   | _ => progress unfold align, dlet, c_alloc, c_assign, c_var in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
-  | _ => progress rewrite app_list_length_spec
+  | _ => progress rewrite app_list_length_asm_spec
   | _ => rewrite Nat.add_assoc
   | _ => lia
   end.
@@ -866,7 +877,7 @@ Proof.
 Qed.
 
 Theorem index_of_spec: forall name vs k,
-  index_of name k vs = k + index_of name 0 vs.
+  index_of vs name k = k + index_of vs name 0.
 Proof.
   induction vs; intros; eauto.
   simpl; destruct a.
@@ -880,7 +891,7 @@ Proof.
 Qed.
 
 Theorem index_of_spec_add: forall name vs k i,
-  index_of name (k + i) vs = i + index_of name k vs.
+  index_of vs name (k + i) = i + index_of vs name k.
 Proof.
   intros.
   rewrite index_of_spec.
@@ -890,7 +901,7 @@ Proof.
 Qed.
 
 Theorem index_of_bounds: forall name vs k,
-  index_of name k vs ≤ k + List.length vs.
+  index_of vs name k ≤ k + List.length vs.
 Proof.
   induction vs; intros; simpl.
   1: rewrite Nat.add_0_r; constructor.
@@ -900,7 +911,7 @@ Proof.
 Qed.
 
 Theorem index_of_In: forall name vs k,
-  index_of name k vs < k + List.length vs <-> In (Some name) vs.
+  index_of vs name k < k + List.length vs <-> In (Some name) vs.
 Proof.
   induction vs; intros; simpl.
   1: rewrite Nat.add_0_r.
@@ -937,27 +948,27 @@ Proof.
 Qed.
 
 Theorem index_of_app: forall name k vs1 vs2,
-  index_of name k vs1 < (List.length vs1) ->
-    index_of name k vs1 = index_of name k (vs1 ++ vs2).
+  index_of vs1 name k < (List.length vs1) ->
+    index_of vs1 name k = index_of (vs1 ++ vs2) name k.
 Proof.
   intros.
   induction vs1; simpl in *.
   - inversion H.
   - destruct a.
     + destruct (_ =? _); try reflexivity.
-      assert (index_of name k vs1 = index_of name k (vs1 ++ vs2)).
+      assert (index_of vs1 name k = index_of (vs1 ++ vs2) name k).
       2: {
         do 2 (rewrite index_of_spec; symmetry).
-        pat `index_of name k vs1 = index_of name k (vs1 ++ vs2)` at do 2 (rewrite index_of_spec in pat; symmetry in pat).
+        pat `index_of vs1 name k = index_of (vs1 ++ vs2) name k` at do 2 (rewrite index_of_spec in pat; symmetry in pat).
         lia.
       }
       rewrite IHvs1; eauto.
       rewrite index_of_spec in *.
       lia.
-    + assert (index_of name k vs1 = index_of name k (vs1 ++ vs2)).
+    + assert (index_of vs1 name k = index_of (vs1 ++ vs2) name k).
       2: {
         do 2 (rewrite index_of_spec; symmetry).
-        pat `index_of name k vs1 = index_of name k (vs1 ++ vs2)` at do 2 (rewrite index_of_spec in pat; symmetry in pat).
+        pat `index_of vs1 name k = index_of (vs1 ++ vs2) name k` at do 2 (rewrite index_of_spec in pat; symmetry in pat).
         lia.
       }
       rewrite IHvs1; eauto.
@@ -966,7 +977,7 @@ Proof.
 Qed.
 
 Theorem index_of_lbound: forall name vs k,
-  k ≤ index_of name k vs.
+  k ≤ index_of vs name k.
 Proof.
   induction vs; intros; simpl.
   1: constructor.
@@ -979,7 +990,7 @@ Proof.
 Qed.
 
 Theorem index_of_bound_inj: forall vs nm1 nm2 k i,
-  index_of nm1 k vs = i -> index_of nm2 k vs = i ->
+  index_of vs nm1 k = i -> index_of vs nm2 k = i ->
   k + i < (List.length vs) ->
     nm1 = nm2.
 Proof.
@@ -989,8 +1000,8 @@ Proof.
   - simpl in *.
     destruct a.
     2: {
-      assert (S (index_of nm1 k vs) = i) by (rewrite index_of_spec in *; lia).
-      assert (S (index_of nm2 k vs) = i) by (rewrite index_of_spec in *; lia).
+      assert (S (index_of vs nm1 k) = i) by (rewrite index_of_spec in *; lia).
+      assert (S (index_of vs nm2 k) = i) by (rewrite index_of_spec in *; lia).
       destruct i; [rewrite index_of_spec in *; lia|].
       ring_simplify in H1.
       specialize (IHvs nm1 nm2 k i).

@@ -19,12 +19,15 @@ Create HintDb automation.
 (*       Can we use N everywhere? *)
 (*       Or can we just support both N and nat everywhere? or maybe Z? *)
 
+(* TODO: sometimes we use (name_enc n) in automation lemmas and sometimes just (n) *)
+(* This might be incorrect, when we pass the names explicitly in the automation *)
+
 Theorem trans_app: forall n params vs body s s1 v,
   let env := make_env params vs FEnv.empty in
     (env |-- ([body], s) ---> ([v], s1)) ->
     List.length params = List.length vs ->
-    lookup_fun (name_enc n) s.(funs) = Some (params,body) ->
-    eval_app (name_enc n) vs s (v,s1).
+    lookup_fun (name_enc n) s.(funs) = Some (params, body) ->
+    eval_app (name_enc n) vs s (v, s1).
 Proof.
   intros; eapply App_intro; eauto.
   unfold env_and_body; simpl.
@@ -33,7 +36,7 @@ Proof.
   reflexivity.
 Qed.
 
-Theorem trans_Call : forall env xs s1 s2 s3 fname vs v,
+Theorem trans_Call: forall env xs s1 s2 s3 fname vs v,
   env |-- (xs, s1) ---> (vs, s2) ->
   eval_app fname vs s2 (v, s3) ->
   env |-- ([Call fname xs], s1) ---> ([v], s3).
@@ -43,7 +46,7 @@ Proof.
   eapply Eval_Call with (vs := vs) (s2 := s2); eauto.
 Qed.
 
-Theorem trans_Var : forall {A} `{Refinable A} env s n (v : A),
+Theorem trans_Var : forall {A} `{ra: Refinable A} env s n (v: A),
   FEnv.lookup env (name_enc n) = Some (encode v) ->
   env |-- ([Var (name_enc n)], s) ---> ([encode v], s).
 Proof.
@@ -51,22 +54,21 @@ Proof.
   apply Eval_Var; auto.
 Qed.
 
-Theorem trans_nil : forall env s,
+Theorem trans_nil: forall env s,
   env |-- ([], s) ---> ([], s).
 Proof.
   intros env s.
   apply Eval_Nil.
 Qed.
 
-Theorem trans_cons : forall env x xs v vs s s1 s2,
+Theorem trans_cons: forall env x xs v vs s s1 s2,
   env |-- ([x], s) ---> ([v], s1) ->
   env |-- (xs, s1) ---> (vs, s2) ->
   env |-- (x :: xs, s) ---> (v :: vs, s2).
 Proof.
-  intros env x xs v vs s s1 s2 H1 H2.
+  intros * H1 H2.
   destruct xs; simpl in *.
-  - inversion H2; subst.
-    assumption.
+  - inversion H2; subst; eauto.
   - inversion H2; subst; econstructor; eauto.
 Qed.
 
@@ -90,7 +92,7 @@ Ltac crunch_NoDup :=
   | _ => assumption
   end.
 
-Theorem auto_let : forall {A B} `{ra : Refinable A} `{rb : Refinable B} env x1 y1 s1 s2 s3 v1 let_n f,
+Theorem auto_let : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env x1 y1 s1 s2 s3 (v1: A) let_n f,
   env |-- ([x1], s1) ---> ([ra.(encode) v1], s2) ->
   (FEnv.insert ((name_enc let_n), Some (ra.(encode) v1)) env) |-- ([y1], s2) --->
       ([rb.(encode) (f v1)], s3) ->
@@ -99,7 +101,7 @@ Proof.
   intros.
   eapply Eval_Let; eauto.
 Qed.
-Hint Resolve auto_let : automation.
+Hint Resolve auto_let: automation.
 
 Theorem auto_otherwise : forall {A} `{ra : Refinable A} env s x1 v1,
   env |-- ([x1], s) ---> ([encode v1], s) ->
@@ -108,7 +110,7 @@ Proof.
   intros.
   repeat econstructor; eauto.
 Qed.
-(* Hint Resolve auto_otherwise : automation. *)
+(* Hint Resolve auto_otherwise: automation. *)
 
 (* bool *)
 
@@ -117,14 +119,14 @@ Theorem auto_bool_F : forall env s,
 Proof.
   intros. apply Eval_Const.
 Qed.
-Hint Resolve auto_bool_F : automation.
+Hint Resolve auto_bool_F: automation.
 
 Theorem auto_bool_T : forall env s,
   env |-- ([Const 1], s) ---> ([encode true], s).
 Proof.
   intros. apply Eval_Const.
 Qed.
-Hint Resolve auto_bool_T : automation.
+Hint Resolve auto_bool_T: automation.
 
 Theorem auto_bool_not : forall env s x1 b,
   env |-- ([x1], s) ---> ([encode b], s) ->
@@ -134,7 +136,7 @@ Proof.
   Eval_eq.
   destruct b; simpl; eauto with automation.
 Qed.
-Hint Resolve auto_bool_not : automation.
+Hint Resolve auto_bool_not: automation.
 
 Theorem auto_bool_and : forall env s x1 x2 bA bB,
   env |-- ([x1], s) ---> ([encode bA], s) ->
@@ -146,7 +148,7 @@ Proof.
   all: unfold encode in *; simpl in *; destruct bA; destruct bB; inversion HbA; inversion HbB; subst.
   all: Eval_eq.
 Qed.
-Hint Resolve auto_bool_and : automation.
+Hint Resolve auto_bool_and: automation.
 
 Theorem auto_bool_iff : forall env s x1 x2 bA bB,
   env |-- ([x1], s) ---> ([encode bA], s) ->
@@ -158,9 +160,9 @@ Proof.
   all: unfold encode in *; simpl in *; destruct bA; destruct bB; inversion HbA; inversion HbB; subst.
   all: Eval_eq.
 Qed.
-Hint Resolve auto_bool_iff : automation.
+Hint Resolve auto_bool_iff: automation.
 
-Theorem last_bool_if : forall {A} `{Refinable A} env s x_b x_t x_f (b : bool) (t f : A),
+Theorem last_bool_if: forall {A} `{ra: Refinable A} env s x_b x_t x_f (b: bool) (t f: A),
   env |-- ([x_b], s) ---> ([encode b], s) ->
   env |-- ([x_t], s) ---> ([encode t], s) ->
   env |-- ([x_f], s) ---> ([encode f], s) ->
@@ -171,23 +173,23 @@ Proof.
   all: unfold encode in *; simpl in *; destruct b; inversion Hb; subst.
   all: Eval_eq.
 Qed.
-Hint Resolve last_bool_if : automation.
+Hint Resolve last_bool_if: automation.
 
 (* num *)
 
-Theorem auto_nat_const_zero : forall env s,
+Theorem auto_nat_const_zero: forall env s,
   env |-- ([Const 0], s) ---> ([encode 0%nat], s).
 Proof.
   intros. apply Eval_Const.
 Qed.
-(* Hint Resolve auto_nat_const_zero : automation. *)
+(* Hint Resolve auto_nat_const_zero: automation. *)
 
-Theorem auto_nat_const : forall env s (n: nat),
+Theorem auto_nat_const: forall env s (n: nat),
   env |-- ([Const (N.of_nat n)], s) ---> ([encode n], s).
 Proof.
   intros. apply Eval_Const.
 Qed.
-Hint Resolve auto_nat_const : automation.
+Hint Resolve auto_nat_const: automation.
 
 Theorem auto_nat_add : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
@@ -199,7 +201,7 @@ Proof.
   rewrite Nnat.Nat2N.inj_add.
   reflexivity.
 Qed.
-Hint Resolve auto_nat_add : automation.
+Hint Resolve auto_nat_add: automation.
 
 Theorem auto_nat_sub : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
@@ -211,7 +213,7 @@ Proof.
   rewrite Nnat.Nat2N.inj_sub.
   reflexivity.
 Qed.
-Hint Resolve auto_nat_sub : automation.
+Hint Resolve auto_nat_sub: automation.
 
 Theorem auto_nat_div : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
@@ -225,9 +227,9 @@ Proof.
   rewrite Nnat.Nat2N.inj_div.
   reflexivity.
 Qed.
-Hint Resolve auto_nat_div : automation.
+Hint Resolve auto_nat_div: automation.
 
-Theorem auto_nat_if_eq : forall {A} `{Refinable A} env s x1 x2 y z (n1 n2: nat) (t f : A),
+Theorem auto_nat_if_eq : forall {A} `{ra: Refinable A} env s x1 x2 y z (n1 n2: nat) (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
   env |-- ([y], s) ---> ([encode t], s) ->
@@ -243,9 +245,9 @@ Proof.
   all: eauto.
   all: lia.
 Qed.
-Hint Resolve auto_nat_if_eq : automation.
+Hint Resolve auto_nat_if_eq: automation.
 
-Theorem auto_nat_if_less : forall {A} `{Refinable A} env s x1 x2 y z (n1 n2: nat) (t f : A),
+Theorem auto_nat_if_less : forall {A} `{ra: Refinable A} env s x1 x2 y z (n1 n2: nat) (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
   env |-- ([y], s) ---> ([encode t], s) ->
@@ -261,9 +263,9 @@ Proof.
   all: eauto.
   all: lia.
 Qed.
-Hint Resolve auto_nat_if_less : automation.
+Hint Resolve auto_nat_if_less: automation.
 
-Theorem auto_nat_case : forall {A} `{Refinable A} env s x0 x1 x2 n (v0: nat) (v1: A) v2,
+Theorem auto_nat_case : forall {A} `{ra: Refinable A} env s x0 x1 x2 n (v0: nat) (v1: A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   (match v0 with
   | 0%nat => env |-- ([x1], s) ---> ([encode v1], s)
@@ -290,18 +292,18 @@ Proof.
   assert ((N.of_nat (S n0) - 1) = N.of_nat n0) as -> by lia.
   eauto.
 Qed.
-Hint Resolve auto_nat_case : automation.
+Hint Resolve auto_nat_case: automation.
 
 (* list *)
 
-Theorem auto_list_nil : forall env s,
-  env |-- ([Const 0], s) ---> ([encode []], s).
+Theorem auto_list_nil: forall {A} `{ra: Refinable A} env s,
+  env |-- ([Const 0], s) ---> ([encode (@nil A)], s).
 Proof.
   intros; econstructor.
 Qed.
-Hint Resolve auto_list_nil : automation.
+Hint Resolve auto_list_nil: automation.
 
-Theorem auto_list_cons : forall {A} `{Refinable A} env s x1 x2 x xs,
+Theorem auto_list_cons : forall {A} `{ra: Refinable A} env s x1 x2 x xs,
   env |-- ([x1], s) ---> ([encode x], s) ->
   env |-- ([x2], s) ---> ([encode xs], s) ->
   env |-- ([Op Cons [x1; x2]], s) ---> ([encode (x :: xs)], s).
@@ -309,12 +311,12 @@ Proof.
   intros.
   repeat econstructor; eauto.
 Qed.
-Hint Resolve auto_list_cons : automation.
+Hint Resolve auto_list_cons: automation.
 
-Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B} env s x0 x1 x2 n1 n2 (v0 : list A) v1 v2,
+Theorem auto_list_case : forall {A B} `{ra: Refinable A} `{rb : Refinable B} env s x0 x1 x2 n1 n2 (v0: list A) (v1: B) (v2: A -> list A -> B),
   env |-- ([x0], s) ---> ([encode v0], s) ->
   (match v0 with
-   | nil =>
+   | [] =>
      env |-- ([x1], s) ---> ([rb.(encode) v1], s)
    | h :: t =>
      (FEnv.insert (name_enc n2, Some (encode t))
@@ -325,7 +327,7 @@ Theorem auto_list_case : forall {A B} `{ra : Refinable A} `{rb : Refinable B} en
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n1) (Op Head [x0])
         (Let (name_enc n2) (Op Tail [x0]) x2))], s) --->
-     ([rb.(encode) (
+    ([rb.(encode) (
       match v0 with
       | [] => v1
       | h :: t => v2 h t
@@ -342,27 +344,27 @@ Proof.
   + rewrite remove_env_update; eauto.
   + simpl; reflexivity.
 Qed.
-Hint Resolve auto_list_case : automation.
+Hint Resolve auto_list_case: automation.
 
 (* option *)
 
-Theorem auto_option_none : forall {A} `{Refinable A} env s,
+Theorem auto_option_none : forall {A} `{ra: Refinable A} env s,
   env |-- ([Const 0], s) ---> ([encode None], s).
 Proof.
   intros; econstructor.
 Qed.
-Hint Resolve auto_option_none : automation.
+Hint Resolve auto_option_none: automation.
 
-Theorem auto_option_some : forall {A} `{Refinable A} env s x1 x,
+Theorem auto_option_some : forall {A} `{ra: Refinable A} env s x1 x,
   env |-- ([x1], s) ---> ([encode x], s) ->
   env |-- ([Op Cons [x1; Const 0]], s) ---> ([encode (Some x)], s).
 Proof.
   intros.
   repeat econstructor; eauto.
 Qed.
-Hint Resolve auto_option_some : automation.
+Hint Resolve auto_option_some: automation.
 
-Theorem auto_option_case : forall {A B} `{Refinable A} `{rb : Refinable B} (v0 : option A) env s x0 x1 x2 n v1 v2,
+Theorem auto_option_case : forall {A B} `{ra: Refinable A} `{rb : Refinable B} (v0 : option A) env s x0 x1 x2 n v1 v2,
   env |-- ([x0],s) ---> ([encode v0],s) ->
   (match v0 with
    | None =>
@@ -384,11 +386,11 @@ Proof.
   - Eval_eq.
   - Eval_eq.
 Qed.
-Hint Resolve auto_option_case : automation.
+Hint Resolve auto_option_case: automation.
 
 (* pair *)
 
-Theorem auto_pair_fst : forall {A B} `{Refinable A} `{Refinable B} env s x1 (x : A * B),
+Theorem auto_pair_fst : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env s x1 (x: A * B),
   env |-- ([x1], s) ---> ([encode x], s) ->
   env |-- ([Op Head [x1]], s) ---> ([encode (fst x)], s).
 Proof.
@@ -396,9 +398,9 @@ Proof.
   destruct x; simpl in *.
   repeat econstructor; eauto.
 Qed.
-Hint Resolve auto_pair_fst : automation.
+Hint Resolve auto_pair_fst: automation.
 
-Theorem auto_pair_snd : forall {A B} `{Refinable A} `{Refinable B} env s x1 (x : A * B),
+Theorem auto_pair_snd : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env s x1 (x: A * B),
   env |-- ([x1], s) ---> ([encode x], s) ->
   env |-- ([Op Tail [x1]], s) ---> ([encode (snd x)], s).
 Proof.
@@ -406,9 +408,9 @@ Proof.
   destruct x; simpl in *.
   repeat econstructor; eauto.
 Qed.
-Hint Resolve auto_pair_fst : automation.
+Hint Resolve auto_pair_fst: automation.
 
-Theorem auto_pair_cons : forall {A B} `{Refinable A} `{Refinable B} env s x1 x2 (x : A) (y : B),
+Theorem auto_pair_cons : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env s x1 x2 (x: A) (y: B),
   env |-- ([x1], s) ---> ([encode x], s) ->
   env |-- ([x2], s) ---> ([encode y], s) ->
   env |-- ([Op Cons [x1; x2]], s) ---> ([encode (x, y)], s).
@@ -416,7 +418,7 @@ Proof.
   intros.
   repeat econstructor; eauto.
 Qed.
-Hint Resolve auto_pair_cons : automation.
+Hint Resolve auto_pair_cons: automation.
 
 Theorem auto_pair_case : forall {A1 A2 B} `{ra1 : Refinable A1} `{ra2 : Refinable A2} `{rb : Refinable B}
     env s x0 x1 n1 n2 (v0 : A1 * A2) v1,
@@ -427,7 +429,7 @@ Theorem auto_pair_case : forall {A1 A2 B} `{ra1 : Refinable A1} `{ra2 : Refinabl
        (FEnv.insert (name_enc n1, Some (ra1.(encode) y1)) env)) |-- ([x1], s) --->
          ([rb.(encode) (v1 y1 y2)], s)
    end) ->
-  NoDup ([name_enc n1] ++ [name_enc n2] ++ free_vars x0) ->
+  NoDup ([name_enc n1] ++ free_vars x0) ->
   env |-- ([Let (name_enc n1) (Op Head [x0])
       (Let (name_enc n2) (Op Tail [x0]) x1)], s) --->
   ([rb.(encode) (match v0 with
@@ -437,15 +439,15 @@ Proof.
   intros.
   destruct v0 as [y1 y2]; simpl in *.
   Eval_eq.
-  - repeat rewrite NoDup_cons_iff in *; destruct H1; destruct H2.
-  rewrite not_in_cons in *; destruct H1.
-  rewrite remove_env_update; eauto.
+  - repeat rewrite NoDup_cons_iff in *; destruct H1.
+    rewrite remove_env_update; eauto.
   - simpl; reflexivity.
 Qed.
-Hint Resolve auto_pair_case : automation.
+Hint Resolve auto_pair_case: automation.
 
 (* char *)
 
+(* TODO: this + the same pattern in word is a crime *)
 Theorem auto_char_CHR : forall env s x1 x,
   env |-- ([x1], s) ---> ([encode x], s) ->
   ((N_of_nat x) < 256) ->
@@ -455,7 +457,7 @@ Proof.
   simpl.
   rewrite N_ascii_embedding; auto.
 Qed.
-Hint Resolve auto_char_CHR : automation.
+Hint Resolve auto_char_CHR: automation.
 
 Theorem auto_char_ORD : forall env s x1 x,
   env |-- ([x1], s) ---> ([encode x], s) ->
@@ -466,10 +468,21 @@ Proof.
   rewrite Nnat.N2Nat.id.
   assumption.
 Qed.
-Hint Resolve auto_char_ORD : automation.
+Hint Resolve auto_char_ORD: automation.
+
+(* TODO: check this *)
+Theorem auto_char_const: forall env s (chr: ascii),
+  env |-- ([Const (N_of_ascii chr)], s) ---> ([encode chr], s).
+Proof.
+  intros.
+  simpl in *.
+  Eval_eq.
+Qed.
 
 (* string *)
 
+(* TODO: check this *)
+(* TODO: also, do we want this? *)
 Theorem auto_string_const: forall env s str,
   env |-- ([Const (name_enc str)], s) ---> ([encode str], s).
 Proof.
@@ -502,7 +515,7 @@ Proof.
   2: rewrite H1; eapply H.
   rewrite Z.mod_small; lia.
 Qed.
-Hint Resolve auto_word4_n2w : automation.
+Hint Resolve auto_word4_n2w: automation.
 
 Theorem auto_word64_n2w : forall env s x1 x,
   env |-- ([x1], s) ---> ([encode x], s) ->
@@ -523,7 +536,7 @@ Proof.
   - now apply Nat2Z.inj_lt.
   - rewrite Nat2Z.inj_pow; simpl; reflexivity. *)
 Qed.
-Hint Resolve auto_word64_n2w : automation.
+Hint Resolve auto_word64_n2w: automation.
 
 Theorem auto_word4_w2n : forall env s x1 x,
   env |-- ([x1], s) ---> ([encode (x : word4)], s) ->
@@ -534,7 +547,7 @@ Proof.
   rewrite Z_nat_N.
   assumption.
 Qed.
-Hint Resolve auto_word4_w2n : automation.
+Hint Resolve auto_word4_w2n: automation.
 
 Theorem auto_word64_w2n : forall env s x1 x,
   env |-- ([x1], s) ---> ([encode (x : word64)], s) ->
@@ -545,7 +558,7 @@ Proof.
   rewrite Z_nat_N.
   assumption.
 Qed.
-Hint Resolve auto_word64_w2n : automation.
+Hint Resolve auto_word64_w2n: automation.
 
 (* TODO(kπ) Skipped common definitions and some automation for cons and case *)
 
@@ -568,7 +581,7 @@ Theorem auto_cmp_cons_Less: forall env s,
   env |-- ([Const (name_enc "Less")], s) ---> ([encode ImpSyntax.Less], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_cmp_CASE: forall {A} `{Refinable A} env s x0 Less_exp Equal_exp v0 f_Less f_Equal,
+Theorem auto_cmp_CASE: forall {A} `{ra: Refinable A} env s x0 Less_exp Equal_exp v0 f_Less f_Equal,
   env |-- ([x0],s) ---> ([encode v0],s) ->
   (match v0 with
    | ImpSyntax.Less =>
@@ -646,7 +659,7 @@ Theorem auto_exp_cons_Read: forall env s x_e1 x_e2 e1 e2,
        ([encode (ImpSyntax.Read e1 e2)], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_exp_CASE: forall {A} `{Refinable A} env s x0 v0
+Theorem auto_exp_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   Var_case Const_case Add_case Sub_case Div_case Read_case
   f_Var f_Const f_Add f_Sub f_Div f_Read
   (n1 n2 n3 n4 n5 n6 n7 n8 n9 n10: string),
@@ -672,8 +685,10 @@ Theorem auto_exp_CASE: forall {A} `{Refinable A} env s x0 v0
        (FEnv.insert (name_enc n9, Some (encode e1)) env)) |-- ([Read_case], s) ---> ([encode (f_Read e1 e2)], s)
    end) ->
 
-  NoDup ([name_enc n1; name_enc n2; name_enc n3; name_enc n4; name_enc n5;
-          name_enc n6; name_enc n7; name_enc n8; name_enc n9; name_enc n10] ++ free_vars x0) ->
+  NoDup ([name_enc n3] ++ free_vars x0) ->
+  NoDup ([name_enc n5] ++ free_vars x0) ->
+  NoDup ([name_enc n7] ++ free_vars x0) ->
+  NoDup ([name_enc n9] ++ free_vars x0) ->
 
   env |-- ([If Equal [Op Head [x0]; Const (name_enc "Var")]
             (Let (name_enc n1) (Op Head [Op Tail [x0]]) Var_case)
@@ -761,7 +776,7 @@ Theorem auto_test_cons_Not: forall env s x_t t,
         ([encode (ImpSyntax.Not t)], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_test_CASE: forall {A} `{Refinable A} env s x0 v0
+Theorem auto_test_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   Test_case And_case Or_case Not_case
   f_Test f_And f_Or f_Not
   n1 n2 n3 n4 n5 n6 n7 n8,
@@ -769,33 +784,35 @@ Theorem auto_test_CASE: forall {A} `{Refinable A} env s x0 v0
 
   (match v0 with
    | ImpSyntax.Test c e1 e2 =>
-     (FEnv.insert (n3, Some (encode e2))
-       (FEnv.insert (n2, Some (encode e1))
-         (FEnv.insert (n1, Some (encode c)) env))) |-- ([Test_case], s) ---> ([encode (f_Test c e1 e2)], s)
+     (FEnv.insert (name_enc n3, Some (encode e2))
+       (FEnv.insert (name_enc n2, Some (encode e1))
+         (FEnv.insert (name_enc n1, Some (encode c)) env))) |-- ([Test_case], s) ---> ([encode (f_Test c e1 e2)], s)
    | ImpSyntax.And t1 t2 =>
-     (FEnv.insert (n5, Some (encode t2))
-       (FEnv.insert (n4, Some (encode t1)) env)) |-- ([And_case], s) ---> ([encode (f_And t1 t2)], s)
+     (FEnv.insert (name_enc n5, Some (encode t2))
+       (FEnv.insert (name_enc n4, Some (encode t1)) env)) |-- ([And_case], s) ---> ([encode (f_And t1 t2)], s)
    | ImpSyntax.Or t1 t2 =>
-     (FEnv.insert (n7, Some (encode t2))
-       (FEnv.insert (n6, Some (encode t1)) env)) |-- ([Or_case], s) ---> ([encode (f_Or t1 t2)], s)
+     (FEnv.insert (name_enc n7, Some (encode t2))
+       (FEnv.insert (name_enc n6, Some (encode t1)) env)) |-- ([Or_case], s) ---> ([encode (f_Or t1 t2)], s)
    | ImpSyntax.Not t =>
-     (FEnv.insert (n8, Some (encode t)) env) |-- ([Not_case], s) ---> ([encode (f_Not t)], s)
+     (FEnv.insert (name_enc n8, Some (encode t)) env) |-- ([Not_case], s) ---> ([encode (f_Not t)], s)
    end) ->
 
-  NoDup ([n1; n2; n3; n4; n5; n6; n7; n8] ++ free_vars x0) ->
+  NoDup ([name_enc n1; name_enc n2] ++ free_vars x0) ->
+  NoDup ([name_enc n4] ++ free_vars x0) ->
+  NoDup ([name_enc n6] ++ free_vars x0) ->
 
   env |-- ([If Equal [Op Head [x0]; Const (name_enc "Test")]
-            (Let n1 (Op Head [Op Tail [x0]])
-              (Let n2 (Op Head [Op Tail [Op Tail [x0]]])
-                (Let n3 (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Test_case)))
+            (Let (name_enc n1) (Op Head [Op Tail [x0]])
+              (Let (name_enc n2) (Op Head [Op Tail [Op Tail [x0]]])
+                (Let (name_enc n3) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Test_case)))
        (If Equal [Op Head [x0]; Const (name_enc "And")]
-            (Let n4 (Op Head [Op Tail [x0]])
-              (Let n5 (Op Head [Op Tail [Op Tail [x0]]]) And_case))
+            (Let (name_enc n4) (Op Head [Op Tail [x0]])
+              (Let (name_enc n5) (Op Head [Op Tail [Op Tail [x0]]]) And_case))
        (If Equal [Op Head [x0]; Const (name_enc "Or")]
-            (Let n6 (Op Head [Op Tail [x0]])
-              (Let n7 (Op Head [Op Tail [Op Tail [x0]]]) Or_case))
+            (Let (name_enc n6) (Op Head [Op Tail [x0]])
+              (Let (name_enc n7) (Op Head [Op Tail [Op Tail [x0]]]) Or_case))
        (If Equal [Op Head [x0]; Const (name_enc "Not")]
-            (Let n8 (Op Head [Op Tail [x0]]) Not_case)
+            (Let (name_enc n8) (Op Head [Op Tail [x0]]) Not_case)
        (Const 0))))], s) --->
 
      ([encode (
@@ -939,83 +956,88 @@ Theorem auto_cmd_cons_Abort: forall env s,
         ([encode ImpSyntax.Abort], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_cmd_CASE: forall {A} `{Refinable A} env s x0 v0
+Theorem auto_cmd_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   Skip_case Seq_case Assign_case Update_case If_case While_case
   Call_case Return_case Alloc_case GetChar_case PutChar_case Abort_case
   f_Skip f_Seq f_Assign f_Update f_If f_While f_Call f_Return f_Alloc f_GetChar f_PutChar f_Abort
-  n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 n16 n17 n18 n19 n20 n21,
+  n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 n16 n17 n18 n19 n20,
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
   (match v0 with
    | ImpSyntax.Skip => env |-- ([Skip_case], s) ---> ([encode (f_Skip)], s)
    | ImpSyntax.Seq c1 c2 =>
-     (FEnv.insert (n2, Some (encode c2))
-       (FEnv.insert (n1, Some (encode c1)) env)) |-- ([Seq_case], s) ---> ([encode (f_Seq c1 c2)], s)
+     (FEnv.insert (name_enc n2, Some (encode c2))
+       (FEnv.insert (name_enc n1, Some (encode c1)) env)) |-- ([Seq_case], s) ---> ([encode (f_Seq c1 c2)], s)
    | ImpSyntax.Assign n e =>
-     (FEnv.insert (n4, Some (encode e))
-       (FEnv.insert (n3, Some (encode n)) env)) |-- ([Assign_case], s) ---> ([encode (f_Assign n e)], s)
+     (FEnv.insert (name_enc n4, Some (encode e))
+       (FEnv.insert (name_enc n3, Some (encode n)) env)) |-- ([Assign_case], s) ---> ([encode (f_Assign n e)], s)
    | ImpSyntax.Update a e e' =>
-     (FEnv.insert (n7, Some (encode e'))
-       (FEnv.insert (n6, Some (encode e))
-         (FEnv.insert (n5, Some (encode a)) env))) |-- ([Update_case], s) ---> ([encode (f_Update a e e')], s)
+     (FEnv.insert (name_enc n7, Some (encode e'))
+       (FEnv.insert (name_enc n6, Some (encode e))
+         (FEnv.insert (name_enc n5, Some (encode a)) env))) |-- ([Update_case], s) ---> ([encode (f_Update a e e')], s)
    | ImpSyntax.If t c1 c2 =>
-     (FEnv.insert (n10, Some (encode c2))
-       (FEnv.insert (n9, Some (encode c1))
-         (FEnv.insert (n8, Some (encode t)) env))) |-- ([If_case], s) ---> ([encode (f_If t c1 c2)], s)
+     (FEnv.insert (name_enc n10, Some (encode c2))
+       (FEnv.insert (name_enc n9, Some (encode c1))
+         (FEnv.insert (name_enc n8, Some (encode t)) env))) |-- ([If_case], s) ---> ([encode (f_If t c1 c2)], s)
    | ImpSyntax.While t c =>
-     (FEnv.insert (n12, Some (encode c))
-       (FEnv.insert (n11, Some (encode t)) env)) |-- ([While_case], s) ---> ([encode (f_While t c)], s)
+     (FEnv.insert (name_enc n12, Some (encode c))
+       (FEnv.insert (name_enc n11, Some (encode t)) env)) |-- ([While_case], s) ---> ([encode (f_While t c)], s)
    | ImpSyntax.Call n f es =>
-     (FEnv.insert (n15, Some (encode es))
-       (FEnv.insert (n14, Some (encode f))
-         (FEnv.insert (n13, Some (encode n)) env))) |-- ([Call_case], s) ---> ([encode (f_Call n f es)], s)
+     (FEnv.insert (name_enc n15, Some (encode es))
+       (FEnv.insert (name_enc n14, Some (encode f))
+         (FEnv.insert (name_enc n13, Some (encode n)) env))) |-- ([Call_case], s) ---> ([encode (f_Call n f es)], s)
    | ImpSyntax.Return e =>
-     (FEnv.insert (n16, Some (encode e)) env) |-- ([Return_case], s) ---> ([encode (f_Return e)], s)
+     (FEnv.insert (name_enc n16, Some (encode e)) env) |-- ([Return_case], s) ---> ([encode (f_Return e)], s)
    | ImpSyntax.Alloc n e =>
-     (FEnv.insert (n18, Some (encode e))
-       (FEnv.insert (n17, Some (encode n)) env)) |-- ([Alloc_case], s) ---> ([encode (f_Alloc n e)], s)
+     (FEnv.insert (name_enc n18, Some (encode e))
+       (FEnv.insert (name_enc n17, Some (encode n)) env)) |-- ([Alloc_case], s) ---> ([encode (f_Alloc n e)], s)
    | ImpSyntax.GetChar n =>
-     (FEnv.insert (n19, Some (encode n)) env) |-- ([GetChar_case], s) ---> ([encode (f_GetChar n)], s)
+     (FEnv.insert (name_enc n19, Some (encode n)) env) |-- ([GetChar_case], s) ---> ([encode (f_GetChar n)], s)
    | ImpSyntax.PutChar e =>
-     (FEnv.insert (n20, Some (encode e)) env) |-- ([PutChar_case], s) ---> ([encode (f_PutChar e)], s)
+     (FEnv.insert (name_enc n20, Some (encode e)) env) |-- ([PutChar_case], s) ---> ([encode (f_PutChar e)], s)
    | ImpSyntax.Abort => env |-- ([Abort_case], s) ---> ([encode (f_Abort)], s)
    end) ->
 
-  NoDup ([n1; n2; n3; n4; n5; n6; n7; n8; n9; n10;
-          n11; n12; n13; n14; n15; n16; n17; n18; n19; n20; n21] ++ free_vars x0) ->
+  NoDup ([name_enc n1] ++ free_vars x0) ->
+  NoDup ([name_enc n3] ++ free_vars x0) ->
+  NoDup ([name_enc n5; name_enc n6] ++ free_vars x0) ->
+  NoDup ([name_enc n8; name_enc n9] ++ free_vars x0) ->
+  NoDup ([name_enc n11] ++ free_vars x0) ->
+  NoDup ([name_enc n13; name_enc n14] ++ free_vars x0) ->
+  NoDup ([name_enc n17] ++ free_vars x0) ->
 
   env |-- ([If Equal [Op Head [x0]; Const (name_enc "Skip")] Skip_case
        (If Equal [Op Head [x0]; Const (name_enc "Seq")]
-            (Let n1 (Op Head [Op Tail [x0]])
-              (Let n2 (Op Head [Op Tail [Op Tail [x0]]]) Seq_case))
+            (Let (name_enc n1) (Op Head [Op Tail [x0]])
+              (Let (name_enc n2) (Op Head [Op Tail [Op Tail [x0]]]) Seq_case))
        (If Equal [Op Head [x0]; Const (name_enc "Assign")]
-            (Let n3 (Op Head [Op Tail [x0]])
-              (Let n4 (Op Head [Op Tail [Op Tail [x0]]]) Assign_case))
+            (Let (name_enc n3) (Op Head [Op Tail [x0]])
+              (Let (name_enc n4) (Op Head [Op Tail [Op Tail [x0]]]) Assign_case))
        (If Equal [Op Head [x0]; Const (name_enc "Update")]
-            (Let n5 (Op Head [Op Tail [x0]])
-              (Let n6 (Op Head [Op Tail [Op Tail [x0]]])
-                (Let n7 (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Update_case)))
+            (Let (name_enc n5) (Op Head [Op Tail [x0]])
+              (Let (name_enc n6) (Op Head [Op Tail [Op Tail [x0]]])
+                (Let (name_enc n7) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Update_case)))
        (If Equal [Op Head [x0]; Const (name_enc "If")]
-            (Let n8 (Op Head [Op Tail [x0]])
-              (Let n9 (Op Head [Op Tail [Op Tail [x0]]])
-                (Let n10 (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) If_case)))
+            (Let (name_enc n8) (Op Head [Op Tail [x0]])
+              (Let (name_enc n9) (Op Head [Op Tail [Op Tail [x0]]])
+                (Let (name_enc n10) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) If_case)))
        (If Equal [Op Head [x0]; Const (name_enc "While")]
-            (Let n11 (Op Head [Op Tail [x0]])
-              (Let n12 (Op Head [Op Tail [Op Tail [x0]]]) While_case))
+            (Let (name_enc n11) (Op Head [Op Tail [x0]])
+              (Let (name_enc n12) (Op Head [Op Tail [Op Tail [x0]]]) While_case))
        (If Equal [Op Head [x0]; Const (name_enc "Call")]
-            (Let n13 (Op Head [Op Tail [x0]])
-              (Let n14 (Op Head [Op Tail [Op Tail [x0]]])
-                (Let n15 (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Call_case)))
+            (Let (name_enc n13) (Op Head [Op Tail [x0]])
+              (Let (name_enc n14) (Op Head [Op Tail [Op Tail [x0]]])
+                (Let (name_enc n15) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Call_case)))
        (If Equal [Op Head [x0]; Const (name_enc "Return")]
-            (Let n16 (Op Head [Op Tail [x0]]) Return_case)
+            (Let (name_enc n16) (Op Head [Op Tail [x0]]) Return_case)
        (If Equal [Op Head [x0]; Const (name_enc "Alloc")]
-            (Let n17 (Op Head [Op Tail [x0]])
-              (Let n18 (Op Head [Op Tail [Op Tail [x0]]]) Alloc_case))
+            (Let (name_enc n17) (Op Head [Op Tail [x0]])
+              (Let (name_enc n18) (Op Head [Op Tail [Op Tail [x0]]]) Alloc_case))
        (If Equal [Op Head [x0]; Const (name_enc "GetChar")]
-            (Let n19 (Op Head [Op Tail [x0]]) GetChar_case)
+            (Let (name_enc n19) (Op Head [Op Tail [x0]]) GetChar_case)
        (If Equal [Op Head [x0]; Const (name_enc "PutChar")]
-            (Let n20 (Op Head [Op Tail [x0]]) PutChar_case)
+            (Let (name_enc n20) (Op Head [Op Tail [x0]]) PutChar_case)
        (If Equal [Op Head [x0]; Const (name_enc "Abort")] Abort_case
        (Const 0))))))))))))], s) --->
 
@@ -1047,7 +1069,7 @@ Qed.
 
 (* app_list *)
 
-Fixpoint encode_app_list {A} `{Refinable A} (l : app_list A) : Value :=
+Fixpoint encode_app_list {A} `{ra: Refinable A} (l: app_list A): Value :=
   match l with
   | List xs =>
     value_list_of_values [value_name "List"; encode xs]
@@ -1056,17 +1078,17 @@ Fixpoint encode_app_list {A} `{Refinable A} (l : app_list A) : Value :=
               encode_app_list ys]
   end.
 
-Global Instance Refinable_app_list {A} `{Refinable A} : Refinable (app_list A) :=
-{ encode := encode_app_list }.
+Global Instance Refinable_app_list {A} `{ra: Refinable A}: Refinable (app_list A) :=
+  { encode := encode_app_list }.
 
-Theorem auto_app_list_cons_List: forall {A} `{Refinable A} env s x_xs xs,
+Theorem auto_app_list_cons_List: forall {A} `{ra: Refinable A} env s x_xs (xs: list A),
   env |-- ([x_xs], s) ---> ([encode xs], s) ->
   env |-- ([Op Cons [Const (name_enc "List");
                      Op Cons [x_xs; Const 0]]], s) --->
         ([encode (List xs)], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_app_list_cons_Append: forall {A} `{Refinable A} env s x_l1 x_l2 l1 l2,
+Theorem auto_app_list_cons_Append: forall {A} `{ra: Refinable A} env s x_l1 x_l2 (l1 l2: app_list A),
   env |-- ([x_l1], s) ---> ([encode l1], s) ->
   env |-- ([x_l2], s) ---> ([encode l2], s) ->
   env |-- ([Op Cons [Const (name_enc "Append");
@@ -1074,26 +1096,26 @@ Theorem auto_app_list_cons_Append: forall {A} `{Refinable A} env s x_l1 x_l2 l1 
         ([encode (Append l1 l2)], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_app_list_CASE: forall {A} `{Refinable A} {R} `{Refinable R}
-  env s x0 v0 List_case Append_case f_List f_Append n1 n2 n3,
+Theorem auto_app_list_CASE: forall {A} `{ra: Refinable A} {B} `{rb: Refinable B}
+  env s x0 (v0: app_list A) List_case Append_case (f_List: list A -> B) (f_Append: app_list A -> app_list A -> B) n1 n2 n3,
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
   (match v0 with
    | List xs =>
-     (FEnv.insert (n1, Some (encode xs)) env) |-- ([List_case], s) ---> ([encode (f_List xs)], s)
+     (FEnv.insert (name_enc n1, Some (encode xs)) env) |-- ([List_case], s) ---> ([encode (f_List xs)], s)
    | Append l1 l2 =>
-     (FEnv.insert (n3, Some (encode l2))
-       (FEnv.insert (n2, Some (encode l1)) env)) |-- ([Append_case], s) ---> ([encode (f_Append l1 l2)], s)
+     (FEnv.insert (name_enc n3, Some (encode l2))
+       (FEnv.insert (name_enc n2, Some (encode l1)) env)) |-- ([Append_case], s) ---> ([encode (f_Append l1 l2)], s)
    end) ->
 
-  NoDup ([n1; n2; n3] ++ free_vars x0) ->
+  NoDup ([name_enc n2] ++ free_vars x0) ->
 
   env |-- ([If Equal [Op Head [x0]; Const (name_enc "List")]
-            (Let n1 (Op Head [Op Tail [x0]]) List_case)
+            (Let (name_enc n1) (Op Head [Op Tail [x0]]) List_case)
          (If Equal [Op Head [x0]; Const (name_enc "Append")]
-            (Let n2 (Op Head [Op Tail [x0]])
-              (Let n3 (Op Head [Op Tail [Op Tail [x0]]]) Append_case))
+            (Let (name_enc n2) (Op Head [Op Tail [x0]])
+              (Let (name_enc n3) (Op Head [Op Tail [Op Tail [x0]]]) Append_case))
          (Const 0))], s) --->
         ([encode (
            match v0 with
@@ -1129,25 +1151,25 @@ Theorem auto_func_cons_Func: forall env s x_n x_params x_body n params body,
                      Op Cons [x_n; Op Cons [x_params; Op Cons [x_body; Const 0]]]]], s) --->
         ([encode (ImpSyntax.Func n params body)], s).
 Proof. Eval_eq. Qed.
-Hint Resolve auto_func_cons_Func : automation.
+Hint Resolve auto_func_cons_Func: automation.
 
-Theorem auto_func_CASE: forall {A} `{Refinable A} env s x0 v0
-  Func_case f_Func (n1 n2 n3 : name),
+Theorem auto_func_CASE: forall {A} `{ra: Refinable A} env s x0 v0
+  Func_case f_Func n1 n2 n3,
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
   (match v0 with
    | ImpSyntax.Func n params body =>
-     (FEnv.insert (n3, Some (encode body))
-       (FEnv.insert (n2, Some (encode params))
-         (FEnv.insert (n1, Some (encode n)) env))) |-- ([Func_case], s) ---> ([encode (f_Func n params body)], s)
+     (FEnv.insert (name_enc n3, Some (encode body))
+       (FEnv.insert (name_enc n2, Some (encode params))
+         (FEnv.insert (name_enc n1, Some (encode n)) env))) |-- ([Func_case], s) ---> ([encode (f_Func n params body)], s)
    end) ->
 
-  NoDup ([n1; n2; n3] ++ free_vars x0) ->
+  NoDup ([name_enc n1; name_enc n2] ++ free_vars x0) ->
 
-  env |-- ([Let n1 (Op Head [Op Tail [x0]])
-            (Let n2 (Op Head [Op Tail [Op Tail [x0]]])
-              (Let n3 (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Func_case))], s) --->
+  env |-- ([Let (name_enc n1) (Op Head [Op Tail [x0]])
+            (Let (name_enc n2) (Op Head [Op Tail [Op Tail [x0]]])
+              (Let (name_enc n3) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Func_case))], s) --->
      ([encode (
        match v0 with
        | ImpSyntax.Func n params body => f_Func n params body
@@ -1161,7 +1183,7 @@ Proof.
   all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
   all: simpl; try reflexivity.
 Qed.
-Hint Resolve auto_func_CASE : automation.
+Hint Resolve auto_func_CASE: automation.
 
 (* prog *)
 
@@ -1180,21 +1202,19 @@ Theorem auto_prog_cons_Program: forall env s x_funcs funcs,
                      Op Cons [x_funcs; Const 0]]], s) --->
         ([encode (ImpSyntax.Program funcs)], s).
 Proof. Eval_eq. Qed.
-Hint Resolve auto_prog_cons_Program : automation.
+Hint Resolve auto_prog_cons_Program: automation.
 
-Theorem auto_prog_CASE: forall {A} `{Refinable A} env s x0 v0
-  Program_case f_Program (n1 : name),
+Theorem auto_prog_CASE: forall {A} `{ra: Refinable A} env s x0 v0
+  Program_case f_Program n1,
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
   (match v0 with
    | ImpSyntax.Program funcs =>
-     (FEnv.insert (n1, Some (encode funcs)) env) |-- ([Program_case], s) ---> ([encode (f_Program funcs)], s)
+     (FEnv.insert (name_enc n1, Some (encode funcs)) env) |-- ([Program_case], s) ---> ([encode (f_Program funcs)], s)
    end) ->
 
-  NoDup ([n1] ++ free_vars x0) ->
-
-  env |-- ([Let n1 (Op Head [Op Tail [x0]]) Program_case], s) --->
+  env |-- ([Let (name_enc n1) (Op Head [Op Tail [x0]]) Program_case], s) --->
      ([encode (
        match v0 with
        | ImpSyntax.Program funcs => f_Program funcs
@@ -1208,7 +1228,7 @@ Proof.
   all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
   all: simpl; try reflexivity.
 Qed.
-Hint Resolve auto_prog_CASE : automation.
+Hint Resolve auto_prog_CASE: automation.
 
 (* reg *)
 
@@ -1262,7 +1282,7 @@ Theorem auto_reg_cons_RDX: forall env s,
   env |-- ([Const (name_enc "RDX")], s) ---> ([encode ASMSyntax.RDX], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_reg_CASE: forall {A} `{Refinable A} env s x0 v0
+Theorem auto_reg_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   RAX_case RDI_case RBX_case RBP_case R12_case R13_case R14_case R15_case RDX_case
   f_RAX f_RDI f_RBX f_RBP f_R12 f_R13 f_R14 f_R15 f_RDX,
 
@@ -1309,7 +1329,7 @@ Proof.
   all: simpl in *; unfold value_list_of_values in *; simpl in *; subst.
   all: Eval_eq.
 Qed.
-Hint Resolve auto_reg_CASE : automation.
+Hint Resolve auto_reg_CASE: automation.
 
 (* cond *)
 
@@ -1347,7 +1367,7 @@ Theorem auto_cond_cons_Equal: forall env s x_r1 x_r2 r1 r2,
         ([encode (ASMSyntax.Equal r1 r2)], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_cond_CASE: forall {A} `{Refinable A} env s x0 v0
+Theorem auto_cond_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   Always_case Less_case Equal_case
   f_Always f_Less f_Equal
   n1 n2 n3 n4,
@@ -1357,22 +1377,23 @@ Theorem auto_cond_CASE: forall {A} `{Refinable A} env s x0 v0
   (match v0 with
    | ASMSyntax.Always => env |-- ([Always_case], s) ---> ([encode f_Always], s)
    | ASMSyntax.Less r1 r2 =>
-     (FEnv.insert (n2, Some (encode r2))
-       (FEnv.insert (n1, Some (encode r1)) env)) |-- ([Less_case], s) ---> ([encode (f_Less r1 r2)], s)
+     (FEnv.insert (name_enc n2, Some (encode r2))
+       (FEnv.insert (name_enc n1, Some (encode r1)) env)) |-- ([Less_case], s) ---> ([encode (f_Less r1 r2)], s)
    | ASMSyntax.Equal r1 r2 =>
-     (FEnv.insert (n4, Some (encode r2))
-       (FEnv.insert (n3, Some (encode r1)) env)) |-- ([Equal_case], s) ---> ([encode (f_Equal r1 r2)], s)
+     (FEnv.insert (name_enc n4, Some (encode r2))
+       (FEnv.insert (name_enc n3, Some (encode r1)) env)) |-- ([Equal_case], s) ---> ([encode (f_Equal r1 r2)], s)
    end) ->
 
-  NoDup ([n1; n2; n3; n4] ++ free_vars x0) ->
+  NoDup ([name_enc n1] ++ free_vars x0) ->
+  NoDup ([name_enc n3] ++ free_vars x0) ->
 
   env |-- ([If Equal [Op Head [x0]; Const (name_enc "Always")] Always_case
           (If Equal [Op Head [x0]; Const (name_enc "Less")]
-            (Let n1 (Op Head [Op Tail [x0]])
-              (Let n2 (Op Head [Op Tail [Op Tail [x0]]]) Less_case))
+            (Let (name_enc n1) (Op Head [Op Tail [x0]])
+              (Let (name_enc n2) (Op Head [Op Tail [Op Tail [x0]]]) Less_case))
           (If Equal [Op Head [x0]; Const (name_enc "Equal")]
-            (Let n3 (Op Head [Op Tail [x0]])
-              (Let n4 (Op Head [Op Tail [Op Tail [x0]]]) Equal_case))
+            (Let (name_enc n3) (Op Head [Op Tail [x0]])
+              (Let (name_enc n4) (Op Head [Op Tail [Op Tail [x0]]]) Equal_case))
           (Const 0)))], s) --->
      ([encode (
        match v0 with
@@ -1389,7 +1410,7 @@ Proof.
   all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
   all: simpl; try reflexivity.
 Qed.
-Hint Resolve auto_cond_CASE : automation.
+Hint Resolve auto_cond_CASE: automation.
 
 (* instr *)
 
@@ -1419,7 +1440,7 @@ Definition encode_instr (i : ASMSyntax.instr) : Value :=
     value_list_of_values [value_name "Add_RSP"; Num (N.of_nat n)]
   | ASMSyntax.Sub_RSP n =>
     value_list_of_values [value_name "Sub_RSP"; Num (N.of_nat n)]
-    | ASMSyntax.Load_RSP r n =>
+  | ASMSyntax.Load_RSP r n =>
     value_list_of_values [value_name "Load_RSP"; encode r; Num (N.of_nat n)]
   | ASMSyntax.Store_RSP r n =>
     value_list_of_values [value_name "Store_RSP"; encode r; Num (N.of_nat n)]
@@ -1583,118 +1604,123 @@ Theorem auto_instr_cons_Comment: forall env s x_s str,
         ([encode (ASMSyntax.Comment str)], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_instr_CASE: forall {A} `{Refinable A} env s x0 v0
+Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   Const_case Add_case Sub_case Div_case Jump_case Call_case
   Mov_case Ret_case Pop_case Push_case Add_RSP_case Sub_RSP_case Load_RSP_case Store_RSP_case
   Load_case Store_case GetChar_case PutChar_case Exit_case Comment_case
   f_Const f_Add f_Sub f_Div f_Jump f_Call f_Mov f_Ret f_Pop f_Push
   f_Add_RSP f_Sub_RSP f_Load_RSP f_Store_RSP f_Load f_Store f_GetChar f_PutChar f_Exit f_Comment
-  n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 n16 n17 n18 n19 n20 n21,
+  n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 n16 n17 n18 n19 n20 n21 n22 n23 n24 n25 n26 n27,
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
   (match v0 with
    | ASMSyntax.Const r w =>
-     (FEnv.insert (n2, Some (encode w))
-       (FEnv.insert (n1, Some (encode r)) env)) |-- ([Const_case], s) ---> ([encode (f_Const r w)], s)
+     (FEnv.insert (name_enc n2, Some (encode w))
+       (FEnv.insert (name_enc n1, Some (encode r)) env)) |-- ([Const_case], s) ---> ([encode (f_Const r w)], s)
    | ASMSyntax.Add r1 r2 =>
-     (FEnv.insert (n4, Some (encode r2))
-       (FEnv.insert (n3, Some (encode r1)) env)) |-- ([Add_case], s) ---> ([encode (f_Add r1 r2)], s)
+     (FEnv.insert (name_enc n4, Some (encode r2))
+       (FEnv.insert (name_enc n3, Some (encode r1)) env)) |-- ([Add_case], s) ---> ([encode (f_Add r1 r2)], s)
    | ASMSyntax.Sub r1 r2 =>
-     (FEnv.insert (n6, Some (encode r2))
-       (FEnv.insert (n5, Some (encode r1)) env)) |-- ([Sub_case], s) ---> ([encode (f_Sub r1 r2)], s)
+     (FEnv.insert (name_enc n6, Some (encode r2))
+       (FEnv.insert (name_enc n5, Some (encode r1)) env)) |-- ([Sub_case], s) ---> ([encode (f_Sub r1 r2)], s)
    | ASMSyntax.Div r =>
-     (FEnv.insert (n7, Some (encode r)) env) |-- ([Div_case], s) ---> ([encode (f_Div r)], s)
+     (FEnv.insert (name_enc n7, Some (encode r)) env) |-- ([Div_case], s) ---> ([encode (f_Div r)], s)
    | ASMSyntax.Jump c n =>
-     (FEnv.insert (n9, Some (encode n))
-       (FEnv.insert (n8, Some (encode c)) env)) |-- ([Jump_case], s) ---> ([encode (f_Jump c n)], s)
+     (FEnv.insert (name_enc n9, Some (encode n))
+       (FEnv.insert (name_enc n8, Some (encode c)) env)) |-- ([Jump_case], s) ---> ([encode (f_Jump c n)], s)
    | ASMSyntax.Call n =>
-     (FEnv.insert (n10, Some (encode n)) env) |-- ([Call_case], s) ---> ([encode (f_Call n)], s)
+     (FEnv.insert (name_enc n10, Some (encode n)) env) |-- ([Call_case], s) ---> ([encode (f_Call n)], s)
    | ASMSyntax.Mov r1 r2 =>
-     (FEnv.insert (n12, Some (encode r2))
-       (FEnv.insert (n11, Some (encode r1)) env)) |-- ([Mov_case], s) ---> ([encode (f_Mov r1 r2)], s)
+     (FEnv.insert (name_enc n12, Some (encode r2))
+       (FEnv.insert (name_enc n11, Some (encode r1)) env)) |-- ([Mov_case], s) ---> ([encode (f_Mov r1 r2)], s)
    | ASMSyntax.Ret => env |-- ([Ret_case], s) ---> ([encode f_Ret], s)
    | ASMSyntax.Pop r =>
-     (FEnv.insert (n13, Some (encode r)) env) |-- ([Pop_case], s) ---> ([encode (f_Pop r)], s)
+     (FEnv.insert (name_enc n13, Some (encode r)) env) |-- ([Pop_case], s) ---> ([encode (f_Pop r)], s)
    | ASMSyntax.Push r =>
-     (FEnv.insert (n14, Some (encode r)) env) |-- ([Push_case], s) ---> ([encode (f_Push r)], s)
+     (FEnv.insert (name_enc n14, Some (encode r)) env) |-- ([Push_case], s) ---> ([encode (f_Push r)], s)
    | ASMSyntax.Add_RSP n =>
-     (FEnv.insert (n15, Some (encode n)) env) |-- ([Add_RSP_case], s) ---> ([encode (f_Add_RSP n)], s)
+     (FEnv.insert (name_enc n15, Some (encode n)) env) |-- ([Add_RSP_case], s) ---> ([encode (f_Add_RSP n)], s)
    | ASMSyntax.Sub_RSP n =>
-     (FEnv.insert (n16, Some (encode n)) env) |-- ([Sub_RSP_case], s) ---> ([encode (f_Sub_RSP n)], s)
+     (FEnv.insert (name_enc n16, Some (encode n)) env) |-- ([Sub_RSP_case], s) ---> ([encode (f_Sub_RSP n)], s)
    | ASMSyntax.Load_RSP r n =>
-     (FEnv.insert (n18, Some (encode n))
-       (FEnv.insert (n17, Some (encode r)) env)) |-- ([Load_RSP_case], s) ---> ([encode (f_Load_RSP r n)], s)
+     (FEnv.insert (name_enc n18, Some (encode n))
+       (FEnv.insert (name_enc n17, Some (encode r)) env)) |-- ([Load_RSP_case], s) ---> ([encode (f_Load_RSP r n)], s)
    | ASMSyntax.Store_RSP r n =>
-     (FEnv.insert (n20, Some (encode n))
-       (FEnv.insert (n19, Some (encode r)) env)) |-- ([Store_RSP_case], s) ---> ([encode (f_Store_RSP r n)], s)
+     (FEnv.insert (name_enc n20, Some (encode n))
+       (FEnv.insert (name_enc n19, Some (encode r)) env)) |-- ([Store_RSP_case], s) ---> ([encode (f_Store_RSP r n)], s)
    | ASMSyntax.Load r1 r2 w =>
-     (FEnv.insert (n21, Some (encode w))
-       (FEnv.insert (name_enc "load_r2", Some (encode r2))
-         (FEnv.insert (name_enc "load_r1", Some (encode r1)) env))) |-- ([Load_case], s) ---> ([encode (f_Load r1 r2 w)], s)
+     (FEnv.insert (name_enc n23, Some (encode w))
+       (FEnv.insert (name_enc n22, Some (encode r2))
+         (FEnv.insert (name_enc n21, Some (encode r1)) env))) |-- ([Load_case], s) ---> ([encode (f_Load r1 r2 w)], s)
    | ASMSyntax.Store r1 r2 w =>
-     (FEnv.insert (name_enc "store_w", Some (encode w))
-       (FEnv.insert (name_enc "store_r2", Some (encode r2))
-         (FEnv.insert (name_enc "store_r1", Some (encode r1)) env))) |-- ([Store_case], s) ---> ([encode (f_Store r1 r2 w)], s)
+     (FEnv.insert (name_enc n26, Some (encode w))
+       (FEnv.insert (name_enc n25, Some (encode r2))
+         (FEnv.insert (name_enc n24, Some (encode r1)) env))) |-- ([Store_case], s) ---> ([encode (f_Store r1 r2 w)], s)
    | ASMSyntax.GetChar => env |-- ([GetChar_case], s) ---> ([encode f_GetChar], s)
    | ASMSyntax.PutChar => env |-- ([PutChar_case], s) ---> ([encode f_PutChar], s)
    | ASMSyntax.Exit => env |-- ([Exit_case], s) ---> ([encode f_Exit], s)
    | ASMSyntax.Comment str =>
-     (FEnv.insert (name_enc "comment_str", Some (encode str)) env) |-- ([Comment_case], s) ---> ([encode (f_Comment str)], s)
+     (FEnv.insert (name_enc n27, Some (encode str)) env) |-- ([Comment_case], s) ---> ([encode (f_Comment str)], s)
    end) ->
 
-  NoDup ([n1; n2; n3; n4; n5; n6; n7; n8; n9; n10;
-          n11; n12; n13; n14; n15; n16; n17; n18; n19; n20; n21;
-          name_enc "load_r1"; name_enc "load_r2"; name_enc "store_r1";
-          name_enc "store_r2"; name_enc "store_w"; name_enc "comment_str"] ++ free_vars x0) ->
+  NoDup ([name_enc n1] ++ free_vars x0) ->
+  NoDup ([name_enc n3] ++ free_vars x0) ->
+  NoDup ([name_enc n5] ++ free_vars x0) ->
+  NoDup ([name_enc n8] ++ free_vars x0) ->
+  NoDup ([name_enc n11] ++ free_vars x0) ->
+  NoDup ([name_enc n17] ++ free_vars x0) ->
+  NoDup ([name_enc n19] ++ free_vars x0) ->
+  NoDup ([name_enc n21; name_enc n22] ++ free_vars x0) ->
+  NoDup ([name_enc n24; name_enc n25] ++ free_vars x0) ->
 
   env |-- ([If Equal [Op Head [x0]; Const (name_enc "Const")]
-            (Let n1 (Op Head [Op Tail [x0]])
-              (Let n2 (Op Head [Op Tail [Op Tail [x0]]]) Const_case))
+            (Let (name_enc n1) (Op Head [Op Tail [x0]])
+              (Let (name_enc n2) (Op Head [Op Tail [Op Tail [x0]]]) Const_case))
        (If Equal [Op Head [x0]; Const (name_enc "Add")]
-            (Let n3 (Op Head [Op Tail [x0]])
-              (Let n4 (Op Head [Op Tail [Op Tail [x0]]]) Add_case))
+            (Let (name_enc n3) (Op Head [Op Tail [x0]])
+              (Let (name_enc n4) (Op Head [Op Tail [Op Tail [x0]]]) Add_case))
        (If Equal [Op Head [x0]; Const (name_enc "Sub")]
-            (Let n5 (Op Head [Op Tail [x0]])
-              (Let n6 (Op Head [Op Tail [Op Tail [x0]]]) Sub_case))
+            (Let (name_enc n5) (Op Head [Op Tail [x0]])
+              (Let (name_enc n6) (Op Head [Op Tail [Op Tail [x0]]]) Sub_case))
        (If Equal [Op Head [x0]; Const (name_enc "Div")]
-            (Let n7 (Op Head [Op Tail [x0]]) Div_case)
+            (Let (name_enc n7) (Op Head [Op Tail [x0]]) Div_case)
        (If Equal [Op Head [x0]; Const (name_enc "Jump")]
-            (Let n8 (Op Head [Op Tail [x0]])
-              (Let n9 (Op Head [Op Tail [Op Tail [x0]]]) Jump_case))
+            (Let (name_enc n8) (Op Head [Op Tail [x0]])
+              (Let (name_enc n9) (Op Head [Op Tail [Op Tail [x0]]]) Jump_case))
        (If Equal [Op Head [x0]; Const (name_enc "Call")]
-            (Let n10 (Op Head [Op Tail [x0]]) Call_case)
+            (Let (name_enc n10) (Op Head [Op Tail [x0]]) Call_case)
        (If Equal [Op Head [x0]; Const (name_enc "Mov")]
-            (Let n11 (Op Head [Op Tail [x0]])
-              (Let n12 (Op Head [Op Tail [Op Tail [x0]]]) Mov_case))
+            (Let (name_enc n11) (Op Head [Op Tail [x0]])
+              (Let (name_enc n12) (Op Head [Op Tail [Op Tail [x0]]]) Mov_case))
        (If Equal [Op Head [x0]; Const (name_enc "Ret")] Ret_case
        (If Equal [Op Head [x0]; Const (name_enc "Pop")]
-            (Let n13 (Op Head [Op Tail [x0]]) Pop_case)
+            (Let (name_enc n13) (Op Head [Op Tail [x0]]) Pop_case)
        (If Equal [Op Head [x0]; Const (name_enc "Push")]
-            (Let n14 (Op Head [Op Tail [x0]]) Push_case)
+            (Let (name_enc n14) (Op Head [Op Tail [x0]]) Push_case)
        (If Equal [Op Head [x0]; Const (name_enc "Add_RSP")]
-            (Let n15 (Op Head [Op Tail [x0]]) Add_RSP_case)
+            (Let (name_enc n15) (Op Head [Op Tail [x0]]) Add_RSP_case)
        (If Equal [Op Head [x0]; Const (name_enc "Sub_RSP")]
-            (Let n16 (Op Head [Op Tail [x0]]) Sub_RSP_case)
+            (Let (name_enc n16) (Op Head [Op Tail [x0]]) Sub_RSP_case)
        (If Equal [Op Head [x0]; Const (name_enc "Load_RSP")]
-            (Let n17 (Op Head [Op Tail [x0]])
-              (Let n18 (Op Head [Op Tail [Op Tail [x0]]]) Load_RSP_case))
+            (Let (name_enc n17) (Op Head [Op Tail [x0]])
+              (Let (name_enc n18) (Op Head [Op Tail [Op Tail [x0]]]) Load_RSP_case))
        (If Equal [Op Head [x0]; Const (name_enc "Store_RSP")]
-            (Let n19 (Op Head [Op Tail [x0]])
-              (Let n20 (Op Head [Op Tail [Op Tail [x0]]]) Store_RSP_case))
+            (Let (name_enc n19) (Op Head [Op Tail [x0]])
+              (Let (name_enc n20) (Op Head [Op Tail [Op Tail [x0]]]) Store_RSP_case))
        (If Equal [Op Head [x0]; Const (name_enc "Load")]
-            (Let (name_enc "load_r1") (Op Head [Op Tail [x0]])
-              (Let (name_enc "load_r2") (Op Head [Op Tail [Op Tail [x0]]])
-                (Let n21 (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Load_case)))
+            (Let (name_enc n21) (Op Head [Op Tail [x0]])
+              (Let (name_enc n22) (Op Head [Op Tail [Op Tail [x0]]])
+                (Let (name_enc n23) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Load_case)))
        (If Equal [Op Head [x0]; Const (name_enc "Store")]
-            (Let (name_enc "store_r1") (Op Head [Op Tail [x0]])
-              (Let (name_enc "store_r2") (Op Head [Op Tail [Op Tail [x0]]])
-                (Let (name_enc "store_w") (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Store_case)))
+            (Let (name_enc n24) (Op Head [Op Tail [x0]])
+              (Let (name_enc n25) (Op Head [Op Tail [Op Tail [x0]]])
+                (Let (name_enc n26) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Store_case)))
        (If Equal [Op Head [x0]; Const (name_enc "GetChar")] GetChar_case
        (If Equal [Op Head [x0]; Const (name_enc "PutChar")] PutChar_case
        (If Equal [Op Head [x0]; Const (name_enc "Exit")] Exit_case
        (If Equal [Op Head [x0]; Const (name_enc "Comment")]
-            (Let (name_enc "comment_str") (Op Head [Op Tail [x0]]) Comment_case)
+            (Let (name_enc n27) (Op Head [Op Tail [x0]]) Comment_case)
        (Const 0))))))))))))))))))))], s) --->
 
       ([encode (
@@ -1730,6 +1756,6 @@ Proof.
   all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
   all: simpl; try reflexivity.
 Qed.
-Hint Resolve auto_instr_CASE : automation.
+Hint Resolve auto_instr_CASE: automation.
 
 (* TODO(kπ) might need some more things for the parser *)

@@ -1,4 +1,5 @@
 From impboot Require Import utils.Core.
+From impboot Require Import utils.AppList.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.utils.AppList.
@@ -14,6 +15,11 @@ From Coq Require Import derive.Derive.
 From Coq Require Import Lia.
 From Ltac2 Require Import Ltac2.
 
+Require Import Patat.Patat.
+
+Set Printing Goal Names.
+Set Printing Existential Instances.
+
 Open Scope app_list_scope.
 
 (* *********************************************** *)
@@ -22,56 +28,35 @@ Open Scope app_list_scope.
 
 (* Equation lemmas for Function declarations *)
 
-(* Lemma c_exp_equation : ltac:(unfold_tpe c_exp).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma c_exps_equation : ltac:(unfold_tpe c_exps).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma c_test_jump_equation : ltac:(unfold_tpe c_test_jump).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma lookup_equation : ltac:(unfold_tpe lookup).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma call_v_stack_equation : ltac:(unfold_tpe call_v_stack).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma c_cmd_equation : ltac:(unfold_tpe c_cmd).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma make_vs_from_binders_equation : ltac:(unfold_tpe make_vs_from_binders).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma c_fundefs_equation : ltac:(unfold_tpe c_fundefs).
-Proof. ltac1:(unfold_proof). Qed. *)
-
-(* Equation lemmas for Fixpoint declarations *)
-
-(* Lemma c_declare_binders_rec_equation : ltac:(unfold_tpe c_declare_binders_rec).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma all_binders_equation : ltac:(unfold_tpe all_binders).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma names_contain_equation : ltac:(unfold_tpe names_contain).
-Proof. ltac1:(unfold_proof). Qed.
-
-Lemma names_unique_equation : ltac:(unfold_tpe names_unique).
-Proof. ltac1:(unfold_proof). Qed. *)
+Theorem c_declare_binders_rec_equation: ltac2:(unfold_fix_type 'c_declare_binders_rec).
+Proof. unfold_fix_proof 'c_declare_binders_rec. Qed.
+Theorem c_exp_equation: ltac2:(unfold_fix_type 'c_exp).
+Proof. unfold_fix_proof 'c_exp. Qed.
+Theorem c_exps_equation: ltac2:(unfold_fix_type 'c_exps).
+Proof. unfold_fix_proof 'c_exps. Qed.
+Theorem c_test_jump_equation: ltac2:(unfold_fix_type 'c_test_jump).
+Proof. unfold_fix_proof 'c_test_jump. Qed.
+Theorem c_cmd_equation: ltac2:(unfold_fix_type 'c_cmd).
+Proof. unfold_fix_proof 'c_cmd. Qed.
+Theorem names_unique_equation: ltac2:(unfold_fix_type 'names_unique).
+Proof. unfold_fix_proof 'names_unique. Qed.
+Theorem c_fundefs_equation: ltac2:(unfold_fix_type 'c_fundefs).
+Proof. unfold_fix_proof 'c_fundefs. Qed.
 
 (* Derivations for simple definitions (no dependencies) *)
 
 Opaque encode.
 Opaque name_enc.
 
-Derive init_prog 
+(* TODO: takes too long *)
+(* TODO: possibly the side condition crunch tactics? *)
+(* Derive init_prog
   in ltac2:(relcompile_tpe 'init_prog 'init []) 
   as init_prog_proof.
 Proof.
   intros.
   subst init_prog.
-  relcompile.
+  time relcompile.
   all: try ltac1:(lia).
   2: eapply FEnv.lookup_insert_eq.
   ltac1:(replace (N.of_nat (2 ^ 63 - 1)) with (2 ^ 63 - 1)%N).
@@ -79,6 +64,87 @@ Proof.
   rewrite Nnat.Nat2N.inj_sub.
   rewrite Nnat.Nat2N.inj_pow.
   ltac1:(lia).
+Qed. *)
+
+Derive list_append_asm_prog
+  in ltac2:(relcompile_tpe 'list_append_asm_prog 'list_append_asm []) 
+  as list_append_asm_prog_proof.
+Proof.
+  intros.
+  subst list_append_asm_prog.
+  time relcompile.
+Qed.
+
+Derive list_append_name_prog
+  in ltac2:(relcompile_tpe 'list_append_name_prog 'list_append_name []) 
+  as list_append_name_prog_proof.
+Proof.
+  intros.
+  subst list_append_name_prog.
+  time relcompile.
+Qed.
+
+Derive list_append_v_stack_prog
+  in ltac2:(relcompile_tpe 'list_append_v_stack_prog 'list_append_v_stack []) 
+  as list_append_v_stack_prog_proof.
+Proof.
+  intros.
+  subst list_append_v_stack_prog.
+  time relcompile.
+Qed.
+
+Derive list_length_asm_prog
+  in ltac2:(relcompile_tpe 'list_length_asm_prog 'list_length_asm []) 
+  as list_length_asm_prog_proof.
+Proof.
+  intros.
+  subst list_length_asm_prog.
+  time relcompile.
+Qed.
+
+Derive list_length_exp_prog
+  in ltac2:(relcompile_tpe 'list_length_exp_prog 'list_length_exp []) 
+  as list_length_exp_prog_proof.
+Proof.
+  intros.
+  subst list_length_exp_prog.
+  time relcompile.
+Qed.
+
+Derive list_length_v_stack_prog
+  in ltac2:(relcompile_tpe 'list_length_v_stack_prog 'list_length_v_stack []) 
+  as list_length_v_stack_prog_proof.
+Proof.
+  intros.
+  subst list_length_v_stack_prog.
+  time relcompile.
+Qed.
+
+Derive list_length_name_prog
+  in ltac2:(relcompile_tpe 'list_length_name_prog 'list_length_name []) 
+  as list_length_name_prog_proof.
+Proof.
+  intros.
+  subst list_length_name_prog.
+  time relcompile.
+Qed.
+
+Derive flatten_asm_prog
+  in ltac2:(relcompile_tpe 'flatten_asm_prog 'flatten_asm ['list_append_asm]) 
+  as flatten_asm_prog_proof.
+Proof.
+  intros.
+  subst flatten_asm_prog.
+  time relcompile.
+Qed.
+
+Derive app_list_length_asm_prog
+  in ltac2:(relcompile_tpe 'app_list_length_asm_prog 'app_list_length_asm ['list_length_asm]) 
+  as app_list_length_asm_prog_proof.
+Proof.
+  intros.
+  subst app_list_length_asm_prog.
+  time relcompile.
 Qed.
 
 Derive give_up_prog 
@@ -87,8 +153,7 @@ Derive give_up_prog
 Proof.
   intros.
   subst give_up_prog.
-  relcompile.
-  cbn; try ltac1:(congruence); try reflexivity.
+  time relcompile.
 Qed.
 
 Derive abort_prog 
@@ -97,8 +162,7 @@ Derive abort_prog
 Proof.
   intros.
   subst abort_prog.
-  relcompile.
-  cbn; try ltac1:(congruence); try reflexivity.
+  time relcompile.
 Qed.
 
 Derive c_const_prog
@@ -107,31 +171,27 @@ Derive c_const_prog
 Proof.
   intros.
   subst c_const_prog.
-  relcompile.
-  all: simpl.
-  all: cbn; try ltac1:(congruence); try reflexivity.
+  time relcompile.
 Qed.
 
 (* Derivations with dependencies *)
 
-Derive even_len_prog 
-  in ltac2:(relcompile_tpe 'even_len_prog 'even_len []) 
-  as even_len_prog_proof.
+Derive even_len_v_stack_prog 
+  in ltac2:(relcompile_tpe 'even_len_v_stack_prog 'even_len_v_stack []) 
+  as even_len_v_stack_prog_proof.
 Proof.
   intros.
-  subst even_len_prog.
-  relcompile.
-  all: inversion H0.
+  subst even_len_v_stack_prog.
+  time relcompile.
 Qed.
 
-Derive odd_len_prog 
-  in ltac2:(relcompile_tpe 'odd_len_prog 'odd_len []) 
-  as odd_len_prog_proof.
+Derive odd_len_v_stack_prog 
+  in ltac2:(relcompile_tpe 'odd_len_v_stack_prog 'odd_len_v_stack []) 
+  as odd_len_v_stack_prog_proof.
 Proof.
   intros.
-  subst odd_len_prog.
-  relcompile.
-  all: inversion H0.
+  subst odd_len_v_stack_prog.
+  time relcompile.
 Qed.
 
 Derive index_of_prog 
@@ -140,12 +200,7 @@ Derive index_of_prog
 Proof.
   intros.
   subst index_of_prog.
-  relcompile.
-  all: simpl; eauto.
-  all: cbn; try ltac1:(congruence); try reflexivity.
-  1: exact Refinable_nat.
-  1: inversion H1.
-  all: cbn; try ltac1:(congruence); try reflexivity.
+  time relcompile.
 Qed.
 
 Derive index_of_opt_prog 
@@ -154,7 +209,7 @@ Derive index_of_opt_prog
 Proof.
   intros.
   subst index_of_opt_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_var_prog 
@@ -163,7 +218,7 @@ Derive c_var_prog
 Proof.
   intros.
   subst c_var_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_declare_binders_rec_prog 
@@ -172,7 +227,7 @@ Derive c_declare_binders_rec_prog
 Proof.
   intros.
   subst c_declare_binders_rec_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_declare_binders_prog 
@@ -181,7 +236,7 @@ Derive c_declare_binders_prog
 Proof.
   intros.
   subst c_declare_binders_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_assign_prog 
@@ -190,7 +245,7 @@ Derive c_assign_prog
 Proof.
   intros.
   subst c_assign_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_add_prog 
@@ -199,7 +254,7 @@ Derive c_add_prog
 Proof.
   intros.
   subst c_add_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_sub_prog 
@@ -208,7 +263,7 @@ Derive c_sub_prog
 Proof.
   intros.
   subst c_sub_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_div_prog 
@@ -217,16 +272,16 @@ Derive c_div_prog
 Proof.
   intros.
   subst c_div_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_alloc_prog 
-  in ltac2:(relcompile_tpe 'c_alloc_prog 'c_alloc ['even_len]) 
+  in ltac2:(relcompile_tpe 'c_alloc_prog 'c_alloc ['even_len_v_stack]) 
   as c_alloc_prog_proof.
 Proof.
   intros.
   subst c_alloc_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive align_prog 
@@ -235,25 +290,25 @@ Derive align_prog
 Proof.
   intros.
   subst align_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_read_prog 
-  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['even_len; 'align]) 
+  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['even_len_v_stack; 'align; 'app_list_length_asm]) 
   as c_read_prog_proof.
 Proof.
   intros.
   subst c_read_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_write_prog 
-  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['even_len; 'align]) 
+  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['even_len_v_stack; 'align; 'app_list_length_asm]) 
   as c_write_prog_proof.
 Proof.
   intros.
   subst c_write_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_load_prog 
@@ -262,7 +317,7 @@ Derive c_load_prog
 Proof.
   intros.
   subst c_load_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_store_prog 
@@ -271,7 +326,7 @@ Derive c_store_prog
 Proof.
   intros.
   subst c_store_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_exp_prog 
@@ -280,7 +335,7 @@ Derive c_exp_prog
 Proof.
   intros.
   subst c_exp_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_exps_prog 
@@ -289,7 +344,7 @@ Derive c_exps_prog
 Proof.
   intros.
   subst c_exps_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_cmp_prog 
@@ -298,16 +353,16 @@ Derive c_cmp_prog
 Proof.
   intros.
   subst c_cmp_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_test_jump_prog 
-  in ltac2:(relcompile_tpe 'c_test_jump_prog 'c_test_jump ['c_exp; 'c_cmp]) 
+  in ltac2:(relcompile_tpe 'c_test_jump_prog 'c_test_jump ['c_exp; 'c_cmp; 'app_list_length_asm]) 
   as c_test_jump_prog_proof.
 Proof.
   intros.
   subst c_test_jump_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive lookup_prog 
@@ -316,25 +371,25 @@ Derive lookup_prog
 Proof.
   intros.
   subst lookup_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive make_ret_prog 
-  in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret []) 
+  in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret ['list_length_v_stack]) 
   as make_ret_prog_proof.
 Proof.
   intros.
   subst make_ret_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_pops_prog 
-  in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; 'even_len]) 
+  in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; 'even_len_v_stack; 'even_len_exp; 'list_length_exp]) 
   as c_pops_prog_proof.
 Proof.
   intros.
   subst c_pops_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive call_v_stack_prog 
@@ -343,45 +398,46 @@ Derive call_v_stack_prog
 Proof.
   intros.
   subst call_v_stack_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_pushes_prog 
-  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_v_stack]) 
+  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_v_stack; 'list_length_name]) 
   as c_pushes_prog_proof.
 Proof.
   intros.
   subst c_pushes_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_call_prog 
-  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; 'align; 'even_len]) 
+  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; 'align; 'even_len_v_stack; 'app_list_length_asm]) 
   as c_call_prog_proof.
 Proof.
   intros.
   subst c_call_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_cmd_prog 
   in ltac2:(relcompile_tpe 'c_cmd_prog 'c_cmd 
     ['c_exp; 'c_assign; 'c_store; 'c_test_jump; 'c_exps; 'c_call; 
-     'c_var; 'make_ret; 'c_alloc; 'c_read; 'c_write; 'abort; 'lookup]) 
+     'c_var; 'make_ret; 'c_alloc; 'c_read; 'c_write; 'abort; 'lookup;
+     'odd_len_v_stack; 'app_list_length_asm])
   as c_cmd_prog_proof.
 Proof.
   intros.
   subst c_cmd_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive all_binders_prog 
-  in ltac2:(relcompile_tpe 'all_binders_prog 'all_binders []) 
+  in ltac2:(relcompile_tpe 'all_binders_prog 'all_binders ['list_append_name]) 
   as all_binders_prog_proof.
 Proof.
   intros.
   subst all_binders_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive names_contain_prog 
@@ -390,7 +446,7 @@ Derive names_contain_prog
 Proof.
   intros.
   subst names_contain_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive names_unique_prog 
@@ -399,7 +455,7 @@ Derive names_unique_prog
 Proof.
   intros.
   subst names_unique_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive unique_binders_prog 
@@ -408,7 +464,7 @@ Derive unique_binders_prog
 Proof.
   intros.
   subst unique_binders_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive make_vs_from_binders_prog 
@@ -417,43 +473,62 @@ Derive make_vs_from_binders_prog
 Proof.
   intros.
   subst make_vs_from_binders_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
 Derive c_fundef_prog 
   in ltac2:(relcompile_tpe 'c_fundef_prog 'c_fundef 
-    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd]) 
+    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd; 'list_length_v_stack; 'list_append_v_stack]) 
   as c_fundef_prog_proof.
 Proof.
   intros.
   subst c_fundef_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
-Derive name2str_prog 
+(* TODO: need mod *)
+(* Derive name2str_prog 
   in ltac2:(relcompile_tpe 'name2str_prog 'name2str []) 
   as name2str_prog_proof.
 Proof.
   intros.
   subst name2str_prog.
-  relcompile.
+  time relcompile.
+Qed. *)
+
+Derive get_funcs_prog 
+  in ltac2:(relcompile_tpe 'get_funcs_prog 'get_funcs []) 
+  as get_funcs_prog_proof.
+Proof.
+  intros.
+  subst get_funcs_prog.
+  time relcompile.
+Qed.
+
+Derive name_of_func_prog 
+  in ltac2:(relcompile_tpe 'name_of_func_prog 'name_of_func []) 
+  as name_of_func_prog_proof.
+Proof.
+  intros.
+  subst name_of_func_prog.
+  time relcompile.
 Qed.
 
 Derive c_fundefs_prog 
-  in ltac2:(relcompile_tpe 'c_fundefs_prog 'c_fundefs ['c_fundef; 'name2str]) 
+  in ltac2:(relcompile_tpe 'c_fundefs_prog 'c_fundefs ['c_fundef; 'name2str; 'name_of_func]) 
   as c_fundefs_prog_proof.
 Proof.
   intros.
   subst c_fundefs_prog.
-  relcompile.
+  time relcompile.
 Qed.
 
+(* TODO: (fun_name_of_string "main") taken as constant. Is that ok? *)
 Derive codegen_prog 
-  in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fundefs; 'lookup; 'init]) 
+  in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fundefs; 'lookup; 'init; 'get_funcs; 'app_list_length_asm; 'flatten_asm]) 
   as codegen_prog_proof.
 Proof.
   intros.
   subst codegen_prog.
-  relcompile.
+  time relcompile.
 Qed.
-

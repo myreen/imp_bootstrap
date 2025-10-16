@@ -9,8 +9,8 @@ From Stdlib Require Import Relations.Relation_Operators.
 From Stdlib Require Import Program.Equality.
 
 Inductive word_or_ret :=
-| Word : word64 -> word_or_ret
-| RetAddr : nat -> word_or_ret
+| Word (w: word64)
+| RetAddr (pc: nat)
 | Uninit.
 
 Record state := mkState {
@@ -73,7 +73,6 @@ Definition read_mem (a : word64) (s : state) : option word64 :=
   | Some opt => opt
   end.
 
-(* TODO(kπ) Has to be updated for handling mutating references? *)
 Definition write_mem (a : word64) (w : word64) (s : state) : option state :=
   match s.(memory) a with
   | Some None =>
@@ -201,8 +200,6 @@ Inductive step : s_or_h -> s_or_h -> Prop :=
     fetch s = Some (Add_RSP (List.length xs)) ->
     s.(stack) = xs ++ ys ->
     step (State s) (State (set_stack ys (inc s)))
-(* TODO: add a new stack value type UNINIT *)
-(*       Then this should add UNINIT values to the stack *)
 | step_sub_rsp : forall {A} s (xs: list A) ys,
     fetch s = Some (Sub_RSP (List.length xs)) ->
     s.(stack) = ys ->

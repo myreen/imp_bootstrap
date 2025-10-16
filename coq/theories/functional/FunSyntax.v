@@ -19,7 +19,7 @@ Inductive test : Type :=
 | Equal.
 
 Inductive exp : Type :=
-| Const (n : N)                                (* constant number            *)
+| Const (n : N)                                  (* constant number            *)
 | Var (n : name)                                 (* local variable             *)
 | Op (o : op) (args : list exp)                  (* primitive operations       *)
 | If (t : test) (conds : list exp) (e1 e2 : exp) (* if test .. then .. else .. *)

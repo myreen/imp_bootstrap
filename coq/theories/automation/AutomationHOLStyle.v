@@ -18,6 +18,11 @@ From coqutil Require Import
 From Coq Require Import derive.Derive.
 From Coq Require Import FunInd.
 
+(* Important notes *)
+(* 1. every destruct has to have a `eqn:?` (Otherwise, we can get a bunch of
+   goal that need to provide base case values for some types)
+   This might be an issue with fix unfolding, since it only happens when we have a fixpoint with a match *)
+
 Open Scope nat.
 
 Ltac2 rec string_of_relevance (r: Binder.relevance): string :=
@@ -70,45 +75,6 @@ Ltac2 rec apply_thm (thm: constr) (args: (unit -> unit) list): constr :=
     apply_thm open_constr:($thm ltac2:(Control.enter arg)) args
   end.
 
-Ltac2 rec compile_if_needed (compile_fn: unit -> unit): unit :=
-  match! Control.goal () with
-  (* | match ?v with 0%nat => _ | S _ => _ end =>
-    Control.enter (fun () =>
-      (* Control.throw_invalid_argument ""; *)
-      destruct $v;
-      Control.enter (fun () => compile_if_needed compile_fn)
-    ) *)
-  | _ |-- (_, _) ---> (_, _) =>
-    Control.enter (fun () =>
-      cbv beta;
-      compile_fn ()
-    )
-  | (forall _, _) =>
-    intro_then (Option.get (Ident.of_string "x_nm")) (fun _ =>
-      compile_if_needed compile_fn
-    )
-  | _ => 
-    match Unsafe.kind (Control.goal ()) with
-    | Case _ _ _ t bl =>
-      printf "compile_if_needed %t %t %t" (Control.goal ()) (Array.get bl 0) t;
-      refine open_constr:(_)
-    | _ => refine open_constr:(_)
-    end
-  end.
-
-Ltac2 rec isCompilable (c: constr): bool :=
-  match! c with
-  | _ |-- (_, _) ---> (_, _) => true
-  | _ =>
-    match Constr.Unsafe.kind c with
-    | Prod _ c1 => isCompilable c1
-    | Case _ _ _ t bl =>
-      printf "compile_if_needed %t %t %t" (Control.goal ()) (Array.get bl 0) t;
-      Array.for_all isCompilable bl
-    | _ => false
-    end
-  end.
-
 (* Returns the number of arguments a theorem named `lname` takes *)
 Ltac2 rec thm_parts_length (lname: string): int :=
   let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
@@ -116,42 +82,6 @@ Ltac2 rec thm_parts_length (lname: string): int :=
   let lemma_tpe: constr := type lemma_inst in
   let thm_parts := split_thm_args lemma_tpe in
   List.length thm_parts.
-
-Ltac2 rec compile_if_needed_rec (compile_fn: unit -> unit) (acc: constr) (lname: string)
-                                (thm_parts: constr list) (extracted: constr list)
-                                (continuations: (unit -> unit) list): constr :=
-  let acc := eval_cbv beta acc in
-  match thm_parts(* , continuations *) with
-  | [](* , [] *) => acc
-  | thm_part :: thm_parts(* , k :: continuations *) =>
-    (* is compilable (_ |-- _ ---> _) -> compile *)
-    if isCompilable thm_part then
-      let compiled := (fun () =>
-        compile_if_needed compile_fn
-      ) in
-      compile_if_needed_rec compile_fn open_constr:($acc ltac2:(Control.enter compiled)) lname thm_parts extracted continuations
-    else
-      match extracted with
-      | extr :: extracted =>
-        (* TODO(kπ): Check if this can backtrack too much (we only want this for an automatic check of unification) *)
-        let use_extr := (fun () =>
-          (open_constr:($acc ltac2:(Control.enter (fun () => refine extr))), extracted)
-        ) in
-        let skip_extr := (fun _ =>
-          (open_constr:($acc _), (extr :: extracted))
-        ) in
-        let (acc, extracted) :=
-          match Control.case use_extr with
-          | Err _ => skip_extr ()
-          | Val (x, _) => x
-          end in
-        compile_if_needed_rec compile_fn acc lname thm_parts extracted continuations
-      | _ =>
-        compile_if_needed_rec compile_fn open_constr:($acc _) lname thm_parts extracted continuations
-      end
-  (* | [], _ => Control.throw (Oopsie (fprintf "Too many continuations passed when compiling with lemma %s" lname))
-  | _, [] => Control.throw (Oopsie (fprintf "Not enough continuations passed when compiling with lemma %s" lname)) *)
-  end.
 
 Ltac2 rec apply_continuations (lemma_inst: constr) (lname: string) (thm_parts: constr list)
                               (continuations: (unit -> unit) list): constr :=
@@ -168,15 +98,31 @@ Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (named_conts: (ide
                          (conts: (unit -> unit) list): constr :=
   let lemma_inst := eval_cbv beta lemma_inst in
   match maybe_thm_binder lemma_inst with
-  | None => lemma_inst
+  | None =>
+    if Bool.neg (Int.equal (List.length named_conts) 0) then
+      let names_left := List.map fst named_conts in
+      Control.throw (Oopsie (
+        fprintf "Unapplied named continuations left after applying lemma %s, namely %a"
+          lname
+          (fun () nl => message_of_list (List.map Message.of_ident nl))
+          names_left
+      ))
+    else if Bool.neg (Int.equal (List.length conts) 0) then
+      Control.throw (Oopsie (
+        fprintf "Unapplied unnamed continuations left after applying lemma %s, namely %i continuations left"
+          lname
+          (List.length conts)
+      ))
+    else lemma_inst
   | Some b =>
     match Binder.name b with
     | Some nm =>
       (* named binder -> term *)
       match List.find_opt (fun n => Ident.equal (fst n) nm) named_conts with
       | Some (_, ext) =>
+        let new_named_conts := List.filter (fun p => Bool.neg (Ident.equal (fst p) nm)) named_conts in
         (* TODO: check the $extr                vvvvv *)
-        assemble_lemma open_constr:($lemma_inst ltac2:(ext ())) lname named_conts conts
+        assemble_lemma open_constr:($lemma_inst ltac2:(ext ())) lname new_named_conts conts
       | None =>
         assemble_lemma open_constr:($lemma_inst _) lname named_conts conts
       end
@@ -191,24 +137,12 @@ Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (named_conts: (ide
     end
   end.
 
-Ltac2 rec pair_thm_parts (thm_parts: constr list) (extracted: constr list)
-                         (acc: (constr * constr) option list): (constr * constr) option list :=
-  match thm_parts with
-  | [] => acc
-  | p :: thm_parts =>
-    if isCompilable p then
-      match extracted with
-      | extr :: extracted => pair_thm_parts thm_parts extracted (Some (extr, p) :: acc)
-      | _ => Control.throw_invalid_argument "pair_thm_parts"
-      end
-    else pair_thm_parts thm_parts extracted (None :: acc)
-  end.
-
 (* Apply lemma named `lname`, use compilaiton funciton `compile_fn` to compile "eval" premises of the lemma *)
 (*   Fill in `extracted` terms for term premises *)
 (*   (Also make sure to update the `cenv` while recursing) *)
 Ltac2 app_lemma (lname: string) (named_conts: (string * (unit -> unit)) list)
                 (conts: (unit -> unit) list): unit :=
+  printf "applying lemma: %s" lname;
   let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
   let lemma_inst: constr := Env.instantiate lemma_ref in
   (* let lemma_tpe: constr := type lemma_inst in *)
@@ -222,9 +156,9 @@ Ltac2 app_lemma (lname: string) (named_conts: (string * (unit -> unit)) list)
   refine (assemble_lemma lemma_inst lname named_conts_id conts).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)
-Ltac2 is_in_loopkup (f_lookup : (string * constr) list) (fname : string) : bool :=
-  match List.find_opt (fun (name, _) => String.equal name fname) f_lookup with
-  | Some (_, c) => true
+Ltac2 is_in_loopkup (f_lookup : string list) (fname : string) : bool :=
+  match List.find_opt (String.equal fname) f_lookup with
+  | Some _ => true
   | None => false
   end.
 
@@ -240,7 +174,7 @@ Ltac2 rec proper_const (c: constr): bool :=
 
 (* Returns a tuple of (functions_part, arguments) if its a function application or ident,
    otherwise None*)
-Ltac2 rec extract_fun (e : constr): (constr * constr list) option :=
+Ltac2 rec extract_fun (e: constr): (constr * constr list) option :=
   match! e with
   | (?f ?arg) =>
     match extract_fun f with
@@ -253,6 +187,8 @@ Ltac2 rec extract_fun (e : constr): (constr * constr list) option :=
   | ?f =>
     if Constr.is_var f then
       Some (f, [])
+    else if Constr.is_const f then
+      Some (f, [])
     else
       None
   end.
@@ -264,7 +200,7 @@ Ltac2 rec apply_to_args (fn: constr) (args: constr list) :=
     apply_to_args open_constr:($fn $arg) args
   end.
 
-Ltac2 rec list_to_constr_encode (l : constr list) : constr :=
+Ltac2 rec list_to_constr_encode (l: constr list): constr :=
   match l with
   | [] => open_constr:([])
   | x :: xs =>
@@ -324,7 +260,7 @@ Ltac2 rec get_cenv_from_fenv_constr (fenv: constr): (constr option * constr) lis
   end.
 
 (* Apply the hypothesis `iden` to wildcards, until it is a top-level `eval_app` *)
-Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
+(* Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
   lazy_match! t with
   | (forall x, @?t1 x) =>
     let t1_refined := refine_up_to_eval_app iden t1 in
@@ -339,33 +275,34 @@ Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
     Control.hyp iden
   | ?t1 =>
     t1
-  end.
+  end. *)
 
-Ltac2 get_f_lookup_from_hyps () : (string * constr) list :=
+Ltac2 get_f_lookup_from_hyps () : string list :=
   let hyps := Control.hyps () in
-  let f_lookup := List.flatten (List.map (fun (iden, _, t) =>
+  let f_lookup := List.flatten (List.map (fun (_iden, _, t) =>
     match! t with
     | context [ eval_app (name_enc ?fname1) _ _ _ ] =>
-      let t_refined := refine_up_to_eval_app iden t in
-      [(string_of_constr_string fname1, t_refined)]
+      [string_of_constr_string fname1]
     | _ => []
     end
   ) hyps) in
   f_lookup.
 
-Ltac2 fname_if_in_f_lookup (f_lookup: (string * constr) list) (f: constr) :=
+Ltac2 fname_if_in_f_lookup (f_lookup: string list) (f: constr) :=
   let f_name_r: reference option := reference_of_constr_opt f in
   let f_name_str := Option.bind f_name_r reference_to_string in
   Option.bind f_name_str (fun n => if is_in_loopkup f_lookup n then Some n else None).
 
-Ltac2 rec binders_names_of_constr_lambda (c: constr): constr list :=
+Ltac2 rec binders_names_of_constr_lambda (c: constr) (avoid: ident list): constr list :=
   match Unsafe.kind c with
   | Lambda b c1 =>
     match Binder.name b with
     | Some n =>
-      constr_string_of_string (Ident.to_string n) :: binders_names_of_constr_lambda c1
+      let n := Fresh.fresh (Free.of_ids avoid) n in
+      constr_string_of_string (Ident.to_string n) :: binders_names_of_constr_lambda c1 (n :: avoid)
     | None =>
-      constr:("_"%string) :: binders_names_of_constr_lambda c1
+      let n := Fresh.fresh (Free.of_ids avoid) (Option.get (Ident.of_string "a")) in
+      constr_string_of_string (Ident.to_string n) :: binders_names_of_constr_lambda c1 (n :: avoid)
     end
   | _ => []
   end.
@@ -376,6 +313,110 @@ Ltac2 rec binders_of_constr_lambda (c: constr): binder list :=
     b :: binders_of_constr_lambda c1
   | _ => []
   end.
+
+Ltac2 rec in_contexts (bs: binder list) (c: unit -> constr) (): constr :=
+  match bs with
+  | [] => c ()
+  | b :: bs =>
+    (* let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in *)
+    let name := Option.get (Binder.name b) in
+    Constr.in_context name (Binder.type b) (fun () =>
+      (* let b_hyp := Control.hyp name in *)
+      let r := in_contexts bs c in
+      Control.refine r
+    )
+  end.
+
+Ltac2 rec lambda_to_prod (c: constr): constr :=
+  match Unsafe.kind c with
+  | Lambda b body => make (Prod b (lambda_to_prod body))
+  | _ => c
+  end.
+
+Ltac2 rec collect_prod_binders_impl (c: constr): binder list :=
+  match Unsafe.kind c with
+  | Prod b c =>
+    b :: collect_prod_binders_impl c
+  | _ => []
+  end.
+Ltac2 collect_prod_binders (c: constr): binder list :=
+  collect_prod_binders_impl (Constr.type c).
+
+Ltac2 struct_of_fix (fconstr: constr): int :=
+  let fref := reference_of_constr fconstr in
+  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
+  match Unsafe.kind unfolded with
+  | Fix structs _ _ _ =>
+    Array.get structs 0
+  | _ =>
+    Control.throw (Oopsie (fprintf "not a fix; %t" fconstr))
+  end.
+
+Ltac2 unfold_fix_impl (fconstr: constr): unit :=
+  let fref := reference_of_constr fconstr in
+  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
+  match Unsafe.kind unfolded with
+  | Fix structs _i bs cs =>
+    let body := Array.get cs 0 in
+    let struct := Array.get structs 0 in
+    let fix_b := Array.get bs 0 in
+    let _fix_name := Option.get (Binder.name fix_b) in
+    let body_bs := binders_of_constr_lambda body in
+    let body_bs_names := List.map (fun b => Option.get (Binder.name b)) body_bs in
+    let struct_name := List.nth body_bs_names struct in
+    let res := in_contexts body_bs (fun () =>
+      let outer_args := List.map Control.hyp body_bs_names in
+      let fconstr_applied := apply_to_args fconstr outer_args in
+      let rhs := fun () => Control.enter (fun () =>
+        let ind_clause := {
+          indcl_arg := (ElimOnIdent struct_name);
+          indcl_eqn := None;
+          indcl_as := None;
+          indcl_in := None;
+        } in
+        Std.destruct false [ind_clause] None;
+        Control.refine (fun () => open_constr:(_))
+      ) in
+      open_constr:($fconstr_applied = ltac2:(rhs ()))
+    ) in
+    let res := fun () => Std.eval_cbv beta (res ()) in
+    let r := lambda_to_prod (res ()) in
+    Control.refine (fun () => r)
+  | _ => Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
+  end.
+
+Ltac2 unfold_fix_gen (fconstr: constr): unit :=
+  let fref := reference_of_constr fconstr in
+  let unfolded_fix_template := open_constr:(ltac2:(unfold_fix_impl fconstr)) in
+  ltac1:(unfolded_fix_template |- instantiate(1 := unfolded_fix_template)) (Ltac1.of_constr unfolded_fix_template);
+  let bs := collect_prod_binders_impl (Control.goal ()) in
+  let nms := List.map (fun b => Fresh.in_goal (Option.get (Binder.name b))) bs in
+  Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
+  let struct_name := List.nth nms (struct_of_fix fconstr) in
+  let struct_hyp := Control.hyp struct_name in
+  destruct $struct_hyp;
+  Control.enter (fun () =>
+    unfold $fref; fold $fconstr;
+    reflexivity ()
+  ).
+
+Ltac2 unfold_fix_type fn :=
+  let unfolded := open_constr:(ltac2:(Control.enter (fun () => unfold_fix_gen fn))) in
+  let t := Constr.type unfolded in
+  Control.refine (fun () => open_constr:($t)).
+
+Ltac2 unfold_fix_proof (fconstr: constr): unit :=
+  let fref := reference_of_constr fconstr in
+  let bs := collect_prod_binders_impl (Control.goal ()) in
+  let nms := List.map (fun b => Fresh.in_goal (Option.get (Binder.name b))) bs in
+  Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
+  let struct_name := List.nth nms (struct_of_fix fconstr) in
+  let struct_hyp := Control.hyp struct_name in
+  destruct $struct_hyp;
+  Control.enter (fun () =>
+    unfold $fref; fold $fconstr;
+    reflexivity ()
+  ).
 
 Ltac2 message_of_option (opt: message option): message :=
   Option.default (fprintf "None") opt.
@@ -399,6 +440,13 @@ Ltac2 message_of_cenv (cenv: (constr option * constr) list): message :=
     cenv
   ).
 
+Ltac2 rec var_ident_of_constr (c: constr): ident :=
+  match Unsafe.kind c with
+  | Var i => i
+  | _ =>
+    Control.throw (Oopsie (fprintf "Error: Expected the argument of a compiled function to be an variable reference, got: %t" c))
+  end.
+
 Ltac2 exactk (c: constr): unit -> unit :=
   fun () => exact $c.
 
@@ -415,6 +463,7 @@ Ltac2 rec compile () : unit :=
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
     let cenv := get_cenv_from_fenv_constr fenv in
+    let names_in_cenv := List.concat (List.map opt_to_list (List.map (fun p => Option.bind (fst p) (fun c => Ident.of_string (string_of_constr_string c))) cenv)) in
     printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_cenv cenv) cenv;
     (* printf "Goal: %t" c; *)
     match List.find_opt (fun p => Constr.equal e (snd p)) cenv with
@@ -425,7 +474,7 @@ Ltac2 rec compile () : unit :=
       (* s *) _
       (* n *) $name_constr
       (* v *) $e
-      (* FEnv.lookup *) _
+      (* FEnv.lookup *) ltac2:(eauto with fenvDb)
       )
     | None =>
       let compile_go () :=
@@ -436,7 +485,8 @@ Ltac2 rec compile () : unit :=
             compile ()
           )
         | (dlet ?val ?body) =>
-          let binders_of_body := binders_names_of_constr_lambda body in
+          (* freshen based on names in cenv *)
+          let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
           let let_n_constr := List.nth binders_of_body 0 in
           refine open_constr:(auto_let
           (* env *) $fenv
@@ -450,7 +500,7 @@ Ltac2 rec compile () : unit :=
           )
         | (let x := ?val in @?body x) =>
           (* might work, but normal `let`s get inlined before (maybe because of the "cbv beta" after unfolding) *)
-          let binders_of_body := binders_names_of_constr_lambda body in
+          let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
           let let_n_constr := List.nth binders_of_body 0 in
           refine open_constr:(auto_let
           (* env *) $fenv
@@ -478,58 +528,50 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_word64_w2n" [("env", exactk fenv); ("x", exactk x)] [compile]
         (* nat *)
         | (?n1 + ?n2)%nat =>
-          app_lemma "auto_nat_add" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)]
-                                   [compile; compile]
+          app_lemma "auto_nat_add"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)]
+            [compile; compile]
         | (?n1 - ?n2)%nat =>
           app_lemma "auto_nat_sub" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
         | (?n1 / ?n2)%nat =>
           app_lemma "auto_nat_div" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
         | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
-          app_lemma "auto_nat_if_eq" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
-                                     [compile; compile; compile; compile]
+          app_lemma "auto_nat_if_eq"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+            [compile; compile; compile; compile]
         | (if Nat.ltb ?n1 ?n2 then ?t else ?f) =>
-          app_lemma "auto_nat_if_less" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
-                                       [compile; compile; compile; compile]
+          app_lemma "auto_nat_if_less"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+            [compile; compile; compile; compile]
         | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
-          let binders_of_v2 := binders_names_of_constr_lambda v2 in
+          let binders_of_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
           let n_constr := List.nth binders_of_v2 0 in
-          app_lemma "auto_nat_case" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
-                                    [compile; (fun () => destruct $v0; (Control.enter compile))]
-        (* bool *)
-        | true =>
-          app_lemma "auto_bool_T" [("env", exactk fenv)] []
-        | false =>
-          app_lemma "auto_bool_F" [("env", exactk fenv)] []
-        | (negb ?b) =>
-          app_lemma "auto_bool_not" [("env", exactk fenv); ("b", exactk b)] [compile]
-        | (andb ?bA ?bB) =>
-          app_lemma "auto_bool_and" [("env", exactk fenv); ("bA", exactk bA); ("bB", exactk bB)] [compile; compile]
-        | (eqb ?bA ?bB) =>
-          app_lemma "auto_bool_iff" [("env", exactk fenv); ("bA", exactk bA); ("bB", exactk bB)] [compile; compile]
-        | (if ?b then ?t else ?f) =>
-          app_lemma "last_bool_if" [("env", exactk fenv); ("b", exactk b); ("t", exactk t); ("f", exactk f)]
-                                   [compile; compile; compile]
+          app_lemma "auto_nat_case"
+            [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
         (* list *)
         | [] =>
-          app_lemma "auto_list_nil" [("env", exactk fenv)] []
+          app_lemma "auto_list_nil" [("env", exactk fenv); ("ra", (fun () => eauto))] []
         | (?x :: ?xs) =>
           app_lemma "auto_list_cons" [("env", exactk fenv); ("x", exactk x); ("xs", exactk xs)] [compile; compile]
         | (match ?v0 with | nil => ?v1 | h :: t => @?v2 h t end) =>
-          let binders_of_v2 := binders_names_of_constr_lambda v2 in
+          let binders_of_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
           let n1_constr := List.nth binders_of_v2 0 in
           let n2_constr := List.nth binders_of_v2 1 in
-          app_lemma "auto_list_case" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n1", exactk n1_constr); ("n2", exactk n2_constr)]
-                                     [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ())]
+          app_lemma "auto_list_case"
+            [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n1", exactk n1_constr); ("n2", exactk n2_constr)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile) ); (fun () => ())]
         (* option *)
         | None =>
           app_lemma "auto_option_none" [("env", exactk fenv)] []
         | (Some ?x) =>
           app_lemma "auto_option_some" [("env", exactk fenv); ("x", exactk x)] [compile]
         | (match ?v0 with | None => ?v1 | Some x => @?v2 x end) =>
-          let binders_of_v2 := binders_names_of_constr_lambda v2 in
+          let binders_of_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
           let n_constr := List.nth binders_of_v2 0 in
-          app_lemma "auto_option_case" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
-                                       [compile; (fun () => destruct $v0; (Control.enter compile))]
+          app_lemma "auto_option_case"
+            [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
         (* pair *)
         | (fst ?x) =>
           app_lemma "auto_pair_fst" [("env", exactk fenv); ("x", exactk x)] [compile]
@@ -537,38 +579,39 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_pair_snd" [("env", exactk fenv); ("x", exactk x)] [compile]
         | (?x, ?y) =>
           app_lemma "auto_pair_cons" [("env", exactk fenv); ("x", exactk x); ("y", exactk y)] [compile; compile]
-        | (match ?v0 with | (x, y) => @?v2 x y end) =>
-          let binders_of_v2 := binders_names_of_constr_lambda v2 in
-          let n1_constr := List.nth binders_of_v2 0 in
-          let n2_constr := List.nth binders_of_v2 1 in
-          app_lemma "auto_pair_case" [("env", exactk fenv); ("v0", exactk v0); ("v2", exactk v2); ("n1", exactk n1_constr); ("n2", exactk n2_constr)]
-                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
+        | (match ?v0 with | (x, y) => @?v1 x y end) =>
+          let binders_of_v1 := binders_names_of_constr_lambda v1 names_in_cenv in
+          let n1_constr := List.nth binders_of_v1 0 in
+          let n2_constr := List.nth binders_of_v1 1 in
+          app_lemma "auto_pair_case"
+            [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("n1", exactk n1_constr); ("n2", exactk n2_constr)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ())]
         (* app_list *)
         | List ?xs =>
           app_lemma "auto_app_list_cons_List" [("env", exactk fenv); ("xs", exactk xs)] [compile]
         | Append ?l1 ?l2 =>
           app_lemma "auto_app_list_cons_Append" [("env", exactk fenv); ("l1", exactk l1); ("l2", exactk l2)] [compile; compile]
         | (match ?v0 with
-           | List xs => @?v1 xs
-           | Append l1 l2 => @?v2 l1 l2
+           | List xs => @?f_List xs
+           | Append l1 l2 => @?f_Append l1 l2
            end) =>
-          let binders_v1 := binders_names_of_constr_lambda v1 in
-          let binders_v2 := binders_names_of_constr_lambda v2 in
-          let n1 := List.nth binders_v1 0 in
-          let n2 := List.nth binders_v2 0 in
-          let n3 := List.nth binders_v2 1 in
+          let binders_f_List := binders_names_of_constr_lambda f_List names_in_cenv in
+          let binders_f_Append := binders_names_of_constr_lambda f_Append names_in_cenv in
+          let n1 := List.nth binders_f_List 0 in
+          let n2 := List.nth binders_f_Append 0 in
+          let n3 := List.nth binders_f_Append 1 in
           app_lemma "auto_app_list_CASE" [("env", exactk fenv); ("v0", exactk v0);
-                                           ("v1", exactk v1); ("v2", exactk v2);
+                                           ("f_List", exactk f_List); ("f_Append", exactk f_Append);
                                            ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3)]
-                                         [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ())]
+                                         [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ())]
         (* cmp *)
         | ImpSyntax.Less =>
           app_lemma "auto_cmp_cons_Less" [("env", exactk fenv)] []
         | ImpSyntax.Equal =>
           app_lemma "auto_cmp_cons_Equal" [("env", exactk fenv)] []
-        | (match ?v0 with | ImpSyntax.Less => ?v1 | ImpSyntax.Equal => ?v2 end) =>
-          app_lemma "auto_cmp_CASE" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2)]
-                                    [compile; (fun () => destruct $v0; (Control.enter compile))]
+        | (match ?v0 with | ImpSyntax.Less => ?f_Less | ImpSyntax.Equal => ?f_Equal end) =>
+          app_lemma "auto_cmp_CASE" [("env", exactk fenv); ("v0", exactk v0); ("f_Less", exactk f_Less); ("f_Equal", exactk f_Equal)]
+                                    [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
         (* cmd *)
         | ImpSyntax.Skip =>
           app_lemma "auto_cmd_cons_Skip" [("env", exactk fenv)] []
@@ -595,61 +638,61 @@ Ltac2 rec compile () : unit :=
         | ImpSyntax.Abort =>
           app_lemma "auto_cmd_cons_Abort" [("env", exactk fenv)] []
         | (match ?v0 with
-           | ImpSyntax.Skip => ?v1
-           | ImpSyntax.Seq c1 c2 => @?v2 c1 c2
-           | ImpSyntax.Assign n e => @?v3 n e
-           | ImpSyntax.Update a e e' => @?v4 a e e'
-           | ImpSyntax.If t c1 c2 => @?v5 t c1 c2
-           | ImpSyntax.While t c => @?v6 t c
-           | ImpSyntax.Call n f es => @?v7 n f es
-           | ImpSyntax.Return e => @?v8 e
-           | ImpSyntax.Alloc n e => @?v9 n e
-           | ImpSyntax.GetChar n => @?v10 n
-           | ImpSyntax.PutChar e => @?v11 e
-           | ImpSyntax.Abort => ?v12
+           | ImpSyntax.Skip => ?f_Skip
+           | ImpSyntax.Seq c1 c2 => @?f_Seq c1 c2
+           | ImpSyntax.Assign n e => @?f_Assign n e
+           | ImpSyntax.Update a e e' => @?f_Update a e e'
+           | ImpSyntax.If t c1 c2 => @?f_If t c1 c2
+           | ImpSyntax.While t c => @?f_While t c
+           | ImpSyntax.Call n f es => @?f_Call n f es
+           | ImpSyntax.Return e => @?f_Return e
+           | ImpSyntax.Alloc n e => @?f_Alloc n e
+           | ImpSyntax.GetChar n => @?f_GetChar n
+           | ImpSyntax.PutChar e => @?f_PutChar e
+           | ImpSyntax.Abort => ?f_Abort
            end) =>
-          let binders_v2 := binders_names_of_constr_lambda v2 in
-          let binders_v3 := binders_names_of_constr_lambda v3 in
-          let binders_v4 := binders_names_of_constr_lambda v4 in
-          let binders_v5 := binders_names_of_constr_lambda v5 in
-          let binders_v6 := binders_names_of_constr_lambda v6 in
-          let binders_v7 := binders_names_of_constr_lambda v7 in
-          let binders_v8 := binders_names_of_constr_lambda v8 in
-          let binders_v9 := binders_names_of_constr_lambda v9 in
-          let binders_v10 := binders_names_of_constr_lambda v10 in
-          let binders_v11 := binders_names_of_constr_lambda v11 in
-          let n1 := List.nth binders_v2 0 in
-          let n2 := List.nth binders_v2 1 in
-          let n3 := List.nth binders_v3 0 in
-          let n4 := List.nth binders_v3 1 in
-          let n5 := List.nth binders_v4 0 in
-          let n6 := List.nth binders_v4 1 in
-          let n7 := List.nth binders_v4 2 in
-          let n8 := List.nth binders_v5 0 in
-          let n9 := List.nth binders_v5 1 in
-          let n10 := List.nth binders_v5 2 in
-          let n11 := List.nth binders_v6 0 in
-          let n12 := List.nth binders_v6 1 in
-          let n13 := List.nth binders_v7 0 in
-          let n14 := List.nth binders_v7 1 in
-          let n15 := List.nth binders_v7 2 in
-          let n16 := List.nth binders_v8 0 in
-          let n17 := List.nth binders_v9 0 in
-          let n18 := List.nth binders_v9 1 in
-          let n19 := List.nth binders_v10 0 in
-          let n20 := List.nth binders_v11 0 in
-          app_lemma "auto_cmd_CASE" [("env", exactk fenv); ("v0", exactk v0);
-                                      ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3); ("v4", exactk v4);
-                                      ("v5", exactk v5); ("v6", exactk v6); ("v7", exactk v7); ("v8", exactk v8);
-                                      ("v9", exactk v9); ("v10", exactk v10); ("v11", exactk v11); ("v12", exactk v12);
-                                      ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4);
-                                      ("n5", exactk n5); ("n6", exactk n6); ("n7", exactk n7); ("n8", exactk n8);
-                                      ("n9", exactk n9); ("n10", exactk n10); ("n11", exactk n11); ("n12", exactk n12);
-                                      ("n13", exactk n13); ("n14", exactk n14); ("n15", exactk n15); ("n16", exactk n16);
-                                      ("n17", exactk n17); ("n18", exactk n18); ("n19", exactk n19); ("n20", exactk n20)]
-                                    [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ());
-                                     (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
-                                     (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
+          let binders_f_Seq := binders_names_of_constr_lambda f_Seq names_in_cenv in
+          let binders_f_Assign := binders_names_of_constr_lambda f_Assign names_in_cenv in
+          let binders_f_Update := binders_names_of_constr_lambda f_Update names_in_cenv in
+          let binders_f_If := binders_names_of_constr_lambda f_If names_in_cenv in
+          let binders_f_While := binders_names_of_constr_lambda f_While names_in_cenv in
+          let binders_f_Call := binders_names_of_constr_lambda f_Call names_in_cenv in
+          let binders_f_Return := binders_names_of_constr_lambda f_Return names_in_cenv in
+          let binders_f_Alloc := binders_names_of_constr_lambda f_Alloc names_in_cenv in
+          let binders_f_GetChar := binders_names_of_constr_lambda f_GetChar names_in_cenv in
+          let binders_f_PutChar := binders_names_of_constr_lambda f_PutChar names_in_cenv in
+          let n1 := List.nth binders_f_Seq 0 in
+          let n2 := List.nth binders_f_Seq 1 in
+          let n3 := List.nth binders_f_Assign 0 in
+          let n4 := List.nth binders_f_Assign 1 in
+          let n5 := List.nth binders_f_Update 0 in
+          let n6 := List.nth binders_f_Update 1 in
+          let n7 := List.nth binders_f_Update 2 in
+          let n8 := List.nth binders_f_If 0 in
+          let n9 := List.nth binders_f_If 1 in
+          let n10 := List.nth binders_f_If 2 in
+          let n11 := List.nth binders_f_While 0 in
+          let n12 := List.nth binders_f_While 1 in
+          let n13 := List.nth binders_f_Call 0 in
+          let n14 := List.nth binders_f_Call 1 in
+          let n15 := List.nth binders_f_Call 2 in
+          let n16 := List.nth binders_f_Return 0 in
+          let n17 := List.nth binders_f_Alloc 0 in
+          let n18 := List.nth binders_f_Alloc 1 in
+          let n19 := List.nth binders_f_GetChar 0 in
+          let n20 := List.nth binders_f_PutChar 0 in
+          app_lemma "auto_cmd_CASE"
+            [("env", exactk fenv); ("v0", exactk v0);
+              ("f_Skip", exactk f_Skip); ("f_Seq", exactk f_Seq); ("f_Assign", exactk f_Assign); ("f_Update", exactk f_Update);
+              ("f_If", exactk f_If); ("f_While", exactk f_While); ("f_Call", exactk f_Call); ("f_Return", exactk f_Return);
+              ("f_Alloc", exactk f_Alloc); ("f_GetChar", exactk f_GetChar); ("f_PutChar", exactk f_PutChar); ("f_Abort", exactk f_Abort);
+              ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4);
+              ("n5", exactk n5); ("n6", exactk n6); ("n7", exactk n7); ("n8", exactk n8);
+              ("n9", exactk n9); ("n10", exactk n10); ("n11", exactk n11); ("n12", exactk n12);
+              ("n13", exactk n13); ("n14", exactk n14); ("n15", exactk n15); ("n16", exactk n16);
+              ("n17", exactk n17); ("n18", exactk n18); ("n19", exactk n19); ("n20", exactk n20)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile));
+              (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
         (* cond *)
         | ASMSyntax.Always =>
           app_lemma "auto_cond_cons_Always" [("env", exactk fenv)] []
@@ -662,8 +705,8 @@ Ltac2 rec compile () : unit :=
            | ASMSyntax.Less r1 r2 => @?v2 r1 r2
            | ASMSyntax.Equal r1 r2 => @?v3 r1 r2
            end) =>
-          let binders_v2 := binders_names_of_constr_lambda v2 in
-          let binders_v3 := binders_names_of_constr_lambda v3 in
+          let binders_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
+          let binders_v3 := binders_names_of_constr_lambda v3 names_in_cenv in
           let n1 := List.nth binders_v2 0 in
           let n2 := List.nth binders_v2 1 in
           let n3 := List.nth binders_v3 0 in
@@ -671,7 +714,7 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_cond_CASE" [("env", exactk fenv); ("v0", exactk v0);
                                        ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3);
                                        ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4)]
-                                     [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ())]
+                                     [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ()); (fun () => ())]
         (* exp *)
         | ImpSyntax.Var ?n =>
           app_lemma "auto_exp_cons_Var" [("env", exactk fenv); ("n", exactk n)] [compile]
@@ -686,48 +729,49 @@ Ltac2 rec compile () : unit :=
         | ImpSyntax.Read ?e1 ?e2 =>
           app_lemma "auto_exp_cons_Read" [("env", exactk fenv); ("e1", exactk e1); ("e2", exactk e2)] [compile; compile]
         | (match ?v0 with
-           | ImpSyntax.Var n => @?v1 n
-           | ImpSyntax.Const n => @?v2 n
-           | ImpSyntax.Add e1 e2 => @?v3 e1 e2
-           | ImpSyntax.Sub e1 e2 => @?v4 e1 e2
-           | ImpSyntax.Div e1 e2 => @?v5 e1 e2
-           | ImpSyntax.Read e1 e2 => @?v6 e1 e2
+           | ImpSyntax.Var n => @?f_Var n
+           | ImpSyntax.Const n => @?f_Const n
+           | ImpSyntax.Add e1 e2 => @?f_Add e1 e2
+           | ImpSyntax.Sub e1 e2 => @?f_Sub e1 e2
+           | ImpSyntax.Div e1 e2 => @?f_Div e1 e2
+           | ImpSyntax.Read e1 e2 => @?f_Read e1 e2
            end) =>
-          let binders_v1 := binders_names_of_constr_lambda v1 in
-          let binders_v2 := binders_names_of_constr_lambda v2 in
-          let binders_v3 := binders_names_of_constr_lambda v3 in
-          let binders_v4 := binders_names_of_constr_lambda v4 in
-          let binders_v5 := binders_names_of_constr_lambda v5 in
-          let binders_v6 := binders_names_of_constr_lambda v6 in
-          let n1 := List.nth binders_v1 0 in
-          let n2 := List.nth binders_v2 0 in
-          let n3 := List.nth binders_v3 0 in
-          let n4 := List.nth binders_v3 1 in
-          let n5 := List.nth binders_v4 0 in
-          let n6 := List.nth binders_v4 1 in
-          let n7 := List.nth binders_v5 0 in
-          let n8 := List.nth binders_v5 1 in
-          let n9 := List.nth binders_v6 0 in
-          let n10 := List.nth binders_v6 1 in
+          let binders_f_Var := binders_names_of_constr_lambda f_Var names_in_cenv in
+          let binders_f_Const := binders_names_of_constr_lambda f_Const names_in_cenv in
+          let binders_f_Add := binders_names_of_constr_lambda f_Add names_in_cenv in
+          let binders_f_Sub := binders_names_of_constr_lambda f_Sub names_in_cenv in
+          let binders_f_Div := binders_names_of_constr_lambda f_Div names_in_cenv in
+          let binders_f_Read := binders_names_of_constr_lambda f_Read names_in_cenv in
+          let n1 := List.nth binders_f_Var 0 in
+          let n2 := List.nth binders_f_Const 0 in
+          let n3 := List.nth binders_f_Add 0 in
+          let n4 := List.nth binders_f_Add 1 in
+          let n5 := List.nth binders_f_Sub 0 in
+          let n6 := List.nth binders_f_Sub 1 in
+          let n7 := List.nth binders_f_Div 0 in
+          let n8 := List.nth binders_f_Div 1 in
+          let n9 := List.nth binders_f_Read 0 in
+          let n10 := List.nth binders_f_Read 1 in
           app_lemma "auto_exp_CASE" [("env", exactk fenv); ("v0", exactk v0);
-                                      ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3);
-                                      ("v4", exactk v4); ("v5", exactk v5); ("v6", exactk v6);
+                                      ("f_Var", exactk f_Var); ("f_Const", exactk f_Const); ("f_Add", exactk f_Add);
+                                      ("f_Sub", exactk f_Sub); ("f_Div", exactk f_Div); ("f_Read", exactk f_Read);
                                       ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3);
                                       ("n4", exactk n4); ("n5", exactk n5); ("n6", exactk n6);
                                       ("n7", exactk n7); ("n8", exactk n8); ("n9", exactk n9);
                                       ("n10", exactk n10)]
-                                    [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
+                                    [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
         (* func *)
         | ImpSyntax.Func ?n ?params ?body =>
           app_lemma "auto_func_cons_Func" [("env", exactk fenv); ("n", exactk n); ("params", exactk params); ("body", exactk body)] [compile; compile; compile]
-        | (match ?v0 with | ImpSyntax.Func n params body => @?v1 n params body end) =>
-          let binders_v1 := binders_names_of_constr_lambda v1 in
-          let n1 := List.nth binders_v1 0 in
-          let n2 := List.nth binders_v1 1 in
-          let n3 := List.nth binders_v1 2 in
-          app_lemma "auto_func_CASE" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1);
-                                       ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3)]
-                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
+        | (match ?v0 with | ImpSyntax.Func n params body => @?f_Func n params body end) =>
+          let binders_f_Func := binders_names_of_constr_lambda f_Func names_in_cenv in
+          let n1 := List.nth binders_f_Func 0 in
+          let n2 := List.nth binders_f_Func 1 in
+          let n3 := List.nth binders_f_Func 2 in
+          app_lemma "auto_func_CASE"
+            [("env", exactk fenv); ("v0", exactk v0); ("f_Func", exactk f_Func);
+              ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ())]
         (* instr *)
         | ASMSyntax.Const ?r ?w =>
           app_lemma "auto_instr_cons_Const" [("env", exactk fenv); ("r", exactk r); ("w", exactk w)] [compile; compile]
@@ -791,22 +835,22 @@ Ltac2 rec compile () : unit :=
            | ASMSyntax.Exit => ?v19
            | ASMSyntax.Comment s => @?v20 s
            end) =>
-          let binders_v1 := binders_names_of_constr_lambda v1 in
-          let binders_v2 := binders_names_of_constr_lambda v2 in
-          let binders_v3 := binders_names_of_constr_lambda v3 in
-          let binders_v4 := binders_names_of_constr_lambda v4 in
-          let binders_v5 := binders_names_of_constr_lambda v5 in
-          let binders_v6 := binders_names_of_constr_lambda v6 in
-          let binders_v7 := binders_names_of_constr_lambda v7 in
-          let binders_v9 := binders_names_of_constr_lambda v9 in
-          let binders_v10 := binders_names_of_constr_lambda v10 in
-          let binders_v11 := binders_names_of_constr_lambda v11 in
-          let binders_v12 := binders_names_of_constr_lambda v12 in
-          let binders_v13 := binders_names_of_constr_lambda v13 in
-          let binders_v14 := binders_names_of_constr_lambda v14 in
-          let binders_v15 := binders_names_of_constr_lambda v15 in
-          let binders_v16 := binders_names_of_constr_lambda v16 in
-          let binders_v20 := binders_names_of_constr_lambda v20 in
+          let binders_v1 := binders_names_of_constr_lambda v1 names_in_cenv in
+          let binders_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
+          let binders_v3 := binders_names_of_constr_lambda v3 names_in_cenv in
+          let binders_v4 := binders_names_of_constr_lambda v4 names_in_cenv in
+          let binders_v5 := binders_names_of_constr_lambda v5 names_in_cenv in
+          let binders_v6 := binders_names_of_constr_lambda v6 names_in_cenv in
+          let binders_v7 := binders_names_of_constr_lambda v7 names_in_cenv in
+          let binders_v9 := binders_names_of_constr_lambda v9 names_in_cenv in
+          let binders_v10 := binders_names_of_constr_lambda v10 names_in_cenv in
+          let binders_v11 := binders_names_of_constr_lambda v11 names_in_cenv in
+          let binders_v12 := binders_names_of_constr_lambda v12 names_in_cenv in
+          let binders_v13 := binders_names_of_constr_lambda v13 names_in_cenv in
+          let binders_v14 := binders_names_of_constr_lambda v14 names_in_cenv in
+          let binders_v15 := binders_names_of_constr_lambda v15 names_in_cenv in
+          let binders_v16 := binders_names_of_constr_lambda v16 names_in_cenv in
+          let binders_v20 := binders_names_of_constr_lambda v20 names_in_cenv in
           let n1 := List.nth binders_v1 0 in
           let n2 := List.nth binders_v1 1 in
           let n3 := List.nth binders_v2 0 in
@@ -847,19 +891,20 @@ Ltac2 rec compile () : unit :=
                                         ("n17", exactk n17); ("n18", exactk n18); ("n19", exactk n19); ("n20", exactk n20);
                                         ("n21", exactk n21); ("n22", exactk n22); ("n23", exactk n23); ("n24", exactk n24);
                                         ("n25", exactk n25); ("n26", exactk n26); ("n27", exactk n27)]
-                                       [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ());
+                                       [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ());
                                         (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
                                         (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
                                         (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
-                                        (fun () => ()); (fun () => ())]
+                                        (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
         (* prog *)
         | ImpSyntax.Program ?funcs =>
           app_lemma "auto_prog_cons_Program" [("env", exactk fenv); ("funcs", exactk funcs)] [compile]
-        | (match ?v0 with | ImpSyntax.Program funcs => @?v1 funcs end) =>
-          let binders_v1 := binders_names_of_constr_lambda v1 in
-          let n1 := List.nth binders_v1 0 in
-          app_lemma "auto_prog_CASE" [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("n1", exactk n1)]
-                                     [compile; (fun () => destruct $v0; (Control.enter compile))]
+        | (match ?v0 with | ImpSyntax.Program funcs => @?f_Program funcs end) =>
+          let binders_f_Program := binders_names_of_constr_lambda f_Program names_in_cenv in
+          let n1 := List.nth binders_f_Program 0 in
+          app_lemma "auto_prog_CASE"
+            [("env", exactk fenv); ("v0", exactk v0); ("f_Program", exactk f_Program); ("n1", exactk n1)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
         (* reg *)
         | ASMSyntax.RAX =>
           app_lemma "auto_reg_cons_RAX" [("env", exactk fenv)] []
@@ -879,6 +924,12 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_reg_cons_R15" [("env", exactk fenv)] []
         | ASMSyntax.RDX =>
           app_lemma "auto_reg_cons_RDX" [("env", exactk fenv)] []
+        | ASMSyntax.R14 =>
+          app_lemma "auto_reg_cons_R14" [("env", exactk fenv)] []
+        | ASMSyntax.R15 =>
+          app_lemma "auto_reg_cons_R15" [("env", exactk fenv)] []
+        | ASMSyntax.RDX =>
+          app_lemma "auto_reg_cons_RDX" [("env", exactk fenv)] []
         | (match ?v0 with
            | ASMSyntax.RAX => ?v1 | ASMSyntax.RDI => ?v2 | ASMSyntax.RBX => ?v3
            | ASMSyntax.RBP => ?v4 | ASMSyntax.R12 => ?v5 | ASMSyntax.R13 => ?v6
@@ -888,7 +939,7 @@ Ltac2 rec compile () : unit :=
                                       ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3);
                                       ("v4", exactk v4); ("v5", exactk v5); ("v6", exactk v6);
                                       ("v7", exactk v7); ("v8", exactk v8); ("v9", exactk v9)]
-                                    [compile; (fun () => destruct $v0; (Control.enter compile))]
+                                    [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
         (* test *)
         | ImpSyntax.Test ?c ?e1 ?e2 =>
           app_lemma "auto_test_cons_Test" [("env", exactk fenv); ("c", exactk c); ("e1", exactk e1); ("e2", exactk e2)] [compile; compile; compile]
@@ -899,39 +950,30 @@ Ltac2 rec compile () : unit :=
         | ImpSyntax.Not ?t =>
           app_lemma "auto_test_cons_Not" [("env", exactk fenv); ("t", exactk t)] [compile]
         | (match ?v0 with
-           | ImpSyntax.Test c e1 e2 => @?v1 c e1 e2
-           | ImpSyntax.And t1 t2 => @?v2 t1 t2
-           | ImpSyntax.Or t1 t2 => @?v3 t1 t2
-           | ImpSyntax.Not t => @?v4 t
+           | ImpSyntax.Test c e1 e2 => @?f_Test c e1 e2
+           | ImpSyntax.And t1 t2 => @?f_And t1 t2
+           | ImpSyntax.Or t1 t2 => @?f_Or t1 t2
+           | ImpSyntax.Not t => @?f_Not t
            end) =>
-          let binders_v1 := binders_names_of_constr_lambda v1 in
-          let binders_v2 := binders_names_of_constr_lambda v2 in
-          let binders_v3 := binders_names_of_constr_lambda v3 in
-          let binders_v4 := binders_names_of_constr_lambda v4 in
-          let n1 := List.nth binders_v1 0 in
-          let n2 := List.nth binders_v1 1 in
-          let n3 := List.nth binders_v1 2 in
-          let n4 := List.nth binders_v2 0 in
-          let n5 := List.nth binders_v2 1 in
-          let n6 := List.nth binders_v3 0 in
-          let n7 := List.nth binders_v3 1 in
-          let n8 := List.nth binders_v4 0 in
-          app_lemma "auto_test_CASE" [("env", exactk fenv); ("v0", exactk v0);
-                                       ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3); ("v4", exactk v4);
-                                       ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3);
-                                       ("n4", exactk n4); ("n5", exactk n5); ("n6", exactk n6);
-                                       ("n7", exactk n7); ("n8", exactk n8)]
-                                     [compile; (fun () => destruct $v0; (Control.enter compile)); (fun () => ()); (fun () => ()); (fun () => ())]
-        (* TODO: see if we can use pairs (name -> tactic/term) *)
-        (*       End-goal: extesible table of all compilation lemmas -> (name, tactic to apply) *)
-        (*       We can use names to have subsets of tactics (e.g. arithmetic only) *)
-        (* nat const *)
-        | ASMSyntax.R14 =>
-          app_lemma "auto_reg_cons_R14" [("env", exactk fenv)] []
-        | ASMSyntax.R15 =>
-          app_lemma "auto_reg_cons_R15" [("env", exactk fenv)] []
-        | ASMSyntax.RDX =>
-          app_lemma "auto_reg_cons_RDX" [("env", exactk fenv)] []
+          let binders_f_Test := binders_names_of_constr_lambda f_Test names_in_cenv in
+          let binders_f_And := binders_names_of_constr_lambda f_And names_in_cenv in
+          let binders_f_Or := binders_names_of_constr_lambda f_Or names_in_cenv in
+          let binders_f_Not := binders_names_of_constr_lambda f_Not names_in_cenv in
+          let n1 := List.nth binders_f_Test 0 in
+          let n2 := List.nth binders_f_Test 1 in
+          let n3 := List.nth binders_f_Test 2 in
+          let n4 := List.nth binders_f_And 0 in
+          let n5 := List.nth binders_f_And 1 in
+          let n6 := List.nth binders_f_Or 0 in
+          let n7 := List.nth binders_f_Or 1 in
+          let n8 := List.nth binders_f_Not 0 in
+          app_lemma "auto_test_CASE"
+            [("env", exactk fenv); ("v0", exactk v0);
+              ("f_Test", exactk f_Test); ("f_And", exactk f_And); ("f_Or", exactk f_Or); ("f_Not", exactk f_Not);
+              ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3);
+              ("n4", exactk n4); ("n5", exactk n5); ("n6", exactk n6);
+              ("n7", exactk n7); ("n8", exactk n8)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ()); (fun () => ())]
         (* cond *)
         | ASMSyntax.Always =>
           app_lemma "auto_cond_cons_Always" [("env", exactk fenv)] []
@@ -980,16 +1022,32 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_instr_cons_Exit" [("env", exactk fenv)] []
         | ASMSyntax.Comment ?s =>
           app_lemma "auto_instr_cons_Comment" [("env", exactk fenv); ("s", exactk s)] [compile]
+        (* bool *)
+        | true =>
+          app_lemma "auto_bool_T" [("env", exactk fenv)] []
+        | false =>
+          app_lemma "auto_bool_F" [("env", exactk fenv)] []
+        | (negb ?b) =>
+          app_lemma "auto_bool_not" [("env", exactk fenv); ("b", exactk b)] [compile]
+        | (andb ?bA ?bB) =>
+          app_lemma "auto_bool_and" [("env", exactk fenv); ("bA", exactk bA); ("bB", exactk bB)] [compile; compile]
+        | (Bool.eqb ?bA ?bB) =>
+          app_lemma "auto_bool_iff" [("env", exactk fenv); ("bA", exactk bA); ("bB", exactk bB)] [compile; compile]
+        | (if ?b then ?t else ?f) =>
+          app_lemma "last_bool_if" [("env", exactk fenv); ("b", exactk b); ("t", exactk t); ("f", exactk f)]
+                                   [compile; compile; compile]
         (* TODO: see if we can use pairs (name -> tactic/term) *)
         (*       End-goal: extesible table of all compilation lemmas -> (name, tactic to apply) *)
         (*       We can use names to have subsets of tactics (e.g. arithmetic only) *)
-        (* nat const *)
+        (* const *)
         | ?n =>
           if proper_const n then
             if Constr.equal (Constr.type n) constr:(nat) then
               app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk n)] []
             else if Constr.equal (Constr.type n) constr:(string) then
               app_lemma "auto_string_const" [("env", exactk fenv); ("str", exactk n)] []
+            else if Constr.equal (Constr.type n) constr:(ascii) then
+              app_lemma "auto_char_const" [("env", exactk fenv); ("chr", exactk n)] []
             else
               Control.throw (Oopsie (fprintf
                 "Error: Tried to compile a constant of unsupported type: namely: %t of type %t"
@@ -1016,6 +1074,7 @@ Ltac2 rec compile () : unit :=
           (* Existing function that is in f_lookup (currently – in premises) *)
           let args_constr := list_to_constr_encode args in
           let fname_str := constr_string_of_string fname in
+          (* printf "applying trans_Call with fname := %t and args := %t" fname_str args_constr; *)
           refine open_constr:(trans_Call
           (* env *) $fenv
           (* xs *) _
@@ -1024,7 +1083,7 @@ Ltac2 rec compile () : unit :=
           (* vs *) $args_constr
           (* v *) (encode $e)
           (* eval args *) ltac2:(Control.enter compile)
-          (* eval_app *) _
+          (* eval_app *) ltac2:(eauto)
           )
         | _ =>
           compile_go ()
@@ -1032,13 +1091,13 @@ Ltac2 rec compile () : unit :=
       end
     end
   | ?fenv |-- (_, _) ---> ([], _) =>
-    app_lemma "trans_nil" [("env", fun () => exact $fenv)] []
-  | ?fenv |-- (_, _) ---> ((encode ?e) :: ?es, _) =>
+    app_lemma "trans_nil" [("env", exactk fenv)] []
+  | ?fenv |-- (_, _) ---> (?e :: ?es, _) =>
     refine open_constr:(trans_cons
     (* env *) $fenv
     (* x *) _
     (* xs *) _
-    (* v *) (encode $e)
+    (* v *) $e
     (* vs *) $es
     (* s s1 s2 *) _ _ _
     (* eval x *) ltac2:(Control.enter compile)
@@ -1059,13 +1118,6 @@ Ltac2 unfold_ref_everywhere (r: reference): unit :=
   let cl := default_on_concl None in
   Std.unfold [(r, AllOccurrences)] cl.
 
-Ltac2 rec var_ident_of_constr (c: constr): ident :=
-  match Unsafe.kind c with
-  | Var i => i
-  | _ =>
-    Control.throw (Oopsie (fprintf "Error: Expected the argument of a compiled function to be an variable reference, got: %t" c))
-  end.
-
 Ltac2 opt_is_empty (opt: 'a option): bool :=
   match opt with
   | None => true
@@ -1075,11 +1127,12 @@ Ltac2 opt_is_empty (opt: 'a option): bool :=
 (* Top level tactic that compiles a program into FunLang *)
 (* Handles expression evaluation and function evaluation as goals *)
 Ltac2 rec docompile () :=
+  (* printf "docompile goal: = %t" (Control.goal ()); *)
   lazy_match! goal with
-  | [ |- ?_fenv |-- (_, _) ---> ([encode ?_c], _) ] =>
+  | [ |- _ |-- (_, _) ---> ([encode _], _) ] =>
     (* let cenv := get_cenv_from_fenv_constr fenv in *)
     compile ()
-  | [ h : (lookup_fun ?_fname _ = Some (?params, _))
+  | [ h : (lookup_fun (name_enc ?fname) _ = Some (?params, _))
   |- eval_app (name_enc ?fname) ?args _ (encode ?c, _) ] =>
     let h_hyp := Control.hyp h in
     (* let f_lookup := get_f_lookup_from_hyps () in *)
@@ -1087,31 +1140,29 @@ Ltac2 rec docompile () :=
     match extract_fun c with
     (* function reference --> unfold *)
     | Some (fconstr, fargs) =>
-      let f_name_r := reference_of_constr_opt fconstr in
-      (if opt_is_empty f_name_r then
+      let cname_ref := reference_of_constr_opt fconstr in
+      (if opt_is_empty cname_ref then
         Control.throw (Oopsie (fprintf "Error: Expected a named function application, got: %t" fconstr))
       else ());
-      let f_name_r := Option.get f_name_r in
-      let fn_name_str := (Option.get (reference_to_string f_name_r)) in
-      let fn_encoded_name_str := (string_of_constr_string fname) in
+      let cname_ref := Option.get cname_ref in
+      let cname_str := (Option.get (reference_to_string cname_ref)) in
+      let fname_str := (string_of_constr_string fname) in
       (*  Check if the encoded name is the same as the compiled top level function *)
-      if String.equal fn_encoded_name_str fn_name_str then
+      if String.equal fname_str cname_str then
         (* If its a fixpoint apply `fname_equation`, otherwise unfold `fname` *)
         (if isFix fconstr then
-          (* let arg1 := List.nth fargs 0 in *)
           let fargs_ids := List.map var_ident_of_constr fargs in
-          (* let arg1_ident := var_ident_of_constr arg1 in *)
           Std.revert fargs_ids;
-          ltac1:(let Hname := fresh "IH" in fix Hname 1);
+          let struct_idx :=  struct_of_fix fconstr in
+          let hname := Fresh.in_goal (Option.get (Ident.of_string "IH")) in
+          Std.fix_ hname (Int.add struct_idx 1);
           intros;
           rewrite_with_equation fconstr
         else
-          unfold_ref_everywhere f_name_r
+          unfold_ref_everywhere cname_ref
         );
         docompile ()
       else (
-        (* top level function is different than the one currently compiling *)
-        (* let compiled := compile argsl f_lookup c in *)
         refine open_constr:(trans_app
         (* n *) $fname
         (* params *) $params
@@ -1120,14 +1171,13 @@ Ltac2 rec docompile () :=
         (* s *) _
         (* s1 *) _
         (* v *) (encode $c)
-        (* eval body *) ltac2:(Control.enter(fun () => docompile ()))
+        (* eval body *) ltac2:(Control.enter docompile)
         (* params length eq *) _
         (* lookup_fun *) $h_hyp
         )
       )
     (* unfolded function --> just compile *)
     | None =>
-      (* let compiled := compile argsl f_lookup c in *)
       refine open_constr:(trans_app
       (* n *) $fname
       (* params *) $params
@@ -1136,7 +1186,7 @@ Ltac2 rec docompile () :=
       (* s *) _
       (* s1 *) _
       (* v *) (encode $c)
-      (* eval body *) ltac2:(Control.enter(fun () => docompile ()))
+      (* eval body *) ltac2:(Control.enter docompile)
       (* params length eq *) _
       (* lookup_fun *) $h_hyp
       )
@@ -1149,25 +1199,38 @@ Ltac2 rec docompile () :=
 (*       - would be nice to prove name_enc_inj *)
 Ltac2 crush_NoDup () :=
   ltac1:(
-    repeat (match goal with
-    | |- NoDup _ => simpl; repeat constructor; simpl
-    | _ => progress auto
-    | |- context[name_enc _] => unfold name_enc, name_enc_l; simpl
-    | _ => congruence
-    | |- not _ =>
-      let hnm := fresh "Hcont" in
-      intros Hnm
-    | H: _ \/ _ |- _ => destruct H
-    end)
+    try match goal with
+    | |- NoDup _ => simpl; repeat constructor; simpl;
+      repeat match goal with
+      | _ => progress auto
+      | |- context[name_enc _] => unfold name_enc, name_enc_l; simpl
+      | _ => congruence
+      | |- not _ =>
+        let hnm := fresh "Hcont" in
+        intros Hnm
+      | H: _ \/ _ |- _ => destruct H
+      | H: name_enc _ = name_enc _ |- _ => inversion H 
+      end
+    end
+  ).
+
+Ltac2 crush_FEnv () :=
+  ltac1:(
+    try match goal with
+    | |- FEnv.lookup _ _ = _ =>
+      eauto with fenvDb;
+      cbn; try congruence; try reflexivity
+    end
   ).
 
 Ltac2 crush_side_conditions () :=
-  ltac1:(
-    repeat (match goal with
-    | |- context[ FEnv.lookup _ _ ] => progress eauto with fenvDb
-    (* | |- context[ FEnv.lookup _ _ ] => cbn; try congruence; try reflexivity *)
-    | _ => progress eauto with fenvDb
-    end)
+  Control.enter (fun () =>
+    match! goal with
+    | [ |- FEnv.lookup _ _ = _ ] => crush_FEnv ()
+    | [ |- NoDup _ ] => crush_NoDup ()
+    | [ |- (_ < _)%N ] => ltac1:(lia)
+    | [ |- _ ] => eauto
+    end
   ).
 
 Ltac2 relcompile_impl () :=
@@ -1185,15 +1248,6 @@ Ltac2 rec mk_constr_list (args: constr list): constr :=
     let t_constr := mk_constr_list t in
     open_constr:($h :: $t_constr)
   end.
-
-Ltac2 rec collect_prod_binders_impl (c: constr): binder list :=
-  match Unsafe.kind c with
-  | Prod b c =>
-    b :: collect_prod_binders_impl c
-  | _ => []
-  end.
-Ltac2 collect_prod_binders (c: constr): binder list :=
-  collect_prod_binders_impl (Constr.type c).
 
 Ltac2 rec gen_eval_app_impl (bs: binder list) (args: constr list) (f_constr_name: constr) (f: constr) (): constr :=
   (* printf "gen_eval_app_impl bs: %a args: %a f_constr_name: %t f: %t"
@@ -1336,6 +1390,47 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
 (* TODO: for some reason, need this for generated derivation statement proofs *)
 Opaque encode.
 
+Function polylength {A} `{ra: Refinable A} (l: list A) :=
+  match l with
+  | [] => 0
+  | _ :: l => 1 + polylength l
+  end.
+
+(* TODO: make this polymorphic example work *)
+(* automatic generation doesn't work for polymorphic functions *)
+(* Derive polylength_prog
+  in ltac2:(relcompile_tpe 'polylength_prog 'polylength [])
+  as polylength_prog_proof. *)
+Derive polylength_prog in (forall s,
+  (* Should this take all the arguments? including type and typeclass arguments? vvv *)
+  lookup_fun (name_enc "polylength") s.(funs) = Some ([name_enc "l"], polylength_prog) ->
+  forall {A: Type} `{ra: Refinable A} (l: list A),
+    eval_app (name_enc "polylength") [encode l] s (encode (@polylength A ra l), s)
+) as polylength_proof.
+Proof.
+  subst polylength_prog.
+  intros* H.
+  ltac1:(fix IH 3).
+  intros.
+  rewrite polylength_equation.
+  eapply trans_app with (params := [name_enc "l"]).
+  1: {
+    eapply auto_list_case with (n1 := "h"%string) (n2 := "t"%string).
+    1: eapply trans_Var with (n := "l"%string); eauto with fenvDb.
+    1: destruct l.
+    1: eapply auto_nat_const.
+    1: {
+      eapply auto_nat_add.
+      1: eapply auto_nat_const.
+      eapply trans_Call; eauto.
+      eapply trans_Var with (n := "t"%string); eauto with fenvDb.
+    }
+    crush_NoDup ().
+  }
+  1: simpl; reflexivity ().
+  eauto.
+Qed.
+
 Function has_match (l: list nat) : nat :=
   1 +
   match l with
@@ -1452,8 +1547,6 @@ Proof.
   intros.
   subst foo_prog.
   relcompile.
-  (* eauto with fenvDb. *)
-  ltac1:(cbn; try congruence; try reflexivity).
 Qed.
 
 Definition bar (n : nat) : nat :=
@@ -1486,11 +1579,11 @@ Proof.
   intros.
   subst baz_prog.
   relcompile.
-  ltac1:(cbn; try congruence; try reflexivity).
 Qed.
 
 Definition baz2 (n : nat) : nat :=
-  baz (n + 1) n.
+  let/d m := baz (n + 1) n in
+  m.
 
 Derive baz2_prog in ltac2:(relcompile_tpe 'baz2_prog 'baz2 ['baz]) as baz2_prog_proof.
 (* Derive baz2_prog in (forall (s : state),
@@ -1505,10 +1598,10 @@ Proof.
   relcompile.
 Qed.
 
-Function sum_acc (n: nat) (acc: nat) :=
-  match n with
-  | 0 => acc
-  | S n => sum_acc n (1 + acc)
+Function sum_acc (xs: list nat) (acc: nat) :=
+  match xs with
+  | [] => acc
+  | x :: xs => sum_acc xs (x + acc)
   end.
 
 Derive sum_acc_prog
@@ -1517,259 +1610,5 @@ Derive sum_acc_prog
 Proof.
   intros.
   subst sum_acc_prog.
-  relcompile.
-Qed.
-
-Ltac2 rec in_contexts (bs: binder list) (c: unit -> constr) (): constr :=
-  match bs with
-  | [] => c ()
-  | b :: bs =>
-    (* let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in *)
-    let name := Option.get (Binder.name b) in
-    Constr.in_context name (Binder.type b) (fun () =>
-      (* let b_hyp := Control.hyp name in *)
-      let r := in_contexts bs c in
-      Control.refine r
-    )
-  end.
-
-Ltac2 rec lambda_to_prod (c: constr): constr :=
-  match Unsafe.kind c with
-  | Lambda b body => make (Prod b (lambda_to_prod body))
-  | _ => c
-  end.
-
-Ltac2 rec constr_transform_simple (f: constr -> constr) (c: constr): constr :=
-  printf "transform: %t" c;
-  match kind c with
-  | Rel _ => f c
-  | Meta _ | Var _ | Sort _ | Constant _ _ | Ind _ _
-  | Constructor _ _ | Uint63 _ | Float _ | String _ => c
-  | Cast c k t =>
-      let c := constr_transform_simple f c
-      with t := constr_transform_simple f t in
-      make (Cast c k t)
-  | Prod b c =>
-    (* shouldn't matter in our case *)
-    make (Prod b c)
-  | Lambda b _ =>
-      let name := Fresh.fresh (Free.of_goal ()) (Option.get (Binder.name b)) in
-      printf "name: %I" name;
-      Constr.in_context name (Binder.type b) (fun () =>
-        let h := Control.hyp name in
-        printf "%t" c;
-        let c := apply_to_args c [h] in
-        printf "%t" c;
-        let c := Std.eval_cbv beta c in
-        printf "%t" c;
-        Control.refine (fun () =>
-          constr_transform_simple f c
-        )
-      )
-  | LetIn b t c =>
-      (* let t := constr_transform_simple f t in
-      let b_id := Option.get (Binder.name b) in
-      let c := Constr.in_context b_id (Binder.type b) (fun () =>
-        Control.refine (fun () => constr_transform_simple f c)
-      ) in
-      let b_var := Unsafe.make (Var b_id) in
-      let c := Std.eval_cbv beta open_constr:($c $b_var) in *)
-      make (LetIn b t c)
-  | App c l =>
-      let c := constr_transform_simple f c
-      with l := Array.map (constr_transform_simple f) l in
-      make (App c l)
-  | Evar e l =>
-      let l := Array.map (constr_transform_simple f) l in
-      make (Evar e l)
-  | Case info x iv y bl =>
-      let y := constr_transform_simple f y
-      with bl := Array.map (constr_transform_simple f) bl in
-      make (Case info x iv y bl)
-  | Proj p r c =>
-      let c := constr_transform_simple f c in
-      make (Proj p r c)
-  | Fix structs which tl bl =>
-      (* unsupported *)
-      let bl := Array.map (constr_transform_simple f) bl in
-      make (Fix structs which tl bl)
-  | CoFix which tl bl =>
-      (* unsupported *)
-      let bl := Array.map (constr_transform_simple f) bl in
-      make (CoFix which tl bl)
-  | Array u t def ty =>
-      let ty := constr_transform_simple f ty
-      with t := Array.map (constr_transform_simple f) t
-      with def := constr_transform_simple f def in
-      make (Array u t def ty)
-end.
-
-Ltac2 unfold_tpe (fconstr: constr): unit :=
-  let fref := reference_of_constr fconstr in
-  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
-  match Unsafe.kind unfolded with
-  | Fix structs i bs cs =>
-    if Int.equal (Array.length cs) 1 then
-      let body := Array.get cs 0 in
-      let _struct := Array.get structs 0 in
-      let fix_b := Array.get bs 0 in
-      let fix_name := Option.get (Binder.name fix_b) in
-      printf "unfolded: %t" unfolded;
-      printf "Fix with which = %i, body = [%t]" i body;
-      Message.print (message_of_list (Array.to_list (Array.map Message.of_int structs)));
-      Message.print (message_of_list (Array.to_list (Array.map message_of_binder bs)));
-      let body_bs := binders_of_constr_lambda body in
-      let res :=
-      Constr.in_context fix_name (Binder.type fix_b) (fun () =>
-        let _fix_hyp := Control.hyp fix_name in
-        Control.refine (in_contexts body_bs (fun () =>
-          let hyps := List.map Control.hyp (List.map (fun b => Option.get (Binder.name b)) body_bs) in
-          let f_applied := apply_to_args fconstr hyps in
-          let f_applied1 := Std.eval_cbv beta (apply_to_args body hyps) in
-          printf "%t" f_applied1;
-          let f_applied1 := constr_transform_simple (fun _c =>
-            (* printf "%t" c;
-            printf "%t" (Constr.type c);
-            Message.print (Message.of_string (kind_string_of_constr c)); *)
-            fconstr
-          ) f_applied1 in
-          printf "f_applied1: %t" f_applied1;
-          (* let f_applied1 := apply_to_args fconstr hyps *)
-          open_constr:($f_applied = $f_applied1)
-        ))
-      ) in
-      let r := lambda_to_prod res in
-      printf "%t" r;
-      Control.refine (fun () => r)
-    else
-      Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
-  | _ => Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
-  end.
-
-(* ************************* *)
-(*        Playground         *)
-(* ************************* *)
-
-Ltac2 struct_of_fix (fconstr: constr): int :=
-  let fref := reference_of_constr fconstr in
-  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
-  match Unsafe.kind unfolded with
-  | Fix structs _ _ _ =>
-    Array.get structs 0
-  | _ =>
-    Control.throw (Oopsie (fprintf "not a fix; %t" fconstr))
-  end.
-
-Ltac2 unfold_fix_impl (fconstr: constr): unit :=
-  let fref := reference_of_constr fconstr in
-  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
-  match Unsafe.kind unfolded with
-  | Fix structs _i bs cs =>
-    let body := Array.get cs 0 in
-    let struct := Array.get structs 0 in
-    let fix_b := Array.get bs 0 in
-    let _fix_name := Option.get (Binder.name fix_b) in
-    (* printf "unfolded: %t" unfolded;
-    printf "Fix with which = %i, body = [%t]" _i body;
-    Message.print (message_of_list (Array.to_list (Array.map Message.of_int structs)));
-    Message.print (message_of_list (Array.to_list (Array.map message_of_binder bs))); *)
-    let body_bs := binders_of_constr_lambda body in
-    let body_bs_names := List.map (fun b => Option.get (Binder.name b)) body_bs in
-    let struct_name := List.nth body_bs_names struct in
-    let res := in_contexts body_bs (fun () =>
-      let outer_args := List.map Control.hyp body_bs_names in
-      let fconstr_applied := apply_to_args fconstr outer_args in
-      let rhs := fun () => Control.enter (fun () =>
-        let ind_clause := {
-          indcl_arg := (ElimOnIdent struct_name);
-          indcl_eqn := None;
-          indcl_as := None;
-          indcl_in := None;
-        } in
-        Std.destruct false [ind_clause] None;
-        Control.refine (fun () => open_constr:(_))
-      ) in
-      open_constr:($fconstr_applied = ltac2:(rhs ()))
-    ) in
-    let res := fun () => Std.eval_cbv beta (res ()) in
-    let r := lambda_to_prod (res ()) in
-    (* printf "end of unfold_fix2: %t" r; *)
-    Control.refine (fun () => r)
-  | _ => Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
-  end.
-
-Ltac2 unfold_fix_gen (fconstr: constr): unit :=
-  let fref := reference_of_constr fconstr in
-  let unfolded_fix_template := open_constr:(ltac2:(unfold_fix_impl fconstr)) in
-  ltac1:(unfolded_fix_template |- instantiate(1 := unfolded_fix_template)) (Ltac1.of_constr unfolded_fix_template);
-  (* printf "%t" (Control.goal ()); *)
-  let bs := collect_prod_binders_impl (Control.goal ()) in
-  Message.print (message_of_list (List.map message_of_binder bs));
-  let nms := List.map (fun b => Fresh.in_goal (Option.get (Binder.name b))) bs in
-  Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
-  (* printf "%t" (Control.goal ()); *)
-  let struct_name := List.nth nms (struct_of_fix fconstr) in
-  let struct_hyp := Control.hyp struct_name in
-  destruct $struct_hyp;
-  Control.enter (fun () =>
-    (* printf "enter: %t" (Control.goal ()); *)
-    unfold $fref; fold $fconstr;
-    (* printf "folded: %t" (Control.goal ()); *)
-    reflexivity ()
-  ).
-
-Ltac2 unfold_fix2_type fn :=
-  let unfolded := open_constr:(ltac2:(Control.enter (fun () => unfold_fix_gen fn))) in
-  let t := Constr.type unfolded in
-  Control.refine (fun () => open_constr:($t)).
-
-Ltac2 unfold_fix_proof (fconstr: constr): unit :=
-  let fref := reference_of_constr fconstr in
-  let bs := collect_prod_binders_impl (Control.goal ()) in
-  let nms := List.map (fun b => Fresh.in_goal (Option.get (Binder.name b))) bs in
-  Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
-  let struct_name := List.nth nms (struct_of_fix fconstr) in
-  let struct_hyp := Control.hyp struct_name in
-  destruct $struct_hyp;
-  Control.enter (fun () =>
-    unfold $fref; fold $fconstr;
-    reflexivity ()
-  ).
-
-Fixpoint length (l: list bool) : nat :=
-  match l with
-  | nil => 0
-  | cons hd tl => 1 + length tl
-  end.
-Goal ltac2:(unfold_fix2_type 'length).
-Proof. unfold_fix_proof 'length. Qed.
-
-Fixpoint sum_acc1 (acc: nat) (n: nat) :=
-  match n with
-  | 0 => acc
-  | S n => sum_acc1 (acc + 1) n
-  end.
-Lemma sum_acc1_equation: ltac2:(unfold_fix2_type 'sum_acc1).
-Proof. unfold_fix_proof 'sum_acc1. Qed.
-About sum_acc1_equation.
-
-(* TODO *)
-(* genrated _equation rewrites to this: *)
-(*
-  (eval_app (name_enc "sum_acc1") [encode n; encode acc] s
-  (encode (match n with
-  | 0 => λ acc : nat, acc
-  | S n' => λ acc : nat, sum_acc1 n' (acc + 1)
-  end acc), s))
-*)
-
-(* TODO: automation always assumes that the first param is decreasing *)
-
-Derive sum_acc1_prog
-  in ltac2:(relcompile_tpe 'sum_acc1_prog 'sum_acc1 [])
-  as sum_acc1_prog_proof.
-Proof.
-  intros.
-  subst sum_acc1_prog.
   relcompile.
 Qed.

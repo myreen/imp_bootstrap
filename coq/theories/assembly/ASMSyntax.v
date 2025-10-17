@@ -64,7 +64,7 @@ Definition reg2str (r : reg) (s: string) : string :=
   | RDX => "%rdx"
   end ++ s.
 
-Program Fixpoint num2str (n: nat) (s: string) {measure n} : string :=
+Program Fixpoint num2str (n: nat) (s: string) {measure n}: string :=
   if n <? 10 then String (ascii_of_nat (48 + n)) s
   else num2str (n / 10) (String (ascii_of_nat (48 + (Nat.modulo n 10))) s).
 Next Obligation.

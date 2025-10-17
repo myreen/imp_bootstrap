@@ -351,9 +351,7 @@ Definition catch_return {A} (f: SRM A) (s: state): (outcome Value * state) :=
     | (Stop Abort,s) => stop Abort s
   end.
 
-Fixpoint eval_cmd (c : cmd)
-  (EVAL_CMD : forall (c:cmd), SRM unit)
-  { struct c } : SRM unit :=
+Fixpoint eval_cmd (c: cmd) (EVAL_CMD: forall (c:cmd), SRM unit) { struct c }: SRM unit :=
   let eval_cmd c := eval_cmd c EVAL_CMD in
   match c with
   | Skip => cont tt

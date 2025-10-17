@@ -49,89 +49,49 @@ Definition AllocLoc: nat := 7.
 
 (* START boilerplate *)
 
-Function list_length_v_stack (l: v_stack): nat :=
+Function list_length {A: Type} (l: list A): nat :=
   match l with
-  | x :: l => 1 + list_length_v_stack l
+  | x :: l => 1 + list_length l
   | [] => 0
   end.
 
-Function list_length_exp (l: list exp): nat :=
-  match l with
-  | x :: l => 1 + list_length_exp l
-  | [] => 0
-  end.
-
-Function list_length_name (l: list name): nat :=
-  match l with
-  | x :: l => 1 + list_length_name l
-  | [] => 0
-  end.
-
-Function list_append_asm (l1 l2: asm): asm :=
+Function list_append {A: Type} (l1 l2: list A): list A :=
   match l1 with
-  | x :: l1 => x :: (list_append_asm l1 l2)
+  | x :: l1 => x :: (list_append l1 l2)
   | [] => l2
   end.
 
-Function list_append_v_stack (l1 l2: v_stack): v_stack :=
-  match l1 with
-  | x :: l1 => x :: (list_append_v_stack l1 l2)
-  | [] => l2
-  end.
-
-Function list_append_name (l1 l2: list name): list name :=
-  match l1 with
-  | x :: l1 => x :: (list_append_name l1 l2)
-  | [] => l2
-  end.
-
-Function list_length_asm (l: asm): nat :=
-  match l with
-  | x :: l => 1 + list_length_asm l
-  | [] => 0
-  end.
-
-Function flatten_asm (xs: asm_appl): asm :=
+Function flatten {A: Type} (xs: app_list A): list A :=
   match xs with
   | List l => l
-  | Append l1 l2 => list_append_asm (flatten_asm l1) (flatten_asm l2)
+  | Append l1 l2 => list_append (flatten l1) (flatten l2)
   end.
 
-Function app_list_length_asm (xs: asm_appl): nat :=
+Function app_list_length {A: Type} (xs: app_list A): nat :=
   match xs with
-  | List l => list_length_asm l
-  | Append l1 l2 => app_list_length_asm l1 + app_list_length_asm l2
+  | List l => list_length l
+  | Append l1 l2 => app_list_length l1 + app_list_length l2
   end.
 
 (* END boilerplate *)
 
-Function even_len_v_stack (xs: v_stack): bool :=
+Function even_len {A: Type} (xs: list A): bool :=
   match xs with
   | nil => true
   | _ :: ys =>
     match ys with
     | nil => false
-    | _ :: zs => even_len_v_stack zs
+    | _ :: zs => even_len zs
     end
   end.
 
-Function even_len_exp (xs: list exp): bool :=
-  match xs with
-  | nil => true
-  | _ :: ys =>
-    match ys with
-    | nil => false
-    | _ :: zs => even_len_exp zs
-    end
-  end.
-
-Function odd_len_v_stack (xs: v_stack) : bool :=
+Function odd_len {A: Type} (xs: list A) : bool :=
   match xs with
   | nil => false
   | _ :: ys =>
     match ys with
     | nil => true
-    | _ :: zs => odd_len_v_stack zs
+    | _ :: zs => odd_len zs
     end
   end.
 
@@ -221,7 +181,7 @@ Definition c_div: asm_appl :=
     ASMSyntax.Div RDI ].
 
 Definition c_alloc (vs: v_stack): asm_appl :=
-  if even_len_v_stack vs (* stack must be aligned at call *)
+  if even_len vs (* stack must be aligned at call *)
   then List [Load_RSP RDI 0; ASMSyntax.Call AllocLoc; Pop RDI]
   else List [Pop RDI; ASMSyntax.Call AllocLoc].
 
@@ -234,12 +194,12 @@ Definition align (needs_alignment: bool) (asm1: asm_appl): asm_appl :=
   if needs_alignment then (List [Push RAX]) +++ asm1 +++ (List [Pop RDI]) else asm1.
 
 Definition c_read (vs: v_stack) (l: nat): (asm_appl * nat) :=
-  let/d asm1 := align (even_len_v_stack vs) (List [ASMSyntax.Push RAX; ASMSyntax.GetChar]) in
-  (asm1, l + app_list_length_asm asm1).
+  let/d asm1 := align (even_len vs) (List [ASMSyntax.Push RAX; ASMSyntax.GetChar]) in
+  (asm1, l + app_list_length asm1).
 
 Definition c_write (vs: v_stack) (l: nat): (asm_appl * nat) :=
-  let/d asm1 := align (even_len_v_stack vs) (List [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z (Z.of_nat 0))]) in
-  (asm1, l + app_list_length_asm asm1).
+  let/d asm1 := align (even_len vs) (List [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z (Z.of_nat 0))]) in
+  (asm1, l + app_list_length asm1).
 
 (*
   input : RAX, top_of_stack
@@ -270,20 +230,20 @@ Fixpoint c_exp (e: exp) (l: nat) (vs: v_stack): asm_appl * nat :=
     let/d '(asm1, l1) := c_exp e1 l vs in
     let/d '(asm2, l2) := c_exp e2 l1 (None :: vs) in
     let/d c_add_asm := c_add in
-    (asm1 +++ asm2 +++ c_add_asm, l2 + app_list_length_asm c_add_asm)
+    (asm1 +++ asm2 +++ c_add_asm, l2 + app_list_length c_add_asm)
   | Sub e1 e2 =>
     let/d '(asm1, l1) := c_exp e1 l vs in
     let/d '(asm2, l2) := c_exp e2 l1 (None :: vs) in
     let/d c_sub_asm := c_sub in
-    (asm1 +++ asm2 +++ c_sub_asm, l2 + app_list_length_asm c_sub_asm)
+    (asm1 +++ asm2 +++ c_sub_asm, l2 + app_list_length c_sub_asm)
   | Div e1 e2 =>
     let/d '(asm1, l1) := c_exp e1 l vs in
     let/d '(asm2, l2) := c_exp e2 l1 (None :: vs) in
-    (asm1 +++ asm2 +++ c_div, l2 + app_list_length_asm c_div)
+    (asm1 +++ asm2 +++ c_div, l2 + app_list_length c_div)
   | Read e1 e2 =>
     let/d '(asm1, l1) := c_exp e1 l vs in
     let/d '(asm2, l2) := c_exp e2 l1 (None :: vs) in
-    (asm1 +++ asm2 +++ c_load, l2 + app_list_length_asm c_load)
+    (asm1 +++ asm2 +++ c_load, l2 + app_list_length c_load)
   end.
 
 Fixpoint c_exps (es: list exp) (l: nat) (vs: v_stack): asm_appl * nat :=
@@ -313,7 +273,7 @@ Fixpoint c_test_jump (t: test) (pos_label: nat) (neg_label: nat)
     let/d c_cmp_asm := List [Mov RBX RAX; Pop RDI; Pop RAX;
       ASMSyntax.Jump (c_cmp c) pos_label;
       ASMSyntax.Jump Always neg_label] in
-    (asm1 +++ asm2 +++ c_cmp_asm, l2 + app_list_length_asm c_cmp_asm)
+    (asm1 +++ asm2 +++ c_cmp_asm, l2 + app_list_length c_cmp_asm)
   | And t1 t2 =>
     let/d '(asm1, l1) := c_test_jump t1 (l + 1) neg_label (l + 2) vs in
     let/d '(asm2, l2) := c_test_jump t2 pos_label neg_label l1 vs in
@@ -340,7 +300,7 @@ Function lookup (fs: f_lookup) (n: nat): nat :=
 
 (* Drop the current stack frame - elements corresponding to `vs` *)
 Definition make_ret (vs: v_stack) (l: nat): asm_appl * nat :=
-  (List [Add_RSP (list_length_v_stack vs); Ret], l + 2).
+  (List [Add_RSP (list_length vs); Ret], l + 2).
 
 (* Should this be different than just give_up and we prove that this never happens *)
 (* Maybe just don't include this in the `ec = _ \/ ec = _` post condition *)
@@ -348,14 +308,14 @@ Definition make_ret (vs: v_stack) (l: nat): asm_appl * nat :=
 (* Store the variables from the stack in the registers, so that they can be
 passed to the function call *)
 Definition c_pops (xs: list exp) (vs: v_stack): asm_appl :=
-  let/d k := list_length_exp xs in
+  let/d k := list_length xs in
   if k =? 0 then List [Push RAX] else
   if k =? 1 then List [] else
   if k =? 2 then List [Pop RDI] else
   if k =? 3 then List [Pop RDI; Pop RDX] else
   if k =? 4 then List [Pop RDI; Pop RDX; Pop RBX] else
   if k =? 5 then List [Pop RDI; Pop RDX; Pop RBX; Pop RBP] else
-  List [Jump Always (give_up (negb (Bool.eqb (even_len_exp xs) (even_len_v_stack vs))))].
+  List [Jump Always (give_up (negb (Bool.eqb (even_len xs) (even_len vs))))].
 
 (** Builds a stack representation for parameters of a function *)
 Function call_v_stack (xs: list name) (acc: v_stack): v_stack :=
@@ -366,7 +326,7 @@ Function call_v_stack (xs: list name) (acc: v_stack): v_stack :=
 
 (** Push a list of variables onto the stack *)
 Definition c_pushes (v_names: list name) (l: nat): (asm_appl * v_stack * nat) :=
-  let/d k := list_length_name v_names in
+  let/d k := list_length v_names in
   let/d e := call_v_stack v_names (@nil (option name)) in
   if k =? 0 then (List [], [None], l) else
   if k =? 1 then (List [], e, l) else
@@ -378,8 +338,8 @@ Definition c_pushes (v_names: list name) (l: nat): (asm_appl * v_stack * nat) :=
 (* Call the given function, passing the arguments in registers*)
 Definition c_call (vs: v_stack) (target: nat) (xs: list exp) (l: nat): asm_appl * nat :=
   let/d asm_pops := c_pops xs vs in
-  let/d asm1 := align (even_len_v_stack vs) (List [ASMSyntax.Call target]) in
-  (asm_pops +++ asm1, l + app_list_length_asm asm_pops + app_list_length_asm asm1).
+  let/d asm1 := align (even_len vs) (List [ASMSyntax.Call target]) in
+  (asm_pops +++ asm1, l + app_list_length asm_pops + app_list_length asm1).
 
 Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) :=
   match c with
@@ -397,7 +357,7 @@ Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) 
     let/d '(asm2, l2) := c_exp e l1 vs in
     let/d '(asm3, l3) := c_exp e' l2 (None :: vs) in
     let/d asm4 := c_store in
-    (asm1 +++ asm2 +++ asm3 +++ asm4, l3 + app_list_length_asm asm4)
+    (asm1 +++ asm2 +++ asm3 +++ asm4, l3 + app_list_length asm4)
   | If t c1 c2 =>
     let/d '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
     let/d '(asm2, l2) := c_cmd c1 l1 fs vs in
@@ -430,7 +390,7 @@ Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) 
   | Alloc n e =>
     let/d '(asm1, l1) := c_exp e l vs in
     let/d asm2 := c_alloc vs in
-    let/d '(asm3, l3) := c_assign n (l1 + app_list_length_asm asm2) vs in
+    let/d '(asm3, l3) := c_assign n (l1 + app_list_length asm2) vs in
     (asm1 +++ asm2 +++ asm3, l3)
   | GetChar n =>
     let/d '(asm1, l1) := c_read vs l in
@@ -441,16 +401,16 @@ Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) 
     let/d '(asm2, l2) := c_write vs l1 in
     (asm1 +++ asm2, l2)
   | Abort =>
-    (List [Jump Always (abort (odd_len_v_stack vs))], l+1)
+    (List [Jump Always (abort (odd_len vs))], l+1)
   end.
 
 Function all_binders (body: cmd): list name :=
   match body with
   | Skip => []
-  | Seq c1 c2 => list_append_name (all_binders c1) (all_binders c2)
+  | Seq c1 c2 => list_append (all_binders c1) (all_binders c2)
   | Assign n e => [n]
   | Update a e e' => []
-  | If t c1 c2 => list_append_name (all_binders c1) (all_binders c2)
+  | If t c1 c2 => list_append (all_binders c1) (all_binders c2)
   | While tst body => all_binders body
   | Call n f es => [n]
   | Return e => []
@@ -491,8 +451,8 @@ Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
     let/d '(asm0, vs0, l0) := c_pushes v_names l in
     let/d binders := unique_binders body in
     let/d vs_binders := make_vs_from_binders binders in
-    let/d asm1 := List [Sub_RSP (list_length_v_stack vs_binders)] in
-    let/d '(asm2, l2) := c_cmd body (l0 + 1) fs (list_append_v_stack vs_binders vs0) in
+    let/d asm1 := List [Sub_RSP (list_length vs_binders)] in
+    let/d '(asm2, l2) := c_cmd body (l0 + 1) fs (list_append vs_binders vs0) in
     (asm0 +++ asm1 +++ asm2, l2)
   end.
 
@@ -541,8 +501,8 @@ Fixpoint fun_name_of_string (str: string): name :=
 (* Generates the complete assembly code for a given program *)
 Definition codegen (prog : prog) : asm :=
   let/d funs := get_funcs prog in
-  let/d init_l := app_list_length_asm (List (init 0)) in
+  let/d init_l := app_list_length (List (init 0)) in
   let/d '(_, fs, _) := c_fundefs funs init_l [] in
   let/d '(asm1, _, _) := c_fundefs funs init_l fs in
   let/d main_l := lookup fs (fun_name_of_string "main") in
-  flatten_asm ((List (init main_l)) +++ asm1).
+  flatten ((List (init main_l)) +++ asm1).

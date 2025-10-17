@@ -139,7 +139,7 @@ Definition read_ascii (input : llist ascii) : (word64 * llist ascii) :=
   | Lcons c cs => (word.of_Z (Z.of_nat (nat_of_ascii c)), cs)
   end.
 
-Inductive step : s_or_h -> s_or_h -> Prop :=
+Inductive step: s_or_h -> s_or_h -> Prop :=
 | step_const : forall s r w,
     fetch s = Some (Const r w) ->
     step (State s) (State (write_reg r w (inc s)))

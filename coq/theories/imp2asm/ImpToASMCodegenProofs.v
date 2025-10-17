@@ -1013,8 +1013,8 @@ Proof.
     destruct (n =? nm1) eqn:?; destruct (n =? nm2) eqn:?.
     all: try rewrite Nat.eqb_eq in *; eauto; try congruence; cleanup.
     all: try (spat `index_of` at rewrite index_of_spec in spat; lia).
-    assert (S (index_of nm1 k vs) = i) by (rewrite index_of_spec in *; lia).
-    assert (S (index_of nm2 k vs) = i) by (rewrite index_of_spec in *; lia).
+    assert (S (index_of vs nm1 k) = i) by (rewrite index_of_spec in *; lia).
+    assert (S (index_of vs nm2 k) = i) by (rewrite index_of_spec in *; lia).
     destruct i; [rewrite index_of_spec in *; lia|].
     ring_simplify in H1.
     specialize (IHvs nm1 nm2 k i).
@@ -1028,7 +1028,7 @@ Qed.
   index_of_opt name k vs = Some  k + index_of name 0 vs. *)
 
 Lemma index_of_opt_in_bounds_str: forall nm vs k i,
-  index_of_opt nm k vs = Some i -> i < List.length vs + k.
+  index_of_opt vs nm k = Some i -> i < List.length vs + k.
 Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
@@ -1042,7 +1042,7 @@ Proof.
 Qed.
 
 Lemma index_of_opt_in_gt_k_str: forall nm vs k i,
-  index_of_opt nm k vs = Some i -> i >= k.
+  index_of_opt vs nm k = Some i -> i >= k.
 Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
@@ -1056,7 +1056,7 @@ Proof.
 Qed.
 
 Lemma index_of_opt_in_bounds: forall nm vs i,
-  index_of_opt nm 0 vs = Some i -> i < List.length vs.
+  index_of_opt vs nm 0 = Some i -> i < List.length vs.
 Proof.
   intros.
   spat `index_of_opt` at specialize (index_of_opt_in_bounds_str _ _ _ _ spat) as ?.
@@ -1064,7 +1064,7 @@ Proof.
 Qed.
 
 Lemma index_of_opt_Some_non_empty: forall nm vs k i,
-  index_of_opt nm k vs = Some i -> List.length vs > 0.
+  index_of_opt vs nm k = Some i -> List.length vs > 0.
 Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
@@ -1078,7 +1078,7 @@ Proof.
 Qed.
 
 Lemma index_of_opt_Some_index_of: forall nm vs k i,
-  index_of_opt nm k vs = Some i -> index_of nm k vs = i.
+  index_of_opt vs nm k = Some i -> index_of vs nm k = i.
 Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
@@ -1092,7 +1092,7 @@ Proof.
 Qed.
 
 Lemma index_of_opt_Some_any_k: forall nm vs k k1 i,
-  index_of_opt nm k vs = Some i -> index_of_opt nm (k + k1) vs = Some (i + k1).
+  index_of_opt vs nm k = Some i -> index_of_opt vs nm (k + k1) = Some (i + k1).
 Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
@@ -1110,7 +1110,7 @@ Proof.
 Qed.
 
 Lemma index_of_opt_Some_0_k: forall nm vs k i,
-  index_of_opt nm 0 vs = Some i -> index_of_opt nm k vs = Some (i + k).
+  index_of_opt vs nm 0 = Some i -> index_of_opt vs nm k = Some (i + k).
 Proof.
   intros * H.
   eapply index_of_opt_Some_any_k in H.
@@ -1118,7 +1118,7 @@ Proof.
 Qed.
 
 Lemma index_of_opt_Some_inj: forall vs nm1 nm2 k i,
-  index_of_opt nm1 k vs = Some i /\ index_of_opt nm2 k vs = Some i ->
+  index_of_opt vs nm1 k = Some i /\ index_of_opt vs nm2 k = Some i ->
     nm1 = nm2.
 Proof.
   induction vs; intros; cleanup.
@@ -1153,8 +1153,10 @@ Admitted. *)
 Ltac crunch_give_up_even :=
   repeat match  goal with
   | |- (ImpToASMCodegen.give_up _) = (ImpToASMCodegen.give_up _) => f_equal
-  | |- context[even_len _] => rewrite even_len_spec
-  | |- context[odd_len _] => rewrite odd_len_spec
+  | |- context[even_len_exp _] => rewrite even_len_v_stack_spec
+  (* TODO *)
+  (* | |- context[even_len_v_stack _] => rewrite even_len_exp_spec *)
+  | |- context[odd_len_v_stack _] => rewrite odd_len_v_stack_spec
   | [ H: (List.length ?vs = _) |- context[List.length ?vs] ] => rewrite H
   | |- context[List.length (_ ++ _)] => rewrite length_app
   | |- context[odd (_ + _)] => rewrite Nat.odd_add
@@ -1323,7 +1325,7 @@ Proof.
   unfold env_ok in *; cleanup.
   unfold code_rel in *; cleanup.
   simpl c_exp in *; unfold c_var in *; unfold dlet in *.
-  destruct (index_of n 0 vs =? 0) eqn:?.
+  destruct (index_of vs n 0 =? 0) eqn:?.
   1: {
     eexists.
     cleanup.
@@ -2440,9 +2442,9 @@ Proof.
 Lemma env_ok_replace_head: forall vars vs curr xnew xold n v pmap,
   env_ok vars vs (Word xold :: curr) pmap →
   v_inv pmap v xnew →
-  index_of n 0 vs = 0 →
+  index_of vs n 0 = 0 →
   0 < List.length vs →
-  index_of n 0 vs < (List.length vs) ->
+  index_of vs n 0 < (List.length vs) ->
   env_ok (IEnv.insert (n, Some v) vars) vs (Word xnew :: curr) pmap.
 Proof.
   intros.
@@ -2463,9 +2465,9 @@ Proof.
     spat `IEnv.lookup` at pose proof spat as Hlookup.
     pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
     split; try eexists; try split; simpl; cleanup; eauto.
-    destruct (index_of n0 0 vs) eqn:?.
-    + spat `index_of n _ _ = _` at pose proof spat as Hidx_of_n.
-      spat `index_of n0 _ _ = _` at pose proof spat as Hidx_of_n0.
+    destruct (index_of vs n0 0) eqn:?.
+    + spat `index_of _ n _ = _` at pose proof spat as Hidx_of_n.
+      spat `index_of _ n0 _ = _` at pose proof spat as Hidx_of_n0.
       pat `0 < List.length vs` at pose proof pat as H0ltvs.
       specialize (index_of_bound_inj _ _ _ _ _ Hidx_of_n Hidx_of_n0 H0ltvs) as ?; subst.
       congruence.
@@ -2500,9 +2502,9 @@ Qed.
 Lemma env_ok_replace_list_update: forall vars vs curr xnew x0 n n0 v pmap,
   env_ok vars vs (Word x0 :: curr) pmap →
   v_inv pmap v xnew →
-  index_of n 0 vs = S n0 →
+  index_of vs n 0 = S n0 →
   S n0 < List.length vs →
-  index_of n 0 vs < (List.length vs) ->
+  index_of vs n 0 < (List.length vs) ->
   env_ok (IEnv.insert (n, Some v) vars) vs (Word x0 :: list_update n0 (Word xnew) curr) pmap.
 Proof.
   intros.
@@ -3137,10 +3139,10 @@ Proof.
     f_equal.
     eapply IHc; eauto.
   - destruct c_var eqn:?.
-    destruct (c_var n (snd (c_exps es lstart vs) + app_list_length (c_pops es vs) + app_list_length (align (even_len vs) (List [Call (lookup f f_lookup0)])))) eqn:?.
+    destruct (c_var n (snd (c_exps es lstart vs) + app_list_length_asm (c_pops es vs) + app_list_length_asm (align (even_len_v_stack vs) (List [Call (lookup f_lookup0 f)])))) eqn:?.
     destruct c_exps eqn:?.
     simpl in *.
-    destruct even_len eqn:?; simpl in *.
+    destruct even_len_v_stack eqn:?; simpl in *.
     all: spat `c_var` at rewrite spat in *; cleanup.
     all: reflexivity.
 Qed.
@@ -3213,7 +3215,7 @@ Qed.
 
 Lemma lookup_append: forall n fs1 fs0 l,
   exists pos,
-    lookup n (fs1 ++ (n, l) :: fs0) = pos.
+    lookup (fs1 ++ (n, l) :: fs0) n = pos.
 Proof.
   induction fs1; intros; simpl in *.
   - eexists.
@@ -3229,7 +3231,7 @@ Lemma c_fundefs_lookup_same: forall funcs fs0 fs1 fs2 fs3 asm1 asm2 l1 l2 n para
   c_fundefs funcs l fs0 = (asm1, fs1, l1) ->
   c_fundefs funcs l fs2 = (asm2, fs3, l2) ->
   find_fun n funcs = Some (params, body) ->
-  lookup n fs1 = lookup n fs3.
+  lookup fs1 n = lookup fs3 n.
 Proof.
   Opaque c_fundef.
   induction funcs; intros; simpl in *; eauto; cleanup.
@@ -3258,7 +3260,7 @@ Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
   c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
   find_fun n funcs = Some (params, body) ->
   exists pos,
-    lookup n fs = pos ∧ (* No fail case here... (<> 0) ? *)
+    lookup fs n = pos ∧ (* No fail case here... (<> 0) ? *)
     code_in pos (flatten (fst (c_fundef (Func n params body) pos fs0)))
       (xs ++ flatten asm1).
 Proof.
@@ -3281,7 +3283,7 @@ Proof.
     split.
     2: {
       spat `c_fundef` at rewrite spat; simpl.
-      assert (xs ++ Comment (name2str n1 "") :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1 "")]) ++ flatten a0 ++ flatten a1) as ->.
+      assert (xs ++ Comment (name2str n1 []) :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1 [])]) ++ flatten a0 ++ flatten a1) as ->.
       1: induction xs; simpl; try rewrite <- app_assoc; eauto.
       eapply code_in_append_left2.
       rewrite length_app; simpl.
@@ -3291,7 +3293,7 @@ Proof.
   }
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1 "")] +++ a0))) as Hrwlength.
+  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1 [])] +++ a0))) as Hrwlength.
   1: simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.
   spat `c_fundefs` at eapply IHfuncs in spat; eauto; cleanup.

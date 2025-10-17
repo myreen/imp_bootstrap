@@ -66,85 +66,44 @@ Proof.
   ltac1:(lia).
 Qed. *)
 
-Derive list_append_asm_prog
-  in ltac2:(relcompile_tpe 'list_append_asm_prog 'list_append_asm []) 
-  as list_append_asm_prog_proof.
+Derive list_append_prog
+  in ltac2:(relcompile_tpe 'list_append_prog '@list_append []) 
+  as list_append_prog_proof.
 Proof.
   intros.
-  subst list_append_asm_prog.
+  subst list_append_prog.
   time relcompile.
 Qed.
 
-Derive list_append_name_prog
-  in ltac2:(relcompile_tpe 'list_append_name_prog 'list_append_name []) 
-  as list_append_name_prog_proof.
+Derive list_length_prog
+  in ltac2:(relcompile_tpe 'list_length_prog '@list_length []) 
+  as list_length_prog_proof.
 Proof.
   intros.
-  subst list_append_name_prog.
+  subst list_length_prog.
   time relcompile.
 Qed.
 
-Derive list_append_v_stack_prog
-  in ltac2:(relcompile_tpe 'list_append_v_stack_prog 'list_append_v_stack []) 
-  as list_append_v_stack_prog_proof.
+Derive flatten_prog
+  in ltac2:(relcompile_tpe 'flatten_prog '@flatten ['@list_append]) 
+  as flatten_prog_proof.
 Proof.
   intros.
-  subst list_append_v_stack_prog.
+  subst flatten_prog.
   time relcompile.
+  specialize H with (A := A) (Refinable_inst := Refinable_inst) (l1 := (flatten a1)) (l2 := (flatten a2)).
+  eauto.
 Qed.
 
-Derive list_length_asm_prog
-  in ltac2:(relcompile_tpe 'list_length_asm_prog 'list_length_asm []) 
-  as list_length_asm_prog_proof.
+Derive app_list_length_prog
+  in ltac2:(relcompile_tpe 'app_list_length_prog '@app_list_length ['@list_length]) 
+  as app_list_length_prog_proof.
 Proof.
   intros.
-  subst list_length_asm_prog.
+  subst app_list_length_prog.
   time relcompile.
-Qed.
-
-Derive list_length_exp_prog
-  in ltac2:(relcompile_tpe 'list_length_exp_prog 'list_length_exp []) 
-  as list_length_exp_prog_proof.
-Proof.
-  intros.
-  subst list_length_exp_prog.
-  time relcompile.
-Qed.
-
-Derive list_length_v_stack_prog
-  in ltac2:(relcompile_tpe 'list_length_v_stack_prog 'list_length_v_stack []) 
-  as list_length_v_stack_prog_proof.
-Proof.
-  intros.
-  subst list_length_v_stack_prog.
-  time relcompile.
-Qed.
-
-Derive list_length_name_prog
-  in ltac2:(relcompile_tpe 'list_length_name_prog 'list_length_name []) 
-  as list_length_name_prog_proof.
-Proof.
-  intros.
-  subst list_length_name_prog.
-  time relcompile.
-Qed.
-
-Derive flatten_asm_prog
-  in ltac2:(relcompile_tpe 'flatten_asm_prog 'flatten_asm ['list_append_asm]) 
-  as flatten_asm_prog_proof.
-Proof.
-  intros.
-  subst flatten_asm_prog.
-  time relcompile.
-Qed.
-
-Derive app_list_length_asm_prog
-  in ltac2:(relcompile_tpe 'app_list_length_asm_prog 'app_list_length_asm ['list_length_asm]) 
-  as app_list_length_asm_prog_proof.
-Proof.
-  intros.
-  subst app_list_length_asm_prog.
-  time relcompile.
+  specialize H with (A := A) (Refinable_inst := Refinable_inst) (l := l).
+  eauto.
 Qed.
 
 Derive give_up_prog 

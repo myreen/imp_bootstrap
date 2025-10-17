@@ -22,6 +22,7 @@ From Coq Require Import FunInd.
 (* 1. every destruct has to have a `eqn:?` (Otherwise, we can get a bunch of
    goal that need to provide base case values for some types)
    This might be an issue with fix unfolding, since it only happens when we have a fixpoint with a match *)
+(* 2. For polymorphic functions always provide them with @ e.g. @length *)
 
 Open Scope nat.
 
@@ -30,6 +31,34 @@ Ltac2 rec string_of_relevance (r: Binder.relevance): string :=
   | Binder.Relevant => "Relevant"
   | Binder.Irrelevant => "Irrelevant"
   | Binder.RelevanceVar (_) => "RelevanceVar"
+  end.
+
+Ltac2 message_of_option (opt: message option): message :=
+  Option.default (fprintf "None") opt.
+
+Ltac2 message_of_binder (b: binder): message :=
+  match Binder.name b with
+  | None =>
+    fprintf "(_, %t)" (Binder.type b)
+  | Some n =>
+    fprintf "(%I, %t)" n (Binder.type b)
+  end.
+
+Ltac2 message_of_cenv (cenv: (constr option * constr) list): message :=
+  message_of_list (
+    List.map (fun p =>
+      fprintf "(%a, %t)"
+        (fun () c => message_of_option (Option.map Message.of_constr c))
+        (fst p)
+        (snd p)
+    )
+    cenv
+  ).
+
+Ltac2 constr_is_sort (c: constr): bool :=
+  match Unsafe.kind c with
+  | Unsafe.Sort _ => true
+  | _ => false
   end.
 
 Ltac2 rec split_thm_args (c: constr): constr list :=
@@ -320,7 +349,8 @@ Ltac2 rec in_contexts (bs: binder list) (c: unit -> constr) (): constr :=
   | b :: bs =>
     (* let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in *)
     let name := Option.get (Binder.name b) in
-    Constr.in_context name (Binder.type b) (fun () =>
+    (* it should ideally be (Binder.type b) instead of open_constr:(_), but it breaks the current procedure for dependent types *)
+    Constr.in_context name open_constr:(_) (fun () =>
       (* let b_hyp := Control.hyp name in *)
       let r := in_contexts bs c in
       Control.refine r
@@ -380,9 +410,10 @@ Ltac2 unfold_fix_impl (fconstr: constr): unit :=
       open_constr:($fconstr_applied = ltac2:(rhs ()))
     ) in
     let res := fun () => Std.eval_cbv beta (res ()) in
-    let r := lambda_to_prod (res ()) in
-    Control.refine (fun () => r)
-  | _ => Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
+    let res := fun () => lambda_to_prod (res ()) in
+    Control.refine res
+  | _ =>
+    Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
   end.
 
 Ltac2 unfold_fix_gen (fconstr: constr): unit :=
@@ -418,28 +449,6 @@ Ltac2 unfold_fix_proof (fconstr: constr): unit :=
     reflexivity ()
   ).
 
-Ltac2 message_of_option (opt: message option): message :=
-  Option.default (fprintf "None") opt.
-
-Ltac2 message_of_binder (b: binder): message :=
-  match Binder.name b with
-  | None =>
-    fprintf "(_, %t)" (Binder.type b)
-  | Some n =>
-    fprintf "(%I, %t)" n (Binder.type b)
-  end.
-
-Ltac2 message_of_cenv (cenv: (constr option * constr) list): message :=
-  message_of_list (
-    List.map (fun p =>
-      fprintf "(%a, %t)"
-        (fun () c => message_of_option (Option.map Message.of_constr c))
-        (fst p)
-        (snd p)
-    )
-    cenv
-  ).
-
 Ltac2 rec var_ident_of_constr (c: constr): ident :=
   match Unsafe.kind c with
   | Var i => i
@@ -468,7 +477,8 @@ Ltac2 rec compile () : unit :=
     (* printf "Goal: %t" c; *)
     match List.find_opt (fun p => Constr.equal e (snd p)) cenv with
     | Some (name_constr_opt, _) =>
-      let name_constr := Option.default open_constr:(_) name_constr_opt in
+      (* Figure out why adding a default here as (open_constr:(_)) leaves hanging evars for polymorophic functions *)
+      let name_constr := Option.get name_constr_opt in
       refine open_constr:(trans_Var
       (* env *) $fenv
       (* s *) _
@@ -1067,6 +1077,7 @@ Ltac2 rec compile () : unit :=
         compile_go ()
       | Some (f, args) =>
         (* A function application *)
+        let args := List.filter (fun c => Bool.neg (constr_is_sort (Constr.type c))) args in
         let f_lookup := get_f_lookup_from_hyps () in
         let fname_opt := fname_if_in_f_lookup f_lookup f in
         match fname_opt with
@@ -1074,7 +1085,7 @@ Ltac2 rec compile () : unit :=
           (* Existing function that is in f_lookup (currently – in premises) *)
           let args_constr := list_to_constr_encode args in
           let fname_str := constr_string_of_string fname in
-          (* printf "applying trans_Call with fname := %t and args := %t" fname_str args_constr; *)
+          printf "applying trans_Call with fname := %t and args := %t" fname_str args_constr;
           refine open_constr:(trans_Call
           (* env *) $fenv
           (* xs *) _
@@ -1124,6 +1135,14 @@ Ltac2 opt_is_empty (opt: 'a option): bool :=
   | _ => false
   end.
 
+Ltac2 rec index_of (i: ident) (l: ident list): int option :=
+  match l with
+  | [] => None
+  | j :: l =>
+    if Ident.equal i j then Some 0
+    else Option.map (Int.add 1) (index_of i l)
+  end.
+
 (* Top level tactic that compiles a program into FunLang *)
 (* Handles expression evaluation and function evaluation as goals *)
 Ltac2 rec docompile () :=
@@ -1151,11 +1170,14 @@ Ltac2 rec docompile () :=
       if String.equal fname_str cname_str then
         (* If its a fixpoint apply `fname_equation`, otherwise unfold `fname` *)
         (if isFix fconstr then
-          let fargs_ids := List.map var_ident_of_constr fargs in
-          Std.revert fargs_ids;
-          let struct_idx :=  struct_of_fix fconstr in
+          let all_fargs_ids := List.map var_ident_of_constr fargs in
+          let non_type_fargs_ids := List.map var_ident_of_constr (List.filter (fun c => Bool.neg (constr_is_sort (Constr.type c))) fargs) in
+          Std.revert non_type_fargs_ids;
+          let struct_idx := struct_of_fix fconstr in
+          let struct_id := List.nth all_fargs_ids struct_idx in
+          let new_struct_idx := Option.get (index_of struct_id non_type_fargs_ids) in
           let hname := Fresh.in_goal (Option.get (Ident.of_string "IH")) in
-          Std.fix_ hname (Int.add struct_idx 1);
+          Std.fix_ hname (Int.add new_struct_idx 1);
           intros;
           rewrite_with_equation fconstr
         else
@@ -1249,7 +1271,7 @@ Ltac2 rec mk_constr_list (args: constr list): constr :=
     open_constr:($h :: $t_constr)
   end.
 
-Ltac2 rec gen_eval_app_impl (bs: binder list) (args: constr list) (f_constr_name: constr) (f: constr) (): constr :=
+Ltac2 rec gen_eval_app_impl (bs: binder list) (fpargs: constr list) (args: constr list) (f_constr_name: constr) (f: constr) (): constr :=
   (* printf "gen_eval_app_impl bs: %a args: %a f_constr_name: %t f: %t"
     (fun () x => message_of_list (List.map (fun b => fprintf "%I %t" (Option.default (Option.get (Ident.of_string "dummy")) (Binder.name b)) (Binder.type b)) x)) bs
     (fun () x => message_of_list (List.map Message.of_constr x)) args
@@ -1258,16 +1280,22 @@ Ltac2 rec gen_eval_app_impl (bs: binder list) (args: constr list) (f_constr_name
   match bs with
   | b :: bs =>
     let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
-    let cont := Constr.in_context name (Binder.type b) (fun () =>
+    (* Same as with in_contexts, should ideally be (Binder.type b), but it beaks with dependent types *)
+    lambda_to_prod (Constr.in_context name open_constr:(_) (fun () =>
       let b_hyp := Control.hyp name in
-      Control.refine (gen_eval_app_impl bs (List.append args [b_hyp]) f_constr_name f)
-    ) in
-    match Constr.Unsafe.kind cont with
-    | Lambda b body' => make (Prod b body')
-    | _ => Control.throw_invalid_argument ""
-    end
+      Control.refine (fun () =>
+        if constr_is_sort (Binder.type b) then
+          let nameR := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "Refinable_inst")) in
+          lambda_to_prod (Constr.in_context nameR open_constr:(Refinable $b_hyp) (fun () =>
+            Control.refine (fun () =>
+              gen_eval_app_impl bs fpargs (List.append args [b_hyp]) f_constr_name f ()
+            )
+          ))
+        else gen_eval_app_impl bs (List.append fpargs [b_hyp]) (List.append args [b_hyp]) f_constr_name f ()
+      )
+    ))
   | _ =>
-    let encode_list_constr := mk_constr_list (List.map (fun c => open_constr:(encode $c)) args) in
+    let encode_list_constr := mk_constr_list (List.map (fun c => open_constr:(encode $c)) fpargs) in
     let applied_f := apply_to_args f args in
     open_constr:(eval_app (name_enc $f_constr_name) $encode_list_constr &s (encode $applied_f, &s))
   end.
@@ -1276,7 +1304,7 @@ Ltac2 gen_eval_app (f: constr) (): constr :=
   let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
   let f_constr_name_c := constr_string_of_string f_constr_name in
   let f_binders := collect_prod_binders f in
-  gen_eval_app_impl f_binders [] f_constr_name_c f ().
+  gen_eval_app_impl f_binders [] [] f_constr_name_c f ().
 
 Ltac2 rec dedup_go (acc: 'a list) (l: 'a list) (eq: 'a -> 'a -> bool): 'a list :=
   match l with
@@ -1352,12 +1380,12 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
   let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
   let f_constr_name_c := constr_string_of_string f_constr_name in
   let f_binders := collect_prod_binders f in
+  let non_type_f_binders := List.filter (fun b => Bool.neg (constr_is_sort (Binder.type b))) f_binders in
   let f_binder_names := List.map (fun b =>
     let n := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
     constr_string_of_string (Ident.to_string n)
-  ) f_binders in
+  ) non_type_f_binders in
   let encoded_b_names := mk_constr_list (List.map (fun n => constr:(name_enc $n)) f_binder_names) in
-  (* printf "encoded_b_names: %t" encoded_b_names; *)
   let eval_app_cont := gen_eval_app f in
   (* TODO: this might be easier to use, if we exclude some spurious deps, like "add" *)
   (* let _deps: constr list := get_fun_deps f in *)
@@ -1390,45 +1418,37 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
 (* TODO: for some reason, need this for generated derivation statement proofs *)
 Opaque encode.
 
-Function polylength {A} `{ra: Refinable A} (l: list A) :=
+Fixpoint polylength {A: Type} (l: list A) :=
   match l with
   | [] => 0
   | _ :: l => 1 + polylength l
   end.
+Lemma polylength_equation: ltac2:(unfold_fix_type '@polylength).
+Proof. unfold_fix_proof '@polylength. Qed.
 
-(* TODO: make this polymorphic example work *)
-(* automatic generation doesn't work for polymorphic functions *)
-(* Derive polylength_prog
-  in ltac2:(relcompile_tpe 'polylength_prog 'polylength [])
-  as polylength_prog_proof. *)
-Derive polylength_prog in (forall s,
-  (* Should this take all the arguments? including type and typeclass arguments? vvv *)
-  lookup_fun (name_enc "polylength") s.(funs) = Some ([name_enc "l"], polylength_prog) ->
-  forall {A: Type} `{ra: Refinable A} (l: list A),
-    eval_app (name_enc "polylength") [encode l] s (encode (@polylength A ra l), s)
-) as polylength_proof.
+Derive polylength_prog
+  in ltac2:(relcompile_tpe 'polylength_prog '@polylength [])
+  as polylength_prog_proof.
 Proof.
-  subst polylength_prog.
-  intros* H.
-  ltac1:(fix IH 3).
   intros.
-  rewrite polylength_equation.
-  eapply trans_app with (params := [name_enc "l"]).
-  1: {
-    eapply auto_list_case with (n1 := "h"%string) (n2 := "t"%string).
-    1: eapply trans_Var with (n := "l"%string); eauto with fenvDb.
-    1: destruct l.
-    1: eapply auto_nat_const.
-    1: {
-      eapply auto_nat_add.
-      1: eapply auto_nat_const.
-      eapply trans_Call; eauto.
-      eapply trans_Var with (n := "t"%string); eauto with fenvDb.
-    }
-    crush_NoDup ().
-  }
-  1: simpl; reflexivity ().
-  eauto.
+  subst polylength_prog.
+  relcompile.
+Qed.
+
+Definition double_polylength (l: list nat) : nat :=
+  2 + polylength l.
+
+Derive double_polylength_prog
+  in ltac2:(relcompile_tpe 'double_polylength_prog 'double_polylength ['@polylength])
+  as double_polylength_prog_proof.
+Proof.
+  intros.
+  subst double_polylength_prog.
+  relcompile.
+  (* TODO: *)
+  2: specialize H with (A := nat) (Refinable_inst := Refinable_nat) (l := l).
+  2: eauto.
+  1: exact Refinable_list.
 Qed.
 
 Function has_match (l: list nat) : nat :=

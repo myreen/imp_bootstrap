@@ -8,6 +8,7 @@ From impboot Require Import automation.Ltac2Utils.
 From impboot Require Import functional.FunValues.
 From impboot Require Import functional.FunSemantics.
 Require Import impboot.automation.AutomationHOLStyle.
+Require Import impboot.automation.AutomationLemmas.
 Require Import coqutil.Word.Interface.
 Require Import ZArith.
 From Coq Require Import FunInd.
@@ -48,23 +49,19 @@ Proof. unfold_fix_proof 'c_fundefs. Qed.
 Opaque encode.
 Opaque name_enc.
 
-(* TODO: takes too long *)
-(* TODO: possibly the side condition crunch tactics? *)
-(* Derive init_prog
+Derive init_prog
   in ltac2:(relcompile_tpe 'init_prog 'init []) 
   as init_prog_proof.
 Proof.
   intros.
   subst init_prog.
   time relcompile.
-  all: try ltac1:(lia).
-  2: eapply FEnv.lookup_insert_eq.
   ltac1:(replace (N.of_nat (2 ^ 63 - 1)) with (2 ^ 63 - 1)%N).
   1: ltac1:(lia).
   rewrite Nnat.Nat2N.inj_sub.
   rewrite Nnat.Nat2N.inj_pow.
   ltac1:(lia).
-Qed. *)
+Qed.
 
 Derive list_append_prog
   in ltac2:(relcompile_tpe 'list_append_prog '@list_append []) 
@@ -91,8 +88,6 @@ Proof.
   intros.
   subst flatten_prog.
   time relcompile.
-  specialize H with (A := A) (Refinable_inst := Refinable_inst) (l1 := (flatten a1)) (l2 := (flatten a2)).
-  eauto.
 Qed.
 
 Derive app_list_length_prog
@@ -102,8 +97,6 @@ Proof.
   intros.
   subst app_list_length_prog.
   time relcompile.
-  specialize H with (A := A) (Refinable_inst := Refinable_inst) (l := l).
-  eauto.
 Qed.
 
 Derive give_up_prog 
@@ -136,7 +129,7 @@ Qed.
 (* Derivations with dependencies *)
 
 Derive even_len_v_stack_prog 
-  in ltac2:(relcompile_tpe 'even_len_v_stack_prog 'even_len_v_stack []) 
+  in ltac2:(relcompile_tpe 'even_len_v_stack_prog '@even_len []) 
   as even_len_v_stack_prog_proof.
 Proof.
   intros.
@@ -145,7 +138,7 @@ Proof.
 Qed.
 
 Derive odd_len_v_stack_prog 
-  in ltac2:(relcompile_tpe 'odd_len_v_stack_prog 'odd_len_v_stack []) 
+  in ltac2:(relcompile_tpe 'odd_len_v_stack_prog '@odd_len []) 
   as odd_len_v_stack_prog_proof.
 Proof.
   intros.
@@ -234,8 +227,8 @@ Proof.
   time relcompile.
 Qed.
 
-Derive c_alloc_prog 
-  in ltac2:(relcompile_tpe 'c_alloc_prog 'c_alloc ['even_len_v_stack]) 
+Derive c_alloc_prog
+  in ltac2:(relcompile_tpe 'c_alloc_prog 'c_alloc ['@even_len]) 
   as c_alloc_prog_proof.
 Proof.
   intros.
@@ -252,8 +245,8 @@ Proof.
   time relcompile.
 Qed.
 
-Derive c_read_prog 
-  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['even_len_v_stack; 'align; 'app_list_length_asm]) 
+Derive c_read_prog
+  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['@even_len; 'align; '@app_list_length]) 
   as c_read_prog_proof.
 Proof.
   intros.
@@ -262,7 +255,7 @@ Proof.
 Qed.
 
 Derive c_write_prog 
-  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['even_len_v_stack; 'align; 'app_list_length_asm]) 
+  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['@even_len; 'align; '@app_list_length]) 
   as c_write_prog_proof.
 Proof.
   intros.
@@ -289,7 +282,7 @@ Proof.
 Qed.
 
 Derive c_exp_prog 
-  in ltac2:(relcompile_tpe 'c_exp_prog 'c_exp ['c_var; 'c_const; 'c_add; 'c_sub; 'c_div; 'c_load]) 
+  in ltac2:(relcompile_tpe 'c_exp_prog 'c_exp ['c_var; 'c_const; 'c_add; 'c_sub; 'c_div; 'c_load; '@app_list_length]) 
   as c_exp_prog_proof.
 Proof.
   intros.
@@ -316,7 +309,7 @@ Proof.
 Qed.
 
 Derive c_test_jump_prog 
-  in ltac2:(relcompile_tpe 'c_test_jump_prog 'c_test_jump ['c_exp; 'c_cmp; 'app_list_length_asm]) 
+  in ltac2:(relcompile_tpe 'c_test_jump_prog 'c_test_jump ['c_exp; 'c_cmp; '@app_list_length]) 
   as c_test_jump_prog_proof.
 Proof.
   intros.
@@ -334,7 +327,7 @@ Proof.
 Qed.
 
 Derive make_ret_prog 
-  in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret ['list_length_v_stack]) 
+  in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret ['@list_length]) 
   as make_ret_prog_proof.
 Proof.
   intros.
@@ -343,7 +336,7 @@ Proof.
 Qed.
 
 Derive c_pops_prog 
-  in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; 'even_len_v_stack; 'even_len_exp; 'list_length_exp]) 
+  in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; '@even_len; '@list_length]) 
   as c_pops_prog_proof.
 Proof.
   intros.
@@ -361,7 +354,7 @@ Proof.
 Qed.
 
 Derive c_pushes_prog 
-  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_v_stack; 'list_length_name]) 
+  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_v_stack; '@list_length]) 
   as c_pushes_prog_proof.
 Proof.
   intros.
@@ -370,7 +363,7 @@ Proof.
 Qed.
 
 Derive c_call_prog 
-  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; 'align; 'even_len_v_stack; 'app_list_length_asm]) 
+  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; 'align; '@even_len; '@app_list_length]) 
   as c_call_prog_proof.
 Proof.
   intros.
@@ -382,7 +375,7 @@ Derive c_cmd_prog
   in ltac2:(relcompile_tpe 'c_cmd_prog 'c_cmd 
     ['c_exp; 'c_assign; 'c_store; 'c_test_jump; 'c_exps; 'c_call; 
      'c_var; 'make_ret; 'c_alloc; 'c_read; 'c_write; 'abort; 'lookup;
-     'odd_len_v_stack; 'app_list_length_asm])
+     '@odd_len; '@app_list_length])
   as c_cmd_prog_proof.
 Proof.
   intros.
@@ -391,7 +384,7 @@ Proof.
 Qed.
 
 Derive all_binders_prog 
-  in ltac2:(relcompile_tpe 'all_binders_prog 'all_binders ['list_append_name]) 
+  in ltac2:(relcompile_tpe 'all_binders_prog 'all_binders ['@list_append]) 
   as all_binders_prog_proof.
 Proof.
   intros.
@@ -437,7 +430,7 @@ Qed.
 
 Derive c_fundef_prog 
   in ltac2:(relcompile_tpe 'c_fundef_prog 'c_fundef 
-    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd; 'list_length_v_stack; 'list_append_v_stack]) 
+    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd; '@list_length; '@list_append]) 
   as c_fundef_prog_proof.
 Proof.
   intros.
@@ -484,7 +477,7 @@ Qed.
 
 (* TODO: (fun_name_of_string "main") taken as constant. Is that ok? *)
 Derive codegen_prog 
-  in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fundefs; 'lookup; 'init; 'get_funcs; 'app_list_length_asm; 'flatten_asm]) 
+  in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fundefs; 'lookup; 'init; 'get_funcs; '@app_list_length; '@flatten]) 
   as codegen_prog_proof.
 Proof.
   intros.

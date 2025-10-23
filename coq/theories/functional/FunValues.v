@@ -32,7 +32,7 @@ Global Instance Refinable_string: Refinable string :=
 Definition value_list_of_values (xs : list Value) : Value :=
   fold_right (fun x acc => Pair x acc) (Num 0) xs.
 
-Global Instance Refinable_list {A : Type} `{Refinable A} : Refinable (list A) :=
+Global Instance Refinable_list {A: Type} `{Refinable A}: Refinable (list A) :=
   { encode l := value_list_of_values (List.map encode l) }.
 
 Definition value_less (v1 v2 : Value) : bool :=
@@ -80,7 +80,7 @@ Global Instance Refinable_bool : Refinable bool :=
 Global Instance Refinable_pair {A B : Type} `{Refinable A} `{Refinable B} : Refinable (A * B) :=
   { encode p := Pair (encode (fst p)) (encode (snd p)) }.
 
-Global Instance Refinable_option {A : Type} `{Refinable (list A)} : Refinable (option A) :=
+Global Instance Refinable_option {A : Type} `{Refinable A} : Refinable (option A) :=
   { encode o :=
     match o with
     | None => encode []

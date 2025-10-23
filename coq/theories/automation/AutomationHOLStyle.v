@@ -3,7 +3,6 @@ From impboot Require Import utils.AppList.
 From coqutil Require Import dlet.
 From coqutil Require Import Word.Interface.
 Require Import impboot.functional.FunValues.
-(* Require Import impboot.functional.FunSyntax. *)
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
@@ -1271,14 +1270,14 @@ Ltac2 rec mk_constr_list (args: constr list): constr :=
     open_constr:($h :: $t_constr)
   end.
 
-Ltac2 rec gen_eval_app_impl (bs: binder list) (fpargs: constr list) (args: constr list) (f_constr_name: constr) (f: constr) (): constr :=
-  (* printf "gen_eval_app_impl bs: %a args: %a f_constr_name: %t f: %t"
-    (fun () x => message_of_list (List.map (fun b => fprintf "%I %t" (Option.default (Option.get (Ident.of_string "dummy")) (Binder.name b)) (Binder.type b)) x)) bs
-    (fun () x => message_of_list (List.map Message.of_constr x)) args
+Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: constr) (): constr :=
+  (* printf "gen_eval_app_impl f.type: %t fpargs: %a f_constr_name: %t f: %t"
+    (Constr.type f)
+    (fun () x => message_of_list (List.map Message.of_constr x)) fpargs
     f_constr_name
     f; *)
-  match bs with
-  | b :: bs =>
+  match Unsafe.kind (Constr.type f) with
+  | Prod b _ =>
     let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
     (* Same as with in_contexts, should ideally be (Binder.type b), but it beaks with dependent types *)
     lambda_to_prod (Constr.in_context name open_constr:(_) (fun () =>
@@ -1288,23 +1287,28 @@ Ltac2 rec gen_eval_app_impl (bs: binder list) (fpargs: constr list) (args: const
           let nameR := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "Refinable_inst")) in
           lambda_to_prod (Constr.in_context nameR open_constr:(Refinable $b_hyp) (fun () =>
             Control.refine (fun () =>
-              gen_eval_app_impl bs fpargs (List.append args [b_hyp]) f_constr_name f ()
+              gen_eval_app_impl fpargs f_constr_name open_constr:($f $b_hyp) ()
             )
           ))
-        else gen_eval_app_impl bs (List.append fpargs [b_hyp]) (List.append args [b_hyp]) f_constr_name f ()
+        else gen_eval_app_impl (List.append fpargs [b_hyp]) f_constr_name open_constr:($f $b_hyp) ()
       )
     ))
   | _ =>
-    let encode_list_constr := mk_constr_list (List.map (fun c => open_constr:(encode $c)) fpargs) in
-    let applied_f := apply_to_args f args in
-    open_constr:(eval_app (name_enc $f_constr_name) $encode_list_constr &s (encode $applied_f, &s))
+    open_constr:(ltac2:(Control.refine (fun () =>
+      let encode_list_constr := mk_constr_list (List.map (fun c =>
+        let ctpe := Constr.type c in
+        constr:(@encode $ctpe _ $c)
+      ) fpargs) in
+      let f_tpe := Constr.type f in
+      constr:(eval_app (name_enc $f_constr_name) $encode_list_constr &s (@encode $f_tpe _ $f, &s))
+    )))
   end.
 
 Ltac2 gen_eval_app (f: constr) (): constr :=
   let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
   let f_constr_name_c := constr_string_of_string f_constr_name in
-  let f_binders := collect_prod_binders f in
-  gen_eval_app_impl f_binders [] [] f_constr_name_c f ().
+  (* let f_binders := collect_prod_binders f in *)
+  open_constr:(ltac2:(Control.refine (gen_eval_app_impl [] f_constr_name_c f))).
 
 Ltac2 rec dedup_go (acc: 'a list) (l: 'a list) (eq: 'a -> 'a -> bool): 'a list :=
   match l with
@@ -1317,7 +1321,7 @@ Ltac2 dedup (l: 'a list) (eq: 'a -> 'a -> bool): 'a list :=
   dedup_go [] l eq.
 
 (* The problem with automatically detecting dependencies is: how do I know which are the "real" rependencies? *)
-(*   i.e. why is add not a dependency? *)
+(*   i.e. why is "add" not a dependency? *)
 (*   Actually, maybe just black-list some built-in functions? *)
 Ltac2 rec collect_deps (bs: ident list) (c: constr): constr list :=
   Message.print (message_of_list (List.map Message.of_ident bs));
@@ -1364,7 +1368,6 @@ Ltac2 get_fun_deps (f: constr): constr list :=
   let all_deps := collect_deps (opt_to_list (Ident.of_string f_constr_name)) (Std.eval_unfold [(f_name_r, AllOccurrences)] f) in
   dedup all_deps (Constr.equal).
 
-
 Ltac2 rec mk_refine_impls (args: (unit -> constr) list) (res: unit -> constr) (): constr :=
   match args with
   | a :: args =>
@@ -1387,7 +1390,7 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
   ) non_type_f_binders in
   let encoded_b_names := mk_constr_list (List.map (fun n => constr:(name_enc $n)) f_binder_names) in
   let eval_app_cont := gen_eval_app f in
-  (* TODO: this might be easier to use, if we exclude some spurious deps, like "add" *)
+  (* TODO: this (below) might be easier to use, if we exclude some spurious deps, like "add" *)
   (* let _deps: constr list := get_fun_deps f in *)
   let deps_eval_app_conts := List.map gen_eval_app deps in
   Control.refine (fun () =>
@@ -1418,6 +1421,19 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
 (* TODO: for some reason, need this for generated derivation statement proofs *)
 Opaque encode.
 
+Set Printing Implicit.
+
+Definition idd {A: Type} (a: list A): list A := a.
+
+Derive idd_prog
+  in ltac2:(relcompile_tpe 'idd_prog '@idd [])
+  as idd_prog_proof.
+Proof.
+  intros.
+  subst idd_prog.
+  time relcompile.
+Qed.
+
 Fixpoint polylength {A: Type} (l: list A) :=
   match l with
   | [] => 0
@@ -1441,14 +1457,18 @@ Definition double_polylength (l: list nat) : nat :=
 Derive double_polylength_prog
   in ltac2:(relcompile_tpe 'double_polylength_prog 'double_polylength ['@polylength])
   as double_polylength_prog_proof.
+(* Derive double_polylength_prog
+  in (∀ s : state,
+  (∀ (A : Type) (Refinable_inst : Refinable A) (l : list A),
+    eval_app (name_enc "polylength") [encode l] s (encode (polylength l), s)) →
+  lookup_fun (name_enc "double_polylength") (funs s) = Some ([name_enc "l"], double_polylength_prog) →
+  ∀ l : list nat,
+    eval_app (name_enc "double_polylength") [encode l] s (encode (double_polylength l), s))
+  as double_polylength_prog_proof. *)
 Proof.
   intros.
   subst double_polylength_prog.
   relcompile.
-  (* TODO: *)
-  2: specialize H with (A := nat) (Refinable_inst := Refinable_nat) (l := l).
-  2: eauto.
-  1: exact Refinable_list.
 Qed.
 
 Function has_match (l: list nat) : nat :=

@@ -1254,7 +1254,13 @@ Ltac2 crush_side_conditions () :=
     end
   ).
 
-Ltac2 relcompile_impl () :=
+Ltac2 relcompile_impl (): unit :=
+  intros;
+  let prog_id :=
+    match (List.nth (Control.hyps ()) 0) with
+    | (i, _, _) => i
+    end in
+  subst $prog_id;
   unshelve (docompile ());
   crush_NoDup ();
   crush_side_conditions ().
@@ -1307,7 +1313,6 @@ Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: co
 Ltac2 gen_eval_app (f: constr) (): constr :=
   let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
   let f_constr_name_c := constr_string_of_string f_constr_name in
-  (* let f_binders := collect_prod_binders f in *)
   open_constr:(ltac2:(Control.refine (gen_eval_app_impl [] f_constr_name_c f))).
 
 Ltac2 rec dedup_go (acc: 'a list) (l: 'a list) (eq: 'a -> 'a -> bool): 'a list :=
@@ -1429,8 +1434,6 @@ Derive idd_prog
   in ltac2:(relcompile_tpe 'idd_prog '@idd [])
   as idd_prog_proof.
 Proof.
-  intros.
-  subst idd_prog.
   time relcompile.
 Qed.
 
@@ -1446,8 +1449,6 @@ Derive polylength_prog
   in ltac2:(relcompile_tpe 'polylength_prog '@polylength [])
   as polylength_prog_proof.
 Proof.
-  intros.
-  subst polylength_prog.
   relcompile.
 Qed.
 
@@ -1466,8 +1467,6 @@ Derive double_polylength_prog
     eval_app (name_enc "double_polylength") [encode l] s (encode (double_polylength l), s))
   as double_polylength_prog_proof. *)
 Proof.
-  intros.
-  subst double_polylength_prog.
   relcompile.
 Qed.
 
@@ -1486,8 +1485,6 @@ Derive has_match_prog in ltac2:(relcompile_tpe 'has_match_prog 'has_match []) as
     eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
 ) as has_match_proof. *)
 Proof.
-  intros.
-  subst has_match_prog.
   relcompile.
 Qed.
 
@@ -1506,8 +1503,6 @@ Derive sum_n_prog in ltac2:(relcompile_tpe 'sum_n_prog 'sum_n []) as sum_n_prog_
       eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
   as sum_n_prog_proof. *)
 Proof.
-  subst sum_n_prog.
-  intros.
   relcompile.
 Qed.
 
@@ -1521,8 +1516,6 @@ Derive bool_ops_prog in ltac2:(relcompile_tpe 'bool_ops_prog 'bool_ops []) as bo
     eval_app (name_enc "bool_ops") [encode b] s (encode (bool_ops b), s))
   as bool_ops_prog_proof. *)
 Proof.
-  intros.
-  subst bool_ops_prog.
   relcompile.
 Qed.
 
@@ -1543,8 +1536,6 @@ Derive has_cases_prog in ltac2:(relcompile_tpe 'has_cases_prog 'has_cases []) as
       eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s))
   as has_cases_proof. *)
 Proof.
-  intros.
-  subst has_cases_prog.
   relcompile.
 Qed.
 
@@ -1565,8 +1556,6 @@ Derive has_cases_list_prog in ltac2:(relcompile_tpe 'has_cases_list_prog 'has_ca
       eval_app (name_enc "has_cases_list") [encode l] s (encode (has_cases_list l), s))
   as has_cases_list_proof. *)
 Proof.
-  intros.
-  subst has_cases_list_prog.
   relcompile.
 Qed.
 
@@ -1584,8 +1573,6 @@ Derive foo_prog in ltac2:(relcompile_tpe 'foo_prog 'foo []) as foo_prog_proof.
       eval_app (name_enc "foo") [encode n] s (encode (foo n), s))
   as foo_prog_proof. *)
 Proof.
-  intros.
-  subst foo_prog.
   relcompile.
 Qed.
 
@@ -1600,8 +1587,6 @@ Derive bar_prog in ltac2:(relcompile_tpe 'bar_prog 'bar ['foo]) as bar_prog_proo
       eval_app (name_enc "bar") [encode n] s (encode (bar n), s))
   as bar_prog_proof. *)
 Proof.
-  intros.
-  subst bar_prog.
   relcompile.
 Qed.
 
@@ -1616,8 +1601,6 @@ Derive baz_prog in ltac2:(relcompile_tpe 'baz_prog 'baz []) as baz_prog_proof.
       eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s))
   as baz_prog_proof. *)
 Proof.
-  intros.
-  subst baz_prog.
   relcompile.
 Qed.
 
@@ -1633,8 +1616,6 @@ Derive baz2_prog in ltac2:(relcompile_tpe 'baz2_prog 'baz2 ['baz]) as baz2_prog_
       eval_app (name_enc "baz2") [encode n] s (encode (baz2 n), s))
   as baz2_prog_proof. *)
 Proof.
-  intros.
-  subst baz2_prog.
   relcompile.
 Qed.
 
@@ -1648,7 +1629,5 @@ Derive sum_acc_prog
   in ltac2:(relcompile_tpe 'sum_acc_prog 'sum_acc [])
   as sum_acc_prog_proof.
 Proof.
-  intros.
-  subst sum_acc_prog.
   relcompile.
 Qed.

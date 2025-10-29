@@ -258,7 +258,7 @@ Fixpoint c_exps (es: list exp) (l: nat) (vs: v_stack): asm_appl * nat :=
 (*
   RDI `cmp` RBX
 *)
-Definition c_cmp (c : cmp) : cond :=
+Definition c_cmp (c: cmp) : cond :=
   match c with
   | Less => ASMSyntax.Less RDI RBX
   | Equal => ASMSyntax.Equal RDI RBX
@@ -490,13 +490,11 @@ Fixpoint c_fundefs (ds: list func) (l: nat) (fs: f_lookup): (asm_appl * list (na
     (comment +++ c1 +++ c2, (fname, l + 1) :: fs', l2)
   end.
 
-Fixpoint fun_name_of_string (str: string): name :=
+Function fun_name_of_string (str: string): name :=
   match str with
   | EmptyString => 0
   | String c s => (nat_of_ascii c) * 256 + fun_name_of_string s
   end.
-
-(* Compute (fun_name_of_string "main"). *)
 
 (* Generates the complete assembly code for a given program *)
 Definition codegen (prog : prog) : asm :=

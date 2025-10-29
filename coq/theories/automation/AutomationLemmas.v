@@ -1,4 +1,4 @@
-Require Import impboot.functional.FunSyntax.
+(* Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunProperties.
 Require Import impboot.functional.FunValues.
@@ -258,21 +258,31 @@ Proof.
   destruct (_ <? _)%nat eqn:Heq.
   all: repeat econstructor; eauto.
   all: unfold take_branch, return_; try reflexivity.
-  all: destruct (_ <? _) eqn:?; try rewrite Nat.ltb_lt in *; try rewrite Nat.ltb_nlt in *; subst.
+  all: destruct (_ <? _) eqn:?; rewrite ?Nat.ltb_lt, ?Nat.ltb_nlt in *; subst.
   all: try rewrite N.ltb_lt in *; try rewrite N.ltb_nlt in *; subst.
   all: eauto.
   all: lia.
 Qed.
 Hint Resolve auto_nat_if_less: automation.
 
+(* TODO: change "nat -> N" *)
+(*       does it work with fix? *)
+(*       use differnet induction type? *)
+
+(* match eq_dec v0 with ... *)
+
+(* for nat/N use strong induction instead of fix *)
+
+(* same precondition in the inductive principle vvvvvvvv *)
+(* destruct on `{v = 0} + {v = (pred v) + 1}` sort of like eq_dec *)
+
 Theorem auto_nat_case : forall {A} `{ra: Refinable A} env s x0 x1 x2 n (v0: nat) (v1: A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
-  (match v0 with
-  | 0%nat => env |-- ([x1], s) ---> ([encode v1], s)
-  | S n' =>
+  (if v0 =? 0 then
+    env |-- ([x1], s) ---> ([encode v1], s)
+  else (∀n', n' < n ->
     (FEnv.insert (name_enc n, Some (encode n')) env) |-- ([x2], s) --->
-      ([encode (v2 n')], s)
-  end) ->
+      ([encode (v2 n')], s))) ->
   env |-- ([If Equal [x0; Const 0] x1
       (Let (name_enc n)
         (Op Sub [x0; Const 1]) x2)], s) --->
@@ -313,7 +323,7 @@ Proof.
 Qed.
 Hint Resolve auto_list_cons: automation.
 
-Theorem auto_list_case : forall {A B} `{ra: Refinable A} `{rb : Refinable B} env s x0 x1 x2 n1 n2 (v0: list A) (v1: B) (v2: A -> list A -> B),
+Theorem auto_list_case: forall {A B} `{ra: Refinable A} `{rb : Refinable B} env s x0 x1 x2 n1 n2 (v0: list A) (v1: B) (v2: A -> list A -> B),
   env |-- ([x0], s) ---> ([encode v0], s) ->
   (match v0 with
    | [] =>
@@ -483,6 +493,7 @@ Qed.
 
 (* TODO: check this *)
 (* TODO: also, do we want this? *)
+(*       maybe for "main"? *)
 Theorem auto_string_const: forall env s str,
   env |-- ([Const (name_enc str)], s) ---> ([encode str], s).
 Proof.
@@ -490,6 +501,40 @@ Proof.
   simpl in *.
   Eval_eq.
 Qed.
+
+Theorem auto_string_case: forall {B} `{rb : Refinable B} env s x0 x1 x2 n1 n2 (v0: string) (v1: B) (v2: ascii -> string -> B),
+  env |-- ([x0], s) ---> ([encode v0], s) ->
+  (match v0 with
+   | EmptyString =>
+     env |-- ([x1], s) ---> ([rb.(encode) v1], s)
+   | String h t =>
+     (FEnv.insert (name_enc n2, Some (encode t))
+      (FEnv.insert (name_enc n1, Some (encode h)) env)) |-- ([x2], s) --->
+        ([rb.(encode) (v2 h t)], s)
+   end) ->
+  NoDup ([name_enc n1] ++ free_vars x0) ->
+  (* TODO: this is probably wrong vvvvvvv This should be consistent with the encoding of strings *)
+  env |-- ([If Equal [x0; Const 0] x1
+      (Let (name_enc n1) (Op Head [x0])
+        (Let (name_enc n2) (Op Tail [x0]) x2))], s) --->
+    ([rb.(encode) (
+      match v0 with
+      | EmptyString => v1
+      | String h t => v2 h t
+      end)], s).
+Proof.
+  intros.
+  destruct v0 eqn:?.
+  1: Eval_eq.
+  simpl in *.
+  subst.
+  rewrite NoDup_cons_iff in *.
+  pat `_ /\ _` at destruct pat.
+  Eval_eq.
+  + rewrite remove_env_update; eauto.
+  + simpl; reflexivity.
+Qed.
+Hint Resolve auto_list_case: automation.
 
 (* word *)
 
@@ -1759,3 +1804,4 @@ Qed.
 Hint Resolve auto_instr_CASE: automation.
 
 (* TODO(kπ) might need some more things for the parser *)
+ *)

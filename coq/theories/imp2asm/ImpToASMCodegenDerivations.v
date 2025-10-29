@@ -27,8 +27,6 @@ Open Scope app_list_scope.
 (*       Derivations for Codegen Functions         *)
 (* *********************************************** *)
 
-(* Equation lemmas for Function declarations *)
-
 Theorem c_declare_binders_rec_equation: ltac2:(unfold_fix_type 'c_declare_binders_rec).
 Proof. unfold_fix_proof 'c_declare_binders_rec. Qed.
 Theorem c_exp_equation: ltac2:(unfold_fix_type 'c_exp).

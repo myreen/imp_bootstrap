@@ -371,15 +371,19 @@ Ltac2 rec collect_prod_binders_impl (c: constr): binder list :=
 Ltac2 collect_prod_binders (c: constr): binder list :=
   collect_prod_binders_impl (Constr.type c).
 
+Ltac2 rec struct_of_fix_impl (c: constr): int :=
+  match Unsafe.kind c with
+  | Fix structs _ _ _ =>
+    Array.get structs 0
+  | Lambda _ c =>
+    Int.add 1 (struct_of_fix_impl c)
+  | _ =>
+    Control.throw (Oopsie (fprintf "not a fix; %t" c))
+  end.
 Ltac2 struct_of_fix (fconstr: constr): int :=
   let fref := reference_of_constr fconstr in
   let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
-  match Unsafe.kind unfolded with
-  | Fix structs _ _ _ =>
-    Array.get structs 0
-  | _ =>
-    Control.throw (Oopsie (fprintf "not a fix; %t" fconstr))
-  end.
+  struct_of_fix_impl unfolded.
 
 Ltac2 unfold_fix_impl (fconstr: constr): unit :=
   let fref := reference_of_constr fconstr in
@@ -1485,6 +1489,7 @@ Derive has_match_prog in ltac2:(relcompile_tpe 'has_match_prog 'has_match []) as
     eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
 ) as has_match_proof. *)
 Proof.
+  subst has_match_prog; intros.
   relcompile.
 Qed.
 

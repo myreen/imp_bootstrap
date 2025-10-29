@@ -236,8 +236,8 @@ Definition eval_cmp (c: cmp) (v1 v2: Value): SRM bool :=
     cont (w1 =w w2)
   (* TODO(kπ) *)
   (* assume that every allocated address is greater than zero (we should know that) *)
-  (* | Equal, Pointer p, Word w =>
-    (if w =w (word.of_Z 0) then cont false else stop Crash) *)
+  | Equal, Pointer _, Word w =>
+    (if w =w (word.of_Z 0) then cont false else stop Crash)
   | _, _, _ => stop Crash
   end.
 
@@ -492,7 +492,7 @@ Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome Value 
   match p with
   | Program funcs =>
     let s0 := init_state input funcs in
-    match find_fun (fun_name_of_string "main") funcs with
+    match find_fun (name_of_string "main") funcs with
     | Some ([], main_c) =>
       catch_return (eval_cmd main_c (EVAL_CMD fuel)) s0
     | _ => crash s0

@@ -48,12 +48,6 @@ Inductive func : Type :=
 Inductive prog : Type :=
 | Program (funcs: list func). (* a complete program is a list of function definitions *)
 
-Fixpoint fun_name_of_string (str: string): name :=
-  match str with
-  | EmptyString => 0
-  | String c s => (nat_of_ascii c) * 256 + fun_name_of_string s
-  end.
-
 (* Values *)
 
 Inductive Value :=

@@ -282,6 +282,34 @@ Ltac cleanup :=
   | [ H: _ :: _ = _ :: _ |- _ ] => inversion H; subst; clear H
   end.
 
+Theorem prefix_trans: forall s1 s2 s3,
+  prefix s1 s2 = true ->
+  prefix s2 s3 = true ->
+  prefix s1 s3 = true.
+Proof.
+  intros s1 s2. revert s1.
+  induction s2 as [|b s2' IH]; intros s1 s3 H1 H2.
+  - destruct s1 as [|a s1'].
+    + simpl. assumption.
+    + simpl in H1. discriminate H1.
+  - destruct s1 as [|a s1'].
+    + destruct s3 as [|c s3']; simpl; reflexivity.
+    + simpl in H1.
+      destruct (ascii_dec a b) as [Heq|Hneq].
+      * subst b.
+        destruct s3 as [|c s3'].
+        -- simpl in H2.
+           destruct (ascii_dec a a) as [_|Hcontr]; [discriminate H2|contradiction].
+        -- simpl in H2.
+           destruct (ascii_dec a c) as [Heq2|Hneq2].
+           ++ subst c.
+              simpl.
+              destruct (ascii_dec a a) as [_|Hcontr]; [|contradiction].
+              eapply IH; eassumption.
+           ++ discriminate H2.
+      * discriminate H1.
+Qed.
+
 Theorem rw_mod_2_even: forall (n: nat),
   (n mod 2 = 0) <-> (even n = true).
 Proof.
@@ -417,13 +445,13 @@ Proof.
     tauto.
 Qed.
 
-Theorem even_len_v_stack_spec_str: forall (l: v_stack),
-  (forall x, even_len_v_stack (x :: l) = even (List.length (x :: l))) ∧
-  even_len_v_stack l = even (List.length l).
+Theorem even_len_spec_str: forall (l: v_stack),
+  (forall x, even_len (x :: l) = even (List.length (x :: l))) ∧
+  even_len l = even (List.length l).
 Proof.
   induction l.
   - split; reflexivity.
-  - simpl even_len_v_stack.
+  - simpl even_len.
     destruct l; try reflexivity; split.
     all: unfold list_CASE; cbv beta.
     all: cleanup; try reflexivity; intros.
@@ -437,20 +465,20 @@ Proof.
     eapply H with (x := a).
 Qed.
 
-Theorem even_len_v_stack_spec: forall (l: v_stack),
-  even_len_v_stack l = even (List.length l).
+Theorem even_len_spec: forall (l: v_stack),
+  even_len l = even (List.length l).
 Proof.
   intros.
-  eapply even_len_v_stack_spec_str.
+  eapply even_len_spec_str.
 Qed.
 
-Theorem odd_len_v_stack_spec_str: forall (l: v_stack),
-  (forall x, odd_len_v_stack (x :: l) = odd (List.length (x :: l))) ∧
-  odd_len_v_stack l = odd (List.length l).
+Theorem odd_len_spec_str: forall (l: v_stack),
+  (forall x, odd_len (x :: l) = odd (List.length (x :: l))) ∧
+  odd_len l = odd (List.length l).
 Proof.
   induction l.
   - split; reflexivity.
-  - simpl odd_len_v_stack.
+  - simpl odd_len.
     destruct l; try reflexivity; split.
     all: unfold list_CASE; cbv beta.
     all: cleanup; try reflexivity; intros.
@@ -464,11 +492,11 @@ Proof.
     eapply H with (x := a).
 Qed.
 
-Theorem odd_len_v_stack_spec: forall (l: v_stack),
-  odd_len_v_stack l = odd (List.length l).
+Theorem odd_len_spec: forall (l: v_stack),
+  odd_len l = odd (List.length l).
 Proof.
   intros.
-  eapply odd_len_v_stack_spec_str.
+  eapply odd_len_spec_str.
 Qed.
 
 Theorem has_stack_even: forall t xs,
@@ -547,6 +575,13 @@ Proof.
   lia.
 Qed.
 
+Theorem list_append_spec: ∀ {A: Type} (l1 l2: list A),
+  list_append l1 l2 = l1 ++ l2.
+Proof.
+  induction l1; simpl; eauto.
+  intros; f_equal; eauto.
+Qed.
+
 Theorem c_exp_length: forall e l vs c l1,
   c_exp e l vs = (c, l1) -> l1 = l + List.length (flatten c).
 Proof.
@@ -563,6 +598,7 @@ Proof.
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
+  | _ => progress rewrite list_append_spec
   | _ => lia
   end.
 Qed.
@@ -582,6 +618,7 @@ Proof.
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
+  | _ => progress rewrite list_append_spec
   | _ => lia
   end.
 Qed.
@@ -605,24 +642,23 @@ Proof.
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
+  | _ => progress rewrite list_append_spec
   | _ => lia
   end.
+Qed.
+
+Theorem list_length_spec: forall {A: Type} (l: list A),
+  list_length l = List.length l.
+Proof.
+  induction l; simpl; eauto.
 Qed.
 
 Theorem app_list_length_spec: forall {A} (l: app_list A),
   app_list_length l = List.length (flatten l).
 Proof.
-  induction l; simpl; eauto.
+  induction l; simpl; [rewrite list_length_spec|]; eauto.
   rewrite IHl1; rewrite IHl2.
-  rewrite length_app.
-  reflexivity.
-Qed.
-
-Theorem app_list_length_asm_spec: forall (l: app_list instr),
-  app_list_length_asm l = List.length (flatten l).
-Proof.
-  induction l; simpl; eauto.
-  rewrite IHl1; rewrite IHl2.
+  rewrite list_append_spec.
   rewrite length_app.
   reflexivity.
 Qed.
@@ -652,7 +688,8 @@ Proof.
   | _ => progress unfold align, dlet, c_alloc, c_assign, c_var in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
-  | _ => progress rewrite app_list_length_asm_spec
+  | _ => progress rewrite app_list_length_spec
+  | _ => progress rewrite list_append_spec
   | _ => rewrite Nat.add_assoc
   | _ => lia
   end.
@@ -747,6 +784,8 @@ Theorem eval_test_not_stop: forall t s res s1 v,
   res ≠ Stop Crash ->
   res <> Stop v.
 Proof.
+  Opaque word.eqb.
+  Opaque word.of_Z.
   induction t; intros.
   all: simpl eval_test in *.
   all: unfold lookup_var, bind in *; unfold_outcome; simpl in *.
@@ -757,6 +796,8 @@ Proof.
     destruct c eqn:?; simpl in *; cleanup.
     all: destruct v0 eqn:?; destruct v1 eqn:?; subst; cleanup.
     all: unfold_outcome; cleanup; try congruence.
+    destruct (word.eqb w _) eqn:?; cleanup.
+    all: congruence.
   - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
     2: unfold not; intros; inversion H; subst; eapply IHt1 in Heqp; eauto.
     destruct (eval_test t2) eqn:?; destruct o eqn:?; subst; cleanup.
@@ -1011,7 +1052,7 @@ Proof.
       lia.
     }
     destruct (n =? nm1) eqn:?; destruct (n =? nm2) eqn:?.
-    all: try rewrite Nat.eqb_eq in *; eauto; try congruence; cleanup.
+    all: try rewrite Nat.eqb_eq in *; try congruence; cleanup.
     all: try (spat `index_of` at rewrite index_of_spec in spat; lia).
     assert (S (index_of vs nm1 k) = i) by (rewrite index_of_spec in *; lia).
     assert (S (index_of vs nm2 k) = i) by (rewrite index_of_spec in *; lia).
@@ -1153,10 +1194,10 @@ Admitted. *)
 Ltac crunch_give_up_even :=
   repeat match  goal with
   | |- (ImpToASMCodegen.give_up _) = (ImpToASMCodegen.give_up _) => f_equal
-  | |- context[even_len_exp _] => rewrite even_len_v_stack_spec
+  | |- context[even_len _] => rewrite even_len_spec
   (* TODO *)
-  (* | |- context[even_len_v_stack _] => rewrite even_len_exp_spec *)
-  | |- context[odd_len_v_stack _] => rewrite odd_len_v_stack_spec
+  (* | |- context[even_len _] => rewrite even_len_exp_spec *)
+  | |- context[odd_len _] => rewrite odd_len_spec
   | [ H: (List.length ?vs = _) |- context[List.length ?vs] ] => rewrite H
   | |- context[List.length (_ ++ _)] => rewrite length_app
   | |- context[odd (_ + _)] => rewrite Nat.odd_add
@@ -1459,6 +1500,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   unfold goal_exp in H; eapply H in Heqp; clear H; eauto.
+  all: repeat rewrite list_append_spec in *.
   all: simpl flatten in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
@@ -1468,33 +1510,34 @@ Proof.
   2: repeat eexists; repeat split; eauto; simpl; split; eauto.
   unfold exp_res_rel in *; cleanup; subst.
   unfold goal_exp in H0.
-  rw ltac:(specialize (steps_instructions _ _ _ _ H10)).
-  eapply H0 in Heqp0; clear H0; eauto; inversion H3; clear H3; subst; cleanup; eauto.
+  pat `steps _ _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
+  eapply H0 in Heqp0; clear H0; eauto; cleanup.
   2: congruence.
   1: destruct x0; destruct s0; cleanup; subst.
   2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto.
   all: unfold exp_res_rel in *; cleanup.
   all: try rewrite <- H20 in *.
   all: unfold state_rel in *; cleanup.
-  1: instantiate (1 := (Word w :: curr)) in H19.
+  1: pat `has_stack s0 _` at instantiate (1 := (Word w :: curr)) in pat.
   all: simpl in *; cleanup; subst.
   1: {
     specialize (has_stack_even t (curr ++ rest) H6) as ?.
-    specialize (has_stack_even _ _ H14) as ?.
-    specialize (has_stack_even _ _ H19) as ?.
+    pat `has_stack s _` at specialize (has_stack_even _ _ pat) as ?.
+    pat `has_stack s0 _` at specialize (has_stack_even _ _ pat) as ?.
     unfold has_stack in *; cleanup.
     unfold env_ok in *; cleanup.
-    rw ltac:(specialize (steps_instructions _ _ _ _ H3)).
+    pat `steps (State s, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
     eexists.
     split.
     1: {
       eapply steps_trans.
-      1: eapply H10.
+      1: eauto.
       eapply steps_trans.
-      1: eapply H3.
+      1: eauto.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_pop; eauto.
+      all: pat `pc s0 = _` at rewrite <- pat in *; unfold fetch; eauto.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_add; eauto.
@@ -1534,6 +1577,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   unfold goal_exp in H; eapply H in Heqp; clear H; eauto.
+  all: repeat rewrite list_append_spec in *.
   all: simpl flatten in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
@@ -1592,6 +1636,8 @@ Theorem c_exp_Div : forall (e1 e2: exp),
   goal_exp e1 -> goal_exp e2 ->
   goal_exp (ImpSyntax.Div e1 e2).
 Proof.
+  Opaque word.eqb.
+  Opaque word.of_Z.
   intros.
   unfold goal_exp; intros.
   simpl eval_exp in *.
@@ -1618,6 +1664,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   unfold goal_exp in H; eapply H in Heqp; clear H; eauto.
+  all: repeat rewrite list_append_spec in *.
   all: simpl flatten in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
@@ -1717,6 +1764,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   unfold goal_exp in H; eapply H in Heqp; clear H; eauto.
+  all: repeat rewrite list_append_spec in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -1901,6 +1949,7 @@ Proof.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
+  repeat rewrite list_append_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   eval_exp_correct_tac.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -2012,6 +2061,7 @@ Proof.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
+  repeat rewrite list_append_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   eval_exp_correct_tac.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -2127,6 +2177,7 @@ Proof.
   specialize (eval_test_pure tst1 _ _ _ Heqp).
   specialize (eval_test_pure tst2 _ _ _ Heqp0).
   intros; subst.
+  repeat rewrite list_append_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   assert (pc t + 1 + 1 = pc t + 2) as Htmp; [lia|]; rewrite Htmp in *; clear Htmp.
   rwr ltac:(specialize (c_test_length tst1 _ _ _ _ _ _ Heqp1)).
@@ -2223,6 +2274,7 @@ Proof.
   specialize (eval_test_pure tst1 _ _ _ Heqp).
   specialize (eval_test_pure tst2 _ _ _ Heqp0).
   intros; subst.
+  repeat rewrite list_append_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   assert (pc t + 1 + 1 = pc t + 2) as Htmp; [lia|]; rewrite Htmp in *; clear Htmp.
   rwr ltac:(specialize (c_test_length tst1 _ _ _ _ _ _ Heqp1)).
@@ -2519,9 +2571,9 @@ Proof.
     rewrite IEnv.lookup_insert_eq in *; cleanup.
     split; try eexists; try split; simpl; cleanup; eauto.
     all: pat `index_of _ _ _ = _` at rewrite pat; eauto.
-    (* 1: rewrite list_update_size_same; eauto.
-    1: spat `_ = S (List.length curr)` at rewrite <- spat.
-    1: spat `index_of _ _ _ = _` at rewrite <- spat; eauto. *)
+    (* 1: rewrite list_update_size_same; eauto. *)
+    (* 1: spat `_ = S (List.length curr)` at rewrite <- spat. *)
+    (* 1: spat `index_of _ _ _ = _` at rewrite <- spat; eauto. *)
     admit.
   - rewrite Nat.eqb_neq in *.
     rewrite IEnv.lookup_insert_neq in *; try assumption.
@@ -2548,6 +2600,7 @@ Proof.
   simpl c_cmd in *; unfold c_assign, dlet, assign in *.
   destruct c_exp eqn:?; cleanup.
   simpl flatten in *; cleanup.
+  repeat rewrite list_append_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   destruct o; unfold_outcome; cleanup.
   2: eval_exp_contr_stop_tac.
@@ -2642,6 +2695,7 @@ Proof.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; subst; cleanup.
+  repeat rewrite list_append_spec in *.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ pat)).
   pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ pat) as ?; subst.
@@ -2657,7 +2711,12 @@ Proof.
   all: assert (steps_done s0 - steps_done s + (steps_done s1 - steps_done s0) = s1.(steps_done) - s.(steps_done)) as ? by lia.
   2: spat `_ = s1.(steps_done) - s.(steps_done)` at rewrite spat in *.
   2: do 2 eexists; split; eauto; split; eauto; split; eauto; split; eauto.
-  2: admit. (* prefix s2 (string_of_list_ascii (ImpSemantics.output s1)) = true *)
+  2: {
+    pat `match ?o with _ => _ end = _` at destruct o eqn:?; inversion pat; subst; eauto.
+    eapply prefix_trans; eauto.
+    (* prefix (ImpSemantics.output s0) (ImpSemantics.output s1) = true *)
+    admit.
+  }
   destruct o eqn:?; subst; cleanup.
   2: do 2 eexists; split; eauto.
   unfold cmd_res_rel in * |-; cleanup; subst.
@@ -2700,6 +2759,7 @@ Proof.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct (c_test_jump _ _ _ _ _) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c _ _ _) eqn:?; simpl in *; subst; cleanup.
+  repeat rewrite list_append_spec in *.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
   spat `c_test_jump` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
   spat `c_cmd c` at specialize (c_cmd_length c _ _ _ _ _ spat) as ?; subst.
@@ -2880,15 +2940,11 @@ Proof.
   spat `eval_cmd (While t c)` at unfold goal_cmd in Hgoal_While; eapply Hgoal_While with (t := set_pc (pc t0) s2) in spat; clear Hgoal_While; cleanup.
   all: simpl; eauto.
   2: {
-    simpl; repeat rewrite code_in_append; cleanup; repeat split.
+    simpl; repeat rewrite list_append_spec in *; repeat rewrite code_in_append; cleanup; repeat split.
     all: pat `steps (_, _) (State s2, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: pat `steps (_, _) (State s3, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: repeat rewrite Nat.add_1_r; eauto; pat `pc s3 = _` at try rewrite <- pat; eauto.
   }
-  (* TODO(kπ): This is problematic. The body can declare new variables and then the stack contains new entries. *)
-  (*           Should we drop the additional stuff from the stack after the body is executed? *)
-  (* env_ok (vars s) vs' x x0 *)
-  (* 2: admit. *)
   destruct x1.
   rewrite Nat.add_0_l in *.
   destruct (steps_done s1 - steps_done s) eqn:?.
@@ -2945,11 +3001,53 @@ Proof.
   all: eauto.
 Admitted.
 
+Theorem c_cmd_Skip: forall (fuel: nat),
+  goal_cmd Skip fuel.
+Proof.
+  Transparent c_cmd.
+  Transparent eval_cmd.
+  unfold goal_cmd; simpl; intros.
+  Opaque eval_cmd.
+  unfold_outcome; cleanup.
+  do 2 eexists.
+  split; [eapply steps_refl|].
+  split; [eauto|].
+  split; [eapply pmap_subsume_refl|].
+  split; [lia|].
+  split; eauto.
+  unfold cmd_res_rel; eexists.
+  repeat (split; eauto).
+Qed.
+
+Theorem c_cmd_Update: forall (a e e': exp) (fuel: nat),
+  goal_cmd (Update a e e') fuel.
+Proof.
+  Transparent eval_cmd.
+  unfold goal_cmd; simpl; intros.
+  Opaque eval_cmd.
+  unfold dlet in *.
+  destruct (c_exp a) eqn:?.
+  destruct (c_exp e) eqn:?.
+  destruct (c_exp e') eqn:?.
+  simpl in *; cleanup.
+  unfold_monadic.
+  destruct (eval_exp a) eqn:?.
+  destruct (eval_exp e) eqn:?.
+  destruct (eval_exp e') eqn:?.
+  destruct o; cleanup.
+  2: eval_exp_contr_stop_tac.
+  destruct o0; cleanup.
+  2: eval_exp_contr_stop_tac.
+  destruct o1; cleanup.
+  2: eval_exp_contr_stop_tac.
+  unfold update in *.
+Qed.
+
 Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),
   goal_cmd c fuel.
 Proof.
   induction c.
-  - intros; admit.
+  - intros; eapply c_cmd_Skip.
   - intros; eapply c_cmd_Seq; eauto.
   - intros; eapply c_cmd_Assign; eauto.
   - intros; admit.
@@ -3024,6 +3122,7 @@ Lemma binders_ok_all_binders: forall c,
 Proof.
   induction c; simpl in *; eauto.
   all: split.
+  all: repeat rewrite list_append_spec in *.
   all: rewrite make_vs_from_binders_spec.
   all: rewrite map_app.
   1,3: eapply binders_ok_append; eauto.
@@ -3076,6 +3175,7 @@ Proof.
   all: try split.
   all: unfold unique_binders, dlet in *; simpl.
   all: eapply binders_ok_names_unique.
+  all: repeat rewrite list_append_spec in *.
   all: rewrite make_vs_from_binders_spec; rewrite map_app.
   1,3: eapply binders_ok_append.
   3,4: eapply binders_ok_append2.
@@ -3105,6 +3205,7 @@ Proof.
   spat `c_pushes` at eapply c_pushes_length in spat.
   simpl in *; cleanup.
   simpl.
+  all: repeat rewrite list_append_spec in *.
   repeat (rewrite length_app; simpl).
   lia.
 Qed.
@@ -3139,10 +3240,10 @@ Proof.
     f_equal.
     eapply IHc; eauto.
   - destruct c_var eqn:?.
-    destruct (c_var n (snd (c_exps es lstart vs) + app_list_length_asm (c_pops es vs) + app_list_length_asm (align (even_len_v_stack vs) (List [Call (lookup f_lookup0 f)])))) eqn:?.
+    destruct (c_var n (snd (c_exps es lstart vs) + app_list_length (c_pops es vs) + app_list_length (align (even_len vs) (List [Call (lookup f_lookup0 f)])))) eqn:?.
     destruct c_exps eqn:?.
     simpl in *.
-    destruct even_len_v_stack eqn:?; simpl in *.
+    destruct even_len eqn:?; simpl in *.
     all: spat `c_var` at rewrite spat in *; cleanup.
     all: reflexivity.
 Qed.
@@ -3283,6 +3384,7 @@ Proof.
     split.
     2: {
       spat `c_fundef` at rewrite spat; simpl.
+      repeat rewrite list_append_spec in *.
       assert (xs ++ Comment (name2str n1 []) :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1 [])]) ++ flatten a0 ++ flatten a1) as ->.
       1: induction xs; simpl; try rewrite <- app_assoc; eauto.
       eapply code_in_append_left2.
@@ -3304,6 +3406,7 @@ Proof.
     - eauto.
   }
   simpl in *.
+  repeat rewrite list_append_spec in *.
   rewrite app_comm_cons; rewrite app_assoc.
   eauto.
 Qed.
@@ -3343,6 +3446,10 @@ Proof.
   Opaque init.
   unfold codegen, dlet in *.
   Opaque fun_name_of_string.
+  Opaque ImpToASMCodegen.fun_name_of_string.
+  repeat rewrite app_list_length_spec in *.
+  repeat rewrite list_append_spec in *.
+  repeat rewrite list_length_spec in *.
   simpl in *.
   unfold catch_return in *.
   spat `let (_, _) := ?x in _` at destruct x eqn:?; unfold_outcome.
@@ -3354,7 +3461,7 @@ Proof.
   simpl in *.
   spat `eval_cmd` at rename spat into Heval_cmd.
   specialize c_fundefs_l_same with (1 := Heqcfuns) (2 := Heqcfuns0) as ?; subst.
-  remember (lookup _ l) as lookup_main_l.
+  remember (lookup l _) as lookup_main_l.
   spat `c_fundefs` at rewrite init_length_same with (l2 := lookup_main_l) in spat.
   pat `find_fun _ _ = _` at rename pat into Hfind_fun.
   pat `c_fundefs _ _ _ = (_, _, _)` at specialize c_fundefs_code_in with (1 := pat) (2 := Hfind_fun) as ?; cleanup.
@@ -3370,7 +3477,9 @@ Proof.
   pat `c_pushes _ _ = (?p, _)` at destruct p.
   unfold c_pushes, dlet in *; simpl in *.
   pat ` (_, _, _) = (_, _, _)` at inversion pat; subst; clear pat.
-  remember (lookup _ l) as lookup_main_l.
+  remember (lookup l _) as lookup_main_l.
+  repeat rewrite list_append_spec in *.
+  repeat rewrite list_length_spec in *.
   repeat (rewrite code_in_append in *; simpl in * ); cleanup.
   rewrite Nat.add_0_r in *.
   remember (make_vs_from_binders _) as vs_binders.
@@ -3386,7 +3495,7 @@ Proof.
     pat `_ = init _ ++ _` at unfold init in pat.
     Opaque init.
     simpl in *.
-    remember (Comment "malloc" :: _) as init_rest; clear Heqinit_rest.
+    remember (Comment ("m"%char :: _) :: _) as init_rest; clear Heqinit_rest.
     unfold cmd_res_rel in * ; cleanup.
     pat `eval_cmd _ _ _ = (?res, _)` at destruct res; cleanup.
     1: congruence.
@@ -3512,6 +3621,8 @@ Proof.
   }
   1: { (* state_rel *)
     unfold state_rel; simpl.
+    replace (Z.of_nat (2 ^ 63 - 1)) with (2 ^ 63 - 1)%Z.
+    2: rewrite Nat2Z.inj_sub; [rewrite Nat2Z.inj_pow|eapply Nat.pow_lower_bound]; lia.
     repeat split; eauto.
     - unfold init_code_in.
       eexists.
@@ -3719,34 +3830,6 @@ Proof.
     pat `NRC _ _ s1 _` at specialize NRC_from_is_State with (1 := pat) as ?; cleanup; subst.
     split; [|lia].
     eapply NRC_step_add_inv; eauto.
-Qed.
-
-Theorem prefix_trans: forall s1 s2 s3,
-  prefix s1 s2 = true ->
-  prefix s2 s3 = true ->
-  prefix s1 s3 = true.
-Proof.
-  intros s1 s2. revert s1.
-  induction s2 as [|b s2' IH]; intros s1 s3 H1 H2.
-  - destruct s1 as [|a s1'].
-    + simpl. assumption.
-    + simpl in H1. discriminate H1.
-  - destruct s1 as [|a s1'].
-    + destruct s3 as [|c s3']; simpl; reflexivity.
-    + simpl in H1.
-      destruct (ascii_dec a b) as [Heq|Hneq].
-      * subst b.
-        destruct s3 as [|c s3'].
-        -- simpl in H2.
-           destruct (ascii_dec a a) as [_|Hcontr]; [discriminate H2|contradiction].
-        -- simpl in H2.
-           destruct (ascii_dec a c) as [Heq2|Hneq2].
-           ++ subst c.
-              simpl.
-              destruct (ascii_dec a a) as [_|Hcontr]; [|contradiction].
-              eapply IH; eassumption.
-           ++ discriminate H2.
-      * discriminate H1.
 Qed.
 
 Theorem NRC_step_mono: ∀n t1 t2,

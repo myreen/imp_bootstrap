@@ -23,7 +23,7 @@ Inductive result {A : Type} : Type :=
 Arguments result : clear implicits.
 
 Record state := mkState {
-  funs : list FunSyntax.dec;
+  funs : list FunSyntax.defun;
   clock : nat;
   input : llist ascii;
   output : list ascii
@@ -89,7 +89,7 @@ Fixpoint make_env (keys : list name) (values : list Value) (acc : FEnv.env) : FE
   end.
 Arguments make_env !_ !_ /.
 
-Fixpoint lookup_fun (n : name) (fs : list FunSyntax.dec) : option (list name * FunSyntax.exp) :=
+Fixpoint lookup_fun (n : name) (fs : list FunSyntax.defun) : option (list name * FunSyntax.exp) :=
   match fs with
   | [] => None
   | FunSyntax.Defun k ps body :: rest => if (k =? n)%N then Some (ps, body) else lookup_fun n rest
@@ -104,7 +104,7 @@ Definition env_and_body (n : name) (args : list Value) (s : state) : option (FEn
 Arguments env_and_body !_ !_ /.
 
 (* TODO(kπ) Should this take a clock? *)
-Definition init_state (inp : llist ascii) (funs : list FunSyntax.dec) : state :=
+Definition init_state (inp : llist ascii) (funs : list FunSyntax.defun) : state :=
   {| funs := funs; clock := 0; input := inp; output := [] |}.
 
 Reserved Notation "env '|--' ( es , s1 ) '--->' ( vs , s2 )" (at level 40, es at next level, vs at next level).

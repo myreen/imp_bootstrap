@@ -162,11 +162,19 @@ Ltac unfold_proof :=
   simpl;
   reflexivity.
 
+Ltac2 rec is_fix_better (c: constr): bool :=
+  match Unsafe.kind c with
+  | Fix _ _ _ cs => true
+  | Lambda _ c =>
+    is_fix_better c
+  | _ => false
+  end.
+
 Ltac2 isFix (fconstr: constr): bool :=
   let fref := reference_of_constr fconstr in
   let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
   printf "Unfolded %t is %t" fconstr unfolded;
-  Constr.is_fix unfolded.
+  is_fix_better unfolded.
 
 Ltac2 Type exn ::= [
   Oopsie (message)

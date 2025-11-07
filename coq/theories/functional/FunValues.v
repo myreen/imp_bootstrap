@@ -5,29 +5,26 @@ From coqutil Require Import dlet.
 Open Scope N.
 
 Inductive Value :=
-  | Pair (v1 v2 : Value)
-  | Num (n : N).
+  | Pair (v1 v2: Value)
+  | Num (n: N).
 
-Class Refinable (A : Type) :=
+Class Refinable (A: Type) :=
   { encode : A -> Value }.
 
 Global Instance Refinable_nat: Refinable nat :=
   { encode n := Num (N.of_nat n) }.
 
-(* Global Instance Refinable_N: Refinable N :=
-  { encode := Num }. *)
+Global Instance Refinable_N: Refinable N :=
+  { encode := Num }.
 
-Definition name_enc_l (s : list ascii): name :=
+Definition name_enc_l (s: list ascii): N :=
   fold_right (fun c acc => (N_of_ascii c) * 256 + acc)%N 0%N s.
 
-Definition name_enc (s: string): name :=
+Definition name_enc (s: string): N :=
   name_enc_l (list_ascii_of_string s).
 
-Definition value_name (s : string) : Value :=
+Definition value_name (s: string) : Value :=
   Num (name_enc s).
-
-Global Instance Refinable_string: Refinable string :=
-  { encode := value_name }.
 
 Definition value_list_of_values (xs : list Value) : Value :=
   fold_right (fun x acc => Pair x acc) (Num 0) xs.
@@ -35,41 +32,14 @@ Definition value_list_of_values (xs : list Value) : Value :=
 Global Instance Refinable_list {A: Type} `{Refinable A}: Refinable (list A) :=
   { encode l := value_list_of_values (List.map encode l) }.
 
-Definition value_less (v1 v2 : Value) : bool :=
-  match v1, v2 with
-  | Num n1, Num n2 => n1 <? n2
-  | _, _ => false
-  end.
+Definition enc_char(c: ascii): N :=
+  N_of_ascii c.
 
-Definition value_plus (v1 v2 : Value) : Value :=
-  match v1, v2 with
-  | Num n1, Num n2 => Num (n1 + n2)
-  | _, _ => Num 0
-  end.
+Global Instance Refinable_char : Refinable ascii :=
+  { encode c := Num (enc_char c) }.
 
-Definition value_minus (v1 v2 : Value) : Value :=
-  match v1, v2 with
-  | Num n1, Num n2 => Num (n1 - n2)
-  | _, _ => Num 0
-  end.
-
-Definition value_div (v1 v2 : Value) : Value :=
-  match v1, v2 with
-  | Num n1, Num n2 => if n2 =? 0 then Num 0 else Num (n1 / n2)
-  | _, _ => Num 0
-  end.
-
-Definition value_head (v : Value) : Value :=
-  match v with
-  | Pair x _ => x
-  | _ => v
-  end.
-
-Definition value_tail (v : Value) : Value :=
-  match v with
-  | Pair _ y => y
-  | _ => v
-  end.
+Global Instance Refinable_string: Refinable string :=
+  { encode s := encode (list_ascii_of_string s) }.
 
 Definition value_cons (x y : Value) : Value :=
   Pair x y.
@@ -86,42 +56,3 @@ Global Instance Refinable_option {A : Type} `{Refinable A} : Refinable (option A
     | None => encode []
     | Some x => encode [x]
     end }.
-
-Global Instance Refinable_char : Refinable ascii :=
-  { encode c := Num (N_of_ascii c) }.
-
-Definition value_isNum (v : Value) : bool :=
-  match v with
-  | Num _ => true
-  | _ => false
-  end.
-
-Definition value_getNum (v : Value) : N :=
-  match v with
-  | Num n => n
-  | _ => 0
-  end.
-
-Definition value_el1 (v : Value) : Value :=
-  value_head (value_tail v).
-
-Definition value_el2 (v : Value) : Value :=
-  value_el1 (value_tail v).
-
-Definition value_el3 (v : Value) : Value :=
-  value_el2 (value_tail v).
-
-Theorem isNum_bool : forall b,
-  value_isNum (encode b) = true.
-Proof.
-  intros. destruct b; reflexivity.
-Qed.
-
-(* TODO(kπ) again problem with termination of this almost exact function *)
-Fail Fixpoint value_is_upper (n : N) : bool :=
-  if n <? 256 then
-    if n <? 65 then false else
-    if n <? 91 then true else false
-  else value_is_upper (n / 256).
-
-Definition value_otherwise {A: Type} (x : A) : A := x.

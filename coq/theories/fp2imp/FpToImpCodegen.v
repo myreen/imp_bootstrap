@@ -26,7 +26,7 @@ Notation "'let/o' v := r1 'in' r2" :=
 
 Fixpoint to_exp (e: FunSyntax.exp): option ImpSyntax.exp :=
   match e with
-  | FunSyntax.Var v => Some (ImpSyntax.Var (N.to_nat v))
+  | FunSyntax.Var v => Some (ImpSyntax.Var v)
   | FunSyntax.Const n =>
       if (n <? 2^64)%N then
         Some (ImpSyntax.Const (word.of_Z (Z.of_N n)))
@@ -98,7 +98,7 @@ Definition to_assign (v: name) (x: FunSyntax.exp): option ImpSyntax.cmd :=
       | None =>
           match x with
           | FunSyntax.Call n es =>
-              option_map (fun xs => ImpSyntax.Call v (N.to_nat n) xs) (to_exps es)
+              option_map (fun xs => ImpSyntax.Call v n xs) (to_exps es)
           | FunSyntax.Op p es =>
               match p, to_exps es with
               | FunSyntax.Add, Some [x1; x2] => 
@@ -130,13 +130,13 @@ Fixpoint to_cmd (e: FunSyntax.exp): option ImpSyntax.cmd :=
           let/o c2 := to_cmd e2 in
           Some (ImpSyntax.If t1 c1 c2)
       | FunSyntax.Let v x y =>
-          let/o c1 := to_assign (N.to_nat v) x in
+          let/o c1 := to_assign v x in
           let/o c2 := to_cmd y in
           Some (ImpSyntax.Seq c1 c2)
       | FunSyntax.Call n es =>
           option_map (fun xs => 
             ImpSyntax.Seq 
-              (ImpSyntax.Call (name_of_string "ret") (N.to_nat n) xs) 
+              (ImpSyntax.Call (name_of_string "ret") n xs) 
               (ImpSyntax.Return (ImpSyntax.Var (name_of_string "ret")))
           ) (to_exps es)
       | _ => None
@@ -156,7 +156,7 @@ Fixpoint to_funs (fs: list FunSyntax.defun): option (list ImpSyntax.func) :=
     if list_uniqb N.eqb vs then
       let/o cmd := to_cmd e in
       let/o funs := to_funs fs in
-      Some (ImpSyntax.Func (N.to_nat n) (map N.to_nat vs) cmd :: funs)
+      Some (ImpSyntax.Func n vs cmd :: funs)
     else
       None
   end.
@@ -214,20 +214,20 @@ Definition builtin: list (name * list name * ImpSyntax.cmd) :=
 
 Definition get_func_name (d: FunSyntax.defun): name :=
   match d with
-  | FunSyntax.Defun n _ _ => N.to_nat n
+  | FunSyntax.Defun n _ _ => n
   end.
 
 Definition has_conflicting_names (defs: list FunSyntax.defun): bool :=
-  let reserved_names := name_of_string_N "main" :: map (fun '(n,_,_) => (N.of_nat n)) builtin in
+  let reserved_names := name_of_string "main" :: map (fun '(n,_,_) => n) builtin in
   List.existsb (fun d =>
-    List.existsb (N.eqb (N.of_nat (get_func_name d))) reserved_names
+    List.existsb (N.eqb (get_func_name d)) reserved_names
   ) defs.
 
 Definition to_imp (p: FunSyntax.prog): option ImpSyntax.prog :=
   match p with
   | FunSyntax.Program defs main =>
     if has_conflicting_names defs then None else
-    match to_funs (FunSyntax.Defun (name_of_string_N "main") [] main :: defs) with
+    match to_funs (FunSyntax.Defun (name_of_string "main") [] main :: defs) with
     | Some fs =>
         Some (
           ImpSyntax.Program
@@ -236,6 +236,8 @@ Definition to_imp (p: FunSyntax.prog): option ImpSyntax.prog :=
     | None => None
     end
   end.
+
+(* examples *)
 
 Example fp_prog1 :=
   FunSyntax.Program (@nil FunSyntax.defun) (

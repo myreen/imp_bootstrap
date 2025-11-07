@@ -11,6 +11,7 @@ Inductive op : Type :=
 | Add
 | Sub
 | Div
+| Mul
 | Cons
 | Head
 | Tail
@@ -46,6 +47,3 @@ Definition get_defs (p: prog): list defun :=
   match p with
   | Program defs _ => defs
   end.
-
-Definition name_of_string_N (s: string): N :=
-  fold_right (fun c acc => (N_of_ascii c) * 256 + acc) 0 (list_ascii_of_string s).

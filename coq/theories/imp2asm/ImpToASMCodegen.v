@@ -8,6 +8,7 @@ Require Import FunInd.
 Require Import Ascii.
 
 Open Scope app_list_scope.
+Open Scope nat.
 
 Notation asm_appl := (app_list instr).
 
@@ -26,24 +27,24 @@ Definition init (k: nat): asm :=
     (*  4 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 0));
     (*  5 *) ASMSyntax.Exit;
     (* alloc routine starts here: *)
-    (*  6 *) ASMSyntax.Comment ["m"; "a"; "l"; "l"; "o"; "c"];
+    (*  6 *) ASMSyntax.Comment "malloc";
     (*  7 *) ASMSyntax.Mov RDI RAX;
     (*  8 *) ASMSyntax.Mov RAX R14;
     (*  9 *) ASMSyntax.Add R14 RDI;
     (* 10 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 14;
-    (* 11 *) ASMSyntax.Comment ["n"; "o"; "o"; "p"];
+    (* 11 *) ASMSyntax.Comment "noop";
     (* 12 *) ASMSyntax.Ret;
     (* give up: *)
-    (* 13 *) ASMSyntax.Comment ["e"; "x"; "i"; "t"; " "; "4"]; (* Internal error – OOM or compiler limitation *)
+    (* 13 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
     (* 14 *) ASMSyntax.Push R15; (* align stack *)
     (* 15 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 4));
     (* 16 *) ASMSyntax.Exit;
     (* abort: *)
-    (* 17 *) ASMSyntax.Comment ["e"; "x"; "i"; "t"; " "; "1"]; (* Internal error – OOM or compiler limitation *)
+    (* 17 *) ASMSyntax.Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
     (* 18 *) ASMSyntax.Push R15; (* align stack *)
     (* 19 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 1));
     (* 20 *) ASMSyntax.Exit
-  ]%char.
+  ]%string.
 
 Definition AllocLoc: nat := 7.
 
@@ -98,12 +99,12 @@ Function odd_len {A: Type} (xs: list A) : bool :=
 (* jump label for failure cases
   b – does the stack need to be aligned
 *)
-Definition give_up (b : bool) : nat := if b then 14 else 15.
+Definition give_up (b: bool): nat := if b then 14 else 15.
 
 (* abort
   b – does the stack need to be aligned
 *)
-Definition abort (b : bool) : nat := if b then 18 else 19.
+Definition abort (b: bool): nat := if b then 18 else 19.
 
 (* Compiles a constant value into assembly instructions *)
 Definition c_const (n : word64) (l : nat) : asm_appl * nat :=
@@ -116,7 +117,7 @@ Function index_of (vs: v_stack) (n: name) (k: nat): nat :=
   | x :: vs =>
     match x with
       | None => index_of vs n (k + 1)
-      | Some v => if Nat.eqb v n then k else index_of vs n (k + 1)
+      | Some v => if N.eqb v n then k else index_of vs n (k + 1)
     end
   end.
 
@@ -126,15 +127,15 @@ Function index_of_opt (vs: v_stack) (n: name) (k: nat): option nat :=
   | x :: vs =>
     match x with
     | None => index_of_opt vs n (k + 1)
-    | Some v => if Nat.eqb v n then Some k else index_of_opt vs n (k + 1)
+    | Some v => if N.eqb v n then Some k else index_of_opt vs n (k + 1)
     end
   end.
 
 (* lookup variable with name `n`, based on stack `vs` *)
 Definition c_var (n: name) (l: nat) (vs: v_stack): asm_appl * nat :=
   let/d k := (index_of vs n 0) in
-  if k =? 0 then (List [ASMSyntax.Push RAX], l+1)
-  else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2).
+  if (k =? 0)%nat then (List [ASMSyntax.Push RAX], l+1)%nat
+  else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2)%nat.
 
 Fixpoint c_declare_binders_rec (binders: list name) (l: nat) (vs: v_stack) (acc_asm: asm_appl): (asm_appl * nat * v_stack) :=
   match binders with
@@ -151,7 +152,7 @@ Definition c_declare_binders (binders: list name) (l: nat) (vs: v_stack): (asm_a
 Definition c_assign (n : name) (l : nat) (vs : v_stack) : (asm_appl * nat) :=
   let/d k := index_of vs n 0 in
   match k return (asm_appl * nat) with
-  | 0 => (List [ASMSyntax.Pop RDI], l+1)
+  | 0%nat => (List [ASMSyntax.Pop RDI], l+1)
   | S _ => (List [ASMSyntax.Store_RSP RAX k; ASMSyntax.Pop RAX], l+2)
   end.
 
@@ -195,11 +196,11 @@ Definition align (needs_alignment: bool) (asm1: asm_appl): asm_appl :=
 
 Definition c_read (vs: v_stack) (l: nat): (asm_appl * nat) :=
   let/d asm1 := align (even_len vs) (List [ASMSyntax.Push RAX; ASMSyntax.GetChar]) in
-  (asm1, l + app_list_length asm1).
+  (asm1, (l + app_list_length asm1)%nat).
 
 Definition c_write (vs: v_stack) (l: nat): (asm_appl * nat) :=
   let/d asm1 := align (even_len vs) (List [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z (Z.of_nat 0))]) in
-  (asm1, l + app_list_length asm1).
+  (asm1, (l + app_list_length asm1)%nat).
 
 (*
   input : RAX, top_of_stack
@@ -220,7 +221,8 @@ Definition c_store: asm_appl :=
   List [ ASMSyntax.Pop RDI;
     ASMSyntax.Pop RDX;
     ASMSyntax.Add RDI RDX;
-    ASMSyntax.Store RAX RDI (word.of_Z (Z.of_nat 0)) ].
+    ASMSyntax.Store RAX RDI (word.of_Z (Z.of_nat 0));
+    ASMSyntax.Pop RAX ].
 
 Fixpoint c_exp (e: exp) (l: nat) (vs: v_stack): asm_appl * nat :=
   match e with
@@ -291,11 +293,11 @@ Fixpoint c_test_jump (t: test) (pos_label: nat) (neg_label: nat)
   end.
 
 (* Looks up a function name in a list of function addresses *)
-Function lookup (fs: f_lookup) (n: nat): nat :=
+Function lookup (fs: f_lookup) (n: N): nat :=
   match fs with
   | [] => 0
   | (x, y) :: xs =>
-    if Nat.eqb x n then y else lookup xs n
+    if N.eqb x n then y else lookup xs n
   end.
 
 (* Drop the current stack frame - elements corresponding to `vs` *)
@@ -354,19 +356,19 @@ Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) 
     (asm1 +++ asm2, l2)
   | Update a e e' =>
     let/d '(asm1, l1) := c_exp a l vs in
-    let/d '(asm2, l2) := c_exp e l1 vs in
-    let/d '(asm3, l3) := c_exp e' l2 (None :: vs) in
+    let/d '(asm2, l2) := c_exp e l1 (None :: vs) in
+    let/d '(asm3, l3) := c_exp e' l2 (None :: None :: vs) in
     let/d asm4 := c_store in
     (asm1 +++ asm2 +++ asm3 +++ asm4, l3 + app_list_length asm4)
   | If t c1 c2 =>
     let/d '(asm1, l1) := c_test_jump t (l + 1) (l + 2) (l + 3) vs in
     let/d '(asm2, l2) := c_cmd c1 l1 fs vs in
     let/d '(asm3, l3) := c_cmd c2 (l2 + 1) fs vs in
-    let/d jump_to_start := List[ASMSyntax.Jump Always (l + 3)] in
+    let/d jump_to_test := List[ASMSyntax.Jump Always (l + 3)] in
     let/d jump_to_c1 := List [ASMSyntax.Jump Always l1] in
-    let/d jump_to_c2 := List [ASMSyntax.Jump Always l2] in
+    let/d jump_to_c2 := List [ASMSyntax.Jump Always (l2 + 1)] in
     let/d jump_to_end := List [ASMSyntax.Jump Always l3] in
-    let/d asmres := jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ jump_to_end +++ asm3 in
+    let/d asmres := jump_to_test +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ jump_to_end +++ asm3 in
     (asmres, l3)
   | While tst body =>
     let/d '(asm1, l1) := c_test_jump tst (l + 1) (l + 2) (l + 3) vs in
@@ -424,7 +426,7 @@ Function names_contain (l: list name) (a: name): bool :=
   match l with
   | nil => false
   | x :: l =>
-    if (x =? a) then true
+    if (x =? a)%N then true
     else names_contain l a
   end.
 
@@ -456,17 +458,21 @@ Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
     (asm0 +++ asm1 +++ asm2, l2)
   end.
 
-(* TODO(kπ) termination is unobvious to Coq, super unimportant function, hacked for now *)
-(* Converts a numeric name to a string representation *)
-Fail Function name2str (n: nat) (acc: list ascii): list ascii :=
-  if n =? 0 then
-    acc
-  else
-    name2str (n / 256) (String (ascii_of_N (N_of_nat (n mod 256))) acc).
+Definition nat_modulo (n1 n2: nat): nat :=
+  match n2 with
+  | 0%nat => 0
+  | S _ => n1 - n2 * (n1 / n2)
+  end.
 
-(* TODO: mod? *)
-Definition name2str (n: nat) (acc: list ascii): list ascii :=
-  (ascii_of_N (N_of_nat (n mod 256))) :: acc.
+Definition N_modulo (n1 n2: N): N :=
+  match n2 with
+  | 0%N => 0
+  | N.pos _ => n1 - n2 * (n1 / n2)
+  end.
+
+(* TODO: Can we use the same helper as with ASM2String.name2str? *)
+Definition name2str (n: N) (acc: string): string :=
+  String (ascii_of_N (N_modulo n 256)) acc.
 
 Definition get_funcs (p: prog): list func :=
   match p with
@@ -484,16 +490,11 @@ Fixpoint c_fundefs (ds: list func) (l: nat) (fs: f_lookup): (asm_appl * list (na
   | [] => (List [], fs, l)
   | d :: ds' =>
     let/d fname := name_of_func d in
-    let/d comment := List [Comment (name2str fname [])] in
+    (* TODO: is using name2str as a constant correct? Should we reify it?  *)
+    let/d comment := List [Comment (name2str fname "")] in
     let/d '(c1, l1) := c_fundef d (l + 1) fs in
     let/d '(c2, fs', l2) := c_fundefs ds' l1 fs in
     (comment +++ c1 +++ c2, (fname, l + 1) :: fs', l2)
-  end.
-
-Function fun_name_of_string (str: string): name :=
-  match str with
-  | EmptyString => 0
-  | String c s => (nat_of_ascii c) * 256 + fun_name_of_string s
   end.
 
 (* Generates the complete assembly code for a given program *)
@@ -502,5 +503,5 @@ Definition codegen (prog : prog) : asm :=
   let/d init_l := app_list_length (List (init 0)) in
   let/d '(_, fs, _) := c_fundefs funs init_l [] in
   let/d '(asm1, _, _) := c_fundefs funs init_l fs in
-  let/d main_l := lookup fs (fun_name_of_string "main") in
+  let/d main_l := lookup fs (name_of_string "main") in
   flatten ((List (init main_l)) +++ asm1).

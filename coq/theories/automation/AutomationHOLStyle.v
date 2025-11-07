@@ -194,6 +194,7 @@ Ltac2 is_in_loopkup (f_lookup : string list) (fname : string) : bool :=
 Ltac2 rec proper_const (c: constr): bool :=
   match Constr.Unsafe.kind c with
   | Var _ => true
+  (* TODO: probably should remove this (next) line – it allows too many undesirable things as consts *)
   | Constant _ _ => true
   | Constructor _ _ => true
   | App c cs => Bool.and (proper_const c) (Array.for_all proper_const cs)
@@ -482,6 +483,7 @@ Ltac2 rec compile () : unit :=
     | Some (name_constr_opt, _) =>
       (* Figure out why adding a default here as (open_constr:(_)) leaves hanging evars for polymorophic functions *)
       let name_constr := Option.get name_constr_opt in
+      printf "applying lemma: trans_Var with v := %t (named: %t)" e name_constr;
       refine open_constr:(trans_Var
       (* env *) $fenv
       (* s *) _
@@ -526,9 +528,11 @@ Ltac2 rec compile () : unit :=
           (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
           )
         (* char *)
-        | (ascii_of_N (N_of_nat ?x)) =>
-          app_lemma "auto_char_CHR" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
-        | (nat_of_N (N_of_ascii ?x)) =>
+        | (ascii_of_nat ?x) =>
+          app_lemma "auto_char_of_nat" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
+        | (ascii_of_N ?x) =>
+          app_lemma "auto_char_of_N" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
+        | (nat_of_ascii ?x) =>
           app_lemma "auto_char_ORD" [("env", exactk fenv); ("x", exactk x)] [compile]
         (* word *)
         | (@word.of_Z 4 _ (Z.of_nat ?x)) =>
@@ -539,17 +543,34 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_word4_w2n" [("env", exactk fenv); ("x", exactk x)] [compile]
         | (Z.to_N (@word.unsigned 64 _ ?x)) =>
           app_lemma "auto_word64_w2n" [("env", exactk fenv); ("x", exactk x)] [compile]
-        (* nat *)
+        (* num *)
         | (?n1 + ?n2)%nat =>
           app_lemma "auto_nat_add"
-            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)]
-            [compile; compile]
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
         | (?n1 - ?n2)%nat =>
-          app_lemma "auto_nat_sub" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
+          app_lemma "auto_nat_sub"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
         | (?n1 / ?n2)%nat =>
-          app_lemma "auto_nat_div" [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
+          app_lemma "auto_nat_div"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile; exactk open_constr:(_)]
+        | (?n1 * ?n2)%nat =>
+          app_lemma "auto_nat_mul"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
+        | (?n1 - ?n2)%N =>
+          app_lemma "auto_N_sub"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
+        | (?n1 / ?n2)%N =>
+          app_lemma "auto_N_div"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile; exactk open_constr:(_)]
+        | (?n1 * ?n2)%N =>
+          app_lemma "auto_N_mul"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
         | (if Nat.eqb ?n1 ?n2 then ?t else ?f) =>
           app_lemma "auto_nat_if_eq"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+            [compile; compile; compile; compile]
+        | (if N.eqb ?n1 ?n2 then ?t else ?f) =>
+          app_lemma "auto_N_if_eq"
             [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
             [compile; compile; compile; compile]
         | (if Nat.ltb ?n1 ?n2 then ?t else ?f) =>
@@ -561,6 +582,10 @@ Ltac2 rec compile () : unit :=
           let n_constr := List.nth binders_of_v2 0 in
           app_lemma "auto_nat_case"
             [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
+        | (match ?v0 with | 0%N => ?v1 | N.pos _ => ?v2 end) =>
+          app_lemma "auto_N_case"
+            [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2)]
             [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
         (* list *)
         | [] =>
@@ -944,14 +969,14 @@ Ltac2 rec compile () : unit :=
         | ASMSyntax.RDX =>
           app_lemma "auto_reg_cons_RDX" [("env", exactk fenv)] []
         | (match ?v0 with
-           | ASMSyntax.RAX => ?v1 | ASMSyntax.RDI => ?v2 | ASMSyntax.RBX => ?v3
-           | ASMSyntax.RBP => ?v4 | ASMSyntax.R12 => ?v5 | ASMSyntax.R13 => ?v6
-           | ASMSyntax.R14 => ?v7 | ASMSyntax.R15 => ?v8 | ASMSyntax.RDX => ?v9
+           | ASMSyntax.RAX => ?f_RAX | ASMSyntax.RDI => ?f_RDI | ASMSyntax.RBX => ?f_RBX
+           | ASMSyntax.RBP => ?f_RBP | ASMSyntax.R12 => ?f_R12 | ASMSyntax.R13 => ?f_R13
+           | ASMSyntax.R14 => ?f_R14 | ASMSyntax.R15 => ?f_R15 | ASMSyntax.RDX => ?f_RDX
            end) =>
           app_lemma "auto_reg_CASE" [("env", exactk fenv); ("v0", exactk v0);
-                                      ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3);
-                                      ("v4", exactk v4); ("v5", exactk v5); ("v6", exactk v6);
-                                      ("v7", exactk v7); ("v8", exactk v8); ("v9", exactk v9)]
+                                      ("f_RAX", exactk f_RAX); ("f_RDI", exactk f_RDI); ("f_RBX", exactk f_RBX);
+                                      ("f_RBP", exactk f_RBP); ("f_R12", exactk f_R12); ("f_R13", exactk f_R13);
+                                      ("f_R14", exactk f_R14); ("f_R15", exactk f_R15); ("f_RDX", exactk f_RDX)]
                                     [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
         (* test *)
         | ImpSyntax.Test ?c ?e1 ?e2 =>
@@ -1035,6 +1060,24 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_instr_cons_Exit" [("env", exactk fenv)] []
         | ASMSyntax.Comment ?s =>
           app_lemma "auto_instr_cons_Comment" [("env", exactk fenv); ("s", exactk s)] [compile]
+        (* string *)
+        | EmptyString =>
+          app_lemma "auto_string_nil" [("env", exactk fenv)] []
+        | String ?x ?xs =>
+          app_lemma "auto_string_cons"
+            [("env", exactk fenv); ("x", exactk x); ("xs", exactk xs)]
+            [compile; compile]
+        | (match ?v0 with
+          | EmptyString => ?v1
+          | String h t => @?v2 h t
+          end) =>
+          let binders_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
+          let n1 := List.nth binders_v2 0 in
+          let n2 := List.nth binders_v2 1 in
+          app_lemma "auto_string_case"
+            [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2);
+             ("n1", exactk n1); ("n2", exactk n2)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ())]
         (* bool *)
         | true =>
           app_lemma "auto_bool_T" [("env", exactk fenv)] []
@@ -1057,8 +1100,10 @@ Ltac2 rec compile () : unit :=
           if proper_const n then
             if Constr.equal (Constr.type n) constr:(nat) then
               app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk n)] []
-            else if Constr.equal (Constr.type n) constr:(string) then
-              app_lemma "auto_string_const" [("env", exactk fenv); ("str", exactk n)] []
+            else if Constr.equal (Constr.type n) constr:(N) then
+              app_lemma "auto_N_const" [("env", exactk fenv); ("n", exactk n)] []
+            (* else if Constr.equal (Constr.type n) constr:(string) then
+              app_lemma "auto_string_const" [("env", exactk fenv); ("str", exactk n)] [(fun () => simpl list_ascii_of_string; compile ())] *)
             else if Constr.equal (Constr.type n) constr:(ascii) then
               app_lemma "auto_char_const" [("env", exactk fenv); ("chr", exactk n)] []
             else
@@ -1289,7 +1334,7 @@ Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: co
   match Unsafe.kind (Constr.type f) with
   | Prod b _ =>
     let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
-    (* Same as with in_contexts, should ideally be (Binder.type b), but it beaks with dependent types *)
+    (* Same as with in_contexts, should ideally be (Binder.type b), but it breaks with dependent types *)
     lambda_to_prod (Constr.in_context name open_constr:(_) (fun () =>
       let b_hyp := Control.hyp name in
       Control.refine (fun () =>
@@ -1480,8 +1525,7 @@ Function has_match (l: list nat) : nat :=
   | nil => 0
   | cons h t => h + 100
   end.
-(* User-land wish: *)
-(* TODO: the typeclass instance isn't resolved? maybe because of the open_constr? *)
+
 Derive has_match_prog in ltac2:(relcompile_tpe 'has_match_prog 'has_match []) as has_match_proof.
 (* Derive has_match_prog in (forall s,
   lookup_fun (name_enc "has_match") s.(funs) = Some ([name_enc "l"], has_match_prog) ->
@@ -1489,7 +1533,6 @@ Derive has_match_prog in ltac2:(relcompile_tpe 'has_match_prog 'has_match []) as
     eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
 ) as has_match_proof. *)
 Proof.
-  subst has_match_prog; intros.
   relcompile.
 Qed.
 
@@ -1498,8 +1541,8 @@ Fixpoint sum_n (n : nat) : nat :=
   | 0 => 0
   | S n1 => (sum_n n1) + n
   end.
-Lemma sum_n_equation : ltac:(unfold_tpe sum_n).
-Proof. ltac1:(unfold_proof). Qed.
+Lemma sum_n_equation : ltac2:(unfold_fix_type 'sum_n).
+Proof. unfold_fix_proof 'sum_n. Qed.
 
 Derive sum_n_prog in ltac2:(relcompile_tpe 'sum_n_prog 'sum_n []) as sum_n_prog_proof.
 (* Derive sum_n_prog in (forall (s: state),

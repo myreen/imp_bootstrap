@@ -28,11 +28,11 @@ Definition init_code_in (instructions : list instr) : Prop :=
   exists start, code_in 0 (init start) instructions.
 
 (* Finds the position of function n in f_lookup if it exists. *)
-Fixpoint lookup_f (n : nat) (fs : f_lookup) : option nat :=
+Fixpoint lookup_f (n: name) (fs: f_lookup) : option nat :=
   match fs with
   | [] => None
   | (fname, pos) :: fs =>
-    if fname =? n then Some pos
+    if (fname =? n)%N then Some pos
     else lookup_f n fs
   end.
 
@@ -280,6 +280,7 @@ Ltac cleanup :=
   | [ H: Some _ = None |- _ ] => inversion H; subst; clear H
   | [ H: (_, _) = (_, _) |- _ ] => inversion H; subst; clear H
   | [ H: _ :: _ = _ :: _ |- _ ] => inversion H; subst; clear H
+  | [ H: False |- _ ] => inversion H
   end.
 
 Theorem prefix_trans: forall s1 s2 s3,
@@ -796,8 +797,8 @@ Proof.
     destruct c eqn:?; simpl in *; cleanup.
     all: destruct v0 eqn:?; destruct v1 eqn:?; subst; cleanup.
     all: unfold_outcome; cleanup; try congruence.
-    destruct (word.eqb w _) eqn:?; cleanup.
-    all: congruence.
+    (* destruct (word.eqb w _) eqn:?; cleanup.
+    all: congruence. *)
   - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
     2: unfold not; intros; inversion H; subst; eapply IHt1 in Heqp; eauto.
     destruct (eval_test t2) eqn:?; destruct o eqn:?; subst; cleanup.
@@ -879,8 +880,7 @@ Proof.
   simpl in *; subst.
   unfold write_mem in *; simpl in *; cleanup.
   destruct (memory _ _) eqn:?; try destruct o; cleanup.
-  all: try inversion H5; try clear H5; subst.
-  split; intros; eauto.
+  all: simpl; reflexivity.
 Qed.
 
 Theorem steps_consts:
@@ -922,7 +922,7 @@ Theorem index_of_spec: forall name vs k,
 Proof.
   induction vs; intros; eauto.
   simpl; destruct a.
-  - destruct (_ =? _) eqn:?; simpl; eauto.
+  - destruct (_ =? _)%N eqn:?; simpl; eauto.
     rewrite IHvs; eapply eq_sym; rewrite IHvs.
     rewrite Nat.add_assoc.
     reflexivity.
@@ -947,7 +947,7 @@ Proof.
   induction vs; intros; simpl.
   1: rewrite Nat.add_0_r; constructor.
   simpl; destruct a.
-  - destruct (_ =? _) eqn:?; simpl; try rewrite IHvs; lia.
+  - destruct (_ =? _)%N eqn:?; simpl; try rewrite IHvs; lia.
   - try rewrite IHvs; lia.
 Qed.
 
@@ -958,8 +958,8 @@ Proof.
   1: rewrite Nat.add_0_r.
   1: split; intros H; [lia|inversion H].
   simpl; destruct a.
-  - destruct (_ =? _) eqn:?; simpl; split; intros H.
-    all: try rewrite Nat.eqb_eq in *; subst; eauto.
+  - destruct (_ =? _)%N eqn:?; simpl; split; intros H.
+    all: rewrite ?N.eqb_eq in *; subst; eauto.
     all: try lia.
     1: right; rewrite <- IHvs.
     1: pat `index_of _ _ _ < _` at rewrite index_of_spec_add in pat.
@@ -971,7 +971,7 @@ Proof.
     rewrite <- Nat.succ_lt_mono.
     rewrite IHvs.
     pat `_ \/ _` at destruct pat.
-    1: pat `Some _ = Some _` at inversion pat; rewrite Nat.eqb_neq in *|-; congruence.
+    1: pat `Some _ = Some _` at inversion pat; rewrite N.eqb_neq in *|-; congruence.
     eauto.
   - split; intros.
     1: right; rewrite <- IHvs.
@@ -996,7 +996,7 @@ Proof.
   induction vs1; simpl in *.
   - inversion H.
   - destruct a.
-    + destruct (_ =? _); try reflexivity.
+    + destruct (_ =? _)%N; try reflexivity.
       assert (index_of vs1 name k = index_of (vs1 ++ vs2) name k).
       2: {
         do 2 (rewrite index_of_spec; symmetry).
@@ -1023,7 +1023,7 @@ Proof.
   induction vs; intros; simpl.
   1: constructor.
   simpl; destruct a.
-  - destruct (_ =? _) eqn:?; simpl; [constructor|].
+  - destruct (_ =? _)%N eqn:?; simpl; [constructor|].
     specialize (IHvs (k + 1)).
     lia.
   - specialize (IHvs (k + 1)).
@@ -1051,8 +1051,8 @@ Proof.
       eapply IHvs; eauto.
       lia.
     }
-    destruct (n =? nm1) eqn:?; destruct (n =? nm2) eqn:?.
-    all: try rewrite Nat.eqb_eq in *; try congruence; cleanup.
+    destruct (n =? nm1)%N eqn:?; destruct (n =? nm2)%N eqn:?.
+    all: rewrite ?N.eqb_eq in *; try congruence; cleanup.
     all: try (spat `index_of` at rewrite index_of_spec in spat; lia).
     assert (S (index_of vs nm1 k) = i) by (rewrite index_of_spec in *; lia).
     assert (S (index_of vs nm2 k) = i) by (rewrite index_of_spec in *; lia).
@@ -1074,7 +1074,7 @@ Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
-  - destruct (_ =? _) eqn:?; cleanup.
+  - destruct (_ =? _)%N eqn:?; cleanup.
     + lia.
     + spat `index_of_opt` at eapply IHvs in spat.
       lia.
@@ -1088,7 +1088,7 @@ Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
-  - destruct (_ =? _) eqn:?; cleanup.
+  - destruct (_ =? _)%N eqn:?; cleanup.
     + lia.
     + spat `index_of_opt` at eapply IHvs in spat.
       lia.
@@ -1110,7 +1110,7 @@ Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
-  - destruct (_ =? _) eqn:?; cleanup.
+  - destruct (_ =? _)%N eqn:?; cleanup.
     + lia.
     + spat `index_of_opt` at eapply IHvs in spat.
       lia.
@@ -1124,7 +1124,7 @@ Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
-  - destruct (_ =? _) eqn:?; cleanup.
+  - destruct (_ =? _)%N eqn:?; cleanup.
     + lia.
     + spat `index_of_opt` at eapply IHvs in spat.
       lia.
@@ -1138,7 +1138,7 @@ Proof.
   induction vs; intros; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
-  - destruct (_ =? _) eqn:?; cleanup.
+  - destruct (_ =? _)%N eqn:?; cleanup.
     + reflexivity.
     + spat `index_of_opt` at eapply IHvs in spat.
       spat `index_of_opt` at rewrite <- spat.
@@ -1167,8 +1167,8 @@ Proof.
   - simpl in *.
     destruct a.
     2: specialize (IHvs _ _ _ _ (conj H H0)); assumption.
-    destruct (n =? nm1) eqn:?; destruct (n =? nm2) eqn:?.
-    all: try rewrite Nat.eqb_eq in *; eauto; try congruence; cleanup.
+    destruct (n =? nm1)%N eqn:?; destruct (n =? nm2)%N eqn:?.
+    all: rewrite ?N.eqb_eq in *; eauto; try congruence; cleanup.
     all: spat `index_of_opt` at eapply index_of_opt_in_gt_k_str in spat.
     all: lia.
 Qed.
@@ -1272,13 +1272,6 @@ Proof.
     rewrite Nat.mul_comm in Hdm.
     exact (eq_sym Hdm).
 Qed.
-
-(* Theorem naive_unsigned_ge_0: forall (x: word64),
-  (0 <= Naive.unsigned x)%Z.
-Proof.
-  intros.
-
-Qed. *)
 
 Ltac rw tac :=
   let n := fresh "H" in
@@ -1507,14 +1500,12 @@ Proof.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
   specialize (c_exp_length e2 _ _ _ _ Heqp2) as ?; subst.
   destruct x; destruct s; cleanup; subst.
-  2: repeat eexists; repeat split; eauto; simpl; split; eauto.
   unfold exp_res_rel in *; cleanup; subst.
   unfold goal_exp in H0.
   pat `steps _ _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
   eapply H0 in Heqp0; clear H0; eauto; cleanup.
   2: congruence.
   1: destruct x0; destruct s0; cleanup; subst.
-  2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto.
   all: unfold exp_res_rel in *; cleanup.
   all: try rewrite <- H20 in *.
   all: unfold state_rel in *; cleanup.
@@ -1584,14 +1575,12 @@ Proof.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
   specialize (c_exp_length e2 _ _ _ _ Heqp2) as ?; subst.
   destruct x; destruct s; cleanup; subst.
-  2: repeat eexists; repeat split; eauto; simpl; split; eauto.
   unfold exp_res_rel in *; cleanup; subst.
   unfold goal_exp in H0.
   rw ltac:(specialize (steps_instructions _ _ _ _ H10)).
   eapply H0 in Heqp0; clear H0; eauto; inversion H3; clear H3; subst; cleanup; eauto.
   2: congruence.
   1: destruct x0; destruct s0; cleanup; subst.
-  2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto.
   all: unfold exp_res_rel in *; cleanup.
   all: try rewrite <- H20 in *.
   all: unfold state_rel in *; cleanup.
@@ -1656,7 +1645,7 @@ Proof.
   destruct v0 eqn:?; unfold_outcome; cleanup; subst.
   2: contradiction.
   unfold value_eqb in *.
-  rewrite word.unsigned_eqb in *; simpl word.unsigned in *; rewrite Z.mod_0_l in *; [|lia].
+  rewrite word.unsigned_eqb in *; rewrite word.unsigned_of_Z in *; simpl word.unsigned in *; unfold word.wrap in *; rewrite Z.mod_0_l in *; [|lia].
   rewrite Heqb in *.
   destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *.
   destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *.
@@ -1671,14 +1660,12 @@ Proof.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
   specialize (c_exp_length e2 _ _ _ _ Heqp2) as ?; subst.
   destruct x; destruct s; cleanup; subst.
-  2: repeat eexists; repeat split; eauto; simpl; split; eauto.
   unfold exp_res_rel in *; cleanup; subst.
   rw ltac:(specialize (steps_instructions _ _ _ _ H10)).
   unfold goal_exp in H0.
   eapply H0 in Heqp0; clear H0; eauto; inversion H3; clear H3; subst; cleanup; eauto.
   2: congruence.
   1: destruct x0; destruct s0; cleanup; subst.
-  2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto.
   all: unfold exp_res_rel in *; cleanup.
   all: try rewrite <- H20 in *.
   all: unfold state_rel in *; cleanup.
@@ -1714,6 +1701,7 @@ Proof.
       2: simpl; eauto.
       2: simpl; eauto.
       1: unfold not; intros ->; rewrite Z.eqb_neq in *; eapply Heqb.
+      Transparent word.of_Z.
       1: simpl; rewrite Z.mod_0_l; try reflexivity; lia.
       eapply steps_refl.
     }
@@ -1770,14 +1758,12 @@ Proof.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
   specialize (c_exp_length e2 _ _ _ _ Heqp2) as ?; subst.
   destruct x; destruct s; cleanup; subst.
-  2: repeat eexists; repeat split; eauto; simpl; split; eauto.
   unfold exp_res_rel in *; cleanup; subst.
   rw ltac:(specialize (steps_instructions _ _ _ _ H10)).
   unfold goal_exp in H0.
   eapply H0 in Heqp0; clear H0; eauto; inversion H3; clear H3; subst; cleanup; eauto.
   2: congruence.
   1: destruct x0; destruct s0; cleanup; subst.
-  2: repeat eexists; repeat split; [eapply steps_trans|..]; eauto; simpl; eauto.
   all: unfold exp_res_rel in *; cleanup.
   all: try rewrite <- H20 in *.
   all: unfold state_rel in *; cleanup.
@@ -1791,7 +1777,7 @@ Proof.
     unfold env_ok in *; cleanup.
     rw ltac:(specialize (steps_instructions _ _ _ _ H3)).
     eapply H18 in Heqo; cleanup.
-    eapply H30 in Heqo0; clear H30; cleanup.
+    pat `forall (_: nat) (_: option Value), _` at eapply pat in Heqo0; clear pat; cleanup.
     unfold opt_rel in *; destruct x8; try contradiction.
     eexists.
     split.
@@ -1818,8 +1804,8 @@ Proof.
         (word.add (word.add x9 x0) (word.of_Z (word.unsigned (word.of_Z 0)))) =
         (word.add x (word.of_Z (Z.of_nat (w2n x0 / 8 * 8))))
       ) as ->.
-      2: rewrite H30; eauto.
-      rewrite H12 in *; cleanup.
+      2: pat`memory s0 _ = _` at rewrite pat; eauto.
+      pat `pmap i = _` at rewrite pat in *; cleanup.
       unfold w2n; simpl.
       cbn.
       rewrite mul_div_id; eauto.
@@ -1955,51 +1941,22 @@ Proof.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
   specialize (c_exp_length e2 _ _ _ _ Heqp2) as ?; subst.
   destruct x; destruct s; cleanup; subst.
-  2: eexists; split; eauto.
   unfold exp_res_rel in *; cleanup; subst.
   steps_inst_tac.
   eval_exp_correct_tac.
   1: destruct x0; destruct s0; cleanup; subst.
-  2: contradiction.
   all: unfold exp_res_rel in *; cleanup.
   all: try rewrite <- H18 in *.
   all: unfold state_rel in *; cleanup.
-  1: inst_has_stack (Word x :: curr).
+  2: eapply env_ok_add_None; eauto; eapply pmap_subsume_refl.
+  2: eauto.
+  repeat has_stack_even_tac; cleanup.
+  unfold env_ok in *; cleanup.
+  steps_inst_tac.
+  simpl in *.
+  cleanup; subst.
+  destruct ((Naive.unsigned w) <? (Naive.unsigned w0))%Z eqn:?.
   1: {
-    repeat has_stack_even_tac; cleanup.
-    unfold env_ok in *; cleanup.
-    steps_inst_tac.
-    simpl in *.
-    cleanup; subst.
-    destruct ((Naive.unsigned w) <? (Naive.unsigned w0))%Z eqn:?.
-    1: {
-      eexists.
-      split.
-      1: {
-        eapply steps_trans.
-        1: eauto.
-        eapply steps_trans.
-        1: eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_mov; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_pop; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_pop; eauto.
-        eapply steps_trans.
-        1: eapply steps_step_same.
-        1: eapply step_jump; eauto.
-        1: econstructor; simpl; eauto.
-        eapply steps_refl.
-      }
-      simpl.
-      unfold code_rel in *; cleanup; eauto.
-      try rewrite Heqb.
-      bin_exp_post_tac.
-    }
     eexists.
     split.
     1: {
@@ -2007,6 +1964,7 @@ Proof.
       1: eauto.
       eapply steps_trans.
       1: eauto.
+      pat `steps _ (State s0, _)` at rw ltac:(specialize steps_instructions with (1 := pat)); eauto.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_mov; eauto.
@@ -2020,11 +1978,6 @@ Proof.
       1: eapply steps_step_same.
       1: eapply step_jump; eauto.
       1: econstructor; simpl; eauto.
-      eapply steps_trans.
-      1: eapply steps_step_same.
-      1: eapply step_jump; eauto.
-      1: simpl; rewrite Heqb; eauto.
-      1: econstructor; simpl; eauto.
       eapply steps_refl.
     }
     simpl.
@@ -2032,16 +1985,45 @@ Proof.
     try rewrite Heqb.
     bin_exp_post_tac.
   }
-  all: eauto.
-  unfold state_rel in *; cleanup.
-  eapply env_ok_add_None; eauto.
-  eapply pmap_subsume_refl.
+  eexists.
+  split.
+  1: {
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_trans.
+    1: eauto.
+    pat `steps _ (State s0, _)` at rw ltac:(specialize steps_instructions with (1 := pat)); eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_mov; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_pop; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_pop; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_jump; eauto.
+    1: econstructor; simpl; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_jump; eauto.
+    1: simpl; rewrite Heqb; eauto.
+    1: econstructor; simpl; eauto.
+    eapply steps_refl.
+  }
+  simpl.
+  unfold code_rel in *; cleanup; eauto.
+  try rewrite Heqb.
+  bin_exp_post_tac.
 Qed.
 
 Theorem c_test_Test_Equal: forall (cm : cmp) (e1 e2 : exp),
   cm = ImpSyntax.Equal ->
   goal_test (Test cm e1 e2).
 Proof.
+  Transparent word.eqb.
   intros.
   unfold goal_test; intros.
   simpl eval_test in *.
@@ -2067,12 +2049,10 @@ Proof.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
   specialize (c_exp_length e2 _ _ _ _ Heqp2) as ?; subst.
   destruct x; destruct s; cleanup; subst.
-  2: eexists; split; eauto.
   unfold exp_res_rel in *; cleanup; subst.
   try steps_inst_tac.
   eval_exp_correct_tac.
   1: destruct x0; destruct s0; cleanup; subst.
-  2: contradiction.
   all: unfold exp_res_rel in *; cleanup.
   all: try rewrite <- H18 in *.
   all: unfold state_rel in *; cleanup.
@@ -2092,6 +2072,7 @@ Proof.
         1: eauto.
         eapply steps_trans.
         1: eauto.
+        pat `steps _ (State s0, _)` at rw ltac:(specialize steps_instructions with (1 := pat)); eauto.
         eapply steps_trans.
         1: eapply steps_step_same.
         1: eapply step_mov; eauto.
@@ -2110,6 +2091,7 @@ Proof.
       simpl.
       unfold code_rel in *; cleanup; eauto.
       try rewrite Heqb.
+      simpl;
       bin_exp_post_tac.
     }
     eexists.
@@ -2119,6 +2101,7 @@ Proof.
       1: eauto.
       eapply steps_trans.
       1: eauto.
+      pat `steps _ (State s0, _)` at rw ltac:(specialize steps_instructions with (1 := pat)); eauto.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_mov; eauto.
@@ -2185,12 +2168,10 @@ Proof.
   rewrite Htmp in *; clear Htmp.
   eval_test_goal_tac.
   destruct x; destruct s; cleanup; subst.
-  2: contradiction.
   assert (n = pc (set_pc n s)) as Htmp by (simpl; reflexivity); rewrite Htmp in *; clear Htmp.
   unfold goal_test in H0; eapply H0 in Heqp0; clear H0; cleanup.
   all: eauto.
   1: destruct x; destruct s0; cleanup; subst.
-  2: contradiction.
   2: simpl in *; unfold state_rel in *; cleanup; rwr ltac:(specialize (steps_instructions _ _ _ _ H)); eauto.
   unfold state_rel in *; cleanup.
   destruct v eqn:?; subst.
@@ -2282,12 +2263,10 @@ Proof.
   rewrite Htmp in *; clear Htmp.
   eval_test_goal_tac.
   destruct x; destruct s; cleanup; subst.
-  2: contradiction.
   assert (n = pc (set_pc n s)) as Htmp by (simpl; reflexivity); rewrite Htmp in *; clear Htmp.
   unfold goal_test in H0; eapply H0 in Heqp0; clear H0; cleanup.
   all: eauto.
   1: destruct x; destruct s0; cleanup; subst.
-  2: contradiction.
   2: simpl in *; unfold state_rel in *; cleanup; rwr ltac:(specialize (steps_instructions _ _ _ _ H)); eauto.
   unfold state_rel in *; cleanup.
   destruct v eqn:?; subst.
@@ -2370,7 +2349,6 @@ Proof.
   repeat rewrite code_in_append in *; cleanup.
   eval_test_goal_tac.
   destruct x eqn:?; destruct s eqn:?; cleanup.
-  2: eexists; split; eauto.
   destruct v eqn:?; subst.
   1: {
     eexists; split.
@@ -2451,8 +2429,8 @@ Proof.
   eapply substring_noop.
 Qed.
 
-(* Theorem c_cmd_Return: forall (e: exp),
-  goal_cmd (ImpSyntax.Return e).
+Theorem c_cmd_Return: forall (e: exp) (fuel: nat),
+  goal_cmd (ImpSyntax.Return e) fuel.
 Proof.
   intros.
   unfold goal_cmd; intros.
@@ -2464,14 +2442,17 @@ Proof.
   destruct c_exp eqn:?; cleanup.
   unfold_outcome; cleanup.
   simpl flatten in *; cleanup.
-  repeat rewrite code_in_append in *; cleanup.
-  simpl code_in in*; cleanup.
-  eval_exp_correct_tac; eauto.
-  destruct x eqn:?; destruct s0 eqn:?; cleanup.
-  2: eexists; eexists; split; eauto.
-  unfold exp_res_rel in *; cleanup; subst.
-  rwr ltac:(specialize (c_exp_length e _ _ _ _ Heqp0)).
+  repeat rewrite list_length_spec in *.
+  pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?; cleanup; subst.
+  simpl flatten in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl code_in in *; cleanup.
+  pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
+  pat `eval_exp e _ = (?r, _)` at
+    assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
+  pat `let (_, _) := ?x in _` at destruct x.
+  pat `match ?s with _ => _ end` at destruct s; cleanup; subst.
   steps_inst_tac.
+  repeat rewrite Nat.sub_diag in *.
   unfold env_ok in *; cleanup.
   unfold has_stack in *; cleanup.
   eexists; eexists; split.
@@ -2481,15 +2462,16 @@ Proof.
     eapply steps_trans.
     1: eapply steps_step_same.
     1: eapply step_add_rsp.
-    1: instantiate(1 := curr).
-    1: rewrite <- H3; eauto.
-    1: rewrite <- H23; reflexivity.
+    2: pat `_ = stack s` at rewrite <- pat; reflexivity.
+    1: pat `_ = List.length curr` at rewrite <- pat; eauto.
     eapply steps_step_same.
     1: eapply step_ret.
     1: simpl; eauto.
     simpl.
-
-  } *)
+    (* rest = RetAddr ?n :: ?rest *)
+    admit.
+  }
+Admitted.
 
 Lemma env_ok_replace_head: forall vars vs curr xnew xold n v pmap,
   env_ok vars vs (Word xold :: curr) pmap →
@@ -2504,15 +2486,15 @@ Proof.
   simpl in *.
   split; [assumption|].
   intros.
-  destruct (n =? n0) eqn:?.
-  - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
+  destruct (n =? n0)%N eqn:?.
+  - spat `IEnv.lookup` at rewrite N.eqb_eq in *; rewrite Heqb in spat.
     rewrite IEnv.lookup_insert_eq in *; cleanup.
     rewrite <- index_of_In with (k := 0); rewrite Nat.add_0_l.
     spat `_ = S _` at rewrite spat.
     split; try eexists; try split; simpl; cleanup; eauto.
     all: pat `index_of _ _ _ = 0` at rewrite pat; eauto.
     lia.
-  - rewrite Nat.eqb_neq in *.
+  - rewrite N.eqb_neq in *.
     rewrite IEnv.lookup_insert_neq in *; try assumption.
     spat `IEnv.lookup` at pose proof spat as Hlookup.
     pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
@@ -2551,6 +2533,28 @@ Proof.
   all: destruct n; simpl; eauto.
 Qed.
 
+Lemma nth_error_list_update_eq: forall {A: Type} n (v: A) xs,
+  (exists v0, nth_error xs n = Some v0) <->
+  nth_error (list_update n v xs) n = Some v.
+Proof.
+  induction n; destruct xs; simpl; split; intros; eauto; cleanup.
+  1: rewrite <- IHn; eauto.
+  rewrite IHn; eauto.
+Qed.
+
+Lemma nth_error_list_update_eq1: forall {A: Type} n (v0 v: A) xs,
+  nth_error (list_update n v xs) n = Some v0 -> nth_error (list_update n v xs) n = Some v.
+Proof.
+  induction n; destruct xs; simpl; intros; eauto; cleanup.
+Qed.
+
+Lemma nth_error_list_update_neq: forall {A: Type} n1 n (v0: A) xs,
+  n <> n1 ->
+  nth_error (list_update n1 v0 xs) n = nth_error xs n.
+Proof.
+  induction n1; destruct xs; destruct n; simpl; intros; eauto; congruence.
+Qed.
+
 Lemma env_ok_replace_list_update: forall vars vs curr xnew x0 n n0 v pmap,
   env_ok vars vs (Word x0 :: curr) pmap →
   v_inv pmap v xnew →
@@ -2566,29 +2570,34 @@ Proof.
   1: rewrite list_update_size_same; eauto.
   intros.
   rewrite <- index_of_In with (k := 0); rewrite Nat.add_0_l.
-  destruct (n =? n1) eqn:?.
-  - spat `IEnv.lookup` at rewrite Nat.eqb_eq in *; rewrite Heqb in spat.
-    rewrite IEnv.lookup_insert_eq in *; cleanup.
+  destruct (n =? n1)%N eqn:?.
+  - spat `IEnv.lookup` at rewrite N.eqb_eq in *; rewrite Heqb in spat.
+    pat `IEnv.lookup _ _ = _` at pose proof pat as ?.
+    pat `IEnv.lookup _ _ = _` at rewrite IEnv.lookup_insert_eq in pat; cleanup.
     split; try eexists; try split; simpl; cleanup; eauto.
-    all: pat `index_of _ _ _ = _` at rewrite pat; eauto.
-    (* 1: rewrite list_update_size_same; eauto. *)
-    (* 1: spat `_ = S (List.length curr)` at rewrite <- spat. *)
-    (* 1: spat `index_of _ _ _ = _` at rewrite <- spat; eauto. *)
-    admit.
-  - rewrite Nat.eqb_neq in *.
+    pat `index_of _ _ _ = _` at rewrite pat; eauto; simpl.
+    pat `List.length vs = _` at rewrite pat in *.
+    rewrite <- Nat.succ_lt_mono in *.
+    eapply nth_error_list_update_eq; eauto.
+    eexists; eapply nth_error_nth'; eauto.
+  - rewrite N.eqb_neq in *.
     rewrite IEnv.lookup_insert_neq in *; try assumption.
     spat `IEnv.lookup` at pose proof spat as Hlookup.
     pat `∀ _, _` as Hthm at eapply Hthm in Hlookup; cleanup.
-    admit.
-    (* split; try eexists; try split; simpl; cleanup; eauto.
-    destruct (index_of n0 0 vs) eqn:?.
-    + spat `index_of n _ _ = _` at pose proof spat as Hidx_of_n.
-      spat `index_of n0 _ _ = _` at pose proof spat as Hidx_of_n0.
-      pat `0 < List.length vs` at pose proof pat as H0ltvs.
-      specialize (index_of_bound_inj _ _ _ _ _ Hidx_of_n Hidx_of_n0 H0ltvs) as ?; subst.
-      congruence.
-    + simpl in *; assumption. *)
-Admitted.
+    split; try eexists; try split; simpl; cleanup; eauto.
+    1: pat `nth_error _ _ = Some _` at eapply nth_error_In in pat.
+    1: rewrite index_of_In in *; eauto.
+    destruct (index_of vs n1 0) eqn:?; simpl in *; cleanup; [reflexivity|].
+    rewrite nth_error_list_update_neq; eauto.
+    assert (S n2 <> S n0) as ?; eauto.
+    pat `_ = S n2` at rewrite <- pat.
+    pat `_ = S n0` at rewrite <- pat.
+    intros Hcont; pat `n <> n1` at eapply pat.
+    eapply index_of_bound_inj; eauto.
+    pat `index_of _ n1 _ = _` at rewrite pat; eauto.
+    Unshelve.
+    exact (Word (word.of_Z 0)).
+Qed.
 
 Theorem c_cmd_Assign: forall (n: name) (e: exp) (fuel: nat),
   goal_cmd (ImpSyntax.Assign n e) fuel.
@@ -2607,7 +2616,6 @@ Proof.
   spat `eval_exp` at specialize (eval_exp_pure e _ _ _ Heqp) as ?; subst.
   eval_exp_correct_tac.
   destruct x eqn:?; destruct s eqn:?; cleanup; subst.
-  2: contradiction.
   unfold exp_res_rel in *; cleanup; subst.
   spat `env_ok` at pose proof spat as Henv_ok; unfold env_ok in spat; cleanup.
   spat `c_exp` at rwr ltac:(specialize (c_exp_length _ _ _ _ _ spat)).
@@ -2685,10 +2693,55 @@ Proof.
   eauto.
 Qed.
 
+Theorem prefix_refl: forall o,
+  prefix o o = true.
+Proof.
+  intros; eapply prefix_correct; eapply substring_noop.
+Qed.
+
+Lemma substring_append: forall (s s1: string),
+  substring 0 (length s) (s ++ s1) = s.
+Proof.
+  induction s; simpl; intros.
+  - destruct s1; simpl; reflexivity.
+  - f_equal; eauto.
+Qed.
+
+Theorem eval_cmd_mono: ∀ fuel c r s0 s1,
+  eval_cmd c (EVAL_CMD fuel) s0 = (r, s1) -> prefix s0.(ImpSemantics.output) s1.(ImpSemantics.output) = true.
+Proof.
+  Opaque EVAL_CMD.
+  induction fuel; induction c; simpl; intros; unfold_outcome; unfold_monadic; cleanup.
+  all: repeat lazymatch goal with
+  | IH: forall r s0 s1, eval_cmd ?c _ _ = _ -> _, H: context [ let (_, _) := eval_cmd ?c ?f ?s2 in _ ] |- _ =>
+    let Hd := fresh "Hd" in
+    destruct (eval_cmd c f s2) eqn:Hd; subst; cleanup; specialize IH with (1 := Hd); clear Hd
+  | H: context [ match ?o with _ => _ end ] |- _ => destruct o eqn:?; subst; cleanup
+  | H: eval_exp _ _ = _ |- _ => eapply eval_exp_pure in H; subst
+  | H: eval_exps _ _ = _ |- _ => eapply eval_exps_pure in H; subst
+  | H: eval_test _ _ = _ |- _ => eapply eval_test_pure in H; subst
+  | H: EVAL_CMD 0 _ _ = _ |- _ => with_strategy transparent [EVAL_CMD] unfold EVAL_CMD in H
+  | IH: forall c r s0 s1, eval_cmd _ _ _ = _ -> _, H: EVAL_CMD (S _) _ _ = _ |- _ =>
+    with_strategy transparent [EVAL_CMD] unfold EVAL_CMD in H;
+    specialize IH with (1 := H)
+  | |- prefix _ (_ ++ _) = true =>
+    eapply prefix_correct; eapply substring_append
+  | H: (_, _) = (_, _) |- _ => inversion H; clear H; subst
+  | _ => (unfold assign, alloc, update, get_vars, get_body_and_set_vars, set_varsM,
+    catch_return, set_vars, set_memory, dest_word, get_char, put_char, set_output in *)
+        || unfold_outcome || unfold_monadic || (eapply prefix_refl) || (simpl in *)
+  end.
+  all: try solve [eauto 4 using prefix_trans].
+Qed.
+
+Transparent EVAL_CMD.
+Transparent eval_cmd.
+
 Theorem c_cmd_Seq: forall (fuel: nat) (c1 c2: cmd),
   goal_cmd c1 fuel -> goal_cmd c2 fuel ->
   goal_cmd (ImpSyntax.Seq c1 c2) fuel.
 Proof.
+  Transparent eval_cmd.
   intros.
   unfold goal_cmd; intros.
   simpl c_cmd in *; unfold dlet in *.
@@ -2704,27 +2757,24 @@ Proof.
   1: destruct o; cleanup; repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
   assert (s.(steps_done) <= s0.(steps_done)).
   1: repeat pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
+  all: assert (steps_done s0 - steps_done s + (steps_done s1 - steps_done s0) = s1.(steps_done) - s.(steps_done)) as ? by lia.
   pat `goal_cmd c1 _` at unfold goal_cmd in pat; eapply pat in Heqp; clear pat; eauto; cleanup; [|destruct o; congruence].
   destruct x; destruct s2; cleanup.
   all: spat `steps` at pose proof spat.
   all: spat `steps` at eapply steps_add_fuel with (x := s1.(steps_done) - s0.(steps_done)) in spat.
-  all: assert (steps_done s0 - steps_done s + (steps_done s1 - steps_done s0) = s1.(steps_done) - s.(steps_done)) as ? by lia.
   2: spat `_ = s1.(steps_done) - s.(steps_done)` at rewrite spat in *.
   2: do 2 eexists; split; eauto; split; eauto; split; eauto; split; eauto.
   2: {
     pat `match ?o with _ => _ end = _` at destruct o eqn:?; inversion pat; subst; eauto.
     eapply prefix_trans; eauto.
-    (* prefix (ImpSemantics.output s0) (ImpSemantics.output s1) = true *)
-    admit.
+    pat `eval_cmd c2 _ _ = _` at eapply eval_cmd_mono in pat; eauto.
   }
   destruct o eqn:?; subst; cleanup.
   2: do 2 eexists; split; eauto.
   unfold cmd_res_rel in * |-; cleanup; subst.
   unfold goal_cmd in H0.
   pat `steps (State t, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
-  pat `eval_cmd c2 _ _ = _` at eapply H0 with (pmap := x0) in pat; clear H0; cleanup.
-  2,3,4,8,9,10: eauto.
-  2: instantiate (1 := x).
+  pat `eval_cmd c2 _ _ = _` at eapply H0 with (pmap := x0) (curr := x) in pat; clear H0; cleanup.
   all: eauto.
   spat `_ = s1.(steps_done) - s.(steps_done)` at rewrite spat in *.
   rewrite Nat.add_0_l in *.
@@ -2744,7 +2794,7 @@ Proof.
     }
     crunch_side_conditions_cmd.
   }
-Admitted.
+Qed.
 
 Theorem c_cmd_While: forall (t: test) (c: cmd) (fuel: nat),
   goal_cmd c fuel ->
@@ -2780,7 +2830,6 @@ Proof.
     spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
     all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
     destruct x eqn:?; destruct s eqn:?; subst; cleanup.
-    2: contradiction.
     pat `state_rel _ _ t0` at pose proof pat.
     pat `state_rel _ _ t0` at unfold state_rel in pat; cleanup; subst.
     pat `state_rel _ _ s0` at unfold state_rel in pat; cleanup; subst.
@@ -2818,7 +2867,6 @@ Proof.
     spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
     all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
     destruct x eqn:?; destruct s eqn:?; cleanup; subst.
-    2: contradiction.
     assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
     spat `eval_cmd c` at unfold goal_cmd in spat; eapply H in spat; eapply spat in H2; clear spat; cleanup; eauto.
     2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
@@ -2860,7 +2908,6 @@ Proof.
   spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
   all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
   destruct x eqn:?; destruct s2 eqn:?; cleanup; subst.
-  2: contradiction.
   assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s3))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
   assert (Cont v <> Stop Crash) by congruence.
   assert (s0.(steps_done) <= s.(steps_done)).
@@ -2930,7 +2977,8 @@ Proof.
     }
     simpl in *; cleanup.
     crunch_side_conditions_cmd.
-    admit. (* prefix s2 (string_of_list_ascii (ImpSemantics.output s1)) = true *)
+    eapply prefix_trans; eauto.
+    pat `eval_cmd _ _ _ = _` at eapply eval_cmd_mono in pat; eauto.
   }
   (* steps (body) ~~> State *)
   all: pat `cmd_res_rel _ _ _ _ _ _ _` at unfold cmd_res_rel in pat; cleanup; eauto.
@@ -2999,7 +3047,7 @@ Proof.
   crunch_side_conditions_cmd.
   Unshelve.
   all: eauto.
-Admitted.
+Qed.
 
 Theorem c_cmd_Skip: forall (fuel: nat),
   goal_cmd Skip fuel.
@@ -3019,9 +3067,308 @@ Proof.
   repeat (split; eauto).
 Qed.
 
+Ltac addition_cleanup :=
+  repeat match goal with
+  | H: context[?x + 1 + 1 + 1 + 1] |- _ =>
+    assert (x + 1 + 1 + 1 + 1 = x + 4) as Htmp by lia; rewrite Htmp in *; clear Htmp
+  | H: context[?x + 1 + 1 + 1] |- _ =>
+    assert (x + 1 + 1 + 1 = x + 3) as Htmp by lia; rewrite Htmp in *; clear Htmp
+  | H: context[?x + 1 + 1] |- _ =>
+    assert (x + 1 + 1 = x + 2) as Htmp by lia; rewrite Htmp in *; clear Htmp
+  end.
+
+Theorem c_cmd_If: forall (t: test) (c1 c2: cmd) (fuel: nat),
+  goal_cmd c1 fuel -> goal_cmd c2 fuel ->
+  goal_cmd (ImpSyntax.If t c1 c2) fuel.
+Proof.
+  intros.
+  unfold goal_cmd; intros.
+  spat `c_cmd` at simpl c_cmd in spat; unfold dlet in spat.
+  with_strategy transparent [eval_cmd] simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
+  destruct c_test_jump eqn:?; simpl in *; subst; cleanup.
+  destruct (c_cmd c1) eqn:?; simpl in *; subst; cleanup.
+  destruct (c_cmd c2) eqn:?; simpl in *; subst; cleanup.
+  repeat rewrite list_append_spec in *.
+  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
+  spat `c_test_jump` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
+  spat `c_cmd c1` at specialize c_cmd_length with (1 := spat) as ?; subst.
+  spat `c_cmd c2` at specialize c_cmd_length with (1 := spat) as ?; subst.
+  destruct eval_test eqn:?; cleanup.
+  addition_cleanup.
+  pat `match ?o with _ => _ end = _` at destruct o eqn:?; subst; cleanup.
+  2: exfalso; destruct v eqn:?; spat `eval_test` at eapply eval_test_not_stop in spat; eauto; try congruence.
+  spat `c_test_jump _ _ _ ?p` at
+    assert (p = pc (set_pc p t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
+  spat `eval_test` at specialize (eval_test_pure t _ _ _ spat) as ?; subst.
+  spat `eval_test` at specialize c_test_correct as Htmp; unfold goal_test in Htmp; eapply Htmp with (fuel := s1.(steps_done) - s0.(steps_done)) in spat; clear Htmp; eauto; cleanup.
+  pat `let (_, _) := ?x in _` at destruct x eqn:?; subst; cleanup.
+  pat `match ?s with _ => _ end` at destruct s eqn:?; subst; cleanup.
+  spat `if ?v then _ else _` at destruct v eqn:?; cleanup; subst.
+  2: { (* test = false *)
+    spat `c_cmd c2 ?p` at
+      assert (p = pc (set_pc p s2)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
+    spat `goal_cmd c2` at unfold goal_cmd in spat; rename spat into IHc.
+    spat `eval_cmd c2` at eapply IHc in spat; clear IHc; cleanup; eauto.
+    2: simpl; pat `steps _ (State s2, _)` at rewrite <- steps_instructions with (1 := pat); simpl; eauto.
+    pat `let (_, _) := ?x in _` at destruct x eqn:?; subst; cleanup.
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; [eauto|econstructor|..].
+      simpl.
+      eapply steps_trans.
+      1: eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; [|econstructor|..].
+      1: unfold fetch; pat `pc s2 = _` at rewrite pat; pat `steps _ (State s2, _)` at rewrite <- steps_instructions with (1 := pat); simpl; eauto.
+      simpl; eauto.
+    }
+    simpl; eauto.
+  }
+  spat `c_cmd c1 ?p` at
+      assert (p = pc (set_pc p s2)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
+  spat `goal_cmd c1` at unfold goal_cmd in spat; rename spat into IHc.
+  spat `eval_cmd c1` at eapply IHc in spat; clear IHc; cleanup; eauto.
+  2: simpl; pat `steps _ (State s2, _)` at rewrite <- steps_instructions with (1 := pat); simpl; eauto.
+  pat `let (_, _) := ?x in _` at destruct x eqn:?; subst; cleanup.
+  pat `match ?s with _ => _ end` at destruct s eqn:?; subst; cleanup.
+  2: { (* s = Halt *)
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; [eauto|econstructor|..].
+      simpl.
+      eapply steps_trans.
+      1: eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; [|econstructor|..].
+      1: unfold fetch; pat `pc s2 = _` at rewrite pat; pat `steps _ (State s2, _)` at rewrite <- steps_instructions with (1 := pat); simpl; eauto.
+      eauto.
+    }
+    simpl; eauto.
+  }
+  (* s = State *)
+  spat `cmd_res_rel` at pose proof spat.
+  spat `cmd_res_rel` at unfold cmd_res_rel in spat.
+  destruct res; cleanup.
+  2: { (* res = Stop *)
+    pat `match ?v with _ => _ end` at destruct v; cleanup; try congruence.
+    1: { (* v = Return *)
+      do 2 eexists; split.
+      1: {
+        eapply steps_trans.
+        1: eapply steps_step_same.
+        1: eapply step_jump; [eauto|econstructor|..].
+        simpl.
+        eapply steps_trans.
+        1: eauto.
+        eapply steps_trans.
+        1: eapply steps_step_same.
+        1: eapply step_jump; [|econstructor|..].
+        1: unfold fetch; pat `pc s2 = _` at rewrite pat; pat `steps _ (State s2, _)` at rewrite <- steps_instructions with (1 := pat); simpl; eauto.
+        eauto.
+      }
+      simpl; eauto.
+    }
+    do 2 eexists; split.
+    1: { (* v = TimeOut *)
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; [eauto|econstructor|..].
+      simpl.
+      eapply steps_trans.
+      1: eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; [|econstructor|..].
+      1: unfold fetch; pat `pc s2 = _` at rewrite pat; pat `steps _ (State s2, _)` at rewrite <- steps_instructions with (1 := pat); simpl; eauto.
+      eauto.
+    }
+    simpl; eauto.
+  }
+  do 2 eexists; split.
+  1: {
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_jump; [eauto|econstructor|..].
+    simpl.
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_jump; [|econstructor|..].
+    all: pat `steps _ (State s2, _)` at specialize steps_instructions with (1 := pat) as Htmp; simpl in Htmp; rewrite Htmp in *; clear Htmp.
+    1: unfold fetch; pat `pc s2 = _` at rewrite pat; simpl; eauto.
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_step_same.
+    eapply step_jump; [|econstructor|..].
+    all: pat `steps _ (State s3, _)` at specialize steps_instructions with (1 := pat) as Htmp; simpl in Htmp; rewrite Htmp in *; clear Htmp.
+    unfold fetch; pat `pc s3 = _` at rewrite pat; eauto.
+  }
+  simpl.
+  crunch_side_conditions_cmd.
+  eexists; split; eauto.
+  Unshelve.
+  exact ImpSemantics.Abort.
+Qed.
+
+Lemma has_stack_set_pc: forall s x st,
+  has_stack s st ->
+  has_stack (set_pc x s) st.
+Proof.
+  unfold has_stack; intros; cleanup; eauto.
+Qed.
+
+Lemma nth_error_some_IMP_existsb_in_addresses: forall {A: Type} (l: list A) base off v,
+  nth_error l off = Some v ->
+  existsb (word.eqb (word.add base (word.of_Z (Z.of_nat (off * 8))))) (addresses_of base (List.length l)) = true.
+Proof.
+Admitted.
+
+Lemma Z_div_mul_id: forall (a b: Z),
+  (a mod b = 0)%Z ->
+  (0 < b)%Z ->
+  (a / b * b = a)%Z.
+Proof.
+  intros.
+  destruct (a =? 0)%Z eqn:?.
+  - rewrite Z.eqb_eq in *; subst.
+    rewrite <- Z.gcd_0_l_nonneg with (n := b); eauto; lia.
+  - rewrite Z.eqb_neq in *.
+    assert (Z.gcd a b = b) as ?.
+    1: rewrite <- Z.gcd_0_l_nonneg with (n := b) at 2; eauto; [|lia].
+    1: rewrite <- Z.gcd_mod_l.
+    1: pat `_ = 0%Z` at rewrite <- pat.
+    1: reflexivity.
+    pat `Z.gcd _ _ = _` at rewrite <- pat at 1.
+    rewrite Z.gcd_div_swap.
+    pat `Z.gcd _ _ = _` at rewrite pat.
+    rewrite Z_div_same; [|lia]; rewrite Z.mul_1_r.
+    reflexivity.
+Qed.
+
+
+Lemma mem_inv_updated: forall pmap baseASM offASM i block off newBlock sASM s v1 v1ASM,
+  pmap_ok pmap ->
+  v_inv pmap (Pointer i) baseASM ->
+  v_inv pmap (ImpSyntax.Word off) offASM ->
+  v_inv pmap v1 v1ASM ->
+  update_block block (w2n off / 8) v1 = Some newBlock ->
+  (w2n off mod 8 =? 0) = true ->
+  nth_error (ImpSemantics.memory s) i = Some block ->
+  mem_inv pmap (memory sASM) (ImpSemantics.memory s) ->
+  mem_inv pmap (λ a1 : word64, if (word.eqb (word.add baseASM offASM) a1)%Z then Some (Some v1ASM) else memory sASM a1)
+    (list_update i newBlock (ImpSemantics.memory s)).
+Proof.
+  Opaque word.unsigned.
+  (* rewrite word.unsigned_eqb. *)
+  intros.
+  rewrite Nat.eqb_eq in *.
+  unfold mem_inv in *; cleanup; intros.
+  unfold update_block in *; pat ` (if ?c then _ else _) = _` at destruct c eqn:?; cleanup.
+  rewrite Nat.ltb_lt in *; unfold w2n in *.
+  pat `v_inv _ (Pointer i) _` at unfold v_inv in pat; cleanup.
+  pat `v_inv _ (ImpSyntax.Word off) _` at unfold v_inv in pat; cleanup; subst.
+  destruct (i =? p) eqn:?.
+  2: { (* i <> p *)
+    rewrite Nat.eqb_neq in *.
+    rewrite nth_error_list_update_neq in *; eauto.
+    pat `forall _, _` at rename pat into Hmem.
+    pat `nth_error _ p = _` at eapply Hmem in pat; cleanup.
+    pat `nth_error _ i = _` at pose proof pat as Htmp; eapply Hmem in Htmp; cleanup; clear Hmem.
+    spat `nth_error block _` at clear spat.
+    pat `pmap i = _` at rewrite pat in *; cleanup.
+    eexists; split; eauto; intros.
+    destruct (word.eqb _ _)%Z eqn:?; [|eauto]; rewrite word.unsigned_eqb in *.
+    exfalso; rewrite Z.eqb_eq in *.
+    pat `i <> p` at eapply pat.
+    eapply Properties.word.unsigned_inj in Heqb1.
+    pat `pmap_ok _` at unfold pmap_ok in pat; eapply pat; [split; eauto|]; clear pat.
+    pat `_ < List.length _` at eapply nth_error_nth' with (d := None) in pat.
+    instantiate (1 := (word.add baseASM off)); split.
+    2: pat `_ = word.add x0 _` at rewrite pat.
+    2: eapply nth_error_some_IMP_existsb_in_addresses; eauto.
+    specialize (Properties.word.unsigned_range off) as ?; cleanup.
+    pat `_ mod _ = _` at assert (8 = Z.to_nat 8) as Htmp by lia; rewrite Htmp in pat; clear Htmp; rewrite <- Z2Nat.inj_mod in pat; eauto; try lia.
+    spat ` (_ mod _)%Z` at rewrite <- Z2Nat.inj_0 in spat; inversion spat; rewrite Z2Nat.inj_iff in spat; eauto; try lia.
+    2: eapply Z.mod_bound_pos; eauto; lia.
+    assert (off = word.of_Z (((word.unsigned off) / 8 * 8))) as ->.
+    1: rewrite Z_div_mul_id with (b := 8%Z); try lia; rewrite word.of_Z_unsigned; reflexivity.
+    assert ((word.unsigned off / 8 * 8) = (Z.of_nat (Z.to_nat (word.unsigned off / 8 * 8))))%Z as ->.
+    1: rewrite Z2Nat.id; [reflexivity|].
+    1: rewrite Z_div_mul_id with (b := 8%Z); try lia; eapply Properties.word.unsigned_range.
+    rewrite Z2Nat.inj_mul; try lia.
+    2: eapply Z_div_nonneg_nonneg; lia.
+    eapply nth_error_some_IMP_existsb_in_addresses; eauto.
+    rewrite Z2Nat.inj_div; [|lia|lia].
+    assert (Z.to_nat 8 = 8) as -> by lia.
+    eauto.
+  }
+  (* i = p *)
+  rewrite Nat.eqb_eq in *; subst.
+  pat `nth_error (list_update _ _ _) p = _` at pose proof pat; rewrite nth_error_list_update_eq1 with (v0 := v) in pat; eauto; cleanup.
+  pat `nth_error _ p = _` at eapply nth_error_list_update_eq1 in pat; rewrite <- nth_error_list_update_eq in pat; eauto; cleanup.
+  pat `nth_error _ p = _` at rewrite pat in *; cleanup.
+  pat `forall _, _` at rename pat into Hmem.
+  pat `nth_error s.(ImpSemantics.memory) _ = _` at eapply Hmem in pat; clear Hmem; cleanup.
+  rewrite list_update_size_same in *.
+  eexists; split; eauto; intros.
+  pat `pmap p = _` at rewrite pat in *; cleanup.
+  specialize (Properties.word.unsigned_range off) as ?; cleanup.
+  pat `_ mod _ = _` at pose proof pat as ?; assert (8 = Z.to_nat 8) as Htmp by lia; rewrite Htmp in pat; clear Htmp; rewrite <- Z2Nat.inj_mod in pat; eauto; try lia.
+  spat ` (_ mod _)%Z` at rewrite <- Z2Nat.inj_0 in spat; rewrite Z2Nat.inj_iff in spat; eauto; try lia.
+  2: spat ` (_ mod _)%Z` at inversion spat.
+  2: eapply Z.mod_bound_pos; eauto; lia.
+  destruct (off0 =? (Z.to_nat (word.unsigned off) / 8)) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *.
+  - eexists; subst.
+    assert (off = word.of_Z (((word.unsigned off) / 8 * 8))) as Htmp; [|rewrite Htmp at 1; clear Htmp].
+    1: rewrite Z_div_mul_id with (b := 8%Z); try lia; rewrite word.of_Z_unsigned; reflexivity.
+    assert ((word.unsigned off / 8 * 8) = (Z.of_nat (Z.to_nat (word.unsigned off / 8 * 8))))%Z as ->.
+    1: rewrite Z2Nat.id; [reflexivity|].
+    1: rewrite Z_div_mul_id with (b := 8%Z); try lia; eapply Properties.word.unsigned_range.
+    assert (Z.to_nat (word.unsigned off) / 8 * 8 = Z.to_nat (word.unsigned off / 8 * 8)) as ->.
+    1: rewrite Z_div_mul_id with (b := 8%Z); try lia.
+    1: rewrite mul_div_id; try lia.
+    destruct (word.eqb _ _)%Z eqn:?; rewrite word.unsigned_eqb in *; rewrite ?Z.eqb_eq, ?Z.eqb_neq in *; subst; cleanup; try congruence.
+    split; eauto.
+    pat `nth_error (list_update _ _ _) _ = _` at pose proof pat; eapply nth_error_list_update_eq1 in pat; rewrite pat in *; cleanup.
+    simpl; eauto.
+  - rewrite nth_error_list_update_neq in *; eauto.
+    pat`forall _, _` at rename pat into Hmem.
+    pat`nth_error _ _ = _` at eapply Hmem in pat; cleanup; clear Hmem.
+    eexists.
+    assert (off = word.of_Z (((word.unsigned off) / 8 * 8))) as Htmp; [|rewrite Htmp at 1; clear Htmp].
+    1: rewrite Z_div_mul_id with (b := 8%Z); try lia; rewrite word.of_Z_unsigned; reflexivity.
+    assert ((word.unsigned off / 8 * 8) = (Z.of_nat (Z.to_nat (word.unsigned off / 8 * 8))))%Z as ->.
+    1: rewrite Z2Nat.id; [reflexivity|].
+    1: rewrite Z_div_mul_id with (b := 8%Z); try lia; eapply Properties.word.unsigned_range.
+    assert (Z.to_nat (word.unsigned off) / 8 * 8 = Z.to_nat (word.unsigned off / 8 * 8)) as <-.
+    1: rewrite Z_div_mul_id with (b := 8%Z); try lia.
+    1: rewrite mul_div_id; try lia.
+    destruct (word.eqb _ _)%Z eqn:?; rewrite word.unsigned_eqb in *; rewrite ?Z.eqb_eq, ?Z.eqb_neq in *; subst; cleanup.
+    1: exfalso; pat`off0 <> _` at eapply pat.
+    (* 1: rewrite <- Properties.word.unsigned_inj_iff. *)
+    1: assert (off0 * 8 = Z.to_nat (word.unsigned off) / 8 * 8) as Htmp; [|lia].
+    1: assert (Z.of_nat (off0 * 8) = Z.of_nat (Z.to_nat (word.unsigned off) / 8 * 8)) as Htmp; [|lia].
+    1: pat`word.unsigned _ = _` at eapply Properties.word.unsigned_inj in pat.
+    1: rewrite mul_div_id in *; try lia.
+    1: rewrite Z2Nat.id in *; try lia.
+    Search (word.add).
+    (* word.add baseASM (word.of_Z (word.unsigned off)) = word.add baseASM (word.of_Z (Z.of_nat (off0 * 8))) ->
+       Z.of_nat (off0 * 8) = word.unsigned off *)
+    1: admit.
+    eauto.
+Admitted.
+
 Theorem c_cmd_Update: forall (a e e': exp) (fuel: nat),
   goal_cmd (Update a e e') fuel.
 Proof.
+  Transparent c_cmd.
   Transparent eval_cmd.
   unfold goal_cmd; simpl; intros.
   Opaque eval_cmd.
@@ -3040,27 +3387,127 @@ Proof.
   2: eval_exp_contr_stop_tac.
   destruct o1; cleanup.
   2: eval_exp_contr_stop_tac.
-  unfold update in *.
+  unfold update in *; unfold_outcome.
+  destruct v; cleanup; [congruence|].
+  destruct v0; cleanup; [|congruence].
+  destruct (negb (w2n w mod 8 =? 0)) eqn:?; cleanup; [congruence|].
+  destruct (nth_error s3.(ImpSemantics.memory) i) eqn:?; cleanup; [|congruence].
+  destruct (update_block l (w2n w / 8) v1) eqn:?; cleanup; [|congruence].
+  pat `eval_exp a _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
+  pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
+  pat `eval_exp e' _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
+  cleanup; subst.
+  simpl flatten in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  pat `c_exp a _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
+  pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
+  pat `c_exp e' _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
+  pat `eval_exp a _ = (?r, _)` at
+    assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
+  pat `let (_, _) := ?x in _` at destruct x.
+  pat `match ?s with _ => _ end` at destruct s; cleanup; subst.
+  try steps_inst_tac.
+  pat `eval_exp e _ = (?r, _)` at
+    assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (curr := Word x :: curr) (vs := None :: vs) (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
+  2: eapply env_ok_add_None; eauto; eapply pmap_subsume_refl.
+  pat `let (_, _) := ?x in _` at destruct x.
+  pat `match ?s with _ => _ end` at destruct s; cleanup; subst.
+  pat `steps _ (State s0, _)`at specialize steps_instructions with (1 := pat) as Htmp; simpl in Htmp; rewrite Htmp in *; clear Htmp.
+  pat `eval_exp e' _ = (?r, _)` at
+    assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (curr := Word x0 :: (Word x :: curr)) (vs := None :: None :: vs) (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
+  2: eapply env_ok_add_None; eauto; try eapply pmap_subsume_refl; eapply env_ok_add_None; eauto; eapply pmap_subsume_refl.
+  pat `let (_, _) := ?x in _` at destruct x.
+  pat `match ?s with _ => _ end` at destruct s; cleanup; subst.
+  simpl code_in in *; cleanup.
+  unfold has_stack in *; cleanup.
+  do 2 eexists; split; simpl.
+  1: {
+    rewrite Nat.sub_diag.
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_trans.
+    1: eauto.
+    pat `steps (State s0, _) _`at specialize steps_instructions with (1 := pat) as Htmp; rewrite Htmp in *.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_pop; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_pop; simpl; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_add; simpl; eauto; simpl; reflexivity.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_store; simpl; eauto; simpl; [reflexivity|].
+    1: unfold v_inv in *; simpl in *; cleanup; subst.
+    1: unfold update_block in *.
+    1: pat ` (if ?c then _ else _) = _` at destruct c eqn:?; cleanup.
+    1: pat `mem_inv _ s1.(memory) _` at unfold mem_inv in pat; rename pat into Hmem.
+    1: pat `nth_error s3.(ImpSemantics.memory) _ = Some _` at eapply Hmem in pat; clear Hmem; cleanup.
+    1: pat `forall _, _` at rename pat into Hmem.
+    1: pat ` (_ <? List.length l) = true` at rewrite Nat.ltb_lt in pat; rewrite <- nth_error_Some in *.
+    1: destruct (nth_error l (w2n w / 8)) eqn:?; cleanup; [|congruence].
+    1: pat `nth_error l _ = Some _` at eapply Hmem in pat; clear Hmem; cleanup.
+    1: rewrite negb_false_iff in *; rewrite Nat.eqb_eq in *.
+    1: pat `memory s1 _ = _` at rewrite mul_div_id in *; unfold w2n in pat; eauto.
+    1: rewrite Z2Nat.id in *; [|specialize (Properties.word.unsigned_range w) as ?; lia].
+    1: rewrite word.of_Z_unsigned in *; rewrite Properties.word.unsigned_of_Z_0 in *.
+    1: rewrite Properties.word.add_0_r; rewrite Properties.word.add_comm.
+    1: pat `pmap i = _` at rewrite pat in *; clear pat; cleanup.
+    Opaque word.eqb.
+    1: unfold write_mem; simpl.
+    1: pat `memory s1 _ = Some _` at rewrite pat; reflexivity.
+    eapply steps_step_same.
+    eapply step_pop; eauto.
+  }
+  simpl.
+  split; eauto.
+  split; [eapply pmap_subsume_refl|].
+  split; [eapply eq_refl|].
+  split.
+  1: { (* state_rel *)
+    unfold state_rel in *; simpl; cleanup.
+    repeat (split; eauto).
+    do 2 eexists.
+    do 4 (split; eauto).
+    unfold memory_writable, can_write_mem_at in *; cleanup.
+    repeat (split; eauto).
+    intros; destruct (word.eqb _ _)%Z eqn:?; [eexists; eauto|].
+    pat `forall _, _` at specialize pat with (a := a3); rename pat into Hmem.
+    pat `_ ∧ _` at eapply Hmem in pat; cleanup.
+    unfold v_inv in *; cleanup; eauto.
+  }
+  exists curr; split.
+  1: { (* has_stack *)
+    unfold has_stack in *.
+    do 2 eexists; simpl; eauto.
+  }
+  split; eauto.
+  1: rewrite negb_false_iff in *.
+  Print word.eqb.
+  1: simpl; eapply mem_inv_updated; eauto.
+  split; eauto.
+  lia.
+  Unshelve.
+  all: exact Abort.
 Qed.
 
-Theorem c_cmd_correct : forall (c: cmd) (fuel: nat),
+Theorem c_cmd_correct : forall (fuel: nat) (c: cmd),
   goal_cmd c fuel.
 Proof.
-  induction c.
-  - intros; eapply c_cmd_Skip.
-  - intros; eapply c_cmd_Seq; eauto.
-  - intros; eapply c_cmd_Assign; eauto.
-  - intros; admit.
-  - intros; admit.
-  - induction fuel; intros; eapply c_cmd_While; eauto; intros.
-    + inversion H.
-    + admit.
-  - intros; admit.
-  - intros; admit.
-  - intros; admit.
-  - intros; admit.
-  - intros; admit.
-  - intros; eapply c_cmd_Abort.
+  induction fuel using lt_wf_ind; induction c.
+  all: repeat lazymatch goal with
+  | |- goal_cmd Skip _ => eapply c_cmd_Skip
+  | |- goal_cmd (Seq _ _) _ => eapply c_cmd_Seq; eauto
+  | |- goal_cmd (Assign _ _) _ => eapply c_cmd_Assign; eauto
+  | |- goal_cmd (While _ _) _ => eapply c_cmd_While; eauto
+  | |- goal_cmd ImpSyntax.Abort _ => eapply c_cmd_Abort
+  | |- goal_cmd (ImpSyntax.Update _ _ _) _ => eapply c_cmd_Update; eauto
+  | |- goal_cmd (ImpSyntax.If _ _ _) _ => eapply c_cmd_If; eauto
+  | |- goal_cmd (ImpSyntax.Return _) _ => eapply c_cmd_Return; eauto
+  end.
 Admitted.
 
 Definition init_state_ok_def (t: ASMSemantics.state) (input: llist ascii) (asm: asm) :=
@@ -3134,9 +3581,9 @@ Theorem names_contain_spec: forall x ns,
 Proof.
   induction ns; simpl in *; eauto.
   - split; intros; [congruence|eauto].
-  - destruct (_ =? _) eqn:?; simpl; eauto.
-    + rewrite Nat.eqb_eq in *; split; eauto.
-    + rewrite Nat.eqb_neq in *.
+  - destruct (_ =? _)%N eqn:?; simpl; eauto.
+    + rewrite N.eqb_eq in *; split; eauto.
+    + rewrite N.eqb_neq in *.
       split; intros; [rewrite <- IHns|rewrite IHns]; eauto.
       pat `_ \/ _` at destruct H; congruence.
 Qed.
@@ -3320,11 +3767,11 @@ Lemma lookup_append: forall n fs1 fs0 l,
 Proof.
   induction fs1; intros; simpl in *.
   - eexists.
-    rewrite Nat.eqb_refl.
+    rewrite N.eqb_refl.
     reflexivity.
   - destruct a.
-    destruct (_ =? _) eqn:?.
-    + rewrite Nat.eqb_eq in *; subst; eauto.
+    destruct (_ =? _)%N eqn:?.
+    + rewrite N.eqb_eq in *; subst; eauto.
     + eauto.
 Qed.
 
@@ -3349,8 +3796,8 @@ Proof.
   (* set l1 as Sl1. *)
   simpl in *|-; cleanup; subst.
   pat `match ?a with _ => _ end = _` at destruct a; simpl in *.
-  rewrite Nat.eqb_sym.
-  destruct (_ =? _) eqn:?.
+  rewrite N.eqb_sym.
+  destruct (_ =? _)%N eqn:?.
   - reflexivity.
   - eapply IHfuncs; eauto.
     spat `c_fundef` at eapply c_fundef_l_same in spat; [|exact Heqp]; subst.
@@ -3376,16 +3823,16 @@ Proof.
   set l1 as Sl1.
   simpl in *|-; cleanup.
   pat `match ?a with _ => _ end = _` at destruct a; simpl in *|-.
-  destruct (_ =? _) eqn:?; cleanup.
+  destruct (_ =? _)%N eqn:?; cleanup.
   1: {
     eexists; simpl.
-    rewrite Nat.eqb_eq in *; subst.
-    rewrite Nat.eqb_refl.
+    rewrite N.eqb_eq in *; subst.
+    rewrite N.eqb_refl.
     split.
     2: {
       spat `c_fundef` at rewrite spat; simpl.
       repeat rewrite list_append_spec in *.
-      assert (xs ++ Comment (name2str n1 []) :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1 [])]) ++ flatten a0 ++ flatten a1) as ->.
+      assert (xs ++ Comment (name2str n1 "") :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1 "")]) ++ flatten a0 ++ flatten a1) as ->.
       1: induction xs; simpl; try rewrite <- app_assoc; eauto.
       eapply code_in_append_left2.
       rewrite length_app; simpl.
@@ -3395,13 +3842,13 @@ Proof.
   }
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1 [])] +++ a0))) as Hrwlength.
+  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1 "")] +++ a0))) as Hrwlength.
   1: simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.
   spat `c_fundefs` at eapply IHfuncs in spat; eauto; cleanup.
   eexists; split; simpl.
   1: {
-    destruct (n1 =? n) eqn:?; try rewrite Nat.eqb_neq in *; try rewrite Nat.eqb_eq in *.
+    destruct (n1 =? n)%N eqn:?; rewrite ?N.eqb_neq in *; rewrite ?N.eqb_eq in *.
     - congruence.
     - eauto.
   }
@@ -3419,7 +3866,7 @@ Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
   s.(funs) = funcs ->
   t.(pc) = 0 ->
   t.(instructions) = codegen (Program funcs) ->
-  find_fun (fun_name_of_string "main") funcs = Some ([], main_c) ->
+  find_fun (name_of_string "main") funcs = Some ([], main_c) ->
   t.(stack) = [] ->
   t.(input) = s.(ImpSemantics.input) ->
   t.(output) = s.(ImpSemantics.output) ->
@@ -3445,8 +3892,7 @@ Proof.
   Opaque word.eqb.
   Opaque init.
   unfold codegen, dlet in *.
-  Opaque fun_name_of_string.
-  Opaque ImpToASMCodegen.fun_name_of_string.
+  Opaque name_of_string.
   repeat rewrite app_list_length_spec in *.
   repeat rewrite list_append_spec in *.
   repeat rewrite list_length_spec in *.
@@ -3466,7 +3912,7 @@ Proof.
   pat `find_fun _ _ = _` at rename pat into Hfind_fun.
   pat `c_fundefs _ _ _ = (_, _, _)` at specialize c_fundefs_code_in with (1 := pat) (2 := Hfind_fun) as ?; cleanup.
   Transparent c_fundef.
-  rewrite c_fundefs_lookup_same with (fs1 := l0) (fs3 := l) (n := fun_name_of_string "main") (1 := Heqcfuns) (2 := Heqcfuns0) (3 := Hfind_fun) in *.
+  rewrite c_fundefs_lookup_same with (fs1 := l0) (fs3 := l) (n := name_of_string "main") (1 := Heqcfuns) (2 := Heqcfuns0) (3 := Hfind_fun) in *.
   unfold c_fundef, dlet in *.
   destruct (c_pushes _ _) eqn:?.
   destruct (c_cmd _ _) eqn:?.
@@ -3495,14 +3941,14 @@ Proof.
     pat `_ = init _ ++ _` at unfold init in pat.
     Opaque init.
     simpl in *.
-    remember (Comment ("m"%char :: _) :: _) as init_rest; clear Heqinit_rest.
+    remember (Comment ("malloc") :: _) as init_rest; clear Heqinit_rest.
     unfold cmd_res_rel in * ; cleanup.
     pat `eval_cmd _ _ _ = (?res, _)` at destruct res; cleanup.
     1: congruence.
     (* res = Stop v *)
     pat `match ?s with _ => _ end` at destruct s; cleanup.
     1: { (* s0 = State *)
-      pat `eval_cmd _ _ _ = (Stop ?v, _)` at destruct v; cleanup; [| |congruence|pat `False` at inversion pat].
+      pat `eval_cmd _ _ _ = (Stop ?v, _)` at destruct v; cleanup; [| |congruence].
       1: { (*res = Stop (Return v)*)
         eexists; split.
         1: {

@@ -58,6 +58,7 @@ Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Val
   match f, vs with
   | FunSyntax.Add, [Num n1; Num n2] => return_ (Num (n1 + n2)) s
   | FunSyntax.Sub, [Num n1; Num n2] => return_ (Num (n1 - n2)) s
+  | FunSyntax.Mul, [Num n1; Num n2] => return_ (Num (n1 * n2)) s
   | FunSyntax.Div, [Num n1; Num n2] =>
     if n2 =? 0 then fail s else return_ (Num (n1 / n2)) s
   | FunSyntax.Cons, [x; y] => return_ (Pair x y) s

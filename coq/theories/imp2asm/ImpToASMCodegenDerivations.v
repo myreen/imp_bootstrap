@@ -1,6 +1,7 @@
 From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
 Require Import impboot.assembly.ASMSyntax.
+Require Import impboot.assembly.ASM2String.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.utils.AppList.
 Require Import impboot.imp2asm.ImpToASMCodegen.
@@ -41,8 +42,6 @@ Theorem names_unique_equation: ltac2:(unfold_fix_type 'names_unique).
 Proof. unfold_fix_proof 'names_unique. Qed.
 Theorem c_fundefs_equation: ltac2:(unfold_fix_type 'c_fundefs).
 Proof. unfold_fix_proof 'c_fundefs. Qed.
-
-(* Derivations for simple definitions (no dependencies) *)
 
 Opaque encode.
 Opaque name_enc.
@@ -352,13 +351,39 @@ Proof.
   time relcompile.
 Qed.
 
-(* TODO: need mod *)
-(* Derive name2str_prog 
-  in ltac2:(relcompile_tpe 'name2str_prog 'name2str []) 
+Derive nat_modulo_prog
+  in ltac2:(relcompile_tpe 'nat_modulo_prog 'nat_modulo []) 
+  as nat_modulo_prog_proof.
+Proof.
+  time relcompile.
+  ltac1:(lia).
+Qed.
+
+Derive N_modulo_prog
+  in ltac2:(relcompile_tpe 'N_modulo_prog 'N_modulo []) 
+  as N_modulo_prog_proof.
+Proof.
+  time relcompile.
+  ltac1:(lia).
+Qed.
+
+Theorem N_modulo_bounds: forall n b,
+  (0 <> b)%N ->
+  (N_modulo n b < b)%N.
+Proof.
+  intros; unfold N_modulo; rewrite <- N.Div0.mod_eq.
+  destruct b eqn:?; try ltac1:(lia).
+  eapply N.mod_upper_bound.
+  ltac1:(lia).
+Qed.
+
+Derive name2str_prog
+  in ltac2:(relcompile_tpe 'name2str_prog 'name2str ['N_modulo]) 
   as name2str_prog_proof.
 Proof.
   time relcompile.
-Qed. *)
+  eapply N_modulo_bounds; ltac1:(lia).
+Qed.
 
 Derive get_funcs_prog 
   in ltac2:(relcompile_tpe 'get_funcs_prog 'get_funcs []) 
@@ -381,10 +406,79 @@ Proof.
   time relcompile.
 Qed.
 
-(* TODO: (fun_name_of_string "main") taken as constant. Is that ok? *)
 Derive codegen_prog 
   in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fundefs; 'lookup; 'init; 'get_funcs; '@app_list_length; '@flatten]) 
   as codegen_prog_proof.
 Proof.
   time relcompile.
 Qed.
+
+(* *********************************************** *)
+(*  Derivations for ASM to String Conversion      *)
+(* *********************************************** *)
+
+(* Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
+Proof. unfold_fix_proof 'num2str_f. Qed.
+
+Theorem clean_equation: ltac2:(unfold_fix_type 'clean).
+Proof. unfold_fix_proof 'clean. Qed.
+
+Theorem instrs2str_equation: ltac2:(unfold_fix_type 'instrs2str).
+Proof. unfold_fix_proof 'instrs2str. Qed.
+
+Derive reg2str_prog
+  in ltac2:(relcompile_tpe 'reg2str_prog 'reg2str ['String.append])
+  as reg2str_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive num2str_f_prog
+  in ltac2:(relcompile_tpe 'num2str_f_prog 'num2str_f ['nat_modulo])
+  as num2str_f_prog_proof.
+Proof.
+  (* when fuel := 0 it compiles `10` as `S (S (... fuel))` *)
+  time relcompile.
+Qed.
+
+Derive num2str_prog
+  in ltac2:(relcompile_tpe 'num2str_prog 'num2str ['num2str_f])
+  as num2str_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive lab_prog
+  in ltac2:(relcompile_tpe 'lab_prog 'lab ['num2str])
+  as lab_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive clean_prog
+  in ltac2:(relcompile_tpe 'clean_prog 'clean [])
+  as clean_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive inst2str_prog
+  in ltac2:(relcompile_tpe 'inst2str_prog 'inst2str ['reg2str; 'num2str; 'lab; 'clean])
+  as inst2str_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive instrs2str_prog
+  in ltac2:(relcompile_tpe 'instrs2str_prog 'instrs2str ['lab; 'inst2str])
+  as instrs2str_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive asm2str_prog
+  in ltac2:(relcompile_tpe 'asm2str_prog 'asm2str ['instrs2str])
+  as asm2str_prog_proof.
+Proof.
+  time relcompile.
+Qed. *)

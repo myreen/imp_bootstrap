@@ -75,7 +75,7 @@ Definition read_mem (a : word64) (s : state) : option word64 :=
 
 Definition write_mem (a : word64) (w : word64) (s : state) : option state :=
   match s.(memory) a with
-  | Some None =>
+  | Some _ =>
       Some {| instructions := s.(instructions);
               pc := s.(pc);
               regs := s.(regs);
@@ -285,7 +285,7 @@ Proof.
 Admitted.
 
 Definition can_write_mem_at (m : word64 -> option (option word64)) (a : word64) : Prop :=
-  m a = Some None.
+  exists v, m a = Some v.
 
 Definition memory_writable (r14 r15 : word64) (m : word64 -> option (option word64)) : Prop :=
   word.ltu r14 r15 = true /\

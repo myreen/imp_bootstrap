@@ -7,6 +7,8 @@ Require Import impboot.imperative.ImpSyntax.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
 
+Open Scope nat.
+
 (* types *)
 
 Notation mem_block := (list (option Value)) (only parsing).
@@ -100,11 +102,11 @@ Definition combine_word (f : word64 -> word64 -> word64) (x y : Value): SRM Valu
 Definition mem_load (ptr val : Value) (s : state) : (outcome Value * state) :=
   match ptr, val with
   | Pointer p, Word w =>
-    if negb (((w2n w) mod 8) =? 0) then crash s else
+    if negb (((w2n w) mod 8) =? 0)%nat then crash s else
     match List.nth_error s.(memory) p with
     | None => crash s
     | Some block =>
-      let idx := (w2n w) / 8 in
+      let idx := ((w2n w) / 8)%nat in
       match List.nth_error block idx with
       | Some (Some w) => cont w s
       | _ => crash s
@@ -183,6 +185,7 @@ Fixpoint eval_exp (e : exp) : SRM Value :=
       mem_load addr offset
   end.
 
+(* TODO: autounfold with _ *)
 Ltac unfold_monadic :=
   unfold cont, crash, stop, point, bind, combine_word, mem_load in *.
 
@@ -236,8 +239,8 @@ Definition eval_cmp (c: cmp) (v1 v2: Value): SRM bool :=
     cont (w1 =w w2)
   (* TODO(kπ) *)
   (* assume that every allocated address is greater than zero (we should know that) *)
-  | Equal, Pointer _, Word w =>
-    (if w =w (word.of_Z 0) then cont false else stop Crash)
+  (* | Equal, Pointer _, Word w =>
+    (if w =w (word.of_Z 0) then cont false else stop Crash) *)
   | _, _, _ => stop Crash
   end.
 
@@ -282,16 +285,16 @@ Fixpoint find_fun (fname : name) (fs : list func): option (list name * cmd) :=
   match fs with
   | nil => None
   | (Func nm params body) :: rest =>
-    if fname =? nm then Some (params, body) else find_fun fname rest
+    if (fname =? nm)%N then Some (params, body) else find_fun fname rest
   end.
 
-Definition update_block (vs:mem_block) offset v : option mem_block :=
-  if offset <? List.length vs then Some (list_update offset (Some v) vs) else None.
+Definition update_block (vs: mem_block) (offset: nat) (v: Value) : option mem_block :=
+  if (offset <? List.length vs)%nat then Some (list_update offset (Some v) vs) else None.
 
 Definition update (v1 v2 v : Value) (s: state): (outcome unit * state) :=
   match v1, v2 with
   | (Pointer p), (Word offset) =>
-    if negb ((w2n offset) mod 8 =? 0) then crash s else
+    if negb ((w2n offset) mod 8 =? 0)%nat then crash s else
       match nth_error s.(memory) p with
       | None => crash s
       | Some vs =>
@@ -327,8 +330,8 @@ Definition get_vars (s: state): (outcome IEnv.env * state) :=
 Definition set_varsM (vars: IEnv.env) (s: state): (outcome unit * state) :=
   cont tt (set_vars vars s).
 
-Definition nodupb (l: list nat): bool :=
-  if NoDup_dec Nat.eq_dec l then
+Definition nodupb (l: list name): bool :=
+  if NoDup_dec N.eq_dec l then
     true
   else false.
 

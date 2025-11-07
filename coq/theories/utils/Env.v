@@ -126,7 +126,7 @@ Module IEnv <: EnvT.
   Definition empty : env := fun _ => None.
   Definition lookup (v : env) (x : name) : option Value := v x.
   Definition insert (p : name * option Value) (v : env) : env :=
-    fun x => if Nat.eq_dec x (fst p) then (snd p) else v x.
+    fun x => if N.eq_dec x (fst p) then (snd p) else v x.
   Fixpoint insert_all (ps: list (name * option Value)) (v: env) :=
     match ps with
     | nil => v
@@ -135,12 +135,12 @@ Module IEnv <: EnvT.
   Definition insert_some (p : name * Value) (v : env) : env :=
     insert (fst p, Some (snd p)) v.
   Definition remove (x : name) (v : env) : env :=
-    fun y => if Nat.eq_dec x y then None else v y.
+    fun y => if N.eq_dec x y then None else v y.
 
   Theorem lookup_insert_eq : forall v x n,
       lookup (insert (x, n) v) x = n.
   Proof.
-    intros; unfold lookup, insert, fst. destruct Nat.eq_dec; try reflexivity; congruence.
+    intros; unfold lookup, insert, fst. destruct N.eq_dec; try reflexivity; congruence.
   Qed.
 
   Theorem lookup_insert_neq : forall v x1 x2 n,
@@ -148,7 +148,7 @@ Module IEnv <: EnvT.
       lookup (insert (x1, n) v) x2 = lookup v x2.
   Proof.
     intros; unfold lookup, insert, fst.
-    destruct Nat.eq_dec; try reflexivity.
+    destruct N.eq_dec; try reflexivity.
     congruence.
   Qed.
 
@@ -156,7 +156,7 @@ Module IEnv <: EnvT.
       insert (x, n1) (insert (x, n2) v) = insert (x, n1) v.
   Proof.
     intros; apply functional_extensionality; intros.
-    unfold insert; destruct Nat.eq_dec; reflexivity.
+    unfold insert; destruct N.eq_dec; reflexivity.
   Qed.
 
   Theorem insert_insert_neq : forall v x1 x2 n1 n2,
@@ -164,9 +164,9 @@ Module IEnv <: EnvT.
       insert (x1, n1) (insert (x2, n2) v) = insert (x2, n2) (insert (x1, n1) v).
   Proof.
     intros; apply functional_extensionality; intros.
-    unfold insert; destruct Nat.eq_dec eqn:?; try reflexivity.
+    unfold insert; destruct N.eq_dec eqn:?; try reflexivity.
     unfold snd, fst in *.
-    destruct (Nat.eq_dec x x2) eqn:?; try reflexivity.
+    destruct (N.eq_dec x x2) eqn:?; try reflexivity.
     subst; congruence.
   Qed.
 
@@ -174,8 +174,8 @@ Module IEnv <: EnvT.
       insert (x, n) (remove x v) = insert (x, n) v.
   Proof.
     intros; apply functional_extensionality; intros.
-    unfold insert, remove, fst; destruct Nat.eq_dec eqn:?; [reflexivity|].
-    destruct (Nat.eq_dec x x0) eqn:?; [|reflexivity].
+    unfold insert, remove, fst; destruct N.eq_dec eqn:?; [reflexivity|].
+    destruct (N.eq_dec x x0) eqn:?; [|reflexivity].
     subst; congruence.
   Qed.
 
@@ -187,7 +187,7 @@ Module IEnv <: EnvT.
     insert (n, lookup env n) env = env.
   Proof.
     intros; apply functional_extensionality; intros.
-    unfold insert, lookup, fst; destruct Nat.eq_dec eqn:?; [|reflexivity].
+    unfold insert, lookup, fst; destruct N.eq_dec eqn:?; [|reflexivity].
     unfold snd; subst.
     reflexivity.
   Qed.

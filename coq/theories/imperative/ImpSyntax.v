@@ -2,12 +2,14 @@ From impboot Require Import utils.Core.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
 
-Notation name := nat (only parsing).
+Notation name := N (only parsing).
 
-Definition name_enc_l (s : list ascii) : nat :=
-  fold_right (fun c acc => (nat_of_ascii c) * 256 + acc) 0 s.
+Open Scope N.
 
-Definition name_of_string (s: string) : nat :=
+Definition name_enc_l (s : list ascii): name :=
+  fold_right (fun c acc => (N_of_ascii c) * 256 + acc) 0 s.
+
+Definition name_of_string (s: string): name :=
   name_enc_l (list_ascii_of_string s).
 
 Inductive exp : Type :=
@@ -57,6 +59,6 @@ Inductive Value :=
 Definition value_eqb (v1 v2 : Value): bool :=
   match v1, v2 with
   | Word w1, Word w2 => word.eqb w1 w2
-  | Pointer p1, Pointer p2 => p1 =? p2
+  | Pointer p1, Pointer p2 => (p1 =? p2)%nat
   | _, _ => false
   end.

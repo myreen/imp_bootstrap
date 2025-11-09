@@ -3486,13 +3486,90 @@ Proof.
   }
   split; eauto.
   1: rewrite negb_false_iff in *.
-  Print word.eqb.
   1: simpl; eapply mem_inv_updated; eauto.
   split; eauto.
   lia.
   Unshelve.
   all: exact Abort.
 Qed.
+
+Theorem c_cmd_GetChar: forall (n: name) (fuel: nat),
+  goal_cmd (ImpSyntax.GetChar n) fuel.
+Proof.
+  unfold goal_cmd; simpl; intros.
+  simpl c_cmd in *; unfold dlet in *.
+  destruct c_read eqn:?; simpl in *.
+  destruct c_assign eqn:?; simpl in *; cleanup.
+  unfold c_assign, dlet, c_read, dlet in *.
+  rewrite app_list_length_spec in *.
+  simpl in *; cleanup.
+  simpl flatten in *; rewrite list_append_spec in *.
+  repeat rewrite code_in_append in *; cleanup.
+  spat `env_ok` at pose proof spat as Henv_ok; unfold env_ok in spat; cleanup.
+  unfold has_stack in *|-; cleanup.
+  rewrite <- index_of_In with (k := 0) in *; rewrite Nat.add_0_l in *.
+  destruct curr; cleanup.
+  1: {
+    pat `Datatypes.length _ = Datatypes.length []` at rewrite pat in *; simpl in *.
+    pat `List.length _ = 0` at eapply length_zero_iff_nil in pat; subst; simpl in *.
+    pat `0 < 0` at inversion pat.
+  }
+  unfold align in *; cleanup.
+  destruct index_of eqn:?; destruct (even_len vs) eqn:?.
+  1: {
+    rewrite <- app_comm_cons in *.
+    simpl in *; cleanup.
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_push; eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_push; eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_get_ascii; eauto.
+      1: unfold read_ascii; destruct (input _); reflexivity.
+      
+      
+      reflexivity.
+    }
+    simpl.
+    unfold has_stack in *; cleanup.
+    repeat match goal with
+    | [ |- _ ∧ _ ] => split
+    | [ |- ∃_, _ ] => eexists
+    | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
+    | [ |- _ - _ = _ ] => lia
+    | _ => progress eauto
+    end.
+    1: pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity.
+    eapply env_ok_replace_head; eauto.
+    pat `index_of _ _ _ = _` at rewrite pat; assumption.
+  }
+  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl in *; cleanup.
+  unfold has_stack in *|-; cleanup.
+  pat `_ = S (List.length curr)` at rewrite pat in *.
+  do 2 eexists; split.
+  1: {
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_store_rsp.
+    1: eauto.
+    1: destruct rest; [spat `odd` at inversion spat|];
+       pat `_ = stack s1` at rewrite <- pat in *; rewrite length_cons; rewrite length_app; lia.
+    1: eauto.
+    eapply steps_step_same.
+    eapply step_pop.
+    1: eauto.
+    simpl.
+    pat `_ = stack s1` at rewrite <- pat.
+    reflexivity.
+  }
+
 
 Theorem c_cmd_correct : forall (fuel: nat) (c: cmd),
   goal_cmd c fuel.

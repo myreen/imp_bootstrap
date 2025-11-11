@@ -93,9 +93,9 @@ Proof.
   time relcompile.
 Qed.
 
-Derive abort_prog 
-  in ltac2:(relcompile_tpe 'abort_prog 'abort []) 
-  as abort_prog_proof.
+Derive abortLoc_prog
+  in ltac2:(relcompile_tpe 'abortLoc_prog 'abortLoc []) 
+  as abortLoc_prog_proof.
 Proof.
   time relcompile.
 Qed.
@@ -193,22 +193,15 @@ Proof.
   time relcompile.
 Qed.
 
-Derive align_prog 
-  in ltac2:(relcompile_tpe 'align_prog 'align []) 
-  as align_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
 Derive c_read_prog
-  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['@even_len; 'align; '@app_list_length]) 
+  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['@even_len; '@app_list_length]) 
   as c_read_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_write_prog 
-  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['@even_len; 'align; '@app_list_length]) 
+  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['@even_len; '@app_list_length]) 
   as c_write_prog_proof.
 Proof.
   time relcompile.
@@ -292,7 +285,7 @@ Proof.
 Qed.
 
 Derive c_call_prog 
-  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; 'align; '@even_len; '@app_list_length]) 
+  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; '@even_len; '@app_list_length]) 
   as c_call_prog_proof.
 Proof.
   time relcompile.
@@ -301,7 +294,7 @@ Qed.
 Derive c_cmd_prog 
   in ltac2:(relcompile_tpe 'c_cmd_prog 'c_cmd 
     ['c_exp; 'c_assign; 'c_store; 'c_test_jump; 'c_exps; 'c_call; 
-     'c_var; 'make_ret; 'c_alloc; 'c_read; 'c_write; 'abort; 'lookup;
+     'c_var; 'make_ret; 'c_alloc; 'c_read; 'c_write; 'abortLoc; 'lookup;
      '@odd_len; '@app_list_length])
   as c_cmd_prog_proof.
 Proof.
@@ -345,7 +338,7 @@ Qed.
 
 Derive c_fundef_prog 
   in ltac2:(relcompile_tpe 'c_fundef_prog 'c_fundef 
-    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd; '@list_length; '@list_append]) 
+    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd; '@list_length; '@list_append; '@even_len]) 
   as c_fundef_prog_proof.
 Proof.
   time relcompile.

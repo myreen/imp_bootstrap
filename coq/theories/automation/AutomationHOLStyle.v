@@ -363,6 +363,14 @@ Ltac2 rec lambda_to_prod (c: constr): constr :=
   | _ => c
   end.
 
+(* This way doesn't crash with anomaly, but leaves "hanging" evars around *)
+(* Ltac2 rec collect_tpe_prod_binders (c: constr): binder list :=
+  match Unsafe.kind (Constr.type c) with
+  | Prod b _ =>
+    b :: collect_tpe_prod_binders open_constr:($c _)
+  | _ => []
+  end. *)
+
 Ltac2 rec collect_prod_binders_impl (c: constr): binder list :=
   match Unsafe.kind c with
   | Prod b c =>
@@ -569,6 +577,13 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_nat_if_eq"
             [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
             [compile; compile; compile; compile]
+        | (match Nat.eq_dec ?n1 ?n2 with
+          | left EQ => @?t EQ
+          | right NE => @?f NE
+          end) =>
+          app_lemma "auto_nat_if_eq_dec"
+            [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+            [compile; compile; (fun () => destruct (Nat.eq_dec $n1 $n2); (Control.enter compile))]
         | (if N.eqb ?n1 ?n2 then ?t else ?f) =>
           app_lemma "auto_N_if_eq"
             [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
@@ -819,6 +834,8 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_instr_cons_Sub" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
         | ASMSyntax.Div ?r =>
           app_lemma "auto_instr_cons_Div" [("env", exactk fenv); ("r", exactk r)] [compile]
+        | ASMSyntax.Sal ?r ?n =>
+          app_lemma "auto_instr_cons_Sal" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
         | ASMSyntax.Jump ?c ?n =>
           app_lemma "auto_instr_cons_Jump" [("env", exactk fenv); ("c", exactk c); ("n", exactk n)] [compile; compile]
         | ASMSyntax.Call ?n =>
@@ -852,88 +869,92 @@ Ltac2 rec compile () : unit :=
         | ASMSyntax.Comment ?str =>
           app_lemma "auto_instr_cons_Comment" [("env", exactk fenv); ("str", exactk str)] [compile]
         | (match ?v0 with
-           | ASMSyntax.Const r w => @?v1 r w
-           | ASMSyntax.Add r1 r2 => @?v2 r1 r2
-           | ASMSyntax.Sub r1 r2 => @?v3 r1 r2
-           | ASMSyntax.Div r => @?v4 r
-           | ASMSyntax.Jump c n => @?v5 c n
-           | ASMSyntax.Call n => @?v6 n
-           | ASMSyntax.Mov r1 r2 => @?v7 r1 r2
-           | ASMSyntax.Ret => ?v8
-           | ASMSyntax.Pop r => @?v9 r
-           | ASMSyntax.Push r => @?v10 r
-           | ASMSyntax.Add_RSP n => @?v11 n
-           | ASMSyntax.Sub_RSP n => @?v12 n
-           | ASMSyntax.Load_RSP r n => @?v13 r n
-           | ASMSyntax.Store_RSP r n => @?v14 r n
-           | ASMSyntax.Load r1 r2 w => @?v15 r1 r2 w
-           | ASMSyntax.Store r1 r2 w => @?v16 r1 r2 w
-           | ASMSyntax.GetChar => ?v17
-           | ASMSyntax.PutChar => ?v18
-           | ASMSyntax.Exit => ?v19
-           | ASMSyntax.Comment s => @?v20 s
+           | ASMSyntax.Const r w => @?f_Const r w
+           | ASMSyntax.Add r1 r2 => @?f_Add r1 r2
+           | ASMSyntax.Sub r1 r2 => @?f_Sub r1 r2
+           | ASMSyntax.Sal r1 n => @?f_Sal r1 n
+           | ASMSyntax.Div r => @?f_Div r
+           | ASMSyntax.Jump c n => @?f_Jump c n
+           | ASMSyntax.Call n => @?f_Call n
+           | ASMSyntax.Mov r1 r2 => @?f_Mov r1 r2
+           | ASMSyntax.Ret => ?f_Ret
+           | ASMSyntax.Pop r => @?f_Pop r
+           | ASMSyntax.Push r => @?f_Push r
+           | ASMSyntax.Add_RSP n => @?f_Add_RSP n
+           | ASMSyntax.Sub_RSP n => @?f_Sub_RSP n
+           | ASMSyntax.Load_RSP r n => @?f_Load_RSP r n
+           | ASMSyntax.Store_RSP r n => @?f_Store_RSP r n
+           | ASMSyntax.Load r1 r2 w => @?f_Load r1 r2 w
+           | ASMSyntax.Store r1 r2 w => @?f_Store r1 r2 w
+           | ASMSyntax.GetChar => ?f_GetChar
+           | ASMSyntax.PutChar => ?f_PutChar
+           | ASMSyntax.Exit => ?f_Exit
+           | ASMSyntax.Comment s => @?f_Comment s
            end) =>
-          let binders_v1 := binders_names_of_constr_lambda v1 names_in_cenv in
-          let binders_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
-          let binders_v3 := binders_names_of_constr_lambda v3 names_in_cenv in
-          let binders_v4 := binders_names_of_constr_lambda v4 names_in_cenv in
-          let binders_v5 := binders_names_of_constr_lambda v5 names_in_cenv in
-          let binders_v6 := binders_names_of_constr_lambda v6 names_in_cenv in
-          let binders_v7 := binders_names_of_constr_lambda v7 names_in_cenv in
-          let binders_v9 := binders_names_of_constr_lambda v9 names_in_cenv in
-          let binders_v10 := binders_names_of_constr_lambda v10 names_in_cenv in
-          let binders_v11 := binders_names_of_constr_lambda v11 names_in_cenv in
-          let binders_v12 := binders_names_of_constr_lambda v12 names_in_cenv in
-          let binders_v13 := binders_names_of_constr_lambda v13 names_in_cenv in
-          let binders_v14 := binders_names_of_constr_lambda v14 names_in_cenv in
-          let binders_v15 := binders_names_of_constr_lambda v15 names_in_cenv in
-          let binders_v16 := binders_names_of_constr_lambda v16 names_in_cenv in
-          let binders_v20 := binders_names_of_constr_lambda v20 names_in_cenv in
-          let n1 := List.nth binders_v1 0 in
-          let n2 := List.nth binders_v1 1 in
-          let n3 := List.nth binders_v2 0 in
-          let n4 := List.nth binders_v2 1 in
-          let n5 := List.nth binders_v3 0 in
-          let n6 := List.nth binders_v3 1 in
-          let n7 := List.nth binders_v4 0 in
-          let n8 := List.nth binders_v5 0 in
-          let n9 := List.nth binders_v5 1 in
-          let n10 := List.nth binders_v6 0 in
-          let n11 := List.nth binders_v7 0 in
-          let n12 := List.nth binders_v7 1 in
-          let n13 := List.nth binders_v9 0 in
-          let n14 := List.nth binders_v10 0 in
-          let n15 := List.nth binders_v11 0 in
-          let n16 := List.nth binders_v12 0 in
-          let n17 := List.nth binders_v13 0 in
-          let n18 := List.nth binders_v13 1 in
-          let n19 := List.nth binders_v14 0 in
-          let n20 := List.nth binders_v14 1 in
-          let n21 := List.nth binders_v15 0 in
-          let n22 := List.nth binders_v15 1 in
-          let n23 := List.nth binders_v15 2 in
-          let n24 := List.nth binders_v16 0 in
-          let n25 := List.nth binders_v16 1 in
-          let n26 := List.nth binders_v16 2 in
-          let n27 := List.nth binders_v20 0 in
+          let binders_f_Const := binders_names_of_constr_lambda f_Const names_in_cenv in
+          let binders_f_Add := binders_names_of_constr_lambda f_Add names_in_cenv in
+          let binders_f_Sub := binders_names_of_constr_lambda f_Sub names_in_cenv in
+          let binders_f_Div := binders_names_of_constr_lambda f_Div names_in_cenv in
+          let binders_f_Sal := binders_names_of_constr_lambda f_Sal names_in_cenv in
+          let binders_f_Jump := binders_names_of_constr_lambda f_Jump names_in_cenv in
+          let binders_f_Call := binders_names_of_constr_lambda f_Call names_in_cenv in
+          let binders_f_Mov := binders_names_of_constr_lambda f_Mov names_in_cenv in
+          let binders_f_Pop := binders_names_of_constr_lambda f_Pop names_in_cenv in
+          let binders_f_Push := binders_names_of_constr_lambda f_Push names_in_cenv in
+          let binders_f_Add_RSP := binders_names_of_constr_lambda f_Add_RSP names_in_cenv in
+          let binders_f_Sub_RSP := binders_names_of_constr_lambda f_Sub_RSP names_in_cenv in
+          let binders_f_Load_RSP := binders_names_of_constr_lambda f_Load_RSP names_in_cenv in
+          let binders_f_Store_RSP := binders_names_of_constr_lambda f_Store_RSP names_in_cenv in
+          let binders_f_Load := binders_names_of_constr_lambda f_Load names_in_cenv in
+          let binders_f_Store := binders_names_of_constr_lambda f_Store names_in_cenv in
+          let binders_f_Comment := binders_names_of_constr_lambda f_Comment names_in_cenv in
+          let nConst1 := List.nth binders_f_Const 0 in
+          let nConst2 := List.nth binders_f_Const 1 in
+          let nAdd1 := List.nth binders_f_Add 0 in
+          let nAdd2 := List.nth binders_f_Add 1 in
+          let nSub1 := List.nth binders_f_Sub 0 in
+          let nSub2 := List.nth binders_f_Sub 1 in
+          let nDiv1 := List.nth binders_f_Div 0 in
+          let nSal1 := List.nth binders_f_Div 0 in
+          let nSal2 := List.nth binders_f_Div 1 in
+          let nJump1 := List.nth binders_f_Jump 0 in
+          let nJump2 := List.nth binders_f_Jump 1 in
+          let nCall1 := List.nth binders_f_Call 0 in
+          let nMov1 := List.nth binders_f_Mov 0 in
+          let nMov2 := List.nth binders_f_Mov 1 in
+          let nPop1 := List.nth binders_f_Pop 0 in
+          let nPush1 := List.nth binders_f_Push 0 in
+          let nAdd_RSP1 := List.nth binders_f_Add_RSP 0 in
+          let nSub_RSP1 := List.nth binders_f_Sub_RSP 0 in
+          let nLoad_RSP1 := List.nth binders_f_Load_RSP 0 in
+          let nLoad_RSP2 := List.nth binders_f_Load_RSP 1 in
+          let nStore_RSP1 := List.nth binders_f_Store_RSP 0 in
+          let nStore_RSP2 := List.nth binders_f_Store_RSP 1 in
+          let nLoad1 := List.nth binders_f_Load 0 in
+          let nLoad2 := List.nth binders_f_Load 1 in
+          let nLoad3 := List.nth binders_f_Load 2 in
+          let nStore1 := List.nth binders_f_Store 0 in
+          let nStore2 := List.nth binders_f_Store 1 in
+          let nStore3 := List.nth binders_f_Store 2 in
+          let nComment1 := List.nth binders_f_Comment 0 in
           app_lemma "auto_instr_CASE" [("env", exactk fenv); ("v0", exactk v0);
-                                        ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3); ("v4", exactk v4);
-                                        ("v5", exactk v5); ("v6", exactk v6); ("v7", exactk v7); ("v8", exactk v8);
-                                        ("v9", exactk v9); ("v10", exactk v10); ("v11", exactk v11); ("v12", exactk v12);
-                                        ("v13", exactk v13); ("v14", exactk v14); ("v15", exactk v15); ("v16", exactk v16);
-                                        ("v17", exactk v17); ("v18", exactk v18); ("v19", exactk v19); ("v20", exactk v20);
-                                        ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4);
-                                        ("n5", exactk n5); ("n6", exactk n6); ("n7", exactk n7); ("n8", exactk n8);
-                                        ("n9", exactk n9); ("n10", exactk n10); ("n11", exactk n11); ("n12", exactk n12);
-                                        ("n13", exactk n13); ("n14", exactk n14); ("n15", exactk n15); ("n16", exactk n16);
-                                        ("n17", exactk n17); ("n18", exactk n18); ("n19", exactk n19); ("n20", exactk n20);
-                                        ("n21", exactk n21); ("n22", exactk n22); ("n23", exactk n23); ("n24", exactk n24);
-                                        ("n25", exactk n25); ("n26", exactk n26); ("n27", exactk n27)]
-                                       [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ());
-                                        (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
-                                        (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
-                                        (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
-                                        (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
+          ("f_Const", exactk f_Const); ("f_Add", exactk f_Add); ("f_Sub", exactk f_Sub); ("f_Div", exactk f_Div);
+          ("f_Jump", exactk f_Jump); ("f_Call", exactk f_Call); ("f_Mov", exactk f_Mov); ("f_Ret", exactk f_Ret);
+          ("f_Pop", exactk f_Pop); ("f_Push", exactk f_Push); ("f_Add_RSP", exactk f_Add_RSP); ("f_Sub_RSP", exactk f_Sub_RSP);
+          ("f_Load_RSP", exactk f_Load_RSP); ("f_Store_RSP", exactk f_Store_RSP); ("f_Load", exactk f_Load); ("f_Store", exactk f_Store);
+          ("f_GetChar", exactk f_GetChar); ("f_PutChar", exactk f_PutChar); ("f_Exit", exactk f_Exit); ("f_Comment", exactk f_Comment);
+          ("nConst1", exactk nConst1); ("nConst2", exactk nConst2); ("nAdd1", exactk nAdd1); ("nAdd2", exactk nAdd2);
+          ("nSub1", exactk nSub1); ("nSub2", exactk nSub2); ("nDiv1", exactk nDiv1); ("nSal1", exactk nSal1); ("nSal2", exactk nSal2); ("nJump1", exactk nJump1);
+          ("nJump2", exactk nJump2); ("nCall1", exactk nCall1); ("nMov1", exactk nMov1); ("nMov2", exactk nMov2);
+          ("nPop1", exactk nPop1); ("nPush1", exactk nPush1); ("nAdd_RSP1", exactk nAdd_RSP1); ("nSub_RSP1", exactk nSub_RSP1);
+          ("nLoad_RSP1", exactk nLoad_RSP1); ("nLoad_RSP2", exactk nLoad_RSP2); ("nStore_RSP1", exactk nStore_RSP1); ("nStore_RSP2", exactk nStore_RSP2);
+          ("nLoad1", exactk nLoad1); ("nLoad2", exactk nLoad2); ("nLoad3", exactk nLoad3); ("nStore1", exactk nStore1);
+          ("nStore2", exactk nStore2); ("nStore3", exactk nStore3); ("nComment1", exactk nComment1)]
+               [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ());
+          (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
+          (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
+          (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
+          (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
         (* prog *)
         | ImpSyntax.Program ?funcs =>
           app_lemma "auto_prog_cons_Program" [("env", exactk fenv); ("funcs", exactk funcs)] [compile]
@@ -1097,7 +1118,9 @@ Ltac2 rec compile () : unit :=
         (*       We can use names to have subsets of tactics (e.g. arithmetic only) *)
         (* const *)
         | ?n =>
-          if proper_const n then
+          if Constr.equal (Constr.type (Constr.type n)) constr:(Prop) then
+            app_lemma "auto_Prop" [("env", exactk fenv); ("v", exactk n)] []
+          else if proper_const n then
             if Constr.equal (Constr.type n) constr:(nat) then
               app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk n)] []
             else if Constr.equal (Constr.type n) constr:(N) then
@@ -1125,7 +1148,12 @@ Ltac2 rec compile () : unit :=
         compile_go ()
       | Some (f, args) =>
         (* A function application *)
-        let args := List.filter (fun c => Bool.neg (constr_is_sort (Constr.type c))) args in
+        let args := List.filter (fun c =>
+          (* TODO: for proper Prop erasure *)
+          (* Bool.and *)
+            (* (Bool.neg (Constr.equal constr:(Prop) (Constr.type (Constr.type c)))) *)
+            (Bool.neg (constr_is_sort (Constr.type c)))
+        ) args in
         let f_lookup := get_f_lookup_from_hyps () in
         let fname_opt := fname_if_in_f_lookup f_lookup f in
         match fname_opt with
@@ -1345,6 +1373,9 @@ Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: co
               gen_eval_app_impl fpargs f_constr_name open_constr:($f $b_hyp) ()
             )
           ))
+        (* TODO: for proper Prop erasure *)
+        (* else if Constr.equal constr:(Prop) (Constr.type (Binder.type b)) then
+          gen_eval_app_impl fpargs f_constr_name open_constr:($f $b_hyp) () *)
         else gen_eval_app_impl (List.append fpargs [b_hyp]) f_constr_name open_constr:($f $b_hyp) ()
       )
     ))
@@ -1437,15 +1468,18 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
   let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
   let f_constr_name_c := constr_string_of_string f_constr_name in
   let f_binders := collect_prod_binders f in
-  let non_type_f_binders := List.filter (fun b => Bool.neg (constr_is_sort (Binder.type b))) f_binders in
+  let non_type_f_binders := List.filter (fun b =>
+    (* TODO: for proper Prop erasure *)
+    (* Bool.and *)
+      (* (Bool.neg (Constr.equal constr:(Prop) (Constr.type (Binder.type b)))) *)
+      (Bool.neg (constr_is_sort (Binder.type b)))
+  ) f_binders in
   let f_binder_names := List.map (fun b =>
     let n := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
     constr_string_of_string (Ident.to_string n)
   ) non_type_f_binders in
   let encoded_b_names := mk_constr_list (List.map (fun n => constr:(name_enc $n)) f_binder_names) in
   let eval_app_cont := gen_eval_app f in
-  (* TODO: this (below) might be easier to use, if we exclude some spurious deps, like "add" *)
-  (* let _deps: constr list := get_fun_deps f in *)
   let deps_eval_app_conts := List.map gen_eval_app deps in
   Control.refine (fun () =>
     open_constr:(forall (s: state),
@@ -1474,6 +1508,31 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
 
 (* TODO: for some reason, need this for generated derivation statement proofs *)
 Opaque encode.
+
+Definition nat_modulo (n1 n2: nat): nat :=
+  match n2 with
+  | 0%nat => 0
+  | S _ => n1 - n2 * (n1 / n2)
+  end.
+
+Remark gcd_oblig:
+  forall (a b: nat) (NE: b <> 0), nat_modulo a b < b.
+Proof.
+Admitted.
+
+Function gcd_rec (a b: nat) (ACC: Acc lt b) {struct ACC}: nat :=
+  match Nat.eq_dec b 0 with
+  | left EQ => a
+  | right NE =>
+    gcd_rec b (nat_modulo a b) (Acc_inv ACC (gcd_oblig a b NE))
+  end.
+
+Derive gcd_rec_prog
+  in ltac2:(relcompile_tpe 'gcd_rec_prog 'gcd_rec ['nat_modulo])
+  as gcd_rec_prog_proof.
+Proof.
+  time relcompile.
+Qed.
 
 Set Printing Implicit.
 

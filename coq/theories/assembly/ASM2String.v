@@ -63,6 +63,8 @@ Definition inst2str (i: instr) (str: string): string :=
   | ASMSyntax.Add dst src => "addq " ++ reg2str src (", " ++ reg2str dst str)
   | Sub dst src => "subq " ++ reg2str src (", " ++ reg2str dst str)
   | Div r => "divq " ++ reg2str r str
+  (* TODO: check this. *)
+  | Sal r n => "sal " ++ reg2str r (", " ++ num2str n str)
   | Jump Always n => "jmp " ++ lab n str
   | Jump (Equal r1 r2) n =>
       "cmpq " ++ reg2str r2 (", " ++ reg2str r1 (" ; je " ++ lab n str))

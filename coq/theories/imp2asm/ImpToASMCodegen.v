@@ -28,22 +28,20 @@ Definition init (k: nat): asm :=
     (*  5 *) ASMSyntax.Exit;
     (* alloc routine starts here: *)
     (*  6 *) ASMSyntax.Comment "malloc";
-    (*  7 *) ASMSyntax.Mov RDI RAX;
-    (*  8 *) ASMSyntax.Mov RAX R14;
-    (*  9 *) ASMSyntax.Add R14 RDI;
-    (* 10 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 14;
-    (* 11 *) ASMSyntax.Comment "noop";
-    (* 12 *) ASMSyntax.Ret;
+    (*  7 *) ASMSyntax.Sal RDI 3;
+    (*  8 *) ASMSyntax.Add R14 RDI;
+    (*  9 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 15;
+    (* 10 *) ASMSyntax.Ret;
     (* give up: *)
-    (* 13 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
-    (* 14 *) ASMSyntax.Push R15; (* align stack *)
-    (* 15 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 4));
-    (* 16 *) ASMSyntax.Exit;
+    (* 11 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
+    (* 12 *) ASMSyntax.Push R15; (* align stack *)
+    (* 13 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 4));
+    (* 14 *) ASMSyntax.Exit;
     (* abort: *)
-    (* 17 *) ASMSyntax.Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
-    (* 18 *) ASMSyntax.Push R15; (* align stack *)
-    (* 19 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 1));
-    (* 20 *) ASMSyntax.Exit
+    (* 15 *) ASMSyntax.Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
+    (* 16 *) ASMSyntax.Push R15; (* align stack *)
+    (* 17 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 1));
+    (* 18 *) ASMSyntax.Exit
   ]%string.
 
 Definition AllocLoc: nat := 7.
@@ -99,12 +97,9 @@ Function odd_len {A: Type} (xs: list A) : bool :=
 (* jump label for failure cases
   b – does the stack need to be aligned
 *)
-Definition give_up (b: bool): nat := if b then 14 else 15.
+Definition give_up (b: bool): nat := if b then 12 else 13.
 
-(* abort
-  b – does the stack need to be aligned
-*)
-Definition abort (b: bool): nat := if b then 18 else 19.
+Definition abortLoc: nat := 16.
 
 (* Compiles a constant value into assembly instructions *)
 Definition c_const (n : word64) (l : nat) : asm_appl * nat :=
@@ -182,24 +177,23 @@ Definition c_div: asm_appl :=
     ASMSyntax.Div RDI ].
 
 Definition c_alloc (vs: v_stack): asm_appl :=
-  if even_len vs (* stack must be aligned at call *)
+  List [Mov RDI RAX; ASMSyntax.Call AllocLoc; Pop RAX].
+  (* if even_len vs (* stack must be aligned at call *)
   then List [Load_RSP RDI 0; ASMSyntax.Call AllocLoc; Pop RDI]
-  else List [Pop RDI; ASMSyntax.Call AllocLoc].
+  else List [Pop RDI; ASMSyntax.Call AllocLoc]. *)
 
-(* Some aasmbly languages and architectures (including x86_64) require alignint
+(* Some assembly languages and architectures (including x86_64) require aligning
 the stack to 16-bytes before function calls. If `vs` is even – we have to push
 something to the stack before calling any function. (the first value from the stack is kept in RAX,
 so the actual stack size is odd then)
 *)
-Definition align (needs_alignment: bool) (asm1: asm_appl): asm_appl :=
-  if needs_alignment then (List [Push RAX]) +++ asm1 +++ (List [Pop RDI]) else asm1.
 
 Definition c_read (vs: v_stack) (l: nat): (asm_appl * nat) :=
-  let/d asm1 := align (even_len vs) (List [ASMSyntax.Push RAX; ASMSyntax.GetChar]) in
+  let/d asm1 := List [Push RAX; ASMSyntax.GetChar] in
   (asm1, (l + app_list_length asm1)%nat).
 
 Definition c_write (vs: v_stack) (l: nat): (asm_appl * nat) :=
-  let/d asm1 := align (even_len vs) (List [Mov RDI RAX; ASMSyntax.PutChar; ASMSyntax.Const RAX (word.of_Z (Z.of_nat 0))]) in
+  let/d asm1 := List [Mov RDI RAX; ASMSyntax.PutChar; Pop RAX] in
   (asm1, (l + app_list_length asm1)%nat).
 
 (*
@@ -340,7 +334,7 @@ Definition c_pushes (v_names: list name) (l: nat): (asm_appl * v_stack * nat) :=
 (* Call the given function, passing the arguments in registers*)
 Definition c_call (vs: v_stack) (target: nat) (xs: list exp) (l: nat): asm_appl * nat :=
   let/d asm_pops := c_pops xs vs in
-  let/d asm1 := align (even_len vs) (List [ASMSyntax.Call target]) in
+  let/d asm1 := List [ASMSyntax.Call target] in
   (asm_pops +++ asm1, l + app_list_length asm_pops + app_list_length asm1).
 
 Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) :=
@@ -403,7 +397,7 @@ Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) 
     let/d '(asm2, l2) := c_write vs l1 in
     (asm1 +++ asm2, l2)
   | Abort =>
-    (List [Jump Always (abort (odd_len vs))], l+1)
+    (List [Jump Always abortLoc], l+1)
   end.
 
 Function all_binders (body: cmd): list name :=
@@ -453,8 +447,10 @@ Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
     let/d '(asm0, vs0, l0) := c_pushes v_names l in
     let/d binders := unique_binders body in
     let/d vs_binders := make_vs_from_binders binders in
-    let/d asm1 := List [Sub_RSP (list_length vs_binders)] in
-    let/d '(asm2, l2) := c_cmd body (l0 + 1) fs (list_append vs_binders vs0) in
+    (* Make sure that at the start of every command vs (the stack) is odd *)
+    let/d vs_binders1 := if even_len vs_binders then vs_binders else list_append vs_binders [None] in
+    let/d asm1 := List [Sub_RSP (list_length vs_binders1)] in
+    let/d '(asm2, l2) := c_cmd body (l0 + 1) fs (list_append vs_binders1 vs0) in
     (asm0 +++ asm1 +++ asm2, l2)
   end.
 

@@ -243,6 +243,7 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
     mem_inv pmap t.(memory) s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
     odd (List.length rest) = true ->
+    odd (List.length curr) = true ->
     code_in t.(pc) (flatten asmc) t.(instructions) ->
     exists outcome pmap1,
       steps (State t, s1.(steps_done) - s.(steps_done)) outcome /\
@@ -396,54 +397,38 @@ Proof.
     tauto.
 Qed.
 
-Theorem abort: forall fs ds t w n,
+Theorem abortLoc: forall fs ds t w n,
   code_rel fs ds t.(instructions) ->
   t.(regs) R15 = Some w ->
-  t.(pc) = abort (odd (List.length t.(stack))) ->
+  odd (List.length (stack t)) = true ->
+  t.(pc) = abortLoc ->
   steps (State t, n) (Halt (word.of_Z 1) t.(output), n).
 Proof.
   intros.
-  unfold abort in *.
+  unfold abortLoc in *.
   unfold code_rel in *.
   unfold init_code_in, init in *.
   unfold code_in in *.
   cleanup.
-  destruct (odd (List.length (stack t))) eqn:?.
-  1: {
-    eapply steps_trans.
-    - eapply steps_step_same.
-      eapply step_push; eauto.
-      unfold fetch; rewrite H1; eauto.
-    - eapply steps_trans.
-      + eapply steps_step_same.
-        eapply step_const; eauto.
-        unfold_stack.
-        unfold fetch; rewrite H1; eauto.
-      + eapply steps_step_same.
-        eapply step_exit with (s := (write_reg ARG_REG (word.of_Z 1)
-        (inc (set_stack (Word w :: stack t) (inc t))))).
-        1: unfold fetch; unfold_stack; simpl; rewrite H1; eauto.
-        1: unfold_stack; simpl; eauto.
-        rewrite rw_mod_2_even.
-        simpl in *.
-        destruct (List.length (stack t)); [tauto|].
-        rewrite Nat.odd_succ in *.
-        assumption.
-  }
   eapply steps_trans.
-  + eapply steps_step_same.
-    eapply step_const; eauto.
-    unfold_stack.
-    unfold fetch; rewrite H1; eauto.
-  + eapply steps_step_same.
-    eapply step_exit with (s := (write_reg ARG_REG (word.of_Z 1) (inc t))).
-    1: unfold fetch; unfold_stack; simpl; rewrite H1; eauto.
-    1: unfold_stack; simpl; eauto.
-    rewrite rw_mod_2_even.
-    simpl in *.
-    rewrite <- Nat.negb_odd in *.
-    rewrite Heqb.
-    tauto.
+  1: eapply steps_step_same.
+  1: eapply step_push; eauto.
+  1: unfold fetch; pat `t.(pc) = _` at rewrite pat; eauto.
+  eapply steps_trans.
+  1: eapply steps_step_same.
+  1: eapply step_const; eauto.
+  1: unfold_stack.
+  1: unfold fetch; pat `t.(pc) = _` at rewrite pat; eauto.
+  eapply steps_step_same.
+  eapply step_exit with (s := (write_reg ARG_REG (word.of_Z 1)
+  (inc (set_stack (Word w :: stack t) (inc t))))).
+  1: unfold fetch; unfold_stack; simpl; pat `t.(pc) = _` at rewrite pat; eauto.
+  1: unfold_stack; simpl; eauto.
+  rewrite rw_mod_2_even.
+  simpl in *.
+  destruct (List.length (stack t)); [tauto|].
+  rewrite Nat.odd_succ in *.
+  assumption.
 Qed.
 
 Theorem even_len_spec_str: forall (l: v_stack),
@@ -686,7 +671,7 @@ Proof.
     eapply c_exps_length in H; subst
   | [ H: c_test_jump _ _ _ _ _ = (_, _) |- _ ] =>
     eapply c_test_length in H; subst
-  | _ => progress unfold align, dlet, c_alloc, c_assign, c_var in *
+  | _ => progress unfold dlet, c_alloc, c_assign, c_var in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
   | _ => progress rewrite app_list_length_spec
@@ -2378,6 +2363,7 @@ Ltac crunch_side_conditions_cmd :=
   repeat match goal with
   | [ |- _ ∧ _ ] => split
   | [ |- pmap_ok _ ] => progress eauto
+  | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
   | [ |- pmap_subsume _ _ ] => eapply pmap_subsume_trans; progress eauto
   | [ |- state_rel _ _ _ ] => progress eauto
   | [ |- cmd_res_rel _ _ _ _ _ _ _ _ ] => progress eauto
@@ -2417,7 +2403,7 @@ Proof.
     1: eapply step_jump.
     1: simpl; eauto.
     1: constructor.
-    eapply abort; eauto.
+    eapply abortLoc; eauto.
     simpl; subst.
     crunch_give_up_even.
   }
@@ -2737,6 +2723,18 @@ Qed.
 Transparent EVAL_CMD.
 Transparent eval_cmd.
 
+Lemma env_ok_IMP_odd_curr1: forall vars vars1 vs curr curr1 pmap pmap1,
+  env_ok vars vs curr pmap ->
+  env_ok vars1 vs curr1 pmap1 ->
+  odd (List.length curr) = true ->
+  odd (List.length curr1) = true.
+Proof.
+  unfold env_ok; intros; cleanup.
+  pat `_ = List.length curr1` at rewrite <- pat.
+  pat `_ = List.length curr` at rewrite pat.
+  assumption.
+Qed.
+
 Theorem c_cmd_Seq: forall (fuel: nat) (c1 c2: cmd),
   goal_cmd c1 fuel -> goal_cmd c2 fuel ->
   goal_cmd (ImpSyntax.Seq c1 c2) fuel.
@@ -2776,6 +2774,7 @@ Proof.
   pat `steps (State t, _) _` at rw ltac:(specialize (steps_instructions _ _ _ _ pat)).
   pat `eval_cmd c2 _ _ = _` at eapply H0 with (pmap := x0) (curr := x) in pat; clear H0; cleanup.
   all: eauto.
+  2: eapply env_ok_IMP_odd_curr1 with (curr := curr); eauto.
   spat `_ = s1.(steps_done) - s.(steps_done)` at rewrite spat in *.
   rewrite Nat.add_0_l in *.
   1: destruct x1; destruct s3; cleanup; subst.
@@ -2987,6 +2986,7 @@ Proof.
   spat `_ < S _` at apply H0 in spat as Hgoal_While; clear H0.
   spat `eval_cmd (While t c)` at unfold goal_cmd in Hgoal_While; eapply Hgoal_While with (t := set_pc (pc t0) s2) in spat; clear Hgoal_While; cleanup.
   all: simpl; eauto.
+  2: eapply env_ok_IMP_odd_curr1 with (curr := curr); eauto.
   2: {
     simpl; repeat rewrite list_append_spec in *; repeat rewrite code_in_append; cleanup; repeat split.
     all: pat `steps (_, _) (State s2, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
@@ -3493,10 +3493,23 @@ Proof.
   all: exact Abort.
 Qed.
 
+Lemma odd_is_succ: forall n,
+  odd n = true ->
+  exists n1, n = S n1.
+Proof.
+  intros.
+  destruct n; simpl in *.
+  - unfold odd, even, negb in *.
+    congruence.
+  - eauto. 
+Qed.
+
 Theorem c_cmd_GetChar: forall (n: name) (fuel: nat),
   goal_cmd (ImpSyntax.GetChar n) fuel.
 Proof.
   unfold goal_cmd; simpl; intros.
+  with_strategy transparent [eval_cmd] simpl in *.
+  unfold_monadic; unfold get_char, assign, set_input, set_vars in *; unfold_outcome; simpl in *; cleanup.
   simpl c_cmd in *; unfold dlet in *.
   destruct c_read eqn:?; simpl in *.
   destruct c_assign eqn:?; simpl in *; cleanup.
@@ -3514,11 +3527,11 @@ Proof.
     pat `List.length _ = 0` at eapply length_zero_iff_nil in pat; subst; simpl in *.
     pat `0 < 0` at inversion pat.
   }
-  unfold align in *; cleanup.
-  destruct index_of eqn:?; destruct (even_len vs) eqn:?.
-  1: {
+  cleanup.
+  destruct index_of eqn:?; destruct t.(input) eqn:?.
+  1: { (* index_of = 0; input = Lnil *)
     rewrite <- app_comm_cons in *.
-    simpl in *; cleanup.
+    simpl in *; cleanup; simpl in *; cleanup.
     do 2 eexists; split.
     1: {
       eapply steps_trans.
@@ -3526,50 +3539,150 @@ Proof.
       1: eapply step_push; eauto.
       eapply steps_trans.
       1: eapply steps_step_same.
+      1: eapply step_get_ascii; simpl; eauto.
+      1: unfold read_ascii; pat `t.(input) = _` at rewrite pat; subst; reflexivity.
+      1: pat `_ = stack t` at rewrite <- pat.
+      1: pat `List.length vs = _` at rewrite pat in *.
+      1: rewrite <- Nat.even_succ in *; rewrite rw_mod_2_even in *; rewrite length_app; rewrite Nat.even_succ_succ in *.
+      1: rewrite Nat.even_succ; rewrite Nat.odd_add; rewrite Nat.even_succ in *; rewrite <- Nat.negb_even in *; pat `negb (Nat.even (List.length rest)) = _` at rewrite Nat.negb_even in pat.
+      1: spat `Nat.even (List.length curr)` at rewrite spat; spat `Nat.odd (List.length rest)` at rewrite spat; simpl; eauto.
+      simpl; unfold write_reg; simpl.
+      eapply steps_step_same.
+      eapply step_pop; simpl; eauto.
+      simpl; unfold write_reg; simpl.
+      assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
+    }
+    unfold write_reg, set_stack; simpl.
+    unfold state_rel in *; cleanup.
+    crunch_side_conditions_cmd.
+    1: pat `ImpSemantics.input s = _` at rewrite pat; pat `input t = _` at rewrite pat; simpl; reflexivity.
+    1: do 2 eexists; eauto.
+    eexists; split; [|split; eauto].
+    1: unfold has_stack in *; do 2 eexists; simpl; split; eauto; pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity.
+    split; [|lia]; unfold next, EOF_CONST; simpl.
+    pat `ImpSemantics.input s = _` at rewrite pat; pat `input t = _` at rewrite pat.
+    eapply env_ok_replace_head; eauto; simpl; eauto.
+    pat `index_of _ _ _ = _` at rewrite pat; assumption.
+  }
+  1: { (* index_of = 0; input = Lcons *)
+    rewrite <- app_comm_cons in *.
+    simpl in *; cleanup; simpl in *; cleanup.
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eapply steps_step_same.
       1: eapply step_push; eauto.
       eapply steps_trans.
       1: eapply steps_step_same.
-      1: eapply step_get_ascii; eauto.
-      1: unfold read_ascii; destruct (input _); reflexivity.
-      
-      
-      reflexivity.
+      1: eapply step_get_ascii; simpl; eauto.
+      1: unfold read_ascii; pat `t.(input) = _` at rewrite pat; subst; reflexivity.
+      1: pat `_ = stack t` at rewrite <- pat.
+      1: pat `List.length vs = _` at rewrite pat in *.
+      1: rewrite <- Nat.even_succ in *; rewrite rw_mod_2_even in *; rewrite length_app; rewrite Nat.even_succ_succ in *.
+      1: rewrite Nat.even_succ; rewrite Nat.odd_add; rewrite Nat.even_succ in *; rewrite <- Nat.negb_even in *; pat `negb (Nat.even (List.length rest)) = _` at rewrite Nat.negb_even in pat.
+      1: spat `Nat.even (List.length curr)` at rewrite spat; spat `Nat.odd (List.length rest)` at rewrite spat; simpl; eauto.
+      simpl; unfold write_reg; simpl.
+      eapply steps_step_same.
+      eapply step_pop; simpl; eauto.
+      simpl; unfold write_reg; simpl.
+      assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
     }
-    simpl.
-    unfold has_stack in *; cleanup.
-    repeat match goal with
-    | [ |- _ ∧ _ ] => split
-    | [ |- ∃_, _ ] => eexists
-    | [ |- pmap_subsume ?x ?x ] => eapply pmap_subsume_refl
-    | [ |- _ - _ = _ ] => lia
-    | _ => progress eauto
-    end.
-    1: pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity.
-    eapply env_ok_replace_head; eauto.
+    unfold write_reg, set_stack; simpl.
+    unfold state_rel in *; cleanup.
+    crunch_side_conditions_cmd.
+    1: pat `ImpSemantics.input s = _` at rewrite pat; pat `input t = _` at rewrite pat; simpl; reflexivity.
+    1: do 2 eexists; eauto.
+    eexists; split; [|split; eauto].
+    1: unfold has_stack in *; do 2 eexists; simpl; split; eauto; pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity.
+    split; [|lia]; unfold next, EOF_CONST; simpl.
+    pat `ImpSemantics.input s = _` at rewrite pat; pat `input t = _` at rewrite pat.
+    eapply env_ok_replace_head; eauto; simpl; eauto.
     pat `index_of _ _ _ = _` at rewrite pat; assumption.
   }
-  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl in *; cleanup.
-  unfold has_stack in *|-; cleanup.
-  pat `_ = S (List.length curr)` at rewrite pat in *.
+  1: { (* index_of = S _; input = Lnil *)
+    rewrite <- app_comm_cons in *.
+    simpl in *; cleanup; simpl in *; cleanup.
+    do 2 eexists; split.
+    1: {
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_push; eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_get_ascii; simpl; eauto.
+      1: unfold read_ascii; pat `t.(input) = _` at rewrite pat; subst; reflexivity.
+      1: pat `_ = stack t` at rewrite <- pat.
+      1: pat `List.length vs = _` at rewrite pat in *.
+      1: rewrite <- Nat.even_succ in *; rewrite rw_mod_2_even in *; rewrite length_app; rewrite Nat.even_succ_succ in *.
+      1: rewrite Nat.even_succ; rewrite Nat.odd_add; rewrite Nat.even_succ in *; rewrite <- Nat.negb_even in *; pat `negb (Nat.even (List.length rest)) = _` at rewrite Nat.negb_even in pat.
+      1: spat `Nat.even (List.length curr)` at rewrite spat; spat `Nat.odd (List.length rest)` at rewrite spat; simpl; eauto.
+      simpl; unfold write_reg; simpl.
+      assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_store_rsp; simpl; eauto.
+      1: eapply Nat.lt_trans; eauto; pat `_ = stack t` at rewrite <- pat; rewrite length_app; pat `List.length vs = _` at rewrite pat.
+      1: pat `odd (List.length rest) = true` at eapply odd_is_succ in pat; cleanup; lia.
+      1: simpl; reflexivity.
+      unfold update_stack; simpl.
+      eapply steps_step_same.
+      eapply step_pop; simpl; eauto.
+    }
+    unfold write_reg, set_stack; simpl.
+    unfold state_rel in *; cleanup.
+    crunch_side_conditions_cmd.
+    1: pat `ImpSemantics.input s = _` at rewrite pat; pat `input t = _` at rewrite pat; simpl; reflexivity.
+    1: do 2 eexists; eauto.
+    eexists; split; [|split; eauto].
+    1: admit.
+    (* 1: unfold has_stack in *; do 2 eexists; simpl; split; eauto; pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity. *)
+    split; [|lia].
+    eapply env_ok_replace_list_update; eauto.
+    1: pat `ImpSemantics.input s = _` at rewrite pat; pat `input t = _` at rewrite pat; simpl; reflexivity.
+    pat `index_of _ _ _ = _` at rewrite pat; assumption.
+  }
+  (* index_of = S _; input = Lcons *)
+  rewrite <- app_comm_cons in *.
+  simpl in *; cleanup; simpl in *; cleanup.
   do 2 eexists; split.
   1: {
     eapply steps_trans.
-    1: eauto.
+    1: eapply steps_step_same.
+    1: eapply step_push; eauto.
     eapply steps_trans.
     1: eapply steps_step_same.
-    1: eapply step_store_rsp.
-    1: eauto.
-    1: destruct rest; [spat `odd` at inversion spat|];
-       pat `_ = stack s1` at rewrite <- pat in *; rewrite length_cons; rewrite length_app; lia.
-    1: eauto.
+    1: eapply step_get_ascii; simpl; eauto.
+    1: unfold read_ascii; pat `t.(input) = _` at rewrite pat; subst; reflexivity.
+    1: pat `_ = stack t` at rewrite <- pat.
+    1: pat `List.length vs = _` at rewrite pat in *.
+    1: rewrite <- Nat.even_succ in *; rewrite rw_mod_2_even in *; rewrite length_app; rewrite Nat.even_succ_succ in *.
+    1: rewrite Nat.even_succ; rewrite Nat.odd_add; rewrite Nat.even_succ in *; rewrite <- Nat.negb_even in *; pat `negb (Nat.even (List.length rest)) = _` at rewrite Nat.negb_even in pat.
+    1: spat `Nat.even (List.length curr)` at rewrite spat; spat `Nat.odd (List.length rest)` at rewrite spat; simpl; eauto.
+    simpl; unfold write_reg; simpl.
+    assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_store_rsp; simpl; eauto.
+    1: eapply Nat.lt_trans; eauto; pat `_ = stack t` at rewrite <- pat; rewrite length_app; pat `List.length vs = _` at rewrite pat.
+    1: pat `odd (List.length rest) = true` at eapply odd_is_succ in pat; cleanup; lia.
+    1: simpl; reflexivity.
+    unfold update_stack; simpl.
     eapply steps_step_same.
-    eapply step_pop.
-    1: eauto.
-    simpl.
-    pat `_ = stack s1` at rewrite <- pat.
-    reflexivity.
+    eapply step_pop; simpl; eauto.
   }
-
+  unfold write_reg, set_stack; simpl.
+  unfold state_rel in *; cleanup.
+  crunch_side_conditions_cmd.
+  1: pat `ImpSemantics.input s = _` at rewrite pat; pat `input t = _` at rewrite pat; simpl; reflexivity.
+  1: do 2 eexists; eauto.
+  eexists; split; [|split; eauto].
+  1: admit.
+  (* 1: unfold has_stack in *; do 2 eexists; simpl; split; eauto; pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity. *)
+  split; [|lia].
+  eapply env_ok_replace_list_update; eauto.
+  1: pat `ImpSemantics.input s = _` at rewrite pat; pat `input t = _` at rewrite pat; simpl; reflexivity.
+  pat `index_of _ _ _ = _` at rewrite pat; assumption.
+Admitted.
 
 Theorem c_cmd_correct : forall (fuel: nat) (c: cmd),
   goal_cmd c fuel.
@@ -3763,13 +3876,6 @@ Proof.
     simpl in *.
     f_equal.
     eapply IHc; eauto.
-  - destruct c_var eqn:?.
-    destruct (c_var n (snd (c_exps es lstart vs) + app_list_length (c_pops es vs) + app_list_length (align (even_len vs) (List [Call (lookup f_lookup0 f)])))) eqn:?.
-    destruct c_exps eqn:?.
-    simpl in *.
-    destruct even_len eqn:?; simpl in *.
-    all: spat `c_var` at rewrite spat in *; cleanup.
-    all: reflexivity.
 Qed.
 
 Lemma c_fundef_l_same: forall f lstart f_lookup f_lookup0 a1 a2 l1 l2,
@@ -3995,8 +4101,7 @@ Proof.
   destruct (c_cmd _ _) eqn:?.
   simpl in *.
   repeat (rewrite code_in_append in *; simpl in * ); cleanup.
-  assert (s0 = s1) by do 2 (spat `match ?o with _ => _ end` at destruct o; inversion spat; try congruence).
-  (* pat ` (_, _) = (_, _)` at inversion pat; clear pat. *)
+  assert (s0 = s1) by do 2 (pat `match ?o with _ => _ end = _` at destruct o; inversion pat; try congruence).
   pat `c_pushes _ _ = (?p, _)` at destruct p.
   unfold c_pushes, dlet in *; simpl in *.
   pat ` (_, _, _) = (_, _, _)` at inversion pat; subst; clear pat.
@@ -4005,7 +4110,7 @@ Proof.
   repeat rewrite list_length_spec in *.
   repeat (rewrite code_in_append in *; simpl in * ); cleanup.
   rewrite Nat.add_0_r in *.
-  remember (make_vs_from_binders _) as vs_binders.
+  remember (if even_len _ then _ else _) as vs_binders.
   pose proof c_cmd_correct as Hccorrect; unfold goal_cmd in Hccorrect.
   eapply Hccorrect with (curr := (Word (word.of_Z 0)) :: (List.map (fun _ => Uninit) vs_binders)) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
   all: simpl in *.
@@ -4127,7 +4232,7 @@ Proof.
     all: spat `_ = 0%Z` at inversion spat.
   }
   all: simpl in *.
-  1: do 2 (spat `match ?o with _ => _ end` at destruct o; inversion spat; try congruence).
+  1: do 2 (pat `match ?o with _ => _ end = _` at destruct o; inversion pat; try congruence).
   5: { (* has_stack *)
     unfold has_stack.
     do 2 eexists.
@@ -4167,9 +4272,14 @@ Proof.
   2: { (* binders_ok *)
     pat `vs_binders = _` at rewrite pat.
     eapply binders_ok_append.
-    eapply binders_ok_unique_binders.
+    destruct even_len; try eapply binders_ok_append.
+    all: eapply binders_ok_unique_binders.
   }
-  4: unfold odd, even; simpl; reflexivity.
+  4: unfold odd, even; reflexivity.
+  4: {
+    subst; destruct even_len eqn:?; rewrite even_len_spec, length_map, ?length_app, ?Nat.add_1_r in *; rewrite Nat.odd_succ; rewrite ?Nat.even_succ, <- ?Nat.negb_even.
+    all: pat `even _ = _` at rewrite pat; reflexivity.
+  }
   4: { (* code_in *)
     pat `lookup_main_l = _` at rewrite <- pat.
     pat `instructions t = _` at rewrite pat.

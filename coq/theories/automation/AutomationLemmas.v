@@ -92,6 +92,14 @@ Ltac crunch_NoDup :=
   | _ => assumption
   end.
 
+Theorem auto_Prop: forall {A: Prop} s env (v: A),
+  env |-- ([Const 0], s) ---> ([encode v], s).
+Proof.
+  intros.
+  Eval_eq.
+Qed.
+Hint Resolve auto_Prop: automation.
+
 Theorem auto_let : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env x1 y1 s1 s2 s3 (v1: A) let_n f,
   env |-- ([x1], s1) ---> ([ra.(encode) v1], s2) ->
   (FEnv.insert ((name_enc let_n), Some (ra.(encode) v1)) env) |-- ([y1], s2) --->
@@ -292,6 +300,32 @@ Proof.
 Qed.
 Hint Resolve auto_nat_if_eq: automation.
 
+Theorem auto_nat_if_eq_dec: forall {A} `{ra: Refinable A} env s x1 x2 x_t x_f (n1 n2: nat) t f,
+  env |-- ([x1], s) ---> ([encode n1], s) ->
+  env |-- ([x2], s) ---> ([encode n2], s) ->
+  (match Nat.eq_dec n1 n2 with
+  | left EQ => env |-- ([x_t], s) ---> ([encode (t EQ)], s)
+  | right NE =>
+    env |-- ([x_f], s) ---> ([encode (f NE)], s)
+  end) ->
+  env |-- ([If Equal [x1; x2] x_t x_f], s) --->
+     ([encode (
+        match Nat.eq_dec n1 n2 with
+        | left EQ => t EQ
+        | right NE => f NE
+        end)], s).
+Proof.
+  intros.
+  destruct Nat.eq_dec eqn:Heq.
+  all: repeat econstructor; eauto.
+  all: unfold take_branch, return_; try reflexivity.
+  all: destruct (_ =? _) eqn:?; try rewrite Nat.eqb_eq in *; try rewrite Nat.eqb_neq in *; subst.
+  all: try rewrite N.eqb_eq in *; try rewrite N.eqb_neq in *; subst.
+  all: eauto.
+  all: lia.
+Qed.
+Hint Resolve auto_nat_if_eq_dec: automation.
+
 Theorem auto_N_if_eq : forall {A} `{ra: Refinable A} env s x1 x2 y z (n1 n2: N) (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
@@ -339,7 +373,7 @@ Hint Resolve auto_nat_if_less: automation.
 (* same precondition in the inductive principle vvvvvvvv *)
 (* destruct on `{v = 0} + {v = (pred v) + 1}` sort of like eq_dec *)
 
-Theorem auto_nat_case : forall {A} `{ra: Refinable A} env s x0 x1 x2 n (v0: nat) (v1: A) v2,
+Theorem auto_nat_case: forall {A} `{ra: Refinable A} env s x0 x1 x2 n (v0: nat) (v1: A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   (match v0 with
   | 0%nat => env |-- ([x1], s) ---> ([encode v1], s)
@@ -1591,6 +1625,8 @@ Definition encode_instr (i : ASMSyntax.instr) : Value :=
     value_list_of_values [value_name "Sub"; encode r1; encode r2]
   | ASMSyntax.Div r =>
     value_list_of_values [value_name "Div"; encode r]
+  | ASMSyntax.Sal r n =>
+    value_list_of_values [value_name "Sal"; encode r; Num (N.of_nat n)]
   | ASMSyntax.Jump c n =>
     value_list_of_values [value_name "Jump"; encode c; Num (N.of_nat n)]
   | ASMSyntax.Call n =>
@@ -1657,6 +1693,14 @@ Theorem auto_instr_cons_Div: forall env s x_r r,
   env |-- ([Op Cons [Const (name_enc "Div");
                      Op Cons [x_r; Const 0]]], s) --->
         ([encode (ASMSyntax.Div r)], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_instr_cons_Sal: forall env s x_r x_n r n,
+  env |-- ([x_r], s) ---> ([encode r], s) ->
+  env |-- ([x_n], s) ---> ([encode n], s) ->
+  env |-- ([Op Cons [Const (name_enc "Sal");
+                     Op Cons [x_r; Op Cons [x_n; Const 0]]]], s) --->
+        ([encode (ASMSyntax.Sal r n)], s).
 Proof. Eval_eq. Qed.
 
 Theorem auto_instr_cons_Jump: forall env s x_c x_n c n,
@@ -1772,123 +1816,133 @@ Theorem auto_instr_cons_Comment: forall env s x_s str,
 Proof. Eval_eq. Qed.
 
 Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
-  Const_case Add_case Sub_case Div_case Jump_case Call_case
+  Const_case Add_case Sub_case Div_case Sal_case Jump_case Call_case
   Mov_case Ret_case Pop_case Push_case Add_RSP_case Sub_RSP_case Load_RSP_case Store_RSP_case
   Load_case Store_case GetChar_case PutChar_case Exit_case Comment_case
-  f_Const f_Add f_Sub f_Div f_Jump f_Call f_Mov f_Ret f_Pop f_Push
+  f_Const f_Add f_Sub f_Div f_Sal f_Jump f_Call f_Mov f_Ret f_Pop f_Push
   f_Add_RSP f_Sub_RSP f_Load_RSP f_Store_RSP f_Load f_Store f_GetChar f_PutChar f_Exit f_Comment
-  n1 n2 n3 n4 n5 n6 n7 n8 n9 n10 n11 n12 n13 n14 n15 n16 n17 n18 n19 n20 n21 n22 n23 n24 n25 n26 n27,
+  nConst1 nConst2 nAdd1 nAdd2 nSub1 nSub2 nDiv1 nSal1 nSal2
+  nJump1 nJump2 nCall1 nMov1 nMov2 nPop1 nPush1 nAdd_RSP1 nSub_RSP1
+  nLoad_RSP1 nLoad_RSP2 nStore_RSP1 nStore_RSP2
+  nLoad1 nLoad2 nLoad3 nStore1 nStore2 nStore3 nComment1,
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
 
   (match v0 with
    | ASMSyntax.Const r w =>
-     (FEnv.insert (name_enc n2, Some (encode w))
-       (FEnv.insert (name_enc n1, Some (encode r)) env)) |-- ([Const_case], s) ---> ([encode (f_Const r w)], s)
+     (FEnv.insert (name_enc nConst2, Some (encode w))
+       (FEnv.insert (name_enc nConst1, Some (encode r)) env)) |-- ([Const_case], s) ---> ([encode (f_Const r w)], s)
    | ASMSyntax.Add r1 r2 =>
-     (FEnv.insert (name_enc n4, Some (encode r2))
-       (FEnv.insert (name_enc n3, Some (encode r1)) env)) |-- ([Add_case], s) ---> ([encode (f_Add r1 r2)], s)
+     (FEnv.insert (name_enc nAdd2, Some (encode r2))
+       (FEnv.insert (name_enc nAdd1, Some (encode r1)) env)) |-- ([Add_case], s) ---> ([encode (f_Add r1 r2)], s)
    | ASMSyntax.Sub r1 r2 =>
-     (FEnv.insert (name_enc n6, Some (encode r2))
-       (FEnv.insert (name_enc n5, Some (encode r1)) env)) |-- ([Sub_case], s) ---> ([encode (f_Sub r1 r2)], s)
+     (FEnv.insert (name_enc nSub2, Some (encode r2))
+       (FEnv.insert (name_enc nSub1, Some (encode r1)) env)) |-- ([Sub_case], s) ---> ([encode (f_Sub r1 r2)], s)
    | ASMSyntax.Div r =>
-     (FEnv.insert (name_enc n7, Some (encode r)) env) |-- ([Div_case], s) ---> ([encode (f_Div r)], s)
+     (FEnv.insert (name_enc nDiv1, Some (encode r)) env) |-- ([Div_case], s) ---> ([encode (f_Div r)], s)
+  | ASMSyntax.Sal r n =>
+     (FEnv.insert (name_enc nSal2, Some (encode n))
+       (FEnv.insert (name_enc nSal1, Some (encode r)) env)) |-- ([Sal_case], s) ---> ([encode (f_Sal r n)], s)
    | ASMSyntax.Jump c n =>
-     (FEnv.insert (name_enc n9, Some (encode n))
-       (FEnv.insert (name_enc n8, Some (encode c)) env)) |-- ([Jump_case], s) ---> ([encode (f_Jump c n)], s)
+     (FEnv.insert (name_enc nJump2, Some (encode n))
+       (FEnv.insert (name_enc nJump1, Some (encode c)) env)) |-- ([Jump_case], s) ---> ([encode (f_Jump c n)], s)
    | ASMSyntax.Call n =>
-     (FEnv.insert (name_enc n10, Some (encode n)) env) |-- ([Call_case], s) ---> ([encode (f_Call n)], s)
+     (FEnv.insert (name_enc nCall1, Some (encode n)) env) |-- ([Call_case], s) ---> ([encode (f_Call n)], s)
    | ASMSyntax.Mov r1 r2 =>
-     (FEnv.insert (name_enc n12, Some (encode r2))
-       (FEnv.insert (name_enc n11, Some (encode r1)) env)) |-- ([Mov_case], s) ---> ([encode (f_Mov r1 r2)], s)
+     (FEnv.insert (name_enc nMov2, Some (encode r2))
+       (FEnv.insert (name_enc nMov1, Some (encode r1)) env)) |-- ([Mov_case], s) ---> ([encode (f_Mov r1 r2)], s)
    | ASMSyntax.Ret => env |-- ([Ret_case], s) ---> ([encode f_Ret], s)
    | ASMSyntax.Pop r =>
-     (FEnv.insert (name_enc n13, Some (encode r)) env) |-- ([Pop_case], s) ---> ([encode (f_Pop r)], s)
+     (FEnv.insert (name_enc nPop1, Some (encode r)) env) |-- ([Pop_case], s) ---> ([encode (f_Pop r)], s)
    | ASMSyntax.Push r =>
-     (FEnv.insert (name_enc n14, Some (encode r)) env) |-- ([Push_case], s) ---> ([encode (f_Push r)], s)
+     (FEnv.insert (name_enc nPush1, Some (encode r)) env) |-- ([Push_case], s) ---> ([encode (f_Push r)], s)
    | ASMSyntax.Add_RSP n =>
-     (FEnv.insert (name_enc n15, Some (encode n)) env) |-- ([Add_RSP_case], s) ---> ([encode (f_Add_RSP n)], s)
+     (FEnv.insert (name_enc nAdd_RSP1, Some (encode n)) env) |-- ([Add_RSP_case], s) ---> ([encode (f_Add_RSP n)], s)
    | ASMSyntax.Sub_RSP n =>
-     (FEnv.insert (name_enc n16, Some (encode n)) env) |-- ([Sub_RSP_case], s) ---> ([encode (f_Sub_RSP n)], s)
+     (FEnv.insert (name_enc nSub_RSP1, Some (encode n)) env) |-- ([Sub_RSP_case], s) ---> ([encode (f_Sub_RSP n)], s)
    | ASMSyntax.Load_RSP r n =>
-     (FEnv.insert (name_enc n18, Some (encode n))
-       (FEnv.insert (name_enc n17, Some (encode r)) env)) |-- ([Load_RSP_case], s) ---> ([encode (f_Load_RSP r n)], s)
+     (FEnv.insert (name_enc nLoad_RSP2, Some (encode n))
+       (FEnv.insert (name_enc nLoad_RSP1, Some (encode r)) env)) |-- ([Load_RSP_case], s) ---> ([encode (f_Load_RSP r n)], s)
    | ASMSyntax.Store_RSP r n =>
-     (FEnv.insert (name_enc n20, Some (encode n))
-       (FEnv.insert (name_enc n19, Some (encode r)) env)) |-- ([Store_RSP_case], s) ---> ([encode (f_Store_RSP r n)], s)
+     (FEnv.insert (name_enc nStore_RSP2, Some (encode n))
+       (FEnv.insert (name_enc nStore_RSP1, Some (encode r)) env)) |-- ([Store_RSP_case], s) ---> ([encode (f_Store_RSP r n)], s)
    | ASMSyntax.Load r1 r2 w =>
-     (FEnv.insert (name_enc n23, Some (encode w))
-       (FEnv.insert (name_enc n22, Some (encode r2))
-         (FEnv.insert (name_enc n21, Some (encode r1)) env))) |-- ([Load_case], s) ---> ([encode (f_Load r1 r2 w)], s)
+     (FEnv.insert (name_enc nLoad3, Some (encode w))
+       (FEnv.insert (name_enc nLoad2, Some (encode r2))
+         (FEnv.insert (name_enc nLoad1, Some (encode r1)) env))) |-- ([Load_case], s) ---> ([encode (f_Load r1 r2 w)], s)
    | ASMSyntax.Store r1 r2 w =>
-     (FEnv.insert (name_enc n26, Some (encode w))
-       (FEnv.insert (name_enc n25, Some (encode r2))
-         (FEnv.insert (name_enc n24, Some (encode r1)) env))) |-- ([Store_case], s) ---> ([encode (f_Store r1 r2 w)], s)
+     (FEnv.insert (name_enc nStore3, Some (encode w))
+       (FEnv.insert (name_enc nStore2, Some (encode r2))
+         (FEnv.insert (name_enc nStore1, Some (encode r1)) env))) |-- ([Store_case], s) ---> ([encode (f_Store r1 r2 w)], s)
    | ASMSyntax.GetChar => env |-- ([GetChar_case], s) ---> ([encode f_GetChar], s)
    | ASMSyntax.PutChar => env |-- ([PutChar_case], s) ---> ([encode f_PutChar], s)
    | ASMSyntax.Exit => env |-- ([Exit_case], s) ---> ([encode f_Exit], s)
    | ASMSyntax.Comment str =>
-     (FEnv.insert (name_enc n27, Some (encode str)) env) |-- ([Comment_case], s) ---> ([encode (f_Comment str)], s)
+     (FEnv.insert (name_enc nComment1, Some (encode str)) env) |-- ([Comment_case], s) ---> ([encode (f_Comment str)], s)
    end) ->
 
-  NoDup ([name_enc n1] ++ free_vars x0) ->
-  NoDup ([name_enc n3] ++ free_vars x0) ->
-  NoDup ([name_enc n5] ++ free_vars x0) ->
-  NoDup ([name_enc n8] ++ free_vars x0) ->
-  NoDup ([name_enc n11] ++ free_vars x0) ->
-  NoDup ([name_enc n17] ++ free_vars x0) ->
-  NoDup ([name_enc n19] ++ free_vars x0) ->
-  NoDup ([name_enc n21; name_enc n22] ++ free_vars x0) ->
-  NoDup ([name_enc n24; name_enc n25] ++ free_vars x0) ->
+  NoDup ([name_enc nConst1] ++ free_vars x0) ->
+  NoDup ([name_enc nAdd1] ++ free_vars x0) ->
+  NoDup ([name_enc nSub1] ++ free_vars x0) ->
+  NoDup ([name_enc nSal1] ++ free_vars x0) ->
+  NoDup ([name_enc nJump1] ++ free_vars x0) ->
+  NoDup ([name_enc nMov1] ++ free_vars x0) ->
+  NoDup ([name_enc nLoad_RSP1] ++ free_vars x0) ->
+  NoDup ([name_enc nStore_RSP1] ++ free_vars x0) ->
+  NoDup ([name_enc nLoad1; name_enc nLoad2] ++ free_vars x0) ->
+  NoDup ([name_enc nStore1; name_enc nStore2] ++ free_vars x0) ->
 
   env |-- ([If Equal [Op Head [x0]; Const (name_enc "Const")]
-            (Let (name_enc n1) (Op Head [Op Tail [x0]])
-              (Let (name_enc n2) (Op Head [Op Tail [Op Tail [x0]]]) Const_case))
+            (Let (name_enc nConst1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nConst2) (Op Head [Op Tail [Op Tail [x0]]]) Const_case))
        (If Equal [Op Head [x0]; Const (name_enc "Add")]
-            (Let (name_enc n3) (Op Head [Op Tail [x0]])
-              (Let (name_enc n4) (Op Head [Op Tail [Op Tail [x0]]]) Add_case))
+            (Let (name_enc nAdd1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nAdd2) (Op Head [Op Tail [Op Tail [x0]]]) Add_case))
        (If Equal [Op Head [x0]; Const (name_enc "Sub")]
-            (Let (name_enc n5) (Op Head [Op Tail [x0]])
-              (Let (name_enc n6) (Op Head [Op Tail [Op Tail [x0]]]) Sub_case))
+            (Let (name_enc nSub1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nSub2) (Op Head [Op Tail [Op Tail [x0]]]) Sub_case))
        (If Equal [Op Head [x0]; Const (name_enc "Div")]
-            (Let (name_enc n7) (Op Head [Op Tail [x0]]) Div_case)
+            (Let (name_enc nDiv1) (Op Head [Op Tail [x0]]) Div_case)
+       (If Equal [Op Head [x0]; Const (name_enc "Sal")]
+            (Let (name_enc nSal1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nSal2) (Op Head [Op Tail [Op Tail [x0]]]) Sal_case))
        (If Equal [Op Head [x0]; Const (name_enc "Jump")]
-            (Let (name_enc n8) (Op Head [Op Tail [x0]])
-              (Let (name_enc n9) (Op Head [Op Tail [Op Tail [x0]]]) Jump_case))
+            (Let (name_enc nJump1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nJump2) (Op Head [Op Tail [Op Tail [x0]]]) Jump_case))
        (If Equal [Op Head [x0]; Const (name_enc "Call")]
-            (Let (name_enc n10) (Op Head [Op Tail [x0]]) Call_case)
+            (Let (name_enc nCall1) (Op Head [Op Tail [x0]]) Call_case)
        (If Equal [Op Head [x0]; Const (name_enc "Mov")]
-            (Let (name_enc n11) (Op Head [Op Tail [x0]])
-              (Let (name_enc n12) (Op Head [Op Tail [Op Tail [x0]]]) Mov_case))
+            (Let (name_enc nMov1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nMov2) (Op Head [Op Tail [Op Tail [x0]]]) Mov_case))
        (If Equal [Op Head [x0]; Const (name_enc "Ret")] Ret_case
        (If Equal [Op Head [x0]; Const (name_enc "Pop")]
-            (Let (name_enc n13) (Op Head [Op Tail [x0]]) Pop_case)
+            (Let (name_enc nPop1) (Op Head [Op Tail [x0]]) Pop_case)
        (If Equal [Op Head [x0]; Const (name_enc "Push")]
-            (Let (name_enc n14) (Op Head [Op Tail [x0]]) Push_case)
+            (Let (name_enc nPush1) (Op Head [Op Tail [x0]]) Push_case)
        (If Equal [Op Head [x0]; Const (name_enc "Add_RSP")]
-            (Let (name_enc n15) (Op Head [Op Tail [x0]]) Add_RSP_case)
+            (Let (name_enc nAdd_RSP1) (Op Head [Op Tail [x0]]) Add_RSP_case)
        (If Equal [Op Head [x0]; Const (name_enc "Sub_RSP")]
-            (Let (name_enc n16) (Op Head [Op Tail [x0]]) Sub_RSP_case)
+            (Let (name_enc nSub_RSP1) (Op Head [Op Tail [x0]]) Sub_RSP_case)
        (If Equal [Op Head [x0]; Const (name_enc "Load_RSP")]
-            (Let (name_enc n17) (Op Head [Op Tail [x0]])
-              (Let (name_enc n18) (Op Head [Op Tail [Op Tail [x0]]]) Load_RSP_case))
+            (Let (name_enc nLoad_RSP1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nLoad_RSP2) (Op Head [Op Tail [Op Tail [x0]]]) Load_RSP_case))
        (If Equal [Op Head [x0]; Const (name_enc "Store_RSP")]
-            (Let (name_enc n19) (Op Head [Op Tail [x0]])
-              (Let (name_enc n20) (Op Head [Op Tail [Op Tail [x0]]]) Store_RSP_case))
+            (Let (name_enc nStore_RSP1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nStore_RSP2) (Op Head [Op Tail [Op Tail [x0]]]) Store_RSP_case))
        (If Equal [Op Head [x0]; Const (name_enc "Load")]
-            (Let (name_enc n21) (Op Head [Op Tail [x0]])
-              (Let (name_enc n22) (Op Head [Op Tail [Op Tail [x0]]])
-                (Let (name_enc n23) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Load_case)))
+            (Let (name_enc nLoad1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nLoad2) (Op Head [Op Tail [Op Tail [x0]]])
+                (Let (name_enc nLoad3) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Load_case)))
        (If Equal [Op Head [x0]; Const (name_enc "Store")]
-            (Let (name_enc n24) (Op Head [Op Tail [x0]])
-              (Let (name_enc n25) (Op Head [Op Tail [Op Tail [x0]]])
-                (Let (name_enc n26) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Store_case)))
+            (Let (name_enc nStore1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nStore2) (Op Head [Op Tail [Op Tail [x0]]])
+                (Let (name_enc nStore3) (Op Head [Op Tail [Op Tail [Op Tail [x0]]]]) Store_case)))
        (If Equal [Op Head [x0]; Const (name_enc "GetChar")] GetChar_case
        (If Equal [Op Head [x0]; Const (name_enc "PutChar")] PutChar_case
        (If Equal [Op Head [x0]; Const (name_enc "Exit")] Exit_case
        (If Equal [Op Head [x0]; Const (name_enc "Comment")]
-            (Let (name_enc n27) (Op Head [Op Tail [x0]]) Comment_case)
-       (Const 0))))))))))))))))))))], s) --->
+            (Let (name_enc nComment1) (Op Head [Op Tail [x0]]) Comment_case)
+       (Const 0)))))))))))))))))))))], s) --->
 
       ([encode (
          match v0 with
@@ -1896,6 +1950,7 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
          | ASMSyntax.Add r1 r2 => f_Add r1 r2
          | ASMSyntax.Sub r1 r2 => f_Sub r1 r2
          | ASMSyntax.Div r => f_Div r
+         | ASMSyntax.Sal r n => f_Sal r n
          | ASMSyntax.Jump c n => f_Jump c n
          | ASMSyntax.Call n => f_Call n
          | ASMSyntax.Mov r1 r2 => f_Mov r1 r2

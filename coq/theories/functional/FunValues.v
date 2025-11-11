@@ -56,3 +56,6 @@ Global Instance Refinable_option {A : Type} `{Refinable A} : Refinable (option A
     | None => encode []
     | Some x => encode [x]
     end }.
+
+Global Instance Refinable_Prop {A: Prop}: Refinable A :=
+  { encode _ := Num 0 }.

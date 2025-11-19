@@ -25,8 +25,6 @@ Inductive instr :=
 | Add (r1 r2 : reg)
 | Sub (r1 r2 : reg)
 | Div (r : reg)
-(* TODO: Ask Magnus if its ok to add this? *)
-| Sal (r1: reg) (n: nat)
   (* jumps *)
 | Jump (c : cond) (n : nat)
 | Call (n : nat)

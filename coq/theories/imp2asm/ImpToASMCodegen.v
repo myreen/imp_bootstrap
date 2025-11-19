@@ -28,9 +28,9 @@ Definition init (k: nat): asm :=
     (*  5 *) ASMSyntax.Exit;
     (* alloc routine starts here: *)
     (*  6 *) ASMSyntax.Comment "malloc";
-    (*  7 *) ASMSyntax.Sal RDI 3;
+    (*  7 *) ASMSyntax.Mov RAX R14;
     (*  8 *) ASMSyntax.Add R14 RDI;
-    (*  9 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 15;
+    (*  9 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 12;
     (* 10 *) ASMSyntax.Ret;
     (* give up: *)
     (* 11 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
@@ -44,7 +44,7 @@ Definition init (k: nat): asm :=
     (* 18 *) ASMSyntax.Exit
   ]%string.
 
-Definition AllocLoc: nat := 7.
+Definition allocLoc: nat := 7.
 
 (* START boilerplate *)
 
@@ -177,10 +177,10 @@ Definition c_div: asm_appl :=
     ASMSyntax.Div RDI ].
 
 Definition c_alloc (vs: v_stack): asm_appl :=
-  List [Mov RDI RAX; ASMSyntax.Call AllocLoc; Pop RAX].
+  List [Mov RDI RAX; ASMSyntax.Call allocLoc].
   (* if even_len vs (* stack must be aligned at call *)
-  then List [Load_RSP RDI 0; ASMSyntax.Call AllocLoc; Pop RDI]
-  else List [Pop RDI; ASMSyntax.Call AllocLoc]. *)
+  then List [Load_RSP RDI 0; ASMSyntax.Call allocLoc; Pop RDI]
+  else List [Pop RDI; ASMSyntax.Call allocLoc]. *)
 
 (* Some assembly languages and architectures (including x86_64) require aligning
 the stack to 16-bytes before function calls. If `vs` is even – we have to push
@@ -247,7 +247,7 @@ Fixpoint c_exps (es: list exp) (l: nat) (vs: v_stack): asm_appl * nat :=
   | [] => (List [], l)
   | e :: es' =>
     let/d '(asm1, l1) := c_exp e l vs in
-    let/d '(asm2, l2) := c_exps es' l1 vs in
+    let/d '(asm2, l2) := c_exps es' l1 (None :: vs) in
     (asm1 +++ asm2, l2)
   end.
 

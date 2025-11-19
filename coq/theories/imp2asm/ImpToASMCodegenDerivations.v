@@ -46,7 +46,7 @@ Proof. unfold_fix_proof 'c_fundefs. Qed.
 Opaque encode.
 Opaque name_enc.
 
-Derive init_prog
+(* Derive init_prog
   in ltac2:(relcompile_tpe 'init_prog 'init []) 
   as init_prog_proof.
 Proof.
@@ -404,13 +404,13 @@ Derive codegen_prog
   as codegen_prog_proof.
 Proof.
   time relcompile.
-Qed.
+Qed. *)
 
 (* *********************************************** *)
 (*  Derivations for ASM to String Conversion      *)
 (* *********************************************** *)
 
-(* Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
+Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
 Proof. unfold_fix_proof 'num2str_f. Qed.
 
 Theorem clean_equation: ltac2:(unfold_fix_type 'clean).
@@ -418,6 +418,8 @@ Proof. unfold_fix_proof 'clean. Qed.
 
 Theorem instrs2str_equation: ltac2:(unfold_fix_type 'instrs2str).
 Proof. unfold_fix_proof 'instrs2str. Qed.
+
+Set Printing Depth 100000.
 
 Derive reg2str_prog
   in ltac2:(relcompile_tpe 'reg2str_prog 'reg2str ['String.append])
@@ -474,4 +476,4 @@ Derive asm2str_prog
   as asm2str_prog_proof.
 Proof.
   time relcompile.
-Qed. *)
+Qed.

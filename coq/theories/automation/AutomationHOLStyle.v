@@ -181,7 +181,10 @@ Ltac2 app_lemma (lname: string) (named_conts: (string * (unit -> unit)) list)
       | Some i => [(i, snd p)]
       | _ => []
       end) named_conts in
-  refine (assemble_lemma lemma_inst lname named_conts_id conts).
+  refine (
+    let c := assemble_lemma lemma_inst lname named_conts_id conts in
+    printf ">>>>>> %t" c;
+    c).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)
 Ltac2 is_in_loopkup (f_lookup : string list) (fname : string) : bool :=
@@ -483,6 +486,10 @@ Ltac2 rec compile () : unit :=
   let c := Control.goal () in
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
+    (lazy_match! goal with
+    | [ h : (lookup_fun (name_enc ?fname) _ = Some (?params, ?body)) |- _ ] =>
+      printf "lookup_fun := %t" body
+    end);
     let cenv := get_cenv_from_fenv_constr fenv in
     let names_in_cenv := List.concat (List.map opt_to_list (List.map (fun p => Option.bind (fst p) (fun c => Ident.of_string (string_of_constr_string c))) cenv)) in
     printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_cenv cenv) cenv;
@@ -597,7 +604,22 @@ Ltac2 rec compile () : unit :=
           let n_constr := List.nth binders_of_v2 0 in
           app_lemma "auto_nat_case"
             [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
-            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
+            [compile; (fun () =>
+              (* printf "======== %t" (Control.goal ()); *)
+              (* Std.case false (v0, NoBindings); intros; Control.enter compile *)
+              destruct $v0 eqn:?; Control.enter compile
+              (* Control.refine (fun () =>
+                match! goal with
+                | [ |- (match _ with | 0 => ?g0 | S n' => @?gs n' end)] =>
+                  open_constr:(
+                    match $v0 as v0t return (match v0t with | 0 => $g0 | S n' => $gs n' end) with
+                    | 0%nat => (ltac2:(printf "%t" v0; compile ()): $g0)
+                    | S n' => (ltac2:(compile ()): ltac2:(Control.refine (fun () => eval_cbv beta constr:($gs &n'))))
+                    end
+                  )
+                  end
+              ) *)
+            )]
         | (match ?v0 with | 0%N => ?v1 | N.pos _ => ?v2 end) =>
           app_lemma "auto_N_case"
             [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2)]
@@ -834,8 +856,6 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_instr_cons_Sub" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
         | ASMSyntax.Div ?r =>
           app_lemma "auto_instr_cons_Div" [("env", exactk fenv); ("r", exactk r)] [compile]
-        | ASMSyntax.Sal ?r ?n =>
-          app_lemma "auto_instr_cons_Sal" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
         | ASMSyntax.Jump ?c ?n =>
           app_lemma "auto_instr_cons_Jump" [("env", exactk fenv); ("c", exactk c); ("n", exactk n)] [compile; compile]
         | ASMSyntax.Call ?n =>
@@ -872,7 +892,6 @@ Ltac2 rec compile () : unit :=
            | ASMSyntax.Const r w => @?f_Const r w
            | ASMSyntax.Add r1 r2 => @?f_Add r1 r2
            | ASMSyntax.Sub r1 r2 => @?f_Sub r1 r2
-           | ASMSyntax.Sal r1 n => @?f_Sal r1 n
            | ASMSyntax.Div r => @?f_Div r
            | ASMSyntax.Jump c n => @?f_Jump c n
            | ASMSyntax.Call n => @?f_Call n
@@ -895,7 +914,6 @@ Ltac2 rec compile () : unit :=
           let binders_f_Add := binders_names_of_constr_lambda f_Add names_in_cenv in
           let binders_f_Sub := binders_names_of_constr_lambda f_Sub names_in_cenv in
           let binders_f_Div := binders_names_of_constr_lambda f_Div names_in_cenv in
-          let binders_f_Sal := binders_names_of_constr_lambda f_Sal names_in_cenv in
           let binders_f_Jump := binders_names_of_constr_lambda f_Jump names_in_cenv in
           let binders_f_Call := binders_names_of_constr_lambda f_Call names_in_cenv in
           let binders_f_Mov := binders_names_of_constr_lambda f_Mov names_in_cenv in
@@ -915,8 +933,6 @@ Ltac2 rec compile () : unit :=
           let nSub1 := List.nth binders_f_Sub 0 in
           let nSub2 := List.nth binders_f_Sub 1 in
           let nDiv1 := List.nth binders_f_Div 0 in
-          let nSal1 := List.nth binders_f_Div 0 in
-          let nSal2 := List.nth binders_f_Div 1 in
           let nJump1 := List.nth binders_f_Jump 0 in
           let nJump2 := List.nth binders_f_Jump 1 in
           let nCall1 := List.nth binders_f_Call 0 in
@@ -944,7 +960,7 @@ Ltac2 rec compile () : unit :=
           ("f_Load_RSP", exactk f_Load_RSP); ("f_Store_RSP", exactk f_Store_RSP); ("f_Load", exactk f_Load); ("f_Store", exactk f_Store);
           ("f_GetChar", exactk f_GetChar); ("f_PutChar", exactk f_PutChar); ("f_Exit", exactk f_Exit); ("f_Comment", exactk f_Comment);
           ("nConst1", exactk nConst1); ("nConst2", exactk nConst2); ("nAdd1", exactk nAdd1); ("nAdd2", exactk nAdd2);
-          ("nSub1", exactk nSub1); ("nSub2", exactk nSub2); ("nDiv1", exactk nDiv1); ("nSal1", exactk nSal1); ("nSal2", exactk nSal2); ("nJump1", exactk nJump1);
+          ("nSub1", exactk nSub1); ("nSub2", exactk nSub2); ("nDiv1", exactk nDiv1); ("nJump1", exactk nJump1);
           ("nJump2", exactk nJump2); ("nCall1", exactk nCall1); ("nMov1", exactk nMov1); ("nMov2", exactk nMov2);
           ("nPop1", exactk nPop1); ("nPush1", exactk nPush1); ("nAdd_RSP1", exactk nAdd_RSP1); ("nSub_RSP1", exactk nSub_RSP1);
           ("nLoad_RSP1", exactk nLoad_RSP1); ("nLoad_RSP2", exactk nLoad_RSP2); ("nStore_RSP1", exactk nStore_RSP1); ("nStore_RSP2", exactk nStore_RSP2);
@@ -1227,7 +1243,7 @@ Ltac2 rec docompile () :=
   | [ |- _ |-- (_, _) ---> ([encode _], _) ] =>
     (* let cenv := get_cenv_from_fenv_constr fenv in *)
     compile ()
-  | [ h : (lookup_fun (name_enc ?fname) _ = Some (?params, _))
+  | [ h : (lookup_fun (name_enc ?fname) _ = Some (?params, ?body))
   |- eval_app (name_enc ?fname) ?args _ (encode ?c, _) ] =>
     let h_hyp := Control.hyp h in
     (* let f_lookup := get_f_lookup_from_hyps () in *)
@@ -1514,6 +1530,57 @@ Definition nat_modulo (n1 n2: nat): nat :=
   | 0%nat => 0
   | S _ => n1 - n2 * (n1 / n2)
   end.
+
+Fixpoint num2str_f (n: nat) (fuel: nat) (str: string): string :=
+  if (n <? 10)%nat then String (ascii_of_nat (48 + n)) str
+  else match fuel with
+  | 0 => ""%string
+  | S fuel => num2str_f (n / 10) fuel (String (ascii_of_nat (48 + (nat_modulo n 10))) str)
+  end.
+
+(* no warning? :/ *)
+(* Function num2str_f1 (n: nat) (fuel: nat) (str: string): string :=
+  match fuel with
+  | 0 => if n <? 10 then String (ascii_of_nat (48 + n)) str else ""%string
+  | S n0 =>
+    if n <? 10
+    then String (ascii_of_nat (48 + n)) str
+    else num2str_f (n / 10) n0 (String (ascii_of_nat (48 + nat_modulo n 10)) str)
+  end. *)
+
+Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
+Proof. unfold_fix_proof 'num2str_f. Qed.
+About num2str_f_equation.
+
+(* Derive foo
+  in (forall s1 n str fuel,
+    fuel = 0 ->
+    make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode 0; encode str]
+  FEnv.empty |-- ([foo], s1) ---> ([encode 10], s1)
+  ) as foo_proof.
+Proof.
+  intros; subst foo.
+  app_lemma "auto_nat_const" [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode 0; encode str] FEnv.empty
+)); ("n", exactk constr:(10))] [].
+  Show Proof. *)
+
+Derive num2str_f_prog
+  in ltac2:(relcompile_tpe 'num2str_f_prog 'num2str_f ['nat_modulo])
+  as num2str_f_prog_proof.
+Proof.
+  (* intros; subst num2str_f_prog. *)
+
+  (* when fuel := 0 it compiles `10` as `S (S (... fuel))` *)
+  time relcompile.
+  Show Proof.
+  5: {
+  app_lemma "auto_nat_const" [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode 0; encode str] FEnv.empty
+)); ("n", exactk constr:(10))] [].
+  Show Proof.
+  }
+Qed.
+
+Definition xd: int = "".
 
 Remark gcd_oblig:
   forall (a b: nat) (NE: b <> 0), nat_modulo a b < b.

@@ -1625,8 +1625,6 @@ Definition encode_instr (i : ASMSyntax.instr) : Value :=
     value_list_of_values [value_name "Sub"; encode r1; encode r2]
   | ASMSyntax.Div r =>
     value_list_of_values [value_name "Div"; encode r]
-  | ASMSyntax.Sal r n =>
-    value_list_of_values [value_name "Sal"; encode r; Num (N.of_nat n)]
   | ASMSyntax.Jump c n =>
     value_list_of_values [value_name "Jump"; encode c; Num (N.of_nat n)]
   | ASMSyntax.Call n =>
@@ -1693,14 +1691,6 @@ Theorem auto_instr_cons_Div: forall env s x_r r,
   env |-- ([Op Cons [Const (name_enc "Div");
                      Op Cons [x_r; Const 0]]], s) --->
         ([encode (ASMSyntax.Div r)], s).
-Proof. Eval_eq. Qed.
-
-Theorem auto_instr_cons_Sal: forall env s x_r x_n r n,
-  env |-- ([x_r], s) ---> ([encode r], s) ->
-  env |-- ([x_n], s) ---> ([encode n], s) ->
-  env |-- ([Op Cons [Const (name_enc "Sal");
-                     Op Cons [x_r; Op Cons [x_n; Const 0]]]], s) --->
-        ([encode (ASMSyntax.Sal r n)], s).
 Proof. Eval_eq. Qed.
 
 Theorem auto_instr_cons_Jump: forall env s x_c x_n c n,
@@ -1816,12 +1806,12 @@ Theorem auto_instr_cons_Comment: forall env s x_s str,
 Proof. Eval_eq. Qed.
 
 Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
-  Const_case Add_case Sub_case Div_case Sal_case Jump_case Call_case
+  Const_case Add_case Sub_case Div_case Jump_case Call_case
   Mov_case Ret_case Pop_case Push_case Add_RSP_case Sub_RSP_case Load_RSP_case Store_RSP_case
   Load_case Store_case GetChar_case PutChar_case Exit_case Comment_case
-  f_Const f_Add f_Sub f_Div f_Sal f_Jump f_Call f_Mov f_Ret f_Pop f_Push
+  f_Const f_Add f_Sub f_Div f_Jump f_Call f_Mov f_Ret f_Pop f_Push
   f_Add_RSP f_Sub_RSP f_Load_RSP f_Store_RSP f_Load f_Store f_GetChar f_PutChar f_Exit f_Comment
-  nConst1 nConst2 nAdd1 nAdd2 nSub1 nSub2 nDiv1 nSal1 nSal2
+  nConst1 nConst2 nAdd1 nAdd2 nSub1 nSub2 nDiv1
   nJump1 nJump2 nCall1 nMov1 nMov2 nPop1 nPush1 nAdd_RSP1 nSub_RSP1
   nLoad_RSP1 nLoad_RSP2 nStore_RSP1 nStore_RSP2
   nLoad1 nLoad2 nLoad3 nStore1 nStore2 nStore3 nComment1,
@@ -1840,9 +1830,6 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
        (FEnv.insert (name_enc nSub1, Some (encode r1)) env)) |-- ([Sub_case], s) ---> ([encode (f_Sub r1 r2)], s)
    | ASMSyntax.Div r =>
      (FEnv.insert (name_enc nDiv1, Some (encode r)) env) |-- ([Div_case], s) ---> ([encode (f_Div r)], s)
-  | ASMSyntax.Sal r n =>
-     (FEnv.insert (name_enc nSal2, Some (encode n))
-       (FEnv.insert (name_enc nSal1, Some (encode r)) env)) |-- ([Sal_case], s) ---> ([encode (f_Sal r n)], s)
    | ASMSyntax.Jump c n =>
      (FEnv.insert (name_enc nJump2, Some (encode n))
        (FEnv.insert (name_enc nJump1, Some (encode c)) env)) |-- ([Jump_case], s) ---> ([encode (f_Jump c n)], s)
@@ -1884,7 +1871,6 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   NoDup ([name_enc nConst1] ++ free_vars x0) ->
   NoDup ([name_enc nAdd1] ++ free_vars x0) ->
   NoDup ([name_enc nSub1] ++ free_vars x0) ->
-  NoDup ([name_enc nSal1] ++ free_vars x0) ->
   NoDup ([name_enc nJump1] ++ free_vars x0) ->
   NoDup ([name_enc nMov1] ++ free_vars x0) ->
   NoDup ([name_enc nLoad_RSP1] ++ free_vars x0) ->
@@ -1903,9 +1889,6 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
               (Let (name_enc nSub2) (Op Head [Op Tail [Op Tail [x0]]]) Sub_case))
        (If Equal [Op Head [x0]; Const (name_enc "Div")]
             (Let (name_enc nDiv1) (Op Head [Op Tail [x0]]) Div_case)
-       (If Equal [Op Head [x0]; Const (name_enc "Sal")]
-            (Let (name_enc nSal1) (Op Head [Op Tail [x0]])
-              (Let (name_enc nSal2) (Op Head [Op Tail [Op Tail [x0]]]) Sal_case))
        (If Equal [Op Head [x0]; Const (name_enc "Jump")]
             (Let (name_enc nJump1) (Op Head [Op Tail [x0]])
               (Let (name_enc nJump2) (Op Head [Op Tail [Op Tail [x0]]]) Jump_case))
@@ -1942,7 +1925,7 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
        (If Equal [Op Head [x0]; Const (name_enc "Exit")] Exit_case
        (If Equal [Op Head [x0]; Const (name_enc "Comment")]
             (Let (name_enc nComment1) (Op Head [Op Tail [x0]]) Comment_case)
-       (Const 0)))))))))))))))))))))], s) --->
+       (Const 0))))))))))))))))))))], s) --->
 
       ([encode (
          match v0 with
@@ -1950,7 +1933,6 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
          | ASMSyntax.Add r1 r2 => f_Add r1 r2
          | ASMSyntax.Sub r1 r2 => f_Sub r1 r2
          | ASMSyntax.Div r => f_Div r
-         | ASMSyntax.Sal r n => f_Sal r n
          | ASMSyntax.Jump c n => f_Jump c n
          | ASMSyntax.Call n => f_Call n
          | ASMSyntax.Mov r1 r2 => f_Mov r1 r2

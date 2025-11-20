@@ -200,15 +200,17 @@ Definition has_address (addr: word64) (base: word64) (length: nat): Prop :=
 
 Definition pmap_ok (pmap: nat -> option (word64 * nat)): Prop :=
   forall p1 p2 base1 len1 base2 len2,
-    pmap p1 = Some (base1, len1) /\ pmap p2 = Some (base2, len2) ->
-    forall addr,
-      has_address addr base1 len1 ∧
-      has_address addr base2 len2 →
+    pmap p1 = Some (base1, len1) -> pmap p2 = Some (base2, len2) ->
+    forall n1 n2, n1 < len1 -> n2 < len2 ->
+      (word.add base1 (word.of_Z (Z.of_nat (n1 * 8)))) = (word.add base2 (word.of_Z (Z.of_nat (n2 * 8)))) ->
+      (* TODO: also say that the offsets are the same? *)
+      (* has_address addr base1 len1 ∧
+      has_address addr base2 len2 → *)
       (* (exists n, n < len1 ∧ (word.add base1 (word.of_Z (Z.of_nat (n * 8)))) = addr) ∧
       (exists n, n < len2 ∧ (word.add base2 (word.of_Z (Z.of_nat (n * 8)))) = addr) → *)
       (* List.existsb (word.eqb addr) (addresses_of base1 len1) = true /\
       List.existsb (word.eqb addr) (addresses_of base2 len2) = true -> *)
-      p1 = p2.
+      p1 = p2 /\ n1 = n2.
 
 Definition pmap_subsume (pmap: nat -> option (word64 * nat))
   (pmap1: nat -> option (word64 * nat)): Prop :=
@@ -3410,26 +3412,15 @@ Proof.
     exfalso; rewrite Z.eqb_eq in *.
     pat `i <> p` at eapply pat.
     eapply Properties.word.unsigned_inj in Heqb1.
-    pat `pmap_ok _` at unfold pmap_ok in pat; eapply pat; [split; eauto|]; clear pat.
-    pat `_ < List.length _` at eapply nth_error_nth' with (d := None) in pat.
-    instantiate (1 := (word.add baseASM off)); split.
-    2: pat `_ = word.add x0 _` at rewrite pat.
-    2: eapply nth_error_some_IMP_existsb_in_addresses; eauto.
+    spat `pmap i` at rename spat into Hpmapi.
+    spat `pmap p` at rename spat into Hpmapp.
+    pat `pmap_ok _` at unfold pmap_ok in pat; specialize pat with (1 := Hpmapi) (2 := Hpmapp) (n2 := off0); eapply pat; clear pat; eauto.
+    1: rewrite <- nth_error_Some; assert (nth_error v off0 <> None) by congruence; eauto.
     specialize (Properties.word.unsigned_range off) as ?; cleanup.
+    rewrite mul_div_id; try lia.
     pat `_ mod _ = _` at assert (8 = Z.to_nat 8) as Htmp by lia; rewrite Htmp in pat; clear Htmp; rewrite <- Z2Nat.inj_mod in pat; eauto; try lia.
-    spat ` (_ mod _)%Z` at rewrite <- Z2Nat.inj_0 in spat; inversion spat; rewrite Z2Nat.inj_iff in spat; eauto; try lia.
-    2: eapply Z.mod_bound_pos; eauto; lia.
-    assert (off = word.of_Z (((word.unsigned off) / 8 * 8))) as ->.
-    1: rewrite Z_div_mul_id with (b := 8%Z); try lia; rewrite word.of_Z_unsigned; reflexivity.
-    assert ((word.unsigned off / 8 * 8) = (Z.of_nat (Z.to_nat (word.unsigned off / 8 * 8))))%Z as ->.
-    1: rewrite Z2Nat.id; [reflexivity|].
-    1: rewrite Z_div_mul_id with (b := 8%Z); try lia; eapply Properties.word.unsigned_range.
-    rewrite Z2Nat.inj_mul; try lia.
-    2: eapply Z_div_nonneg_nonneg; lia.
-    eapply nth_error_some_IMP_existsb_in_addresses; eauto.
-    rewrite Z2Nat.inj_div; [|lia|lia].
-    assert (Z.to_nat 8 = 8) as -> by lia.
-    eauto.
+    rewrite Z2Nat.id; try lia.
+    rewrite word.of_Z_unsigned; eauto.
   }
   (* i = p *)
   rewrite Nat.eqb_eq in *; subst.
@@ -3447,7 +3438,8 @@ Proof.
   2: spat ` (_ mod _)%Z` at inversion spat.
   2: eapply Z.mod_bound_pos; eauto; lia.
   destruct (off0 =? (Z.to_nat (word.unsigned off) / 8)) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *.
-  - eexists; subst.
+  - (* off0 = (word.unsigned off) / 8 *)
+    eexists; subst.
     assert (off = word.of_Z (((word.unsigned off) / 8 * 8))) as Htmp; [|rewrite Htmp at 1; clear Htmp].
     1: rewrite Z_div_mul_id with (b := 8%Z); try lia; rewrite word.of_Z_unsigned; reflexivity.
     assert ((word.unsigned off / 8 * 8) = (Z.of_nat (Z.to_nat (word.unsigned off / 8 * 8))))%Z as ->.
@@ -3460,8 +3452,10 @@ Proof.
     split; eauto.
     pat `nth_error (list_update _ _ _) _ = _` at pose proof pat; eapply nth_error_list_update_eq1 in pat; rewrite pat in *; cleanup.
     simpl; eauto.
-  - rewrite nth_error_list_update_neq in *; eauto.
+  - (* off0 <> Z.to_nat (word.unsigned off) / 8 *)
+    rewrite nth_error_list_update_neq in *; eauto.
     pat`forall _, _` at rename pat into Hmem.
+    pat`nth_error _ off0 = _` at pose proof pat as ?.
     pat`nth_error _ _ = _` at eapply Hmem in pat; cleanup; clear Hmem.
     eexists.
     assert (off = word.of_Z (((word.unsigned off) / 8 * 8))) as Htmp; [|rewrite Htmp at 1; clear Htmp].
@@ -3472,20 +3466,19 @@ Proof.
     assert (Z.to_nat (word.unsigned off) / 8 * 8 = Z.to_nat (word.unsigned off / 8 * 8)) as <-.
     1: rewrite Z_div_mul_id with (b := 8%Z); try lia.
     1: rewrite mul_div_id; try lia.
-    destruct (word.eqb _ _)%Z eqn:?; rewrite word.unsigned_eqb in *; rewrite ?Z.eqb_eq, ?Z.eqb_neq in *; subst; cleanup.
-    1: exfalso; pat`off0 <> _` at eapply pat.
-    (* 1: rewrite <- Properties.word.unsigned_inj_iff. *)
-    1: assert (off0 * 8 = Z.to_nat (word.unsigned off) / 8 * 8) as Htmp; [|lia].
-    1: assert (Z.of_nat (off0 * 8) = Z.of_nat (Z.to_nat (word.unsigned off) / 8 * 8)) as Htmp; [|lia].
-    1: pat`word.unsigned _ = _` at eapply Properties.word.unsigned_inj in pat.
-    1: rewrite mul_div_id in *; try lia.
-    1: rewrite Z2Nat.id in *; try lia.
-    Search (word.add).
-    (* word.add baseASM (word.of_Z (word.unsigned off)) = word.add baseASM (word.of_Z (Z.of_nat (off0 * 8))) ->
-       Z.of_nat (off0 * 8) = word.unsigned off *)
-    1: admit.
-    eauto.
-Admitted.
+    destruct (word.eqb _ _)%Z eqn:?; rewrite word.unsigned_eqb in *; rewrite ?Z.eqb_eq, ?Z.eqb_neq in *; subst; cleanup; [|eauto].
+    exfalso.
+    spat `pmap p` at rename spat into Hpmap.
+    spat `pmap_ok` at unfold pmap_ok in spat; specialize spat with (1 := Hpmap) (2 := Hpmap) (n1 := off0) (n2 := Z.to_nat (word.unsigned off) / 8).
+    assert(nth_error block off0 <> None) by congruence.
+    pat`nth_error _ off0 <> None` at rewrite nth_error_Some in pat; rename pat into Hltoff0.
+    pat`_ / 8 < _` at rename pat into Hltoff.
+    spat `_ < _ -> _` at specialize spat with (1 := Hltoff0) (2 := Hltoff).
+    pat `word.unsigned _ = word.unsigned _` at eapply Properties.word.unsigned_inj in pat; rename pat into Hwordeq.
+    assert(off0 = Z.to_nat (word.unsigned off) / 8); try congruence.
+    pat `word.add _ _ = word.add _ _ -> _` at eapply pat.
+    congruence.
+Qed.
 
 Theorem c_cmd_Update: forall (a e e': exp) (fuel: nat),
   goal_cmd (Update a e e') fuel.
@@ -3599,18 +3592,21 @@ Proof.
       pat `_ ∧ _` at eapply Hmem in pat; cleanup.
       unfold v_inv in *; cleanup; eauto.
     }
-    (* Updating an existing memory region doesn't affect memory between r14 and r15 *)
-    admit.
+    eexists; reflexivity.
   }
   1: eapply r14_mono_IMP_pmap_in_bounds; eauto.
   1: crunch_side_conditions.
-  (* pmap_in_memory pmap (list_update i l0 (ImpSemantics.memory s3)) *)
-  2: admit.
+  2: {
+    unfold pmap_in_memory; intros * Hpmap; cleanup.
+    destruct (p =? i) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; subst.
+    1: eexists; eapply nth_error_list_update_eq; eauto.
+    rewrite nth_error_list_update_neq; spat `pmap_in_memory` at eapply spat in Hpmap; eauto.
+  }
   rewrite negb_false_iff in *.
   eapply mem_inv_updated; eauto.
   Unshelve.
   all: exact Abort.
-Admitted.
+Qed.
 
 Lemma odd_is_succ: forall n,
   odd n = true ->
@@ -3866,8 +3862,12 @@ Qed.
 (* - I need to know that the new moved r14 address (new allocation start) doesn't overflow *)
 (*   I need (w2n r14) + (w2n off) < 2^64 *)
 (* - I also need to know that the offset is in bounds *)
-Lemma pmap_ok_impossible: forall p2 len2 base2 base1 off2 off1 pmap t s r14,
+Lemma pmap_ok_impossible: forall p2 len2 base2 base1 off2 off1 pmap t s r14 l r15,
   pmap_in_bounds pmap (regs t R14) ->
+  word.ltu (word.sub r15 base1) l = false ->
+  word.ltu r15 base1 = false ->
+  off1 < w2n l / 8 ->
+  w2n l mod 8 = 0 ->
   r14_mono (regs t R14) (regs s R14) ->
   regs s R14 = Some base1 ->
   regs t R14 = Some r14 ->
@@ -3882,27 +3882,153 @@ Proof.
   pat `regs t R14 = _` at unfold pmap_in_bounds in Hpmapbounds; specialize Hpmapbounds with (1 := Hpmap) (2 := pat); clear Hpmap; cleanup.
   pat `off2 < _` at rename pat into Hlt.
   spat `_ < _ -> word.ltu _ _ = true` at specialize spat with (1 := Hlt); clear Hlt.
-  (* base2 + (x * 8) = base1 + (x0 * 8)*)
-  (* regs s R14 = base1 *)
   pat `regs s R14 = _` at rewrite pat in *; cleanup; clear pat.
-  (* base2 + (x * 8) < x6 *)
   pat `word.ltu _ r14 = true` at rename pat into Hbase2ltx6.
-  (* regs t R14 = x6 *)
   pat `r14_mono (regs t R14) (Some base1)` at unfold r14_mono in pat; rename pat into Hr14_mono.
   pat `regs t R14 = _` at eapply Hr14_mono with (2 := eq_refl) in pat; clear Hr14_mono.
   pat `word.add _ _ = _` at rewrite pat in *; clear pat.
-  (* r14_mono (regs t R14) (base1) -> x6 <= base1 *)
   rewrite word.unsigned_eqb, word.unsigned_ltu, Z.eqb_eq, Z.ltb_lt in *.
+  specialize (Properties.word.unsigned_range l) as ?.
+  specialize (Properties.word.unsigned_range base1) as ?.
+  specialize (Properties.word.unsigned_range r15) as ?.
   rewrite Properties.word.unsigned_add_nowrap in *.
-  (* TODO: do we know this? *)
-  (* (word.unsigned base1 + word.unsigned (word.of_Z (Z.of_nat (off1 * 8))) < 2 ^ 64)%Z *)
-  2: admit.
-  Search (word.unsigned (word.of_Z _)).
+  2: {
+    assert(word.unsigned base1 + word.unsigned (word.of_Z (Z.of_nat (w2n l / 8 * 8)): word64) < 2 ^ 64)%Z.
+    2: {
+      rewrite mul_div_id in *; eauto.
+      unfold w2n in *; rewrite Z2Nat.id in *; try lia.
+      rewrite word.of_Z_unsigned in *.
+      rewrite Z.lt_add_lt_sub_l in *.
+      assert(off1 * 8 < Z.to_nat (word.unsigned l) / 8 * 8) as ? by lia.
+      rewrite mul_div_id in *; eauto.
+      pat `off1 * 8 < _` at rewrite <- Nat2Z.id with (n := off1 * 8) in pat.
+      assert(Z.of_nat (off1 * 8) < word.unsigned l)%Z by lia.
+      rewrite Properties.word.unsigned_of_Z_nowrap; lia.
+    }
+    rewrite Z.ltb_ge in *.
+    rewrite Z.lt_add_lt_sub_l in *.
+    rewrite mul_div_id in *; eauto.
+    unfold w2n in *; rewrite Z2Nat.id in *; try lia.
+    rewrite word.of_Z_unsigned in *.
+    rewrite Properties.word.unsigned_sub_nowrap in *; lia.
+  }
   rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
-  (* TODO: do we know this? *)
-  (* (0 <= Z.of_nat (off1 * 8) < 2 ^ 64)%Z *)
-  admit.
-Admitted.
+  assert (off1 * 8 < w2n l / 8 * 8) by lia; rewrite mul_div_id in *; eauto.
+  pat `off1 * 8 < _` at rewrite <- Nat2Z.id with (n := off1 * 8) in pat.
+  unfold w2n in *.
+  assert(Z.of_nat (off1 * 8) < word.unsigned l)%Z by lia.
+  lia.
+Qed.
+
+Lemma pmap_in_bounds_alloc: forall imem_size t s r14 old_r14 r15 w pmap,
+  regs t R14 = Some old_r14 ->
+  r14_mono (regs t R14) (regs s R14) ->
+  regs s R14 = Some r14 ->
+  regs s R15 = Some r15 ->
+  pmap_in_bounds pmap (regs t R14) ->
+  word.ltu r15 r14 = false ->
+  word.ltu (word.sub r15 r14) w = false ->
+  memory_writable r14 r15 s.(memory) ->
+  w2n w mod 8 = 0 ->
+  w2n w <> 0 ->
+  pmap_in_bounds (fun p => if p =? imem_size then Some (r14, w2n w / 8) else pmap p)
+    (Some (word.add r14 w)).
+Proof.
+  intros.
+  unfold pmap_in_bounds; intros.
+  destruct (p =? _) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; cleanup; subst.
+  2: {
+    pat`pmap p = _` at rename pat into Hpmap.
+    pat`regs t R14 = _` at rename pat into Htr14.
+    spat `pmap_in_bounds` at unfold pmap_in_bounds in spat; eapply spat with (2 := Htr14) in Hpmap; cleanup.
+    pat `regs s R14 = _` at rewrite pat in *.
+    specialize (Properties.word.unsigned_range w) as ?.
+    specialize (Properties.word.unsigned_range r14) as ?.
+    specialize (Properties.word.unsigned_range old_r14) as ?.
+    specialize (Properties.word.unsigned_range base) as ?.
+    specialize (Properties.word.unsigned_range r15) as ?.
+    split; eauto; intros.
+    pat `n < len` at rename pat into Hlt.
+    pat `forall n, _ < _ -> _` at specialize pat with (n := n) (1 := Hlt).
+    pat `regs t R14 = _` at rewrite pat in *; cleanup.
+    pat `r14_mono _ _` at unfold r14_mono in pat; specialize pat with (1 := eq_refl) (2 := eq_refl).
+    rewrite word.unsigned_eqb, word.unsigned_ltu, Z.eqb_eq, Z.ltb_lt, Z.ltb_ge in *.
+    eapply Z.lt_trans; eauto.
+    rewrite Properties.word.unsigned_sub_nowrap in *; try lia.
+    rewrite Properties.word.unsigned_add_nowrap; try lia.
+    pat `_ \/ _` at destruct pat; try lia.
+    pat `word.unsigned _ = _` at rewrite pat.
+    unfold w2n in *; lia.
+  }
+  specialize (Properties.word.unsigned_range w) as ?.
+  specialize (Properties.word.unsigned_range r15) as ?.
+  specialize (Properties.word.unsigned_range base) as ?.
+  specialize (Properties.word.unsigned_range old_r14) as ?.
+  rewrite word.unsigned_ltu, Z.ltb_lt, Z.ltb_ge in *.
+  split.
+  2: {
+    unfold memory_writable in *; cleanup.
+    rewrite Properties.word.unsigned_of_Z_0.
+    assert(0 <> word.unsigned base)%Z; try lia.
+    rewrite <- Properties.word.unsigned_of_Z_0.
+    specialize (Properties.word.unsigned_inj base (word.of_Z 0)) as ?.
+    eauto.
+  }
+  intros.
+  rewrite word.unsigned_ltu, Z.ltb_lt in *.
+  unfold w2n in *.
+  assert(n * 8 < Z.to_nat (word.unsigned w) / 8 * 8) as ? by lia.
+  rewrite mul_div_id in *; eauto.
+  assert(Z.of_nat (n * 8) < word.unsigned w)%Z as ? by lia.
+  specialize (Properties.word.unsigned_range (word.of_Z (Z.of_nat (n * 8)): word64)) as ?.
+  rewrite Properties.word.unsigned_sub_nowrap in *; try lia.
+  assert(word.unsigned (word.of_Z (Z.of_nat (n * 8)): word64) < word.unsigned w)%Z.
+  1: rewrite Properties.word.unsigned_of_Z_nowrap; try lia.
+  rewrite Properties.word.unsigned_add_nowrap; try lia.
+  rewrite Properties.word.unsigned_add_nowrap; try lia.
+Qed.
+
+Lemma pmap_ok_alloc: forall pmap fs imps t s w r14 r15,
+  mem_inv pmap (memory s) imps.(ImpSemantics.memory) ->
+  regs s R14 = Some r14 ->
+  regs s R15 = Some r15 ->
+  state_rel fs imps t ->
+  pmap_ok pmap ->
+  pmap_in_bounds pmap (regs t R14) ->
+  word.ltu (word.sub r15 r14) w = false ->
+  word.ltu r15 r14 = false ->
+  w2n w mod 8 = 0 ->
+  r14_mono (regs t R14) (regs s R14) ->
+  pmap_ok (λ p : nat, if p =? List.length imps.(ImpSemantics.memory) then Some (r14, w2n w / 8) else pmap p).
+Proof.
+  Transparent pmap_ok.
+  intros.
+  unfold state_rel in*; cleanup.
+  unfold pmap_ok in *; intros; unfold mem_inv in *; cleanup.
+  unfold state_rel in *; cleanup.
+  destruct (p1 =? _) eqn:?; destruct (p2 =? _) eqn:?; cleanup; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; subst; eauto.
+  2,3: unfold memory_writable, can_write_mem_at in *; cleanup.
+  2,3: exfalso; eapply pmap_ok_impossible; eauto.
+  split; eauto.
+  unfold w2n in *.
+  specialize (Properties.word.unsigned_range w) as ?.
+  specialize (Properties.word.unsigned_range base1) as ?.
+  specialize (Properties.word.unsigned_range r15) as ?.
+  rewrite word.unsigned_ltu, Z.ltb_ge in *.
+  rewrite Properties.word.unsigned_sub_nowrap in *; [|lia].
+  pat `word.add _ _ = word.add _ _` at rewrite <- Properties.word.unsigned_inj_iff in pat.
+  assert(n1 * 8 < Z.to_nat (word.unsigned w) / 8 * 8) as ? by lia.
+  rewrite mul_div_id in *; eauto.
+  assert(n2 * 8 < Z.to_nat (word.unsigned w) / 8 * 8) as ? by lia.
+  rewrite mul_div_id in *; eauto.
+  rewrite Properties.word.unsigned_add_nowrap in *.
+  2: rewrite Properties.word.unsigned_of_Z_nowrap; try lia.
+  rewrite Properties.word.unsigned_add_nowrap in *.
+  2: rewrite Properties.word.unsigned_of_Z_nowrap; try lia.
+  assert(word.unsigned (word.of_Z (Z.of_nat (n1 * 8)): word64) = word.unsigned (word.of_Z (Z.of_nat (n2 * 8)): word64)) by lia.
+  rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
+  rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
+Qed.
 
 Theorem c_cmd_Alloc: forall (n: name) (e: exp) (fuel: nat),
   goal_cmd (ImpSyntax.Alloc n e) fuel.
@@ -3921,7 +4047,8 @@ Proof.
   unfold dest_word in *; unfold_outcome.
   destruct v; cleanup; [|congruence].
   unfold alloc in *; unfold_outcome.
-  destruct (negb (_ =? _)) eqn:?; cleanup; [congruence|].
+  destruct (negb (_ =? _)) eqn:?; cleanup; [congruence|]; simpl in *.
+  destruct (w2n w =? 0) eqn:?; cleanup; [congruence|].
   unfold assign in *; unfold_outcome; cleanup.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
@@ -3940,8 +4067,9 @@ Proof.
   unfold code_in in *|-; fold code_in in *|-; cleanup.
   pat `forall (n: N) (params: list N) (body: cmd), _` at clear pat.
   Opaque nth_error.
-  destruct index_of eqn:?; simpl in *; destruct (word.ltu x1 (word.add x x0)) eqn:?; cleanup.
-  1: { (* index_of = 0; word.ltu = true *)
+  Opaque word.add word.sub word.ltu.
+  simpl in *; destruct (word.ltu x1 x) eqn:?; cleanup.
+  1: { (* word.ltu r15 r14 = true *)
     do 2 eexists; split; simpl.
     1: {
       rewrite Nat.sub_diag.
@@ -3960,14 +4088,13 @@ Proof.
       unfold inc, write_reg; simpl.
       eapply steps_trans.
       1: eapply steps_step_same.
-      1: eapply step_add; simpl; eauto; [simpl; reflexivity|..].
+      1: eapply step_sub; simpl; eauto; [simpl; reflexivity|..].
       unfold inc, write_reg; simpl.
       eapply steps_trans.
       1: eapply steps_step_same.
-      1: eapply step_jump; simpl; eauto.
+      1: eapply step_jump; simpl; eauto; eauto.
       1: econstructor; simpl; eauto.
-      pat `word.ltu _ _ = _` at rewrite pat.
-      unfold set_pc; simpl.
+      unfold inc, write_reg; simpl; pat `word.ltu _ _ = _` at rewrite pat.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_push; eauto.
@@ -3987,7 +4114,8 @@ Proof.
     crunch_side_conditions.
     1: pat `_ = output s` at rewrite <- pat; eapply prefix_refl.
   }
-  1: { (* index_of = 0; word.ltu = false *)
+  simpl in *; destruct (word.ltu (word.sub x1 x) x0) eqn:?; cleanup.
+  1: { (* word.ltu (r15 - r14) rdi = true *)
     do 2 eexists; split; simpl.
     1: {
       rewrite Nat.sub_diag.
@@ -4006,14 +4134,79 @@ Proof.
       unfold inc, write_reg; simpl.
       eapply steps_trans.
       1: eapply steps_step_same.
-      1: eapply step_add; simpl; eauto; [simpl; reflexivity|..].
+      1: eapply step_sub; simpl; eauto; [simpl; reflexivity|..].
       unfold inc, write_reg; simpl.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_jump; simpl; eauto.
       1: econstructor; simpl; eauto.
-      pat `word.ltu _ _ = _` at rewrite pat.
+      pat `word.ltu _ x = _` at rewrite pat.
       unfold set_pc; simpl.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; simpl; eauto; eauto.
+      1: econstructor; simpl; eauto.
+      unfold inc, write_reg; simpl; pat `word.ltu (word.sub _ _) _ = _` at rewrite pat.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_push; eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_const; eauto.
+      unfold write_reg, inc, set_stack; simpl.
+      eapply steps_step_same.
+      eapply step_exit; simpl; eauto.
+      pat `_ = stack s` at rewrite <- pat.
+      rewrite length_app, rw_mod_2_even, Nat.even_succ_succ, Nat.even_add, <- Nat.negb_even, negb_true_iff in *.
+      do 2 (pat `Nat.even _ = false` at rewrite pat; clear pat); simpl; eauto.
+    }
+    simpl in *; subst.
+    unfold write_reg, set_stack; simpl.
+    unfold state_rel in *; cleanup.
+    crunch_side_conditions.
+    1: pat `_ = output s` at rewrite <- pat; eapply prefix_refl.
+  }
+  destruct index_of eqn:?; simpl in *; cleanup.
+  1: { (* index_of = 0 *)
+    do 2 eexists; split; simpl.
+    1: {
+      rewrite Nat.sub_diag.
+      eapply steps_trans.
+      1: eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_mov; eauto.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_call; simpl; eauto.
+      unfold allocLoc, set_pc, set_stack; simpl.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_mov; simpl; eauto.
+      unfold inc, write_reg; simpl.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_sub; simpl; eauto; [simpl; reflexivity|..].
+      unfold inc, write_reg; simpl.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; simpl; eauto; eauto.
+      1: econstructor; simpl; eauto.
+      unfold inc, write_reg; simpl; pat `word.ltu _ x = _` at rewrite pat.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_jump; simpl; eauto.
+      1: econstructor; simpl; eauto.
+      pat `word.ltu (word.sub _ _) _ = _` at rewrite pat.
+      unfold set_pc; simpl.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_mov; simpl; eauto.
+      unfold inc, write_reg; simpl.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_add; simpl; eauto; [simpl; reflexivity|..].
+      unfold inc, write_reg; simpl.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_ret; simpl; eauto.
@@ -4023,18 +4216,10 @@ Proof.
       pat `_ = stack s` at rewrite <- pat; pat `curr ++ rest = _ :: _` at rewrite <- pat; reflexivity.
     }
     simpl in *; subst.
+    rewrite negb_false_iff in *; rewrite Nat.eqb_eq, Nat.eqb_neq in *.
     split.
     1: instantiate (1 := (fun (p: nat) => if Nat.eqb p (List.length s0.(ImpSemantics.memory)) then Some (x, w2n w / 8) else pmap p)).
-    1: {
-      Transparent pmap_ok.
-      unfold pmap_ok in *; intros; unfold mem_inv in *; cleanup.
-      unfold state_rel in *; cleanup.
-      destruct (p1 =? _) eqn:?; destruct (p2 =? _) eqn:?; cleanup; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; subst; eauto.
-      all: unfold has_address in *; cleanup.
-      all: unfold memory_writable, can_write_mem_at in *; cleanup.
-      all: exfalso; eapply pmap_ok_impossible; eauto.
-      all: pat `regs _ R14 = _` at rewrite pat in *; cleanup; eauto.
-    }
+    1: eapply pmap_ok_alloc with (t := t) (s := s); eauto.
     split.
     1: {
       unfold pmap_subsume; intros.
@@ -4052,39 +4237,100 @@ Proof.
     repeat (pat `regs s _ = _` at rewrite pat in *); cleanup.
     destruct curr; cleanup; [simpl odd in *; rewrite Nat.odd_0 in *; congruence|]; rewrite <- app_comm_cons in *.
     crunch_side_conditions.
-    (* Transparent word.eqb word.of_Z word.add. *)
-    (* 1: unfold memory_writable in *; cleanup; simpl; eauto; rewrite Z.ltb_ge, Z.le_lteq, Z.ltb_lt, Z.eqb_eq in *.
-    1: split; eauto.
-    1: split; simpl. *)
-    1: admit.
-    1: {
+    1: { (* memory_writeable *)
+      Transparent word.eqb word.of_Z word.add.
+      unfold memory_writable in *; cleanup; simpl; eauto; rewrite ?Z.ltb_ge, ?Z.le_lteq, ?Z.ltb_lt, ?Z.eqb_eq in *.
+      (* repeat (split; eauto). *)
+      admit.
+      (* unfold memory_writable in *; cleanup. *)
+    }
+    1: { (* r14_mono *)
+      Opaque word.add.
       unfold r14_mono in *; intros; cleanup.
       pat `regs s R14 = _` at rewrite pat in *; cleanup.
-      admit.
-      (* rewrite Properties.word.unsigned_add_nowrap in *. *)
+      rewrite word.unsigned_eqb, word.unsigned_ltu, Z.eqb_eq, Z.ltb_lt, Z.ltb_ge in *.
+      specialize (Properties.word.unsigned_range w) as ?.
+      specialize (Properties.word.unsigned_range x) as ?.
+      specialize (Properties.word.unsigned_range x1) as ?.
+      rewrite Properties.word.unsigned_sub_nowrap in *; try lia.
+      rewrite Properties.word.unsigned_add_nowrap in *; lia.
     }
-    (* pmap_in_bounds *)
-    1: admit.
-    1: {
+    1: eapply pmap_in_bounds_alloc with (t := t) (s := s); eauto.
+    1: { (* has_stack *)
       unfold has_stack; do 2 eexists; split; simpl; [|split; eauto].
       pat `_ = _ :: stack t` at inversion pat.
       rewrite app_comm_cons; reflexivity.
     }
     1: {
+      Opaque word.add word.unsigned word.of_Z.
       unfold mem_inv; intros.
-      admit.
+      destruct (p =? _) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; cleanup; subst.
+      1: {
+        rewrite nth_error_app2 in *; [|reflexivity].
+        rewrite Nat.sub_diag, nth_error_0 in *; simpl in *; cleanup.
+        rewrite repeat_length.
+        eexists; split; eauto; intros.
+        assert(nth_error (repeat (@None Value) (w2n w / 8)) off <> None) as Hnth by congruence.
+        eapply nth_error_Some in Hnth; rewrite repeat_length in *.
+        rewrite nth_error_repeat in *; eauto; cleanup.
+        spat `memory_writable` at unfold memory_writable in spat; cleanup.
+        (* pat `forall a, _` at specialize pat with (a := (word.add x (word.of_Z (Z.of_nat (off * 8))))); cleanup. *)
+        assert(can_write_mem_at (memory s) (word.add x (word.of_Z (Z.of_nat (off * 8))))).
+        1: {
+          pat `forall a, _` at eapply pat.
+          repeat (rewrite ?word.unsigned_eqb, ?word.unsigned_ltu, ?Z.eqb_eq, ?Z.ltb_lt, ?Z.ltb_ge in *).
+          unfold w2n in *.
+          specialize (Properties.word.unsigned_range w) as ?.
+          specialize (Properties.word.unsigned_range x) as ?.
+          specialize (Properties.word.unsigned_range x1) as ?.
+          rewrite Properties.word.unsigned_sub_nowrap in *; try lia.
+          assert(off * 8 < Z.to_nat (word.unsigned w) / 8 * 8) as ? by lia.
+          rewrite mul_div_id in *; eauto.
+          pat `off * 8 < _` at rewrite <- Nat2Z.id with (n := off * 8) in pat.
+          assert(Z.of_nat (off * 8) < word.unsigned w)%Z by lia.
+          rewrite Properties.word.unsigned_of_Z_nowrap; lia.
+          rewrite Properties.word.unsigned_add_nowrap in *; try lia.
+
+        }
+      }
+      2: {
+        assert (p <> List.length (s0.(ImpSemantics.memory))) by (rewrite Nat.eqb_neq in *; congruence).
+        rewrite nth_error_app in *.
+        Transparent nth_error.
+        spat `mem_inv` at unfold mem_inv in spat; specialize spat with (p := p).
+        specialize 
+        eexists; split.
+      }
+      eexists.
+      (* admit. *)
     }
-    (* pmap_in_memory *)
-    1: admit.
-    admit.
-    (* eapply env_ok_replace_head; try (pat `index_of _ _ _  = _` at rewrite pat).
+    1: { (* pmap_in_memory *)
+      unfold pmap_in_memory; intros.
+      destruct (p =? _) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; cleanup; subst.
+      1: {
+        rewrite nth_error_app2; [|reflexivity].
+        Transparent nth_error.
+        eexists; rewrite Nat.sub_diag; simpl.
+        reflexivity.
+      }
+      pat `pmap p = _` at rename pat into Hpmap.
+      spat `pmap_in_memory` at eapply spat in Hpmap; cleanup.
+      rewrite nth_error_app.
+      destruct (_ <? _) eqn:?; [eauto|].
+      rewrite Nat.ltb_ge in *.
+      assert (nth_error s0.(ImpSemantics.memory) p <> None) by congruence.
+      spat `nth_error _ p <> None` at eapply nth_error_Some in spat.
+      lia.
+    }
+    (* admit. *)
+    eapply env_ok_replace_head; try (pat `index_of _ _ _  = _` at rewrite pat).
     all: pat `List.length vs = _` at rewrite ?pat in *; simpl; try lia.
     2: {
       unfold v_inv in *; cleanup.
       exists (w2n w / 8).
       
 
-    } *)
+    }
 
   }
   all: admit.
@@ -4104,7 +4350,7 @@ Proof.
   destruct (c_exps es) eqn:?.
   simpl in *; cleanup.
   unfold_monadic.
-  destruct (eval_exp e) eqn:?.
+  destruct (eval_exps es) eqn:?.
   destruct o; cleanup.
   2: eval_exp_contr_stop_tac.
   unfold put_char in *; unfold_outcome.
@@ -4985,7 +5231,7 @@ Proof.
   2: { (* output None at i*)
     right; cleanup; split; eauto.
     intros.
-     destruct eval_from eqn:?.
+    destruct eval_from eqn:?.
     spat `_ <> Stop Crash` at specialize spat with (res := o) (s := s) as Hnocrash; clear spat.
     pat `eval_from _ _ _ = _` at specialize (Hnocrash _ pat).
     destruct prog.

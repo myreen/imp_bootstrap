@@ -28,20 +28,23 @@ Definition init (k: nat): asm :=
     (*  5 *) ASMSyntax.Exit;
     (* alloc routine starts here: *)
     (*  6 *) ASMSyntax.Comment "malloc";
-    (*  7 *) ASMSyntax.Mov RAX R14;
-    (*  8 *) ASMSyntax.Add R14 RDI;
-    (*  9 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 12;
-    (* 10 *) ASMSyntax.Ret;
+    (*  7 *) ASMSyntax.Mov RAX R15;
+    (*  8 *) ASMSyntax.Sub RAX R14;
+    (*  9 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 15;
+    (* 10 *) ASMSyntax.Jump (ASMSyntax.Less RAX RDI) 15;
+    (* 11 *) ASMSyntax.Mov RAX R14;
+    (* 12 *) ASMSyntax.Add R14 RDI;
+    (* 13 *) ASMSyntax.Ret;
     (* give up: *)
-    (* 11 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
-    (* 12 *) ASMSyntax.Push R15; (* align stack *)
-    (* 13 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 4));
-    (* 14 *) ASMSyntax.Exit;
+    (* 14 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
+    (* 15 *) ASMSyntax.Push R15; (* align stack *)
+    (* 16 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 4));
+    (* 17 *) ASMSyntax.Exit;
     (* abort: *)
-    (* 15 *) ASMSyntax.Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
-    (* 16 *) ASMSyntax.Push R15; (* align stack *)
-    (* 17 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 1));
-    (* 18 *) ASMSyntax.Exit
+    (* 18 *) ASMSyntax.Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
+    (* 19 *) ASMSyntax.Push R15; (* align stack *)
+    (* 20 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 1));
+    (* 21 *) ASMSyntax.Exit
   ]%string.
 
 Definition allocLoc: nat := 7.
@@ -97,9 +100,9 @@ Function odd_len {A: Type} (xs: list A) : bool :=
 (* jump label for failure cases
   b – does the stack need to be aligned
 *)
-Definition give_up (b: bool): nat := if b then 12 else 13.
+Definition give_up (b: bool): nat := if b then 15 else 16.
 
-Definition abortLoc: nat := 16.
+Definition abortLoc: nat := 19.
 
 (* Compiles a constant value into assembly instructions *)
 Definition c_const (n : word64) (l : nat) : asm_appl * nat :=

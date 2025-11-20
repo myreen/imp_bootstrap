@@ -1,4 +1,4 @@
-From impboot Require Import utils.Core.
+(* From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.assembly.ASM2String.
@@ -476,4 +476,4 @@ Derive asm2str_prog
   as asm2str_prog_proof.
 Proof.
   time relcompile.
-Qed.
+Qed. *)

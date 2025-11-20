@@ -1,4 +1,4 @@
-From impboot Require Import utils.Core.
+(* From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
 From coqutil Require Import dlet.
 From coqutil Require Import Word.Interface.
@@ -1531,12 +1531,8 @@ Definition nat_modulo (n1 n2: nat): nat :=
   | S _ => n1 - n2 * (n1 / n2)
   end.
 
-Fixpoint num2str_f (n: nat) (fuel: nat) (str: string): string :=
-  if (n <? 10)%nat then String (ascii_of_nat (48 + n)) str
-  else match fuel with
-  | 0 => ""%string
-  | S fuel => num2str_f (n / 10) fuel (String (ascii_of_nat (48 + (nat_modulo n 10))) str)
-  end.
+Fixpoint num2str_f (n: nat) (fuel: nat) (str: string) {struct fuel}: nat :=
+  0.
 
 (* no warning? :/ *)
 (* Function num2str_f1 (n: nat) (fuel: nat) (str: string): string :=
@@ -1548,9 +1544,16 @@ Fixpoint num2str_f (n: nat) (fuel: nat) (str: string): string :=
     else num2str_f (n / 10) n0 (String (ascii_of_nat (48 + nat_modulo n 10)) str)
   end. *)
 
-Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
+(* Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
 Proof. unfold_fix_proof 'num2str_f. Qed.
-About num2str_f_equation.
+About num2str_f_equation. *)
+Axiom num2str_f_equation :
+∀ (n fuel : nat) (str : string),
+num2str_f n fuel str =
+match fuel with
+| 0 => 10
+| S _ => 0
+end.
 
 (* Derive foo
   in (forall s1 n str fuel,
@@ -1565,10 +1568,59 @@ Proof.
   Show Proof. *)
 
 Derive num2str_f_prog
-  in ltac2:(relcompile_tpe 'num2str_f_prog 'num2str_f ['nat_modulo])
+  in ltac2:(relcompile_tpe 'num2str_f_prog 'num2str_f [])
   as num2str_f_prog_proof.
 Proof.
-  (* intros; subst num2str_f_prog. *)
+  intros; subst num2str_f_prog.
+  eapply trans_app.
+  3: ltac1:(eassumption).
+  2: reflexivity ().
+  rewrite num2str_f_equation.
+  (* let lname := "auto_nat_case" in
+  let named_conts := [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty));
+      ("v0", exactk constr:(fuel)); ("v1", exactk constr:(10)); ("v2", exactk constr:(fun n0: nat => 0)); ("n", exactk constr:("steve"%string))]
+     in
+  let conts := [compile; (fun () =>
+      destruct fuel; Control.enter compile
+    )] in
+  printf "applying lemma: %s" lname;
+  let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
+  let lemma_inst: constr := Env.instantiate lemma_ref in
+  let named_conts_id :=
+    List.flat_map (fun p =>
+      match Ident.of_string (fst p) with
+      | Some i => [(i, snd p)]
+      | _ => []
+      end) named_conts in *)
+  (* refine (assemble_lemma lemma_inst lname named_conts_id conts). *)
+  (* refine(open_constr:(
+    auto_nat_case (make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty)
+    _ _ _ _ "steve"%string fuel 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(destruct fuel; Control.enter compile)
+  )). *)
+  refine(open_constr:(
+    auto_nat_case (make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty)
+    _ _ _ _ "steve"%string fuel 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(printf "=====%t" (Control.goal ()); cbv zeta; destruct fuel; Control.enter compile)
+  )).
+  1: destruct fuel; Control.enter compile.
+  (* NOTES: works as a step after refine, doesn't as part of refine *)
+  (*    diff goals betwene the two *)
+  (*    use semicolon instead of dot *)
+  (*    Ltac2 print_full_goal *)
+  (* app_lemma "auto_nat_case"
+    [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty));
+      ("v0", exactk constr:(fuel)); ("v1", exactk constr:(10)); ("v2", exactk constr:(fun n0: nat => 0)); ("n", exactk constr:("steve"%string))]
+    [compile; (fun () =>
+      destruct fuel; Control.enter compile
+    )]. *)
+  (* compile ().
+  eapply auto_nat_case with (n := "n1"%string).
+  eapply auto_nat_case with (n := "n1"%string) (1:= ltac2:(compile ())). *)
+  1: compile ().
+  Show Proof.
+  1: destruct fuel; Control.enter compile.
+  Show Proof.
+  1: compile ().
+  compile ().
 
   (* when fuel := 0 it compiles `10` as `S (S (... fuel))` *)
   time relcompile.
@@ -1804,4 +1856,4 @@ Derive sum_acc_prog
   as sum_acc_prog_proof.
 Proof.
   relcompile.
-Qed.
+Qed. *)

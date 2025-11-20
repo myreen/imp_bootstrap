@@ -308,6 +308,7 @@ Definition update (v1 v2 v : Value) (s: state): (outcome unit * state) :=
 
 Definition alloc (len: word64) (s: state) : (outcome Value * state) :=
   if negb ((w2n len) mod 8 =? 0) then crash s else
+  if (w2n len) =? 0 then crash s else
     cont (Pointer (List.length s.(memory)))
       (set_memory (s.(memory) ++ [repeat None ((w2n len) / 8)]) s).
 

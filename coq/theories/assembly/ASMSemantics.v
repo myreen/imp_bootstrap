@@ -291,8 +291,8 @@ Definition memory_writable (r14 r15 : word64) (m : word64 -> option (option word
   (word.ltu r14 r15 = true \/ word.eqb r14 r15 = true) /\
   word.eqb (word.modu r14 (word.of_Z 8)) (word.of_Z 0) = true /\
   word.eqb (word.modu r15 (word.of_Z 8)) (word.of_Z 0) = true /\
-  r14 <> word.of_Z 0 /\
-  (forall a, (word.ltu r14 a = true \/ word.eqb r14 a = true) /\
+  word.eqb r14 (word.of_Z 0) = false /\
+  (forall a: word64, (word.ltu r14 a = true \/ word.eqb r14 a = true) /\
               word.ltu a r15 = true /\
               word.eqb (word.modu a (word.of_Z 8)) (word.of_Z 0) = true ->
               can_write_mem_at m a).

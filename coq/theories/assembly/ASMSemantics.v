@@ -285,15 +285,16 @@ Proof.
 Admitted.
 
 Definition can_write_mem_at (m : word64 -> option (option word64)) (a : word64) : Prop :=
-  exists v, m a = Some v.
+  m a = Some None.
 
 Definition memory_writable (r14 r15 : word64) (m : word64 -> option (option word64)) : Prop :=
   (word.ltu r14 r15 = true \/ word.eqb r14 r15 = true) /\
-  word.modu r14 (word.of_Z 4) = word.of_Z 0 /\
-  word.modu r15 (word.of_Z 4) = word.of_Z 0 /\
+  word.eqb (word.modu r14 (word.of_Z 8)) (word.of_Z 0) = true /\
+  word.eqb (word.modu r15 (word.of_Z 8)) (word.of_Z 0) = true /\
   r14 <> word.of_Z 0 /\
-  (forall a, word.ltu r14 a = true /\ word.ltu a r15 = true /\
-              word.modu a (word.of_Z 8) = word.of_Z 0 ->
+  (forall a, (word.ltu r14 a = true \/ word.eqb r14 a = true) /\
+              word.ltu a r15 = true /\
+              word.eqb (word.modu a (word.of_Z 8)) (word.of_Z 0) = true ->
               can_write_mem_at m a).
 
 Definition init_state_ok (t : state) (inp : llist ascii) (asm : asm) : Prop :=

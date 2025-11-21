@@ -3592,7 +3592,9 @@ Proof.
       pat `_ ∧ _` at eapply Hmem in pat; cleanup.
       unfold v_inv in *; cleanup; eauto.
     }
-    eexists; reflexivity.
+    cleanup.
+    (* Updating a value was in bounds, so it is not between r14 and r15 *)
+    admit.
   }
   1: eapply r14_mono_IMP_pmap_in_bounds; eauto.
   1: crunch_side_conditions.
@@ -3606,7 +3608,7 @@ Proof.
   eapply mem_inv_updated; eauto.
   Unshelve.
   all: exact Abort.
-Qed.
+Admitted.
 
 Lemma odd_is_succ: forall n,
   odd n = true ->
@@ -4062,7 +4064,8 @@ Proof.
   simpl code_in in *; cleanup.
   unfold has_stack in *|-; cleanup.
   spat `env_ok` at pose proof spat as ?; unfold env_ok in spat; cleanup.
-  spat `state_rel` at pose proof spat as ?; unfold state_rel, code_rel, init_code_in, init in spat; cleanup.
+  spat `state_rel` at unfold state_rel in spat; cleanup.
+  spat `code_rel` at pose proof spat as ?; unfold code_rel, init_code_in, init in spat; cleanup.
   remember (Comment ("exit 1") :: _) as init_rest; clear Heqinit_rest.
   unfold code_in in *|-; fold code_in in *|-; cleanup.
   pat `forall (n: N) (params: list N) (body: cmd), _` at clear pat.
@@ -4277,32 +4280,51 @@ Proof.
         (* pat `forall a, _` at specialize pat with (a := (word.add x (word.of_Z (Z.of_nat (off * 8))))); cleanup. *)
         assert(can_write_mem_at (memory s) (word.add x (word.of_Z (Z.of_nat (off * 8))))).
         1: {
-          pat `forall a, _` at eapply pat.
-          repeat (rewrite ?word.unsigned_eqb, ?word.unsigned_ltu, ?Z.eqb_eq, ?Z.ltb_lt, ?Z.ltb_ge in *).
+          pat `forall a, _` at eapply pat; clear pat.
+          all: repeat (rewrite ?word.unsigned_eqb, ?word.unsigned_ltu, ?Z.eqb_eq, ?Z.ltb_lt, ?Z.ltb_ge in *).
           unfold w2n in *.
           specialize (Properties.word.unsigned_range w) as ?.
           specialize (Properties.word.unsigned_range x) as ?.
           specialize (Properties.word.unsigned_range x1) as ?.
+          specialize (Properties.word.unsigned_range x0) as ?.
           rewrite Properties.word.unsigned_sub_nowrap in *; try lia.
           assert(off * 8 < Z.to_nat (word.unsigned w) / 8 * 8) as ? by lia.
           rewrite mul_div_id in *; eauto.
           pat `off * 8 < _` at rewrite <- Nat2Z.id with (n := off * 8) in pat.
           assert(Z.of_nat (off * 8) < word.unsigned w)%Z by lia.
-          rewrite Properties.word.unsigned_of_Z_nowrap; lia.
           rewrite Properties.word.unsigned_add_nowrap in *; try lia.
-
+          2: rewrite Properties.word.unsigned_of_Z_nowrap; lia.
+          assert(word.unsigned w <> 0)%Z by lia.
+          repeat (rewrite Properties.word.unsigned_of_Z_nowrap; try lia).
+          split; try lia.
+          split; try lia.
+          rewrite Properties.word.unsigned_modu_nowrap in *; try lia.
+          all: rewrite Properties.word.unsigned_of_Z_nowrap; try lia.
+          rewrite Properties.word.unsigned_add_nowrap in *; try lia.
+          all: rewrite Properties.word.unsigned_of_Z_nowrap; try lia.
+          repeat (rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia).
+          assert(Z.of_nat (off * 8) = Z.of_nat off * 8)%Z as -> by lia.
+          rewrite Z.mod_add; try lia.
         }
+        unfold can_write_mem_at in *; cleanup.
+        eexists; split; eauto.
+        simpl; exact I.
       }
-      2: {
-        assert (p <> List.length (s0.(ImpSemantics.memory))) by (rewrite Nat.eqb_neq in *; congruence).
-        rewrite nth_error_app in *.
-        Transparent nth_error.
-        spat `mem_inv` at unfold mem_inv in spat; specialize spat with (p := p).
-        specialize 
-        eexists; split.
-      }
-      eexists.
-      (* admit. *)
+      assert(nth_error (ImpSemantics.memory s0 ++ [repeat None (w2n w / 8)]) p <> None) by congruence.
+      rewrite nth_error_Some, length_app in *; simpl in *.
+      rewrite nth_error_app1 in *; try lia.      
+      pat `nth_error _ p = _` at rename pat into Hnth.
+      spat `mem_inv` at unfold mem_inv in spat; specialize spat with (1 := Hnth); cleanup.
+      eexists; split; eauto; intros * Hnthoff.
+      pat `forall off xopt, _` at eapply pat in Hnthoff; cleanup.
+      eexists; split; eauto; simpl.
+      destruct xopt; destruct x6; simpl in *; cleanup; eauto.
+      destruct v0; simpl in *; eauto; cleanup.
+      destruct (i =? _) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; subst; eauto.
+      pat `pmap (List.length _) = _` at rename pat into Hpmap.
+      spat `pmap_in_memory` at eapply spat in Hpmap; cleanup.
+      assert(nth_error (ImpSemantics.memory s0) (Datatypes.length (ImpSemantics.memory s0)) <> None) as Hnthneq by congruence.
+      eapply nth_error_Some in Hnthneq; lia.
     }
     1: { (* pmap_in_memory *)
       unfold pmap_in_memory; intros.

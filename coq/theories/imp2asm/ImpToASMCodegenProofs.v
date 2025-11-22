@@ -1273,24 +1273,6 @@ Proof.
     all: lia.
 Qed.
 
-(* Lemma index_of_opt_Some_nth_error: forall nm vs i,
-  index_of_opt nm 0 vs = Some i -> nth_error vs i = Some (Some nm).
-Proof.
-  (* induction vs; intros; simpl in *.
-  1: pat `None = Some _` at inversion pat.
-  destruct a; cleanup.
-  - destruct (_ =? _) eqn:?; cleanup.
-    + rewrite Nat.eqb_eq in *; subst; simpl; reflexivity.
-    + spat `index_of_opt` at eapply index_of_opt_Some_0_k in spat.
-      spat `index_of_opt` at rewrite <- spat.
-      f_equal.
-      lia.
-  - spat `index_of_opt` at eapply IHvs in spat.
-    spat `index_of_opt` at rewrite <- spat.
-    f_equal.
-    lia. *)
-Admitted. *)
-
 Ltac crunch_give_up_even :=
   repeat match  goal with
   | |- (ImpToASMCodegen.give_up _) = (ImpToASMCodegen.give_up _) => f_equal
@@ -1429,16 +1411,28 @@ Proof.
   lia.
 Qed.
 
-Lemma r14_mono_IMP_pmap_in_bounds: forall pmap r14old r14new,
-  pmap_in_bounds pmap r14old ->
-  r14_mono r14old r14new ->
+Lemma r14_mono_IMP_pmap_in_bounds: forall pmap mr14old r14old r14new,
+  pmap_in_bounds pmap mr14old ->
+  r14_mono mr14old r14new ->
+  mr14old = Some r14old ->
   pmap_in_bounds pmap r14new.
 Proof.
+  intros * Hbounds Hr14_mono ?.
+  unfold pmap_in_bounds in *; intros; subst.
+  pat `pmap p = _` at rename pat into Hpmap.
+  specialize Hbounds with (wr14 := r14old) (1 := Hpmap) (2 := eq_refl); cleanup.
+  split; eauto.
   intros.
-Admitted.
+  unfold r14_mono in Hr14_mono; specialize Hr14_mono with (old_wr14 := r14old) (new_wr14 := wr14) (1 := eq_refl) (2 := eq_refl).
+  pat `n < _` at rename pat into Hlt.
+  pat `forall n, _` at specialize pat with (n := n) (1 := Hlt).
+  rewrite word.unsigned_ltu, Z.ltb_lt, word.unsigned_eqb, Z.eqb_eq in *.
+  lia.
+Qed.
 
 Ltac crunch_side_conditions :=
   simpl;
+  unfold state_rel in *; cleanup;
   repeat match goal with
   | |- _ /\ _ => split
   | _ => progress eauto
@@ -1452,7 +1446,7 @@ Ltac crunch_side_conditions :=
   | |- _ => lia
   | |- pmap_subsume ?x ?x => eapply pmap_subsume_refl
   | H: r14_mono ?a ?b, H1: pmap_in_bounds ?pm ?a |- pmap_in_bounds ?pm ?b =>
-    eapply r14_mono_IMP_pmap_in_bounds; eauto
+    eapply r14_mono_IMP_pmap_in_bounds with (1 := H1) (2 := H); eauto
   | |- pmap_ok _ => progress eauto
   | |- pmap_subsume _ _ => eapply pmap_subsume_trans; progress eauto
   | |- state_rel _ _ _ => progress eauto
@@ -2586,14 +2580,8 @@ Proof.
     2: pat `_ = stack s` at rewrite <- pat; reflexivity.
     1: pat `_ = List.length curr` at rewrite <- pat; eauto.
     eapply steps_refl.
-    (* eapply steps_step_same.
-    1: eapply step_ret.
-    1: simpl; eauto.
-    simpl.
-    (* TODO: is this a cheat? Magnus did it, so maybe it was intentional? *)
-    (* rest = RetAddr ?n :: ?rest *)
-    admit. *)
   }
+  unfold state_rel in *; cleanup; eauto.
   crunch_side_conditions.
 Qed.
 
@@ -2791,6 +2779,7 @@ Proof.
       reflexivity.
     }
     simpl.
+    unfold state_rel in *; cleanup.
     unfold has_stack in *; cleanup.
     crunch_side_conditions.
     1: pat `_ = stack t` at rewrite <- pat; rewrite app_comm_cons; reflexivity.
@@ -3007,9 +2996,7 @@ Proof.
     simpl.
     unfold code_rel in *; cleanup; eauto.
     crunch_side_conditions.
-    unfold state_rel in *; cleanup.
     repeat (split; eauto).
-    eexists; eexists; eauto.
   }
   (* test = true *)
   all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
@@ -3023,7 +3010,7 @@ Proof.
     destruct x eqn:?; destruct s eqn:?; cleanup; subst.
     assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
     spat `eval_cmd c` at unfold goal_cmd in spat; eapply H in spat; eapply spat in H2; clear spat; cleanup; eauto.
-    2: simpl in *; eapply r14_mono_IMP_pmap_in_bounds; eauto.
+    2: unfold state_rel in *; cleanup; simpl in *; eapply r14_mono_IMP_pmap_in_bounds; eauto.
     2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
        pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl; eauto.
     cleanup; subst.
@@ -3068,7 +3055,7 @@ Proof.
   assert (s0.(steps_done) <= s.(steps_done)).
   1: pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
   spat `eval_cmd c` at unfold goal_cmd in H; eapply H with (s1 := s) in spat; clear H; cleanup; eauto.
-  2: simpl in *; eapply r14_mono_IMP_pmap_in_bounds; eauto.
+  2: unfold state_rel in *; cleanup; simpl in *; eapply r14_mono_IMP_pmap_in_bounds; eauto.
   2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
       pat `steps (State (set_pc _ t0), _) _` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl; eauto.
   cleanup; subst.
@@ -3261,7 +3248,7 @@ Proof.
       assert (p = pc (set_pc p s2)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
     spat `goal_cmd c2` at unfold goal_cmd in spat; rename spat into IHc.
     spat `eval_cmd c2` at eapply IHc in spat; clear IHc; cleanup; eauto.
-    2: eapply r14_mono_IMP_pmap_in_bounds; eauto.
+    2: unfold state_rel in *; cleanup; simpl in *; eapply r14_mono_IMP_pmap_in_bounds; eauto.
     2: simpl; pat `steps _ (State s2, _)` at rewrite <- steps_instructions with (1 := pat); simpl; eauto.
     pat `let (_, _) := ?x in _` at destruct x eqn:?; subst; cleanup.
     do 2 eexists; split.
@@ -3285,7 +3272,7 @@ Proof.
       assert (p = pc (set_pc p s2)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
   spat `goal_cmd c1` at unfold goal_cmd in spat; rename spat into IHc.
   spat `eval_cmd c1` at eapply IHc in spat; clear IHc; cleanup; eauto.
-  2: eapply r14_mono_IMP_pmap_in_bounds; eauto.
+  2: unfold state_rel in *; cleanup; simpl in *; eapply r14_mono_IMP_pmap_in_bounds; eauto.
   2: simpl; pat `steps _ (State s2, _)` at rewrite <- steps_instructions with (1 := pat); simpl; eauto.
   pat `let (_, _) := ?x in _` at destruct x eqn:?; subst; cleanup.
   pat `match ?s with _ => _ end` at destruct s eqn:?; subst; cleanup.
@@ -3372,12 +3359,6 @@ Proof.
   Unshelve.
   exact ImpSemantics.Abort.
 Qed.
-
-Lemma nth_error_some_IMP_existsb_in_addresses: forall {A: Type} (l: list A) (base: word64) off v,
-  nth_error l off = Some v ->
-  exists n, n < (List.length l) ∧ (word.add base (word.of_Z (Z.of_nat (n * 8)))) = (word.add base (word.of_Z (Z.of_nat (off * 8)))).
-Proof.
-Admitted.
 
 Lemma Z_div_mul_id: forall (a b: Z),
   (a mod b = 0)%Z ->
@@ -3666,10 +3647,6 @@ Proof.
   simpl.
   crunch_side_conditions.
   1: { (* state_rel *)
-    unfold state_rel in *; simpl; cleanup.
-    repeat (split; eauto).
-    do 2 eexists.
-    do 4 (split; eauto).
     pat `regs s1 R14 = _` at rewrite pat in *.
     pat `regs t R14 = _` at rewrite pat in *.
     rewrite negb_false_iff, Nat.eqb_eq in *.
@@ -4457,7 +4434,7 @@ Proof.
     1: eapply pmap_in_bounds_alloc with (t := t) (s := s); eauto.
     1: { (* has_stack *)
       unfold has_stack; do 2 eexists; split; simpl; [|split; eauto].
-      pat `_ = _ :: stack t` at inversion pat.
+      pat `_ = stack t` at rewrite <- pat.
       rewrite app_comm_cons; reflexivity.
     }
     1: eapply mem_inv_alloc; eauto.

@@ -54,6 +54,21 @@ Ltac2 message_of_cenv (cenv: (constr option * constr) list): message :=
     cenv
   ).
 
+Ltac2 print_full_goal () :=
+  let hyps := Control.hyps () in
+  List.iter (fun h =>
+    match h with
+    | (id, body, ty) =>
+      (match body with
+       | None => printf "%I : %t" id ty
+       | Some b => printf "%I := %t : %t" id b ty
+       end)
+    end
+  ) hyps;
+  printf "----------------------------------------";
+  let g := Control.goal () in
+  printf "|- %t" g.
+
 Ltac2 constr_is_sort (c: constr): bool :=
   match Unsafe.kind c with
   | Unsafe.Sort _ => true
@@ -366,13 +381,57 @@ Ltac2 rec lambda_to_prod (c: constr): constr :=
   | _ => c
   end.
 
-(* This way doesn't crash with anomaly, but leaves "hanging" evars around *)
-(* Ltac2 rec collect_tpe_prod_binders (c: constr): binder list :=
+(* TODO: extract this magic pattern as a utility function *)
+Ltac2 rec collect_tpe_prod_binders_impl (c: constr) (magic: constr) (proj: binder -> constr option): constr :=
   match Unsafe.kind (Constr.type c) with
   | Prod b _ =>
-    b :: collect_tpe_prod_binders open_constr:($c _)
-  | _ => []
-  end. *)
+    let curr := proj b in
+    let binder_tpe := (Binder.type b) in
+    let applied_magic := open_constr:($magic $binder_tpe) in
+    let recursive := collect_tpe_prod_binders_impl open_constr:($c $applied_magic) magic proj in
+    match curr with
+    | Some curr => open_constr:($curr :: $recursive)
+    | None => recursive
+    end
+  | _ => open_constr:(nil)
+  end.
+
+Ltac2 collect_tpe_prod_binders (c: constr) (proj: binder -> constr option): constr :=
+  let magic_ident := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "magic")) in
+  let with_magic := Constr.in_context magic_ident constr:(forall A, A) (fun () =>
+    let magic := Control.hyp magic_ident in
+    Control.refine(fun () =>
+      collect_tpe_prod_binders_impl c magic proj
+    )
+  ) in
+  match Unsafe.kind with_magic with
+  | Unsafe.Lambda _ v =>
+    v
+  | _ =>
+    Control.throw (Oopsie (fprintf "collect_tpe_prod_binders: expected a product type, got %t" with_magic))
+  end.
+
+Ltac2 rec list_of_constr_list (c: constr): constr list :=
+  match! c with
+  | [] => []
+  | ?x :: ?xs =>
+    x :: list_of_constr_list xs
+  end.
+
+Ltac2 collect_non_prop_tpe_prod_names (c: constr): constr :=
+  let cres := collect_tpe_prod_binders c
+    (fun b =>
+      let cstr := match Binder.name b with
+      | Some n => constr_string_of_string (Ident.to_string n)
+      | None => constr_string_of_string "?"
+      end in
+      if Constr.equal constr:(Prop) (Constr.type (Binder.type b)) then
+        None
+      else if constr_is_sort (Binder.type b) then
+        None
+      else
+        Some open_constr:(name_enc $cstr)) in
+  constr:($cres: list N).
 
 Ltac2 rec collect_prod_binders_impl (c: constr): binder list :=
   match Unsafe.kind c with
@@ -1166,8 +1225,8 @@ Ltac2 rec compile () : unit :=
         (* A function application *)
         let args := List.filter (fun c =>
           (* TODO: for proper Prop erasure *)
-          (* Bool.and *)
-            (* (Bool.neg (Constr.equal constr:(Prop) (Constr.type (Constr.type c)))) *)
+          Bool.and
+            (Bool.neg (Constr.equal constr:(Prop) (Constr.type (Constr.type c))))
             (Bool.neg (constr_is_sort (Constr.type c)))
         ) args in
         let f_lookup := get_f_lookup_from_hyps () in
@@ -1243,7 +1302,7 @@ Ltac2 rec docompile () :=
   | [ |- _ |-- (_, _) ---> ([encode _], _) ] =>
     (* let cenv := get_cenv_from_fenv_constr fenv in *)
     compile ()
-  | [ h : (lookup_fun (name_enc ?fname) _ = Some (?params, ?body))
+  | [ h : (lookup_fun (name_enc ?fname) _ = Some (?params, ?_body))
   |- eval_app (name_enc ?fname) ?args _ (encode ?c, _) ] =>
     let h_hyp := Control.hyp h in
     (* let f_lookup := get_f_lookup_from_hyps () in *)
@@ -1370,11 +1429,11 @@ Ltac2 rec mk_constr_list (args: constr list): constr :=
   end.
 
 Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: constr) (): constr :=
-  (* printf "gen_eval_app_impl f.type: %t fpargs: %a f_constr_name: %t f: %t"
+  printf "gen_eval_app_impl f.type: %t fpargs: %a f_constr_name: %t f: %t"
     (Constr.type f)
     (fun () x => message_of_list (List.map Message.of_constr x)) fpargs
     f_constr_name
-    f; *)
+    f;
   match Unsafe.kind (Constr.type f) with
   | Prod b _ =>
     let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
@@ -1390,8 +1449,8 @@ Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: co
             )
           ))
         (* TODO: for proper Prop erasure *)
-        (* else if Constr.equal constr:(Prop) (Constr.type (Binder.type b)) then
-          gen_eval_app_impl fpargs f_constr_name open_constr:($f $b_hyp) () *)
+        else if Constr.equal constr:(Prop) (Constr.type (Binder.type b)) then
+          gen_eval_app_impl fpargs f_constr_name open_constr:($f $b_hyp) ()
         else gen_eval_app_impl (List.append fpargs [b_hyp]) f_constr_name open_constr:($f $b_hyp) ()
       )
     ))
@@ -1483,20 +1542,13 @@ Ltac2 rec mk_refine_impls (args: (unit -> constr) list) (res: unit -> constr) ()
 Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
   let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
   let f_constr_name_c := constr_string_of_string f_constr_name in
-  let f_binders := collect_prod_binders f in
-  let non_type_f_binders := List.filter (fun b =>
-    (* TODO: for proper Prop erasure *)
-    (* Bool.and *)
-      (* (Bool.neg (Constr.equal constr:(Prop) (Constr.type (Binder.type b)))) *)
-      (Bool.neg (constr_is_sort (Binder.type b)))
-  ) f_binders in
-  let f_binder_names := List.map (fun b =>
-    let n := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
-    constr_string_of_string (Ident.to_string n)
-  ) non_type_f_binders in
-  let encoded_b_names := mk_constr_list (List.map (fun n => constr:(name_enc $n)) f_binder_names) in
+  printf "relcompile_tpe for function: %t" f_constr_name_c;
+  printf "relcompile_tpe for function_c: %t" f_constr_name_c;
+  let encoded_b_names := collect_non_prop_tpe_prod_names f in
+  printf "encoded_b_names: %t" encoded_b_names;
   let eval_app_cont := gen_eval_app f in
   let deps_eval_app_conts := List.map gen_eval_app deps in
+  printf "HERE";
   Control.refine (fun () =>
     open_constr:(forall (s: state),
       ltac2:(Control.refine (
@@ -1547,7 +1599,7 @@ Fixpoint num2str_f (n: nat) (fuel: nat) (str: string) {struct fuel}: nat :=
 (* Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
 Proof. unfold_fix_proof 'num2str_f. Qed.
 About num2str_f_equation. *)
-Axiom num2str_f_equation :
+Axiom num2str_f_equation:
 ∀ (n fuel : nat) (str : string),
 num2str_f n fuel str =
 match fuel with
@@ -1599,13 +1651,18 @@ Proof.
   )). *)
   refine(open_constr:(
     auto_nat_case (make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty)
-    _ _ _ _ "steve"%string fuel 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(printf "=====%t" (Control.goal ()); cbv zeta; destruct fuel; Control.enter compile)
+    s _ _ _ "steve"%string fuel 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(cbv zeta; print_full_goal (); destruct fuel; Control.enter compile)
   )).
   1: destruct fuel; Control.enter compile.
   (* NOTES: works as a step after refine, doesn't as part of refine *)
-  (*    diff goals betwene the two *)
+  (*    diff goals between the two *)
   (*    use semicolon instead of dot *)
-  (*    Ltac2 print_full_goal *)
+  (* The difference is *)
+  (* H : lookup_fun (name_enc "num2str_f") (funs s) = Some ([name_enc "n"; name_enc "fuel"; name_enc "str"],
+FunSyntax.If FunSyntax.Equal [FunSyntax.Var (name_enc "fuel"); FunSyntax.Const 0] ?x1
+(FunSyntax.Let (name_enc "steve") (FunSyntax.Op FunSyntax.Sub [FunSyntax.Var (name_enc "fuel"); FunSyntax.Const 1]) ?x2)) *)
+ (* vs *)
+ (* H : (lookup_fun (name_enc "num2str_f") (funs s) = Some ([name_enc "n"; name_enc "fuel"; name_enc "str"], ?body)) *)
   (* app_lemma "auto_nat_case"
     [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty));
       ("v0", exactk constr:(fuel)); ("v1", exactk constr:(10)); ("v2", exactk constr:(fun n0: nat => 0)); ("n", exactk constr:("steve"%string))]

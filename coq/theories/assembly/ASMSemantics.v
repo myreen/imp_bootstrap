@@ -44,6 +44,15 @@ Definition write_reg (r : reg) (w : word64) (s : state) : state :=
      input := s.(input);
      output := s.(output) |}.
 
+Definition set_regs (rs : reg -> option word64) (s : state) : state :=
+  {| instructions := s.(instructions);
+     pc := s.(pc);
+     regs := rs;
+     stack := s.(stack);
+     memory := s.(memory);
+     input := s.(input);
+     output := s.(output) |}.
+
 Fixpoint unset_regs (rs : list reg) (s : state) : state :=
   match rs with
   | [] => s

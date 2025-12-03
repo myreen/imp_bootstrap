@@ -336,6 +336,13 @@ Definition nodupb (l: list name): bool :=
     true
   else false.
 
+Fixpoint make_env (keys : list name) (values : list Value) (acc : IEnv.env) : IEnv.env :=
+  match keys, values with
+  | [], [] => acc
+  | k :: ks, v :: vs => make_env ks vs (IEnv.insert (k, Some v) acc)
+  | _, _ => acc
+  end.
+
 Definition get_body_and_set_vars (nm: name) (vs: list Value) (s: state): (outcome cmd * state) :=
   match find_fun nm s.(funs) with
   | None => crash s
@@ -343,7 +350,7 @@ Definition get_body_and_set_vars (nm: name) (vs: list Value) (s: state): (outcom
       if orb (negb (List.length params =? List.length vs)) (negb (nodupb params)) then
         crash s
       else
-        cont body (set_vars (IEnv.insert_all (List.combine params (List.map Some vs)) IEnv.empty) s)
+        cont body (set_vars (make_env params vs IEnv.empty) s)
   end.
 
 Definition catch_return {A} (f: SRM A) (s: state): (outcome Value * state) :=
@@ -404,8 +411,8 @@ Fixpoint eval_cmd (c: cmd) (EVAL_CMD: forall (c:cmd), SRM unit) { struct c }: SR
     let+ vars := get_vars in
     let+ body := get_body_and_set_vars fname vs in
     let+ v := catch_return (EVAL_CMD body) in
-    let+ _ := assign n v in
-    set_varsM vars
+    let+ _ := set_varsM vars in
+    assign n v
   end.
 
 Fixpoint EVAL_CMD (fuel: nat) (c : cmd) {struct fuel} : SRM unit :=

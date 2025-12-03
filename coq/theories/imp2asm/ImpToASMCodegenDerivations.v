@@ -46,7 +46,7 @@ Proof. unfold_fix_proof 'c_fundefs. Qed.
 Opaque encode.
 Opaque name_enc.
 
-(* Derive init_prog
+Derive init_prog
   in ltac2:(relcompile_tpe 'init_prog 'init []) 
   as init_prog_proof.
 Proof.
@@ -404,7 +404,7 @@ Derive codegen_prog
   as codegen_prog_proof.
 Proof.
   time relcompile.
-Qed. *)
+Qed.
 
 (* *********************************************** *)
 (*  Derivations for ASM to String Conversion      *)

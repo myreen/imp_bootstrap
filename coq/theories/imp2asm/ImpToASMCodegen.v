@@ -135,7 +135,7 @@ Definition c_var (n: name) (l: nat) (vs: v_stack): asm_appl * nat :=
   if (k =? 0)%nat then (List [ASMSyntax.Push RAX], l+1)%nat
   else (List [ASMSyntax.Push RAX; ASMSyntax.Load_RSP RAX k], l+2)%nat.
 
-Fixpoint c_declare_binders_rec (binders: list name) (l: nat) (vs: v_stack) (acc_asm: asm_appl): (asm_appl * nat * v_stack) :=
+(* Fixpoint c_declare_binders_rec (binders: list name) (l: nat) (vs: v_stack) (acc_asm: asm_appl): (asm_appl * nat * v_stack) :=
   match binders with
   | nil => (acc_asm, l, vs)
   | binder_name :: binders =>
@@ -144,7 +144,7 @@ Fixpoint c_declare_binders_rec (binders: list name) (l: nat) (vs: v_stack) (acc_
 
 Definition c_declare_binders (binders: list name) (l: nat) (vs: v_stack): (asm_appl * nat * v_stack) :=
   let/d '(asm1, l1, vs1) := c_declare_binders_rec binders (l + 1) vs (List []) in
-  (asm1 +++ List [ASMSyntax.Const RDI (word.of_Z (Z.of_nat 0))], l1, vs1).
+  (asm1 +++ List [ASMSyntax.Const RDI (word.of_Z (Z.of_nat 0))], l1, vs1). *)
 
 (* assign variable with name `n`, based on stack *)
 Definition c_assign (n : name) (l : nat) (vs : v_stack) : (asm_appl * nat) :=
@@ -301,9 +301,6 @@ Function lookup (fs: f_lookup) (n: N): nat :=
 Definition make_ret (vs: v_stack) (l: nat): asm_appl * nat :=
   (List [Add_RSP (list_length vs); Ret], l + 2).
 
-(* Should this be different than just give_up and we prove that this never happens *)
-(* Maybe just don't include this in the `ec = _ \/ ec = _` post condition *)
-
 (* Store the variables from the stack in the registers, so that they can be
 passed to the function call *)
 Definition c_pops (xs: list exp) (vs: v_stack): asm_appl :=
@@ -314,7 +311,7 @@ Definition c_pops (xs: list exp) (vs: v_stack): asm_appl :=
   if k =? 3 then List [Pop RDI; Pop RDX] else
   if k =? 4 then List [Pop RDI; Pop RDX; Pop RBX] else
   if k =? 5 then List [Pop RDI; Pop RDX; Pop RBX; Pop RBP] else
-  List [Jump Always (give_up (negb (Bool.eqb (even_len xs) (even_len vs))))].
+  List [Jump Always (give_up (even_len xs))].
 
 (** Builds a stack representation for parameters of a function *)
 Function call_v_stack (xs: list name) (acc: v_stack): v_stack :=
@@ -380,7 +377,7 @@ Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) 
     let/d target := lookup fs f in
     let/d '(asms, l1) := c_exps es l vs in
     let/d '(asm1, l2) := c_call vs target es l1 in
-    let/d '(asm2, l3) := c_var n l2 vs in
+    let/d '(asm2, l3) := c_assign n l2 vs in
     (asms +++ asm1 +++ asm2, l3)
   | Return e =>
     let/d '(asm1, l1) := c_exp e l vs in
@@ -443,17 +440,35 @@ Function make_vs_from_binders (binders: list name): v_stack :=
   | b :: binders => (Some b) :: make_vs_from_binders binders
   end.
 
+Function filter_name (a: name) (l: list name): list name :=
+  match l with
+  | nil => nil
+  | x :: xs =>
+    if (a =? x)%N then filter_name a xs
+    else x :: filter_name a xs
+  end.
+
+Function remove_names (l1 l2: list name): list name :=
+  match l1 with
+  | nil => l2
+  | x :: xs => remove_names xs (filter_name x l2)
+  end.
+
+Definition c_declare_binders (v_names: list name) (body: cmd): (asm_appl * v_stack) :=
+  let/d binders := unique_binders body in
+  let/d binders_no_params := remove_names v_names binders in
+  let/d vs_binders := make_vs_from_binders binders_no_params in
+  (* Make sure that at the start of every command vs (the stack) is odd *)
+  let/d vs_binders1 := if even_len (list_append v_names binders_no_params) then list_append vs_binders [None] else vs_binders in
+  (List [Sub_RSP (list_length vs_binders1)], vs_binders1).
+
 (** Compiles a single function definition into assembly code. *)
 Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
   match fundef with
   | Func n v_names body =>
-    let/d '(asm0, vs0, l0) := c_pushes v_names l in
-    let/d binders := unique_binders body in
-    let/d vs_binders := make_vs_from_binders binders in
-    (* Make sure that at the start of every command vs (the stack) is odd *)
-    let/d vs_binders1 := if even_len vs_binders then vs_binders else list_append vs_binders [None] in
-    let/d asm1 := List [Sub_RSP (list_length vs_binders1)] in
-    let/d '(asm2, l2) := c_cmd body (l0 + 1) fs (list_append vs_binders1 vs0) in
+    let/d '(asm0, vs_binders1) := c_declare_binders v_names body in
+    let/d '(asm1, vs1, l1) := c_pushes v_names (l + app_list_length asm0) in
+    let/d '(asm2, l2) := c_cmd body l1 fs (list_append vs1 vs_binders1) in
     (asm0 +++ asm1 +++ asm2, l2)
   end.
 

@@ -276,27 +276,11 @@ Proof.
   - eapply steps_trans; eauto.
 Qed.
 
-Theorem step_determ: forall x y z,
-  step x y ∧ step x z -> y = z.
-Proof.
-Admitted.
-
-Theorem steps_determ: forall s fuel s1 s2 e1 e2 o1 o2,
-  steps (s, fuel) (Halt e1 o1, s1) ->
-  steps (s, fuel) (Halt e2 o2, s2) ->
-  e1 = e2 /\ o1 = o2.
-Proof.
-Admitted.
-
-Theorem step_mono: forall s0 s1,
-  step (State s0) (State s1) -> prefix s0.(output) s1.(output) = true.
-Proof.
-Admitted.
-
 Definition can_write_mem_at (m : word64 -> option (option word64)) (a : word64) : Prop :=
   m a = Some None.
 
 Definition memory_writable (r14 r15 : word64) (m : word64 -> option (option word64)) : Prop :=
+  (* TODO: change to word.ltu r15 r14 = false *)
   (word.ltu r14 r15 = true \/ word.eqb r14 r15 = true) /\
   word.eqb (word.modu r14 (word.of_Z 8)) (word.of_Z 0) = true /\
   word.eqb (word.modu r15 (word.of_Z 8)) (word.of_Z 0) = true /\

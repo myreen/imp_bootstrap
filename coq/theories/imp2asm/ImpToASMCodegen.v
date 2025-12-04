@@ -320,11 +320,17 @@ Function call_v_stack (xs: list name) (acc: v_stack): v_stack :=
   | x :: xs' => call_v_stack xs' (Some x :: acc)
   end.
 
+Definition c_pushes_vs (v_names: list name): list (option name) :=
+  match v_names with
+  | [] => [None]
+  | _ => call_v_stack v_names (@nil (option name))
+  end.
+
 (** Push a list of variables onto the stack *)
 Definition c_pushes (v_names: list name) (l: nat): (asm_appl * v_stack * nat) :=
   let/d k := list_length v_names in
-  let/d e := call_v_stack v_names (@nil (option name)) in
-  if k =? 0 then (List [], [None], l) else
+  let/d e := c_pushes_vs v_names in
+  if k =? 0 then (List [], e, l) else
   if k =? 1 then (List [], e, l) else
   if k =? 2 then (List [Push RDI], e, l + 1) else
   if k =? 3 then (List [Push RDX; Push RDI], e, l + 2) else
@@ -459,7 +465,8 @@ Definition c_declare_binders (v_names: list name) (body: cmd): (asm_appl * v_sta
   let/d binders_no_params := remove_names v_names binders in
   let/d vs_binders := make_vs_from_binders binders_no_params in
   (* Make sure that at the start of every command vs (the stack) is odd *)
-  let/d vs_binders1 := if even_len (list_append v_names binders_no_params) then list_append vs_binders [None] else vs_binders in
+  let/d vs_after_pushes := list_append (c_pushes_vs v_names) vs_binders in
+  let/d vs_binders1 := if even_len vs_after_pushes then list_append vs_binders [None] else vs_binders in
   (List [Sub_RSP (list_length vs_binders1)], vs_binders1).
 
 (** Compiles a single function definition into assembly code. *)

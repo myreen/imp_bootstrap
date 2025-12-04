@@ -4828,6 +4828,16 @@ Proof.
   intros; eapply all_In_add_remove; eauto.
 Qed.
 
+Lemma binders_ok_rev_append: forall c vs1 vs2,
+  binders_ok c (vs1 ++ vs2) ->
+    binders_ok c (rev vs1 ++ vs2).
+Proof.
+  induction c; intros; simpl in *; cleanup; eauto.
+  all: rewrite in_app_iff in *; cleanup.
+  all: spat `_ \/ _` at destruct spat; eauto.
+  all: left; rewrite <- in_rev; eauto.
+Qed.
+
 Definition ARGS_REGS := [RDI;RDX;RBX;RBP].
 
 Definition write_reg r (w: word64) rgs :=
@@ -5047,13 +5057,36 @@ Proof.
   simpl; split; eauto.
 Qed.
 
+Lemma list_rel_length_same : forall [A B] (R: A -> B -> Prop) l l1,
+  list_rel R l l1 -> List.length l = List.length l1.
+Proof.
+  induction l; intros; simpl in *; eauto; cleanup.
+  all: destruct l1; simpl in *; cleanup; eauto.
+Qed.
+
+Ltac crunch_ienv :=
+  repeat match goal with
+  | _ => progress eauto
+  | _ => progress cleanup
+  | H : IEnv.lookup (IEnv.insert (?n, _) _) ?n = _ |- _ =>
+    rewrite IEnv.lookup_insert_eq in H
+  | H : IEnv.lookup (IEnv.insert (?n1, _) _) ?n2 = _, H1: ?n1 <> ?n2 |- _ =>
+    rewrite IEnv.lookup_insert_neq in H
+  | H: IEnv.lookup IEnv.empty ?n = _ |- _ =>
+    rewrite IEnv.lookup_empty in H
+  | H: IEnv.lookup (IEnv.insert (?n1, _) _) ?n2 = _ |- _ =>
+    destruct (N.eqb n1 n2) eqn:?; rewrite ?N.eqb_eq, ?N.eqb_neq in *; subst; cleanup
+  | _ =>
+    solve [crunch_side_conditions; spat `_ = w` at rewrite <- spat; simpl; eauto; congruence]
+  end.
+
 Lemma pushes_thm: forall t fs s fuel params args ws rest pos c vs1 l1 w rgs pmap, 
   c_pushes params pos = (c, vs1, l1) ->
   code_in t.(pc) (flatten c) t.(instructions) ->
   t.(regs) = pops_regs ws rgs ->
   t.(stack) = rest -> List.length params ≤ 5 ->
   t.(regs) RAX = Some w ->
-  (* (ws ≠ [] -> List.last ws (word.of_Z 0) = w) -> *)
+  (ws ≠ [] -> List.last ws (word.of_Z 0) = w) ->
   list_rel (v_inv pmap) args ws ->
   List.length ws = List.length params ->
   state_rel fs s t ->
@@ -5066,10 +5099,123 @@ Lemma pushes_thm: forall t fs s fuel params args ws rest pos c vs1 l1 w rgs pmap
     state_rel fs s t5 ∧
     t5.(instructions) = t.(instructions) ∧
     r14_mono (regs t R14) (regs t5 R14)  ∧
-    mem_inv pmap t5.(memory) s.(ImpSemantics.memory) ∧
-    vs1 = map Some params.
+    t5.(memory) = t.(memory) ∧
+    vs1 = c_pushes_vs params.
 Proof.
-Admitted.
+  Transparent nth_error.
+  intros.
+  unfold c_pushes, dlet, pops_regs in *.
+  repeat (rewrite list_length_spec in *).
+  destruct params eqn:?; simpl in *; subst; cleanup.
+  1: {
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence).
+    spat `list_rel _ _ _` at specialize list_rel_length_same with (1 := spat) as ?; subst.
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence); cleanup.
+    exists [Word w]; eexists; split.
+    1: eapply steps_refl.
+    crunch_side_conditions.
+    unfold env_ok; crunch_side_conditions.
+    intros; rewrite IEnv.lookup_empty in *; congruence.
+  }
+  destruct (List.length _ =? _) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; cleanup.
+  1: {
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence).
+    spat `list_rel _ _ _` at specialize list_rel_length_same with (1 := spat) as ?; subst.
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence); cleanup.
+    exists [Word w]; eexists; split.
+    1: eapply steps_refl.
+    crunch_side_conditions.
+    unfold env_ok; crunch_side_conditions; intros.
+    crunch_ienv.
+  }
+  destruct (List.length _ =? _) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; cleanup.
+  1: {
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence).
+    spat `list_rel _ _ _` at specialize list_rel_length_same with (1 := spat) as ?; subst.
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence); cleanup.
+    exists [Word w; Word w0]; eexists; split.
+    1: {
+      eapply steps_step_same.
+      eapply step_push; eauto.
+      unfold inc, write_reg in *; simpl in *.
+      pat `regs t = _` at rewrite pat; simpl; reflexivity.
+    }
+    crunch_side_conditions.
+    unfold env_ok; crunch_side_conditions; intros.
+    crunch_ienv.
+  }
+  destruct (List.length _ =? _) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; cleanup.
+  1: {
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence).
+    spat `list_rel _ _ _` at specialize list_rel_length_same with (1 := spat) as ?; subst.
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence); cleanup.
+    exists [Word w; Word w1; Word w0]; eexists; split.
+    1: {
+      unfold inc, write_reg in *; simpl in *.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_push; eauto.
+      1: pat `regs t = _` at rewrite pat; simpl; reflexivity.
+      eapply steps_step_same.
+      eapply step_push; eauto; simpl.
+      pat `regs t = _` at rewrite pat; simpl; reflexivity.
+    }
+    crunch_side_conditions.
+    unfold env_ok; crunch_side_conditions; intros.
+    crunch_ienv.
+  }
+  destruct (List.length _ =? _) eqn:?; rewrite ?Nat.eqb_eq, ?Nat.eqb_neq in *; cleanup.
+  1: {
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence).
+    spat `list_rel _ _ _` at specialize list_rel_length_same with (1 := spat) as ?; subst.
+    repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence); cleanup.
+    exists [Word w; Word w2; Word w1; Word w0]; eexists; split.
+    1: {
+      unfold inc, write_reg in *; simpl in *.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_push; eauto.
+      1: pat `regs t = _` at rewrite pat; simpl; reflexivity.
+      eapply steps_trans.
+      1: eapply steps_step_same.
+      1: eapply step_push; eauto; simpl.
+      1: pat `regs t = _` at rewrite pat; simpl; reflexivity.
+      eapply steps_step_same.
+      eapply step_push; eauto; simpl.
+      pat `regs t = _` at rewrite pat; simpl; reflexivity.
+    }
+    crunch_side_conditions.
+    unfold env_ok; crunch_side_conditions; intros.
+    crunch_ienv.
+  }
+  repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence; try lia).
+  spat `list_rel _ _ _` at specialize list_rel_length_same with (1 := spat) as ?; subst.
+  repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence; try lia); cleanup.
+  exists [Word w; Word w3; Word w2; Word w1; Word w0]; eexists; split.
+  1: {
+    unfold inc, write_reg in *; simpl in *.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_push; eauto.
+    1: pat `regs t = _` at rewrite pat; simpl; reflexivity.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_push; eauto; simpl.
+    1: pat `regs t = _` at rewrite pat; simpl; reflexivity.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_push; eauto; simpl.
+    1: pat `regs t = _` at rewrite pat; simpl; reflexivity.
+    eapply steps_step_same.
+    eapply step_push; eauto; simpl.
+    pat `regs t = _` at rewrite pat; simpl; reflexivity.
+  }
+  crunch_side_conditions.
+  unfold env_ok; crunch_side_conditions; intros.
+  crunch_ienv.
+  crunch_side_conditions.
+  eauto 6.
+Qed.
 
 Theorem eval_exps_length: forall xs s args s1,
   eval_exps xs s = (Cont args,s1) ->
@@ -5188,6 +5334,31 @@ Proof.
   destruct s; simpl; reflexivity.
 Qed.
 
+Lemma call_v_stack_spec: forall vs acc,
+  call_v_stack vs acc = rev (map Some vs) ++ acc.
+Proof.
+  induction vs; intros; simpl in *; eauto.
+  rewrite <- app_assoc; eauto.
+Qed.
+
+Lemma hd_app: forall [A] (l1 l2: list A) (d: A),
+  l1 <> nil ->
+    hd d (l1 ++ l2) = hd d l1.
+Proof.
+  destruct l1; intros; simpl in *; try congruence; eauto.
+Qed.
+
+Lemma last_eq_head_rev: forall [A] (l: list A) (d: A),
+  List.last l d = hd d (rev l).
+Proof.
+  induction l; intros; simpl; eauto.
+  Opaque last.
+  destruct l; simpl; eauto.
+  rewrite IHl; simpl; eauto.
+  symmetry; rewrite hd_app; eauto.
+  destruct (rev l); simpl; congruence.
+Qed.
+
 Theorem c_cmd_Call: forall (n: name) (f: name) (es: list exp) (fuel: nat)
   (IH: ∀ m : nat, m < fuel → ∀ c : cmd, goal_cmd c m),
   goal_cmd (ImpSyntax.Call n f es) fuel.
@@ -5275,9 +5446,16 @@ Proof.
   specialize pops_regs_rw with (ws := x) (rgs := regs s) as ?; cleanup.
   spat `c_pushes` at pose proof spat as Htmp; eapply pushes_thm with 
     (t := (set_pc _ (set_stack (map (λ _ : option N, Uninit) vs_body ++ (RetAddr (pc s + Datatypes.length (flatten (c_pops es vs)) + 1) :: curr ++ rest)) (set_regs (pops_regs x s.(regs)) s))))
-    (fuel := s1.(steps_done) - s0.(steps_done) - 1) in Htmp; simpl; eauto; cleanup.
-  all: try lia.
-  2: pat `regs s RAX = _` at rewrite <- pat in *; cleanup; eauto.
+    (fuel := s1.(steps_done) - s0.(steps_done) - 1) in Htmp; simpl; cleanup.
+  6: pat `regs s RAX = _` at rewrite <- pat in *; cleanup; eauto.
+  all: eauto; try lia.
+  2: {
+    intros.
+    destruct (rev x) eqn:?; simpl in *; try congruence.
+    1: destruct x; simpl in *; cleanup; try congruence; pat `_ ++ _ = []` at eapply app_eq_nil in pat; cleanup; congruence.
+    pat `Word _ :: _ = Word _ :: _` at inversion pat; subst; simpl; eauto.
+    rewrite last_eq_head_rev; pat `rev _ = _` at rewrite pat; simpl; eauto.
+  }
   2: crunch_side_conditions.
   all: try (lazymatch goal with
   | H: pops_regs _ (regs ?s) ?r = _ |- pops_regs _ (regs ?s) ?r = _ => rewrite H; eauto
@@ -5330,16 +5508,22 @@ Proof.
   all: simpl; pat `pops_regs x _ R14 = _` at rewrite pat in *; eauto.
   all: pat `pc x9 = _` at rewrite <- pat in *.
   2: subst; eauto.
+  5: pat `memory x9 = _` at rewrite <- pat in *; eauto.
   (* pmap_in_bounds *)
   5: eapply r14_mono_IMP_pmap_in_bounds; eauto; eapply r14_mono_trans; solve [eauto].
   (* code_in *)
   7: pat `steps _ (State x9, _)` at simpl; specialize steps_instructions with (1 := pat) as Htmp; simpl in Htmp; rewrite <- Htmp in *; subst; solve [eauto].
   3: { (* binders_ok *)
     pat `l0 = _` at rewrite pat in *.
-    destruct even.
-    1: rewrite app_assoc; eapply binders_ok_append.
-    all: eapply binders_ok_add_remove.
-    all: eapply binders_ok_unique_binders.
+    Opaque call_v_stack remove_names.
+    destruct l; unfold c_pushes_vs; destruct even; simpl in *.
+    all: try eapply binders_ok_append2 with (b1 := [None]).
+    all: try eapply binders_ok_append with (b2 := [None]).
+    all: try (rewrite app_assoc; eapply binders_ok_append with (b2 := [None])).
+    all: rewrite ?call_v_stack_spec, ?app_nil_r.
+    all: try eapply binders_ok_rev_append.
+    all: try eapply binders_ok_add_remove.
+    all: try eapply binders_ok_unique_binders.
   }
   (* env_ok*)
   2: eapply env_ok_append_r; eauto; rewrite ?length_map; simpl; subst; solve [eauto].
@@ -5359,10 +5543,12 @@ Proof.
   2: {
     subst vs_body l0.
     unfold env_ok in *; cleanup.
-    rewrite length_app, length_map, make_vs_from_binders_spec; simpl.
+    rewrite length_app, length_map, make_vs_from_binders_spec in *; simpl.
     destruct even eqn:?; rewrite ?length_map, ?length_app, ?length_map in *; simpl.
+    all: spat `even` at rewrite spat.
     all: pat `_ = List.length x8` at rewrite <- pat; simpl in *.
-    1: rewrite Nat.add_assoc, Nat.add_1_r, Nat.odd_succ; eauto.
+    all: rewrite ?length_map, ?length_app, ?length_map in *; simpl in *.
+    all: try rewrite Nat.add_assoc, Nat.add_1_r, Nat.odd_succ in *; eauto.
     rewrite <- Nat.negb_even; pat `even _ = false` at rewrite pat; eauto.
   }
   pat `let (_, _) := ?x in _` at destruct x.
@@ -5496,8 +5682,9 @@ Proof.
   | |- goal_cmd (ImpSyntax.GetChar _) _ => eapply c_cmd_GetChar; eauto
   | |- goal_cmd (ImpSyntax.PutChar _) _ => eapply c_cmd_PutChar; eauto
   | |- goal_cmd (Alloc _ _) _ => eapply c_cmd_Alloc; eauto
+  | |- goal_cmd (ImpSyntax.Call _ _ _) _ => eapply c_cmd_Call; eauto
   end.
-Admitted.
+Qed.
 
 Definition init_state_ok_def (t: ASMSemantics.state) (input: llist ascii) (asm: asm) :=
   ∃r14 r15,
@@ -5780,6 +5967,7 @@ Proof.
   Transparent nth_error.
   unfold codegen, dlet in *.
   Opaque name_of_string.
+  Transparent remove_names.
   repeat rewrite app_list_length_spec in *.
   repeat rewrite list_append_spec in *.
   repeat rewrite list_length_spec in *.
@@ -5812,9 +6000,8 @@ Proof.
   remember (lookup l _) as lookup_main_l.
   repeat rewrite list_append_spec in *.
   repeat rewrite list_length_spec in *.
+  pat `c_cmd _ _ _ ([None] ++ ?vs) = _` at remember vs as vs_binders.
   repeat (rewrite code_in_append in *; simpl in * ); cleanup.
-  rewrite Nat.add_0_r in *.
-  remember (if even_len _ then _ else _) as vs_binders.
   pose proof c_cmd_correct as Hccorrect; unfold goal_cmd in Hccorrect.
   eapply Hccorrect with (curr := (Word (word.of_Z 0)) :: (List.map (fun _ => Uninit) vs_binders)) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
   all: simpl in *.
@@ -5974,17 +6161,29 @@ Proof.
       repeat split; eauto.
   }
   2: { (* binders_ok *)
+    assert (None :: vs_binders = [None] ++ vs_binders) as -> by (simpl; congruence).
+    eapply binders_ok_append2.
     pat `vs_binders = _` at rewrite pat.
-    eapply binders_ok_append.
-    destruct even_len; try eapply binders_ok_append.
+    destruct (make_vs_from_binders) eqn:?.
+    all: pat `make_vs_from_binders _ = _` at rewrite <- pat.
+    2: destruct even_len.
+    2: eapply binders_ok_append.
     all: eapply binders_ok_unique_binders.
   }
   6: unfold odd, even; reflexivity.
   6: {
-    subst; destruct even_len eqn:?; rewrite even_len_spec, length_map, ?length_app, ?Nat.add_1_r in *; rewrite Nat.odd_succ; rewrite ?Nat.even_succ, <- ?Nat.negb_even.
+    pat `vs_binders = _` at rewrite pat.
+    destruct (make_vs_from_binders) eqn:?.
+    all: rewrite length_map; simpl; eauto.
+    rewrite app_comm_cons.
+    destruct even_len eqn:?.
+    all: rewrite ?length_app; simpl; rewrite ?Nat.add_1_r.
+    all: rewrite even_len_spec in *.
+    all: rewrite Nat.odd_succ_succ, ?Nat.odd_succ, <- ?Nat.negb_even.
     all: pat `even _ = _` at rewrite pat; reflexivity.
   }
   6: { (* code_in *)
+    rewrite Nat.add_0_r in *.
     pat `lookup_main_l = _` at rewrite <- pat.
     pat `instructions t = _` at rewrite pat.
     eauto.
@@ -6000,7 +6199,7 @@ Proof.
     Opaque init.
     repeat split.
     1: pat `vs_binders = _` at rewrite pat.
-    1: rewrite length_app; simpl in *; rewrite length_map; lia.
+    1: simpl in *; rewrite length_map; lia.
     all: rewrite IEnv.lookup_empty in *; cleanup.
   }
   2: { (* pmap_in_memory *)

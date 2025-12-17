@@ -1,20 +1,21 @@
 (* From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
 Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.assembly.ASM2String.
+Require Import impboot.assembly.ASMToString.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.utils.AppList.
 Require Import impboot.imp2asm.ImpToASMCodegen.
 From impboot Require Import automation.Ltac2Utils.
 From impboot Require Import functional.FunValues.
 From impboot Require Import functional.FunSemantics.
-Require Import impboot.automation.AutomationHOLStyle.
+Require Import impboot.automation.RelCompiler.
+Require Import impboot.automation.ltac2.UnfoldFix.
 Require Import impboot.automation.AutomationLemmas.
 Require Import coqutil.Word.Interface.
 Require Import ZArith.
-From Coq Require Import FunInd.
-From Coq Require Import derive.Derive.
-From Coq Require Import Lia.
+From Stdlib Require Import FunInd.
+From Stdlib Require Import derive.Derive.
+From Stdlib Require Import Lia.
 From Ltac2 Require Import Ltac2.
 
 Require Import Patat.Patat.
@@ -28,21 +29,6 @@ Open Scope app_list_scope.
 (*       Derivations for Codegen Functions         *)
 (* *********************************************** *)
 
-Theorem c_declare_binders_rec_equation: ltac2:(unfold_fix_type 'c_declare_binders_rec).
-Proof. unfold_fix_proof 'c_declare_binders_rec. Qed.
-Theorem c_exp_equation: ltac2:(unfold_fix_type 'c_exp).
-Proof. unfold_fix_proof 'c_exp. Qed.
-Theorem c_exps_equation: ltac2:(unfold_fix_type 'c_exps).
-Proof. unfold_fix_proof 'c_exps. Qed.
-Theorem c_test_jump_equation: ltac2:(unfold_fix_type 'c_test_jump).
-Proof. unfold_fix_proof 'c_test_jump. Qed.
-Theorem c_cmd_equation: ltac2:(unfold_fix_type 'c_cmd).
-Proof. unfold_fix_proof 'c_cmd. Qed.
-Theorem names_unique_equation: ltac2:(unfold_fix_type 'names_unique).
-Proof. unfold_fix_proof 'names_unique. Qed.
-Theorem c_fundefs_equation: ltac2:(unfold_fix_type 'c_fundefs).
-Proof. unfold_fix_proof 'c_fundefs. Qed.
-
 Opaque encode.
 Opaque name_enc.
 
@@ -51,11 +37,6 @@ Derive init_prog
   as init_prog_proof.
 Proof.
   time relcompile.
-  ltac1:(replace (N.of_nat (2 ^ 63 - 1)) with (2 ^ 63 - 1)%N).
-  1: ltac1:(lia).
-  rewrite Nnat.Nat2N.inj_sub.
-  rewrite Nnat.Nat2N.inj_pow.
-  ltac1:(lia).
 Qed.
 
 Derive list_append_prog
@@ -109,16 +90,16 @@ Qed.
 
 (* Derivations with dependencies *)
 
-Derive even_len_v_stack_prog 
-  in ltac2:(relcompile_tpe 'even_len_v_stack_prog '@even_len []) 
-  as even_len_v_stack_prog_proof.
+Derive even_len_prog 
+  in ltac2:(relcompile_tpe 'even_len_prog '@even_len []) 
+  as even_len_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
-Derive odd_len_v_stack_prog 
-  in ltac2:(relcompile_tpe 'odd_len_v_stack_prog '@odd_len []) 
-  as odd_len_v_stack_prog_proof.
+Derive odd_len_prog 
+  in ltac2:(relcompile_tpe 'odd_len_prog '@odd_len []) 
+  as odd_len_prog_proof.
 Proof.
   time relcompile.
 Qed.
@@ -144,15 +125,72 @@ Proof.
   time relcompile.
 Qed.
 
-Derive c_declare_binders_rec_prog 
-  in ltac2:(relcompile_tpe 'c_declare_binders_rec_prog 'c_declare_binders_rec []) 
-  as c_declare_binders_rec_prog_proof.
+Derive all_binders_prog 
+  in ltac2:(relcompile_tpe 'all_binders_prog 'all_binders ['@list_append]) 
+  as all_binders_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive names_contain_prog 
+  in ltac2:(relcompile_tpe 'names_contain_prog 'names_contain []) 
+  as names_contain_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive names_unique_prog 
+  in ltac2:(relcompile_tpe 'names_unique_prog 'names_unique ['names_contain]) 
+  as names_unique_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive unique_binders_prog 
+  in ltac2:(relcompile_tpe 'unique_binders_prog 'unique_binders ['all_binders; 'names_unique]) 
+  as unique_binders_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive make_vs_from_binders_prog 
+  in ltac2:(relcompile_tpe 'make_vs_from_binders_prog 'make_vs_from_binders []) 
+  as make_vs_from_binders_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive filter_name_prog 
+  in ltac2:(relcompile_tpe 'filter_name_prog 'filter_name []) 
+  as filter_name_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive remove_names_prog 
+  in ltac2:(relcompile_tpe 'remove_names_prog 'remove_names ['filter_name]) 
+  as remove_names_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive call_v_stack_prog 
+  in ltac2:(relcompile_tpe 'call_v_stack_prog 'call_v_stack []) 
+  as call_v_stack_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive c_pushes_vs_prog 
+  in ltac2:(relcompile_tpe 'c_pushes_vs_prog 'c_pushes_vs ['@list_length; 'call_v_stack]) 
+  as c_pushes_vs_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_declare_binders_prog 
-  in ltac2:(relcompile_tpe 'c_declare_binders_prog 'c_declare_binders ['c_declare_binders_rec]) 
+  in ltac2:(relcompile_tpe 'c_declare_binders_prog 'c_declare_binders
+    ['unique_binders; 'remove_names; 'make_vs_from_binders; '@list_append; 'c_pushes_vs; '@even_len; '@list_length]) 
   as c_declare_binders_prog_proof.
 Proof.
   time relcompile.
@@ -270,15 +308,8 @@ Proof.
   time relcompile.
 Qed.
 
-Derive call_v_stack_prog 
-  in ltac2:(relcompile_tpe 'call_v_stack_prog 'call_v_stack []) 
-  as call_v_stack_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
 Derive c_pushes_prog 
-  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_v_stack; '@list_length]) 
+  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_v_stack; '@list_length; 'c_pushes_vs]) 
   as c_pushes_prog_proof.
 Proof.
   time relcompile.
@@ -301,44 +332,9 @@ Proof.
   time relcompile.
 Qed.
 
-Derive all_binders_prog 
-  in ltac2:(relcompile_tpe 'all_binders_prog 'all_binders ['@list_append]) 
-  as all_binders_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive names_contain_prog 
-  in ltac2:(relcompile_tpe 'names_contain_prog 'names_contain []) 
-  as names_contain_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive names_unique_prog 
-  in ltac2:(relcompile_tpe 'names_unique_prog 'names_unique ['names_contain]) 
-  as names_unique_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive unique_binders_prog 
-  in ltac2:(relcompile_tpe 'unique_binders_prog 'unique_binders ['all_binders; 'names_unique]) 
-  as unique_binders_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive make_vs_from_binders_prog 
-  in ltac2:(relcompile_tpe 'make_vs_from_binders_prog 'make_vs_from_binders []) 
-  as make_vs_from_binders_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
 Derive c_fundef_prog 
   in ltac2:(relcompile_tpe 'c_fundef_prog 'c_fundef 
-    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd; '@list_length; '@list_append; '@even_len]) 
+    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd; '@list_length; '@list_append; '@even_len; 'c_declare_binders; '@app_list_length]) 
   as c_fundef_prog_proof.
 Proof.
   time relcompile.
@@ -406,74 +402,10 @@ Proof.
   time relcompile.
 Qed.
 
-(* *********************************************** *)
-(*  Derivations for ASM to String Conversion      *)
-(* *********************************************** *)
-
-Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
-Proof. unfold_fix_proof 'num2str_f. Qed.
-
-Theorem clean_equation: ltac2:(unfold_fix_type 'clean).
-Proof. unfold_fix_proof 'clean. Qed.
-
-Theorem instrs2str_equation: ltac2:(unfold_fix_type 'instrs2str).
-Proof. unfold_fix_proof 'instrs2str. Qed.
-
-Set Printing Depth 100000.
-
-Derive reg2str_prog
-  in ltac2:(relcompile_tpe 'reg2str_prog 'reg2str ['String.append])
-  as reg2str_prog_proof.
+(* Derive codegen_test_prog
+  in (forall s p input,
+    FEnv.empty |-- ([FunSyntax.get_main codegen_test_prog], (init_state input (FunSyntax.get_defs codegen_test_prog))) ---> ([encode (codegen p)],  s)
+  )
+  as codegen_test_prog_proof.
 Proof.
-  time relcompile.
-Qed.
-
-Derive num2str_f_prog
-  in ltac2:(relcompile_tpe 'num2str_f_prog 'num2str_f ['nat_modulo])
-  as num2str_f_prog_proof.
-Proof.
-  (* when fuel := 0 it compiles `10` as `S (S (... fuel))` *)
-  time relcompile.
-Qed.
-
-Derive num2str_prog
-  in ltac2:(relcompile_tpe 'num2str_prog 'num2str ['num2str_f])
-  as num2str_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive lab_prog
-  in ltac2:(relcompile_tpe 'lab_prog 'lab ['num2str])
-  as lab_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive clean_prog
-  in ltac2:(relcompile_tpe 'clean_prog 'clean [])
-  as clean_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive inst2str_prog
-  in ltac2:(relcompile_tpe 'inst2str_prog 'inst2str ['reg2str; 'num2str; 'lab; 'clean])
-  as inst2str_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive instrs2str_prog
-  in ltac2:(relcompile_tpe 'instrs2str_prog 'instrs2str ['lab; 'inst2str])
-  as instrs2str_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive asm2str_prog
-  in ltac2:(relcompile_tpe 'asm2str_prog 'asm2str ['instrs2str])
-  as asm2str_prog_proof.
-Proof.
-  time relcompile.
-Qed. *)
+  subst codegen_test_prog; intros. *) *)

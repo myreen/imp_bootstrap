@@ -7,8 +7,10 @@ Require Import coqutil.Word.Interface.
 Require Import impboot.imp2asm.ImpToASMCodegen.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.imperative.ImpSemantics.
+Require Import impboot.imperative.ImpProperties.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.assembly.ASMSemantics.
+Require Import impboot.assembly.ASMProperties.
 
 Require Import Stdlib.Program.Equality.
 
@@ -291,6 +293,7 @@ Definition goal_test (tst: test): Prop :=
     env_ok s.(vars) vs curr pmap ->
     has_stack t (curr ++ rest) ->
     mem_inv pmap t.(memory) s.(ImpSemantics.memory) ->
+    (exists r14, pmap_in_bounds pmap (Some r14)) ->
     pmap_in_memory pmap s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
     odd (List.length rest) = true ->
@@ -652,7 +655,7 @@ Qed.
 Theorem list_append_spec: ∀ {A: Type} (l1 l2: list A),
   list_append l1 l2 = l1 ++ l2.
 Proof.
-  induction l1; simpl; eauto.
+  induction l1; simpl; unfold dlet; simpl; eauto.
   intros; f_equal; eauto.
 Qed.
 
@@ -724,13 +727,13 @@ Qed.
 Theorem list_length_spec: forall {A: Type} (l: list A),
   list_length l = List.length l.
 Proof.
-  induction l; simpl; eauto.
+  induction l; simpl; unfold dlet; simpl; eauto.
 Qed.
 
 Theorem app_list_length_spec: forall {A} (l: app_list A),
   app_list_length l = List.length (flatten l).
 Proof.
-  induction l; simpl; [rewrite list_length_spec|]; eauto.
+  induction l; simpl; unfold dlet; [rewrite list_length_spec|]; eauto.
   rewrite IHl1; rewrite IHl2.
   rewrite list_append_spec.
   rewrite length_app.
@@ -789,167 +792,6 @@ Proof.
       rewrite Nat.add_assoc in H0.
       eauto.
 Qed.
-
-(* Lemma code_in_append_2: forall n xs code1 code2,
-  code_in n xs (code1 ++ code2) <->
-    (code_in n xs code ∧ code_in (n + List.length xs) ys code). *)
-
-Theorem eval_exp_not_stop: forall e s res s1 v,
-  eval_exp e s = (res, s1) ->
-  res ≠ Stop Crash ->
-  res <> Stop v.
-Proof.
-  induction e; intros.
-  all: simpl eval_exp in *.
-  all: unfold lookup_var, bind in *; unfold_outcome; simpl in *.
-  - destruct (IEnv.lookup (vars s) n) eqn:?.
-    all: inversion H; subst; congruence.
-  - congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct o eqn:?.
-    2: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; inversion H3; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct o0 eqn:?.
-    2: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; inversion H3; subst; eauto.
-    unfold combine_word in *.
-    destruct v0; unfold_outcome.
-    2: congruence.
-    destruct v1; unfold_outcome.
-    all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct o eqn:?.
-    2: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; inversion H3; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct o0 eqn:?.
-    2: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; inversion H3; subst; eauto.
-    unfold combine_word in *.
-    destruct v0; unfold_outcome.
-    2: congruence.
-    destruct v1; unfold_outcome.
-    all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct o eqn:?.
-    2: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; inversion H3; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct o0 eqn:?.
-    2: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; inversion H3; subst; eauto.
-    destruct (value_eqb v1 (ImpSyntax.Word (Naive.wrap 0))) eqn:?.
-    1: congruence.
-    unfold combine_word in *.
-    destruct v0; unfold_outcome.
-    2: congruence.
-    destruct v1; unfold_outcome.
-    all: congruence.
-  - destruct (eval_exp e1 s) eqn:?; destruct o eqn:?.
-    2: unfold not; intros; inversion H; subst; eapply IHe1 in Heqp; inversion H3; subst; eauto.
-    destruct (eval_exp e2 s0) eqn:?; destruct o0 eqn:?.
-    2: unfold not; intros; inversion H; subst; eapply IHe2 in Heqp0; inversion H3; subst; eauto.
-    unfold mem_load in *.
-    destruct v0; unfold_outcome.
-    1: congruence.
-    destruct v1; unfold_outcome.
-    2: congruence.
-    destruct (negb (w2n w mod 8 =? 0)) eqn:?.
-    1: congruence.
-    destruct (nth_error (ImpSemantics.memory s2) i) eqn:?.
-    2: congruence.
-    destruct (nth_error _ (w2n w / 8)) eqn:?.
-    2: congruence.
-    destruct o1 eqn:?.
-    all: congruence.
-Qed.
-
-Theorem eval_exps_not_stop: forall es s res s1 v,
-  eval_exps es s = (res, s1) ->
-  res ≠ Stop Crash ->
-  res <> Stop v.
-Proof.
-  induction es; intros; simpl in *; unfold_outcome; cleanup; try congruence.
-  unfold_monadic.
-  destruct eval_exp eqn:?.
-  destruct eval_exps eqn:?.
-  pat `match ?o with _ => _ end = _` at destruct o; cleanup.
-  2: pat `eval_exp _ _ = _` at eapply eval_exp_not_stop in pat; eauto; congruence.
-  pat `eval_exps _ _ = _` at rename pat into Heval.
-  pat `match ?o with _ => _ end = _` at destruct o; cleanup; try congruence.
-  pat `forall _ _ _, _` at eapply pat in Heval; eauto.
-Qed.
-
-Theorem eval_test_not_stop: forall t s res s1 v,
-  eval_test t s = (res, s1) ->
-  res ≠ Stop Crash ->
-  res <> Stop v.
-Proof.
-  Opaque word.eqb.
-  Opaque word.of_Z.
-  induction t; intros.
-  all: simpl eval_test in *.
-  all: unfold lookup_var, bind in *; unfold_outcome; simpl in *.
-  - destruct eval_exp eqn:?; destruct o eqn:?; cleanup.
-    all: eapply eval_exp_not_stop in Heqp; eauto; try congruence.
-    destruct eval_exp eqn:?; destruct o0 eqn:?; subst; cleanup.
-    all: eapply eval_exp_not_stop in Heqp0; eauto; try congruence.
-    destruct c eqn:?; simpl in *; cleanup.
-    all: destruct v0 eqn:?; destruct v1 eqn:?; subst; cleanup.
-    all: unfold_outcome; cleanup; try congruence.
-    (* destruct (word.eqb w _) eqn:?; cleanup.
-    all: congruence. *)
-  - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
-    2: unfold not; intros; inversion H; subst; eapply IHt1 in Heqp; eauto.
-    destruct (eval_test t2) eqn:?; destruct o eqn:?; subst; cleanup.
-    2: unfold not; intros; inversion H; subst; eapply IHt2 in Heqp0; eauto.
-    congruence.
-  - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
-    2: unfold not; intros; inversion H; subst; eapply IHt1 in Heqp; eauto.
-    destruct (eval_test t2) eqn:?; destruct o eqn:?; subst; cleanup.
-    2: unfold not; intros; inversion H; subst; eapply IHt2 in Heqp0; eauto.
-    congruence.
-  - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
-    2: unfold not; intros; inversion H; subst; eapply IHt in Heqp; eauto.
-    congruence.
-  (* TODO(kπ) Does this imply some sort of error? *)
-  Unshelve.
-  + exact Abort.
-  + exact Abort.
-Qed.
-
-(* Theorem mem_inv_pmap_subsume: forall pmap pmap1 asmm impm,
-  mem_inv pmap asmm impm ->
-  pmap_subsume pmap pmap1 ->
-  mem_inv pmap1 asmm impm.
-Proof.
-  intros.
-  unfold mem_inv in *; cleanup.
-  (* split.
-  1: {
-    split; intros; cleanup.
-    1: {
-      pat `nth_error _ _ = _` at rename pat into Hnth.
-      spat `_ <-> _` at eapply spat in Hnth; eauto; cleanup; eauto.
-    }
-    spat `_ <-> _` at rewrite spat; eexists; eauto.
-    eapply H0.
-    pat `pmap_subsume
-  } *)
-  intros.
-  eapply H in H1; clear H.
-  cleanup.
-  eexists; eauto.
-  split; eauto.
-  intros.
-  eapply H1 in H2; clear H1.
-  cleanup.
-  eexists; eauto.
-  split; eauto.
-  unfold opt_rel in *.
-  destruct xopt eqn:?; destruct x0 eqn:?.
-  1: unfold v_inv in *; simpl; destruct v0 eqn:?; cleanup; eauto.
-  all: try assumption.
-Qed. *)
-
-(* Theorem mem_inv_asmm_IMP: forall pmap (impm : list mem_block) asmm asmm1,
-  mem_inv pmap asmm impm ->
-  mem_inv pmap asmm1 impm.
-Proof.
-  unfold mem_inv; intros; cleanup.
-  eapply H in H0; clear H; cleanup.
-  eexists; split; eauto; intros.
-  eapply H0 in H1; clear H0; cleanup.
-  eexists; split. *)
 
 Theorem memory_set_pc: forall s p,
   memory (set_pc p s) = memory s.
@@ -1021,7 +863,7 @@ Theorem index_of_spec: forall name vs k,
   index_of vs name k = k + index_of vs name 0.
 Proof.
   induction vs; intros; eauto.
-  simpl; destruct a.
+  simpl; unfold dlet; simpl; destruct a.
   - destruct (_ =? _)%N eqn:?; simpl; eauto.
     rewrite IHvs; eapply eq_sym; rewrite IHvs.
     rewrite Nat.add_assoc.
@@ -1044,7 +886,7 @@ Qed.
 Theorem index_of_bounds: forall name vs k,
   index_of vs name k ≤ k + List.length vs.
 Proof.
-  induction vs; intros; simpl.
+  induction vs; intros; simpl; unfold dlet; simpl.
   1: rewrite Nat.add_0_r; constructor.
   simpl; destruct a.
   - destruct (_ =? _)%N eqn:?; simpl; try rewrite IHvs; lia.
@@ -1057,7 +899,7 @@ Proof.
   induction vs; intros; simpl.
   1: rewrite Nat.add_0_r.
   1: split; intros H; [lia|inversion H].
-  simpl; destruct a.
+  simpl; unfold dlet; simpl; destruct a.
   - destruct (_ =? _)%N eqn:?; simpl; split; intros H.
     all: rewrite ?N.eqb_eq in *; subst; eauto.
     all: try lia.
@@ -1093,7 +935,7 @@ Theorem index_of_app: forall name k vs1 vs2,
     index_of vs1 name k = index_of (vs1 ++ vs2) name k.
 Proof.
   intros.
-  induction vs1; simpl in *.
+  induction vs1; simpl in *; unfold dlet in *; simpl in *.
   - inversion H.
   - destruct a.
     + destruct (_ =? _)%N; try reflexivity.
@@ -1122,7 +964,7 @@ Theorem index_of_lbound: forall name vs k,
 Proof.
   induction vs; intros; simpl.
   1: constructor.
-  simpl; destruct a.
+  simpl; unfold dlet; simpl; destruct a.
   - destruct (_ =? _)%N eqn:?; simpl; [constructor|].
     specialize (IHvs (k + 1)).
     lia.
@@ -1138,7 +980,7 @@ Proof.
   induction vs; intros; cleanup.
   - simpl in *; cleanup.
     pat `_ < 0` at inversion pat.
-  - simpl in *.
+  - simpl in *; unfold dlet in *; simpl in *.
     destruct a.
     2: {
       assert (S (index_of vs nm1 k) = i) by (rewrite index_of_spec in *; lia).
@@ -1171,7 +1013,7 @@ Qed.
 Lemma index_of_opt_in_bounds_str: forall nm vs k i,
   index_of_opt vs nm k = Some i -> i < List.length vs + k.
 Proof.
-  induction vs; intros; simpl in *.
+  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
   - destruct (_ =? _)%N eqn:?; cleanup.
@@ -1185,7 +1027,7 @@ Qed.
 Lemma index_of_opt_in_gt_k_str: forall nm vs k i,
   index_of_opt vs nm k = Some i -> i >= k.
 Proof.
-  induction vs; intros; simpl in *.
+  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
   - destruct (_ =? _)%N eqn:?; cleanup.
@@ -1207,7 +1049,7 @@ Qed.
 Lemma index_of_opt_Some_non_empty: forall nm vs k i,
   index_of_opt vs nm k = Some i -> List.length vs > 0.
 Proof.
-  induction vs; intros; simpl in *.
+  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
   - destruct (_ =? _)%N eqn:?; cleanup.
@@ -1221,7 +1063,7 @@ Qed.
 Lemma index_of_opt_Some_index_of: forall nm vs k i,
   index_of_opt vs nm k = Some i -> index_of vs nm k = i.
 Proof.
-  induction vs; intros; simpl in *.
+  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
   - destruct (_ =? _)%N eqn:?; cleanup.
@@ -1235,7 +1077,7 @@ Qed.
 Lemma index_of_opt_Some_any_k: forall nm vs k k1 i,
   index_of_opt vs nm k = Some i -> index_of_opt vs nm (k + k1) = Some (i + k1).
 Proof.
-  induction vs; intros; simpl in *.
+  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
   1: pat `None = Some _` at inversion pat.
   destruct a; cleanup.
   - destruct (_ =? _)%N eqn:?; cleanup.
@@ -1263,8 +1105,8 @@ Lemma index_of_opt_Some_inj: forall vs nm1 nm2 k i,
     nm1 = nm2.
 Proof.
   induction vs; intros; cleanup.
-  - simpl in *; cleanup.
-  - simpl in *.
+  - simpl in *; unfold dlet in *; simpl in *; cleanup.
+  - simpl in *; unfold dlet in *; simpl in *.
     destruct a.
     2: specialize (IHvs _ _ _ _ (conj H H0)); assumption.
     destruct (n =? nm1)%N eqn:?; destruct (n =? nm2)%N eqn:?.
@@ -1310,7 +1152,7 @@ Proof.
   eapply H0 in HLookup; cleanup.
   spat `index_of` at pose proof spat as ?.
   split; eauto; try eexists; try split; try eexists; try split.
-  all: simpl.
+  all: simpl; unfold dlet in *; simpl in *.
   all: try rewrite index_of_spec.
   all: unfold v_inv in *.
   1: eauto.
@@ -1335,24 +1177,6 @@ Theorem pmap_subsume_trans: forall pmap1 pmap2 pmap3,
     pmap_subsume pmap1 pmap3.
 Proof.
   unfold pmap_subsume; intros; eauto.
-Qed.
-
-Theorem mul_div_id: forall n m,
-  n mod m = 0 ->
-  n / m * m = n.
-Proof.
-  intros n m H.
-  destruct m as [|m'].
-  - simpl in H.
-    destruct n.
-    + simpl; reflexivity.
-    + discriminate H.
-  - assert (S m' <> 0) as Hnz by (intro; discriminate).
-    pose proof (Nat.div_mod n (S m') Hnz) as Hdm.
-    rewrite H in Hdm.
-    rewrite Nat.add_0_r in Hdm.
-    rewrite Nat.mul_comm in Hdm.
-    exact (eq_sym Hdm).
 Qed.
 
 Ltac rw tac :=
@@ -1473,7 +1297,7 @@ Proof.
   unfold lookup_var in *.
   unfold state_rel in *; cleanup.
   unfold env_ok in *; cleanup.
-  simpl c_exp in *; unfold c_const in *.
+  simpl c_exp in *; unfold c_const, dlet in *.
   cleanup.
   simpl flatten in *.
   eexists.
@@ -1567,8 +1391,9 @@ Proof.
   intros.
   unfold goal_exp; intros.
   simpl eval_exp in *.
-  simpl c_exp in *; unfold c_add, c_sub, c_div, c_load in *; unfold dlet in *.
+  simpl c_exp in *; unfold c_add, c_sub, c_div, c_load, dlet in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp in *; subst.
+  unfold dlet in *; simpl in *.
   destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
   destruct (eval_exp e2 s0) eqn:?; simpl in *; unfold bind at 1 in H1; rewrite Heqp0 in H1; subst.
@@ -1579,8 +1404,8 @@ Proof.
   2: contradiction.
   destruct v0 eqn:?; unfold_outcome; cleanup; subst.
   2: contradiction.
-  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *.
-  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *.
+  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
@@ -1654,8 +1479,8 @@ Proof.
   2: contradiction.
   destruct v0 eqn:?; unfold_outcome; cleanup; subst.
   2: contradiction.
-  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *.
-  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *.
+  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
@@ -1739,8 +1564,8 @@ Proof.
   unfold value_eqb in *.
   rewrite word.unsigned_eqb in *; rewrite word.unsigned_of_Z in *; simpl word.unsigned in *; unfold word.wrap in *; rewrite Z.mod_0_l in *; [|lia].
   rewrite Heqb in *.
-  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *.
-  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *.
+  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
@@ -1838,8 +1663,8 @@ Proof.
   rewrite negb_false_iff in *; rewrite Nat.eqb_eq in *.
   Opaque Nat.modulo.
   Opaque Nat.div.
-  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *.
-  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *.
+  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
@@ -1936,7 +1761,7 @@ Qed.
 Theorem c_exps_correct: forall es,
   goal_exps es.
 Proof.
-  induction es; intros; unfold goal_exps; intros; simpl in *; unfold_outcome; cleanup.
+  induction es; intros; unfold goal_exps; intros; simpl in *; unfold dlet in *; simpl in *; unfold_outcome; cleanup.
   1: { (* nil *)
     eexists; split.
     1: eapply steps_refl.
@@ -1949,7 +1774,7 @@ Proof.
   unfold dlet in *; cleanup.
   destruct c_exp eqn:?.
   destruct c_exps eqn:?.
-  simpl in *.
+  simpl in *; unfold dlet in *; simpl in *.
   destruct eval_exp eqn:?.
   destruct eval_exps eqn:?.
   pat `match ?o with _ => _ end = _` at destruct o; cleanup.
@@ -2053,6 +1878,7 @@ Theorem c_test_Test_Less: forall (cm : cmp) (e1 e2 : exp),
 Proof.
   intros.
   unfold goal_test; intros.
+  spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
   simpl c_exp in *; unfold c_test_jump in *; unfold dlet in *.
   unfold bind in *.
@@ -2065,8 +1891,8 @@ Proof.
   unfold eval_cmp in *.
   destruct v eqn:?; unfold_outcome; cleanup; subst.
   destruct v0 eqn:?; unfold_outcome; cleanup; subst.
-  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *.
-  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *.
+  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
@@ -2158,9 +1984,10 @@ Theorem c_test_Test_Equal: forall (cm : cmp) (e1 e2 : exp),
   cm = ImpSyntax.Equal ->
   goal_test (Test cm e1 e2).
 Proof.
-  Transparent word.eqb.
+  Opaque word.eqb.
   intros.
   unfold goal_test; intros.
+  spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
   simpl c_exp in *; unfold c_test_jump in *; unfold dlet in *.
   unfold bind in *.
@@ -2171,10 +1998,10 @@ Proof.
   destruct o eqn:?; subst.
   2: eval_exp_contr_stop_tac.
   unfold eval_cmp in *.
-  destruct v eqn:?; unfold_outcome; cleanup; subst.
   destruct v0 eqn:?; unfold_outcome; cleanup; subst.
-  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *.
-  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *.
+  2: destruct v eqn:?; unfold_outcome; cleanup; subst; congruence.
+  destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
@@ -2187,21 +2014,23 @@ Proof.
   unfold exp_res_rel in *; cleanup; subst.
   try steps_inst_tac.
   eval_exp_correct_tac.
-  1: destruct x0; destruct s0; cleanup; subst.
-  all: unfold exp_res_rel in *; cleanup.
-  1: pat `pc s0 = _` at rewrite <- pat in *.
-  all: unfold state_rel in *; cleanup.
-  1: inst_has_stack (Word x :: curr).
-  1: {
-    repeat has_stack_even_tac; cleanup.
-    unfold env_ok in *; cleanup.
-    steps_inst_tac.
-    simpl in *.
-    cleanup; subst.
-    destruct ((Naive.unsigned w) =? (Naive.unsigned w0))%Z eqn:?.
+  2: instantiate (1 := (Word x :: curr)).
+  3: eauto.
+  2: eapply env_ok_add_None; eauto; eapply pmap_subsume_refl.
+  destruct x0; destruct s0; cleanup; subst.
+  unfold exp_res_rel in *; cleanup.
+  pat `pc s0 = _` at rewrite <- pat in *.
+  unfold state_rel in *; cleanup.
+  repeat has_stack_even_tac; cleanup.
+  unfold env_ok in *; cleanup.
+  steps_inst_tac.
+  simpl in *.
+  cleanup; subst.
+  destruct v eqn:?; unfold_outcome; cleanup; subst; rewrite word.unsigned_eqb in *.
+  1: { (* Word *)
+    destruct (word.unsigned w0 =? word.unsigned w)%Z eqn:?; rewrite ?Z.eqb_eq in *.
     1: {
-      eexists.
-      split.
+      eexists; split.
       1: {
         eapply steps_trans.
         1: eauto.
@@ -2225,12 +2054,13 @@ Proof.
       }
       simpl.
       unfold code_rel in *; cleanup; eauto.
-      try rewrite Heqb.
-      simpl.
+      simpl in *; subst.
+      rewrite word.unsigned_eqb in *.
+      rewrite <- Heqb; rewrite Z.eqb_refl.
       crunch_side_conditions.
     }
-    eexists.
-    split.
+    simpl in *; subst.
+    eexists; split.
     1: {
       eapply steps_trans.
       1: eauto.
@@ -2253,19 +2083,53 @@ Proof.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_jump; eauto.
+      1: rewrite word.unsigned_eqb in *.
       1: simpl; rewrite Heqb; eauto.
       1: econstructor; simpl; eauto.
       eapply steps_refl.
     }
     simpl.
     unfold code_rel in *; cleanup; eauto.
-    try rewrite Heqb.
+    rewrite word.unsigned_eqb in *.
+    rewrite Heqb.
     crunch_side_conditions.
   }
-  all: eauto.
-  unfold state_rel in *; cleanup.
-  eapply env_ok_add_None; eauto.
-  eapply pmap_subsume_refl.
+  (* Pointer *)
+  destruct (word.unsigned w =? word.unsigned (word.of_Z 0))%Z eqn:?; rewrite ?Z.eqb_eq in *; cleanup.
+  simpl in *; cleanup.
+  eexists; split.
+  1: {
+    eapply steps_trans.
+    1: eauto.
+    eapply steps_trans.
+    1: eauto.
+    pat `steps _ (State s0, _)` at rw ltac:(specialize steps_instructions with (1 := pat)); eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_mov; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_pop; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_pop; eauto.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_jump; eauto.
+    1: econstructor; simpl; eauto.
+    rewrite word.unsigned_eqb in *.
+    pat `word.unsigned w = _` at rewrite pat.
+    pat `pmap _ = _` at rename pat into Hpmap.
+    spat `pmap_in_bounds` at unfold pmap_in_bounds in spat; eapply spat in Hpmap; cleanup; [|unfold state_rel in *; cleanup; eauto].
+    rewrite word.unsigned_ltu, Z.ltb_lt in *.
+    assert ((word.unsigned x9 =? word.unsigned (word.of_Z 0: word64))%Z = false) as -> by lia.
+    eapply steps_trans.
+    1: eapply steps_step_same.
+    1: eapply step_jump; eauto.
+    1: econstructor; simpl; eauto.
+    eapply steps_refl.
+  }
+  crunch_side_conditions.
 Qed.
 
 Theorem c_test_Test: forall (cm : cmp) (e1 e2 : exp),
@@ -2276,12 +2140,20 @@ Proof.
   - eapply c_test_Test_Equal; reflexivity.
 Qed.
 
+Lemma pmap_in_bounds_set_pc: forall s pmap r14 n,
+  pmap_in_bounds pmap (regs s r14) ->
+  pmap_in_bounds pmap (regs (set_pc n s) r14).
+Proof.
+  unfold pmap_in_bounds; intros; cleanup; eauto.
+Qed.
+
 Theorem c_test_And: ∀ (tst1 tst2 : test),
   goal_test tst1 -> goal_test tst2 ->
   goal_test (ImpSyntax.And tst1 tst2).
 Proof.
   intros.
   unfold goal_test; intros.
+  spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
   simpl c_test_jump in *; unfold dlet in *.
   unfold bind in *.
@@ -2290,8 +2162,8 @@ Proof.
   destruct (eval_test tst2 s0) eqn:?; simpl in *.
   destruct o eqn:?; subst; cleanup.
   unfold_outcome; cleanup.
-  destruct (c_test_jump tst1) eqn:?; simpl in *.
-  destruct (c_test_jump tst2) eqn:?; simpl in *.
+  destruct (c_test_jump tst1) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_test_jump tst2) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_test_pure tst1 _ _ _ Heqp).
   specialize (eval_test_pure tst2 _ _ _ Heqp0).
   intros; subst.
@@ -2377,6 +2249,7 @@ Theorem c_test_Or: ∀ (tst1 tst2 : test),
 Proof.
   intros.
   unfold goal_test; intros.
+  spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
   simpl c_test_jump in *; unfold dlet in *.
   unfold bind in *.
@@ -2386,7 +2259,7 @@ Proof.
   destruct o eqn:?; subst; cleanup.
   unfold_outcome; cleanup.
   destruct (c_test_jump tst1) eqn:?; simpl in *.
-  destruct (c_test_jump tst2) eqn:?; simpl in *.
+  destruct (c_test_jump tst2) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_test_pure tst1 _ _ _ Heqp).
   specialize (eval_test_pure tst2 _ _ _ Heqp0).
   intros; subst.
@@ -2470,6 +2343,7 @@ Theorem c_test_Not: ∀ (tst : test),
 Proof.
   intros.
   unfold goal_test; intros.
+  spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
   simpl c_test_jump in *; unfold dlet in *.
   unfold bind in *.
@@ -2522,7 +2396,7 @@ Theorem c_cmd_Abort: forall (fuel: nat),
   goal_cmd ImpSyntax.Abort fuel.
 Proof.
   unfold goal_cmd; intros.
-  simpl c_cmd in *; cleanup.
+  simpl c_cmd in *; unfold dlet in *; simpl in *; cleanup.
   pat `has_stack _ _` at eapply has_stack_even in pat.
   simpl eval_cmd in *; unfold_outcome; cleanup.
   unfold has_stack in *; cleanup.
@@ -2560,7 +2434,7 @@ Proof.
   simpl c_cmd in *; unfold dlet in *.
   destruct c_exp eqn:?; cleanup.
   unfold_outcome; cleanup.
-  simpl flatten in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; cleanup.
   repeat rewrite list_length_spec in *.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?; cleanup; subst.
   simpl flatten in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
@@ -2803,69 +2677,6 @@ Proof.
   lia.
 Qed.
 
-(* Definition mk_new_curr n x curr vs :=
-  let idx := index_of vs n 0 in
-  list_update idx (Word x) curr.
-
-(* TODO: use this wherever possible *)
-Lemma c_assign_thm: forall n v l l1 fs s vs t x curr rest fuel c pmap,
-  c_assign n l vs = (c, l1) ->
-  In (Some n) vs ->
-  v_inv pmap v x ->
-  env_ok s.(vars) vs curr pmap ->
-  code_in t.(pc) (flatten c) t.(instructions) ->
-  has_stack t (Word x :: (curr ++ rest)) ->
-  state_rel fs s t ->
-  ∃ t1,
-    steps (State t, fuel) (State t1, fuel) ∧
-    has_stack t1 ((mk_new_curr n x curr vs) ++ rest) ∧
-    t1.(pc) = t.(pc) + List.length (flatten c) ∧
-    l1 = l + List.length (flatten c) ∧
-    env_ok (IEnv.insert (n, Some v) s.(vars)) vs (mk_new_curr n x curr vs) pmap ∧
-    state_rel fs s t1 ∧ regs t1 R14 = regs t R14 ∧
-    t1.(instructions) = t.(instructions) ∧
-    t1.(memory) = t.(memory).
-Proof.
-  intros.
-  unfold c_assign, dlet in *; simpl in *; cleanup.
-  unfold mk_new_curr.
-  unfold has_stack in *; cleanup.
-  spat `env_ok` at pose proof spat as Htmp; unfold env_ok in Htmp; cleanup.
-  rewrite <- index_of_In with (k := 0) in *; rewrite Nat.add_0_l in *.
-  destruct curr.
-  1: pat `Datatypes.length _ = Datatypes.length []` at rewrite pat in *; simpl in *; pat `_ < 0` at inversion pat.
-  destruct (index_of vs n 0) eqn:?; simpl in *; cleanup; simpl in *; cleanup.
-  1: {
-    eexists; split.
-    1: {
-      unfold set_stack, write_reg; simpl.
-      eapply steps_step_same.
-      eapply step_pop; eauto.
-    }
-    crunch_side_conditions.
-    intros.
-    eapply env_ok_replace_head; eauto.
-    1: eapply pmap_subsume_refl.
-    lia.
-  }
-  eexists; split.
-  1: {
-    eapply steps_trans.
-    1: eapply steps_step_same.
-    1: eapply step_store_rsp; eauto.
-    1: pat `_ = stack t` at rewrite <- pat in *; rewrite length_cons; rewrite length_app; lia.
-    eapply steps_step_same.
-    eapply step_pop; eauto.
-    simpl; pat `_ = stack t` at rewrite <- pat; reflexivity.
-  }
-  rewrite Nat.sub_0_r.
-  crunch_side_conditions.
-  2: eapply env_ok_replace_list_update; eauto.
-  all: crunch_side_conditions.
-  rewrite list_update_append; eauto.
-  lia.
-Qed. *)
-
 Theorem c_cmd_Assign: forall (n: name) (e: exp) (fuel: nat),
   goal_cmd (ImpSyntax.Assign n e) fuel.
 Proof.
@@ -2875,7 +2686,7 @@ Proof.
   destruct eval_exp eqn:?; cleanup.
   simpl c_cmd in *; unfold dlet, ImpSemantics.assign in *.
   destruct c_exp eqn:?; cleanup.
-  simpl flatten in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; cleanup.
   repeat rewrite list_append_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   destruct o; unfold_outcome; cleanup.
@@ -2980,7 +2791,7 @@ Proof.
   simpl c_cmd in *; unfold dlet in *.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; subst; cleanup.
-  destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; subst; cleanup.
+  destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
   repeat rewrite list_append_spec in *.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ pat)).
@@ -3043,7 +2854,7 @@ Proof.
   Opaque c_cmd.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct (c_test_jump _ _ _ _ _) eqn:?; simpl in *; subst; cleanup.
-  destruct (c_cmd c _ _ _) eqn:?; simpl in *; subst; cleanup.
+  destruct (c_cmd c _ _ _) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
   repeat rewrite list_append_spec in *.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
   spat `c_test_jump` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
@@ -3063,6 +2874,7 @@ Proof.
     2: shelve.
     all: eauto.
     spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
+    2: unfold state_rel in *; cleanup; pat `regs _ R14 = _` at rewrite pat in *; eauto.
     all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
     destruct x eqn:?; destruct s eqn:?; subst; cleanup.
     pat `state_rel _ _ t0` at pose proof pat.
@@ -3099,6 +2911,7 @@ Proof.
     2: shelve.
     all: eauto.
     spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
+    2: unfold state_rel in *; cleanup; pat `regs _ R14 = _` at rewrite pat in *; eauto.
     all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
     destruct x eqn:?; destruct s eqn:?; cleanup; subst.
     assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
@@ -3141,6 +2954,7 @@ Proof.
   2: shelve.
   all: eauto.
   spat `_ -> _` at eauto; eapply spat in Heqp; clear spat; eauto; cleanup.
+  2: unfold state_rel in *; cleanup; pat `regs _ R14 = _` at rewrite pat in *; eauto.
   all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
   destruct x eqn:?; destruct s2 eqn:?; cleanup; subst.
   assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s3))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
@@ -3225,7 +3039,7 @@ Proof.
   all: simpl; eauto.
   2: eapply env_ok_IMP_odd_curr1 with (curr := curr); eauto.
   2: {
-    simpl; repeat rewrite list_append_spec in *; repeat rewrite code_in_append; cleanup; repeat split.
+    simpl; unfold dlet in *; simpl in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append; cleanup; repeat split.
     all: pat `steps (_, _) (State s2, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: pat `steps (_, _) (State s3, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: repeat rewrite Nat.add_1_r; eauto; pat `pc s3 = _` at try rewrite <- pat; eauto.
@@ -3292,6 +3106,7 @@ Proof.
   Transparent c_cmd.
   Transparent eval_cmd.
   unfold goal_cmd; simpl; intros.
+  unfold dlet in *; simpl in *.
   Opaque eval_cmd.
   unfold_outcome; cleanup.
   do 2 eexists.
@@ -3319,7 +3134,7 @@ Proof.
   with_strategy transparent [eval_cmd] simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct c_test_jump eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c1) eqn:?; simpl in *; subst; cleanup.
-  destruct (c_cmd c2) eqn:?; simpl in *; subst; cleanup.
+  destruct (c_cmd c2) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
   repeat rewrite list_append_spec in *.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
   spat `c_test_jump` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
@@ -3333,6 +3148,7 @@ Proof.
     assert (p = pc (set_pc p t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
   spat `eval_test` at specialize (eval_test_pure t _ _ _ spat) as ?; subst.
   spat `eval_test` at specialize c_test_correct as Htmp; unfold goal_test in Htmp; eapply Htmp with (fuel := s1.(steps_done) - s0.(steps_done)) in spat; clear Htmp; eauto; cleanup.
+  2: unfold state_rel in *; cleanup; pat `regs _ R14 = _` at rewrite pat in *; eauto.
   pat `let (_, _) := ?x in _` at destruct x eqn:?; subst; cleanup.
   pat `match ?s with _ => _ end` at destruct s eqn:?; subst; cleanup.
   spat `if ?v then _ else _` at destruct v eqn:?; cleanup; subst.
@@ -3672,7 +3488,7 @@ Proof.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   pat `eval_exp e' _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_exp a _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `c_exp e' _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
@@ -3782,7 +3598,7 @@ Proof.
   destruct c_assign eqn:?; simpl in *; cleanup.
   unfold c_assign, dlet, c_read, dlet in *.
   rewrite app_list_length_spec in *.
-  simpl in *; cleanup.
+  simpl in *; unfold dlet in *; simpl in *; cleanup.
   simpl flatten in *; rewrite list_append_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   spat `env_ok` at pose proof spat as Henv_ok; unfold env_ok in spat; cleanup.
@@ -3974,7 +3790,7 @@ Proof.
   destruct (_ <? _) eqn:?; cleanup; [|congruence].
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `eval_exp e _ = (?r, _)` at
     assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
@@ -4324,7 +4140,7 @@ Proof.
   unfold assign in *; unfold_outcome; cleanup.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `eval_exp e _ = (?r, _)` at
     assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
@@ -4714,7 +4530,7 @@ Qed.
 Lemma binders_ok_all_binders: forall c,
   binders_ok c (make_vs_from_binders (all_binders c)).
 Proof.
-  induction c; simpl in *; eauto.
+  induction c; simpl in *; unfold dlet in *; simpl in *; eauto.
   all: split.
   all: repeat rewrite list_append_spec in *.
   all: rewrite make_vs_from_binders_spec.
@@ -4769,6 +4585,7 @@ Proof.
   all: try split.
   all: unfold unique_binders, dlet in *; simpl.
   all: eapply binders_ok_names_unique.
+  all: unfold dlet in *; simpl in *.
   all: repeat rewrite list_append_spec in *.
   all: rewrite make_vs_from_binders_spec; rewrite map_app.
   1,3: eapply binders_ok_append.
@@ -5264,7 +5081,7 @@ Lemma index_of_app_r: forall vs1 vs2 n k,
   List.length vs1 + k <= index_of vs1 n k ->
     index_of (vs1 ++ vs2) n k = index_of vs2 n (k + List.length vs1).
 Proof.
-  induction vs1; intros; simpl in *; eauto.
+  induction vs1; intros; simpl in *; unfold dlet in *; simpl in *; eauto.
   destruct a; simpl.
   all: assert (S (List.length vs1) = 1 + List.length vs1) as HS by lia; rewrite HS in *.
   all: rewrite Nat.add_assoc in *.
@@ -5380,7 +5197,7 @@ Proof.
   2: eval_exps_contr_stop_tac.
   unfold get_vars in *; unfold_outcome.
   unfold get_body_and_set_vars, assign in *; unfold_outcome.
-  destruct find_fun eqn:?; unfold_outcome; simpl in *.
+  destruct find_fun eqn:?; unfold_outcome; simpl in *; unfold dlet in *; simpl in *.
   2: congruence.
   pat `find_fun _ _ = Some ?p` at destruct p.
   destruct (_ || _) eqn:?.
@@ -5437,7 +5254,7 @@ Proof.
   destruct c_pushes eqn:?.
   pat `c_pushes _ _ = (?p, _)` at destruct p.
   remember (if even_len _ then _ else _) as vs_body.
-  simpl in *.
+  simpl in *; unfold dlet in *; simpl in *.
   repeat (rewrite ?list_append_spec, ?app_list_length_spec, ?list_length_spec, ?length_app in *).
   destruct c_cmd eqn:?.
   repeat (rewrite code_in_append in *); cleanup; simpl in *; cleanup.
@@ -5516,7 +5333,7 @@ Proof.
   3: { (* binders_ok *)
     pat `l0 = _` at rewrite pat in *.
     Opaque call_v_stack remove_names.
-    destruct l; unfold c_pushes_vs; destruct even; simpl in *.
+    destruct l; unfold c_pushes_vs; destruct even; simpl in *; unfold dlet in *; simpl in *.
     all: try eapply binders_ok_append2 with (b1 := [None]).
     all: try eapply binders_ok_append with (b2 := [None]).
     all: try (rewrite app_assoc; eapply binders_ok_append with (b2 := [None])).
@@ -5725,13 +5542,13 @@ Proof.
   intros.
   unfold c_fundef, dlet in *.
   pat `match ?a with _ => _ end = _` at destruct a; simpl in *|-.
-  destruct (c_pushes) eqn:?.
+  destruct (c_pushes) eqn:?; unfold dlet in *; simpl in *.
   pat `c_pushes _ _ = (?p, _)` at destruct p.
   destruct (c_cmd) eqn:?.
   spat `c_cmd` at eapply c_cmd_length in spat.
   spat `c_pushes` at eapply c_pushes_length in spat.
   simpl in *; cleanup.
-  simpl.
+  simpl; unfold dlet in *; simpl in *.
   all: repeat rewrite list_append_spec in *.
   repeat (rewrite length_app; simpl).
   lia.
@@ -5789,8 +5606,7 @@ Lemma c_fundefs_l_same: forall funs lstart f_lookup f_lookup0 a1 a2 fs1 fs2 l1 l
   c_fundefs funs lstart f_lookup0 = (a2, fs2, l2) ->
   l1 = l2.
 Proof.
-  induction funs; intros; simpl in *; cleanup; eauto.
-  unfold dlet in *.
+  induction funs; intros; simpl in *; unfold dlet in *; simpl in *; cleanup; eauto.
   destruct c_fundef eqn:?.
   destruct (c_fundef _ _ f_lookup0) eqn:?.
   destruct c_fundefs eqn:?.
@@ -5898,12 +5714,12 @@ Proof.
   pat `match ?a with _ => _ end = _` at destruct a; simpl in *|-.
   destruct (_ =? _)%N eqn:?; cleanup.
   1: {
-    eexists; simpl.
+    eexists; simpl; unfold dlet; simpl.
     rewrite N.eqb_eq in *; subst.
     rewrite N.eqb_refl.
     split.
     2: {
-      spat `c_fundef` at rewrite spat; simpl.
+      spat `c_fundef` at rewrite spat; simpl; unfold dlet; simpl.
       repeat rewrite list_append_spec in *.
       assert (xs ++ Comment (name2str n1 "") :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1 "")]) ++ flatten a0 ++ flatten a1) as ->.
       1: induction xs; simpl; try rewrite <- app_assoc; eauto.
@@ -5918,14 +5734,14 @@ Proof.
   assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1 "")] +++ a0))) as Hrwlength.
   1: simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.
-  spat `c_fundefs` at eapply IHfuncs in spat; eauto; cleanup.
+  spat `c_fundefs` at eapply IHfuncs in spat; eauto; cleanup; simpl; unfold dlet in *; simpl in *.
   eexists; split; simpl.
   1: {
     destruct (n1 =? n)%N eqn:?; rewrite ?N.eqb_neq in *; rewrite ?N.eqb_eq in *.
     - congruence.
     - eauto.
   }
-  simpl in *.
+  simpl in *; unfold dlet in *; simpl in *.
   repeat rewrite list_append_spec in *.
   rewrite app_comm_cons; rewrite app_assoc.
   eauto.
@@ -5995,7 +5811,7 @@ Proof.
   repeat (rewrite code_in_append in *; simpl in * ); cleanup.
   assert (s0 = s1) by do 2 (pat `match ?o with _ => _ end = _` at destruct o; inversion pat; try congruence).
   pat `c_pushes _ _ = (?p, _)` at destruct p.
-  unfold c_pushes, dlet in *; simpl in *.
+  unfold c_pushes, dlet in *; simpl in *; unfold dlet in *; simpl in *.
   pat ` (_, _, _) = (_, _, _)` at inversion pat; subst; clear pat.
   remember (lookup l _) as lookup_main_l.
   repeat rewrite list_append_spec in *.
@@ -6235,7 +6051,7 @@ Proof.
   all: cleanup; subst.
   all: unfold init_state in *; simpl in *.
   all: rewrite Nat.sub_0_r in *.
-  all: spat `steps` at eapply steps_determ in spat; cleanup.
+  all: spat `steps` at eapply steps_determ_Halt in spat; cleanup.
   2,4: pat`steps _ (Halt (word.of_Z 0) _, _)` at exact pat.
   all: subst.
   2: spat `word.eqb` at eapply Properties.word.eqb_false in spat; congruence.
@@ -6292,19 +6108,6 @@ Proof.
     eexists; split; eauto.
 Qed.
 
-Theorem steps_from_Halt_is_Halt: forall w o n s n1,
-  steps (Halt w o, n) (s, n1) ->
-    s = (Halt w o) ∧ n1 = n.
-Proof.
-  intros * H.
-  dependent induction H; subst; eauto.
-  all: try spat `step` at inversion spat.
-  eapply IHsteps2; eauto.
-  f_equal.
-  all: specialize (IHsteps1 w o n s2 n2 eq_refl eq_refl) as ?; cleanup; subst.
-  all: eauto.
-Qed.
-
 Theorem steps_IMP_NRC_step: ∀s k res r,
   steps (s, k) (res, r) -> ∃k, NRC step k s res.
 Proof.
@@ -6347,10 +6150,7 @@ Proof.
   - destruct H as [z1 [Hz1a Hz1b]].
     destruct H0 as [z2 [Hz2a Hz2b]].
     assert (z1 = z2) as Heq.
-    1: {
-      eapply step_determ.
-      split; eauto.
-    }
+    1: eapply step_determ; eauto.
     subst z2.
     eapply IHk; eauto.
 Qed.

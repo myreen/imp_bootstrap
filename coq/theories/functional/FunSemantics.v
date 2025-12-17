@@ -110,8 +110,6 @@ Definition init_state (inp : llist ascii) (funs : list FunSyntax.defun) : state 
 
 Reserved Notation "env '|--' ( es , s1 ) '--->' ( vs , s2 )" (at level 40, es at next level, vs at next level).
 
-(* Ask Magnus why he likes using `list of exp`, instead of exp *)
-(* Answer: to avoid mutual recursion *)
 Inductive eval : FEnv.env -> list FunSyntax.exp -> state -> list Value -> state -> Prop :=
 | Eval_Nil : forall env s,
   env |-- ([], s) ---> ([], s)
@@ -167,7 +165,7 @@ Proof.
   eapply Eval_Call; eauto.
 Qed.
 
-Definition prog_terminates (input : llist ascii) (p : FunSyntax.prog) (out : list ascii) : Prop :=
+Definition prog_terminates (input: llist ascii) (p: FunSyntax.prog) (out: list ascii): Prop :=
   exists s r,
-    FEnv.empty |-- ([get_main p],  (init_state input (get_defs p))) ---> (r,  s) /\
-        out = s.(output).
+    FEnv.empty |-- ([get_main p], (init_state input (get_defs p))) ---> (r,  s) /\
+      out = s.(output).

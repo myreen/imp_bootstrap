@@ -1,10 +1,16 @@
-(* From impboot Require Import
+From impboot Require Import
   utils.Core
   utils.Llist.
 Import Llist.
 Require Import impboot.imperative.ImpSyntax.
+Require Import impboot.functional.FunValues.
+Require Import coqutil.Word.Interface.
+Require Import coqutil.Word.Properties.
+
+Require Import Patat.Patat.
 
 Open Scope N.
+Open Scope string.
 
 (* lexing *)
 
@@ -13,200 +19,282 @@ Inductive token :=
   | CLOSE
   | DOT
   | NUM (n: N)
-  | QUOTE (s : N).
+  | QUOTE (s: N).
 
-(* TODO: add type ascriptions *)
-Fixpoint read_num l h f x acc cs :=
+Fixpoint read_num (l h: ascii) (f x: N) (acc: N) (cs: list ascii): (N * list ascii) :=
   match cs with
   [] => (acc, [])
   | c :: cs =>
     if (andb (N_of_ascii l <=? N_of_ascii c) (N_of_ascii c <=? N_of_ascii h))%N then
       read_num l h f x (f * acc + (N_of_ascii c - x)) cs
-    else (acc,c::cs)
+    else (acc, c::cs)
+  end.
+
+Fixpoint end_line (cs: list ascii) :=
+  match cs with
+  | [] => []
+  | c :: cs =>
+    (*             vvvvv \n *)
+    if Ascii.eqb c "010" then cs else end_line cs
+  end.
+
+Fixpoint lex q (cs: list ascii) (acc: list token) (fuel: nat): option (list token) :=
+  (* TODO: change the order of matches? *)
+  match cs with
+  | [] => Some acc
+  | c :: cs =>
+    match fuel with
+    | 0%nat => None
+    | S fuel => 
+      if List.existsb (fun c1 => Ascii.eqb c c1) (list_ascii_of_string " \t\n") then
+        lex NUM cs acc fuel else
+      if Ascii.eqb c "#" then lex NUM (end_line cs) acc fuel else
+      if Ascii.eqb c "." then lex NUM cs (DOT :: acc) fuel else
+      if Ascii.eqb c "(" then lex NUM cs (OPEN :: acc) fuel else
+      if Ascii.eqb c ")" then lex NUM cs (CLOSE :: acc) fuel else
+      if Ascii.eqb c "'" then lex QUOTE cs acc fuel else
+        let (n, rest) := read_num "0" "9" 10 (N_of_ascii "0") 0 (c :: cs) in
+        if negb (Nat.eqb (List.length rest) (List.length (c :: cs))) then
+          lex NUM rest (q n :: acc) fuel
+        else
+          let (n, rest) := read_num "*" "z" 256 0 0 (c :: cs) in
+          if negb (Nat.eqb (List.length rest) (List.length (c :: cs))) then
+            lex NUM rest (q n :: acc) fuel
+          else lex NUM cs acc fuel
+    end
+  end.
+
+Ltac cleanup :=
+  repeat match goal with
+  | H: _ /\ _ |- _ => destruct H; clear H
+  | H: (_, _) = (_, _) |- _ => inversion H; clear H; subst
   end.
 
 Theorem read_num_length: ∀l h xs n ys f acc x,
-    read_num l h f x acc xs = (n,ys) ->
-    List.length ys ≤ List.length xs ∧ (xs ≠ ys -> List.length ys < List.length xs).
+  read_num l h f x acc xs = (n, ys) ->
+    List.length ys ≤ List.length xs ∧ (xs ≠ ys -> List.length ys < List.length xs)%nat.
 Proof.
-  
-  Induct_on ‘xs’ \\ rw [read_num_def]
-  \\ TRY pairarg_tac \\ fs [] \\ rw [] \\ res_tac \\ fs []
+  induction xs; intros; simpl in *; cleanup; simpl.
+  1: split; eauto; intros; congruence.
+  destruct andb eqn:?; rewrite ?andb_true_iff, ?andb_false_iff, ?N.leb_le, ?N.leb_gt in *; cleanup; simpl in *.
+  1: {
+    pat `read_num _ _ _ _ _ _ = _` at rename pat into Hread_num.
+    pat `forall n ys f acc x, _` at eapply pat in Hread_num.
+    split; [lia|].
+    intros; lia.
+  }
+  split; [lia|].
+  intros; congruence.
 Qed.
 
-Definition end_line_def:
-  end_line [] = [] ∧
-  end_line (c::cs) = if c = #"\n" then cs else end_line cs
-End
+Theorem end_line_length: ∀cs,
+  (List.length (end_line cs) <= List.length cs)%nat.
+Proof.
+  induction cs; simpl; [lia|].
+  destruct (_ =? _)%char eqn:?; lia.
+Qed.
 
-Theorem end_line_length:
-  ∀cs. STRLEN (end_line cs) < SUC (STRLEN cs)
-Proof
-  Induct \\ rw [end_line_def]
-QED
+Theorem lex_terminates: forall fuel q cs acc,
+  (List.length cs <= fuel)%nat -> lex q cs acc fuel <> None.
+Proof.
+  Opaque Ascii.eqb.
+  induction fuel; intros; simpl.
+  1: inversion H; simpl; destruct cs eqn:?; simpl in *; try congruence.
+  destruct cs eqn:?; try congruence; simpl in *.
+  repeat match goal with
+  | |- (if ?c then _ else _) <> _ => destruct c eqn:?
+  | |- lex _ _ _ _ <> _ =>
+    eapply IHfuel
+  | |- (let (_, _) := if ?c then _ else _ in _) <> _ =>
+    destruct c eqn:?
+  | |- (let (_, _) := read_num _ _ _ _ _ cs in _) <> _ =>
+    destruct read_num eqn:?
+  | H: _ = _ :: ?l |- (let (_, _) := read_num ?a1 ?a2 ?a3 ?a4 ?a5 ?l in _) <> _ =>
+    destruct (read_num a1 a2 a3 a4 a5 l) eqn:?
+  | |- (List.length (end_line _) <= _)%nat =>
+    eapply Nat.le_trans; [eapply end_line_length|]; lia
+  | H: (S _ <= S _)%nat |- _ =>
+    eapply le_S_n in H
+  | H: cs = ?h :: ?t |- (List.length (?h :: ?t) <= _)%nat =>
+    rewrite negb_true_iff, Nat.eqb_neq in *; simpl in *; congruence
+  | H: read_num _ _ _ _ _ ?t = (_, _) |- _ =>
+    eapply read_num_length in H
+  | _ => lia
+  end.
+Qed.
 
-Definition lex_def:
-  lex q [] acc = acc ∧
-  lex q (c::cs) acc =
-      if MEM c " \t\n" then lex NUM cs acc else
-      if c = #"#" then lex NUM (end_line cs) acc else
-      if c = #"." then lex NUM cs (DOT::acc) else
-      if c = #"(" then lex NUM cs (OPEN::acc) else
-      if c = #")" then lex NUM cs (CLOSE::acc) else
-      if c = #"'" then lex QUOTE cs acc else
-        let (n,rest) = read_num #"0" #"9" 10 (ORD #"0") 0 (c::cs) in
-          if rest ≠ c::cs then lex NUM rest (q n::acc) else
-            let (n,rest) = read_num #"*" #"z" 256 0 0 (c::cs) in
-              if rest ≠ c::cs then lex NUM rest (q n::acc) else
-                lex NUM cs acc
-Termination
-  WF_REL_TAC ‘measure (LENGTH o FST o SND)’ \\ rw []
-  \\ imp_res_tac (GSYM read_num_length) \\ fs [end_line_length]
-End
+Definition lexer (input: string): option (list token) :=
+  let/d in_list := list_ascii_of_string input in
+  lex NUM in_list [] (List.length in_list).
 
-Definition lexer_def:
-  lexer input = lex NUM input []
-End
-
+Theorem lexer_terminates: forall (inp: string),
+  lexer inp <> None.
+Proof.
+  intros; unfold lexer, dlet.
+  eapply lex_terminates.
+  eapply Nat.le_refl.
+Qed.
 
 (* parsing *)
 
-Definition quote_def:
-  quote n = list [Num (name "'"); Num n]
-End
+Definition quote n :=
+  FunValues.vlist [Num (name_enc "'"); Num n].
 
-Definition parse_def:
-  parse [] x s = x ∧
-  parse (CLOSE :: rest) x s = parse rest (Num 0) (x::s) ∧
-  parse (OPEN :: rest) x s =
-    (case s of [] => parse rest x s
-     | (y::ys) => parse rest (Pair x y) ys) ∧
-  parse (NUM n :: rest) x s = parse rest (Pair (Num n) x) s ∧
-  parse (QUOTE n :: rest) x s = parse rest (Pair (quote n) x) s ∧
-  parse (DOT :: rest) x s = parse rest (head x) s
-End
-
+Fixpoint parse (ts: list token) x s :=
+  match ts with
+  | [] => x
+  | (CLOSE :: rest) => parse rest (Num 0) (x::s)
+  | (OPEN :: rest) =>
+    match s with
+    | [] => parse rest x s
+    | (y::ys) => parse rest (Pair x y) ys
+    end
+  | (NUM n :: rest) => parse rest (Pair (Num n) x) s
+  | (QUOTE n :: rest) => parse rest (Pair (quote n) x) s
+  | (DOT :: rest) => parse rest (FunValues.vhead x) s
+end.
 
 (* converting from v to prog *)
 
-Definition v2test_def:
-  v2test v = if getNum v = name "<" then Less else Equal
-End
+Fixpoint v2list v :=
+  match v with
+  | Num _ => []
+  | Pair v1 v2 =>
+    v1 :: v2list v2
+  end.
 
-Definition v2list_def:
-  v2list v = if isNum v then [] else head v :: v2list (tail v)
-Termination
-  WF_REL_TAC ‘measure v_size’
-  \\ rpt conj_tac \\ rw [name_def]
-  \\ rpt (goal_term (fn tm => tmCases_on (hd (free_vars (rator tm))) [] \\ fs []))
-End
+Fixpoint pat_lets x v rhs :=
+  match v with
+  | Num _ => rhs
+  | Pair v1 v2 =>
+    let var := vgetNum v1 in
+      FunSyntax.Let var (FunSyntax.Op FunSyntax.Head [x])
+        (pat_lets (FunSyntax.Op FunSyntax.Tail [x]) v2 rhs)
+  end.
 
-Definition conses_def:
-  conses [] = Op Cons [] ∧
-  conses [x] = Op Cons [x] ∧
-  conses [x;y] = Op Cons [x;y] ∧
-  conses (x::xs) = Op Cons [x; conses xs]
-End
+Definition num2exp n :=
+  if vis_upper n then ImpSyntax.Const (word.of_Z (Z.of_N n)) else Var n.
 
-Definition pat_lets_def:
-  pat_lets x v rhs =
-    if isNum v then rhs else
-      let var = getNum (head v) in
-        Let var (Op Head [x])
-          (pat_lets (Op Tail [x]) (tail v) rhs)
-Termination
-  WF_REL_TAC ‘measure (λ(x,v,rhs). v_size v)’ \\ rw []
-  \\ rpt (goal_term (fn tm => tmCases_on (find_term is_var (rator tm)) [] \\ fs []))
-End
+Fixpoint v2exp (v: Value): ImpSyntax.exp :=
+  match v with
+  | Num n => num2exp n
+  | Pair v0 v1 =>
+    let n := vgetNum v0 in (* this can fail? *)
+    if N.eqb n (name_enc "'") then Const (word.of_Z (Z.of_N (vgetNum v1))) else
+    if N.eqb n (name_enc "var") then Var (vgetNum v1) else
+    match v1 with
+    | Num _ => Var (vgetNum v) (* fail? *)
+    | Pair v1 v2 =>
+      if N.eqb n (name_enc "+") then Add (v2exp v1) (v2exp v2) else
+      if N.eqb n (name_enc "-") then Sub (v2exp v1) (v2exp v2) else
+      if N.eqb n (name_enc "div") then Div (v2exp v1) (v2exp v2) else
+      if N.eqb n (name_enc "read") then Read (v2exp v1) (v2exp v2) else
+      Var (vgetNum (vel0 v)) (* fail? *)
+    end
+  end.
 
-Definition num2exp_def:
-  num2exp n = if is_upper n then Const n else Var n
-End
+Fixpoint v2exps (v: Value): list ImpSyntax.exp :=
+  match v with
+  | Num _ => []
+  | Pair v1 v2 =>
+    v2exp v1 :: v2exps v2
+  end.
 
-fun apply_at_conv p c tm =
-  DEPTH_CONV (fn tm => if p tm then c tm else NO_CONV tm
-                       handle HOL_ERR _ => NO_CONV tm) tm;
+Definition v2cmp (v: Value): ImpSyntax.cmp :=
+  if N.eqb (vgetNum v) (name_enc "<") then Less else
+  if N.eqb (vgetNum v) (name_enc "=") then Equal else
+  Less. (* fail? *)
 
-fun apply_at_pat_conv pat = apply_at_conv (can (match_term pat));
+Fixpoint v2test (v: Value): ImpSyntax.test :=
+  match v with
+  | Num _ => Test Less (Const (word.of_Z 0)) (Const (word.of_Z 0)) (* fail? *)
+  | Pair v0 v1 =>
+    let n := vgetNum v0 in (* this can fail? *)
+    if N.eqb n (name_enc "not") then Not (v2test v1) else
+    match v1 with
+    | Num _ => Test Less (Const (word.of_Z 0)) (Const (word.of_Z 0)) (* fail? *)
+    | Pair v1 v2 =>
+      if N.eqb n (name_enc "and") then And (v2test v1) (v2test v2) else
+      if N.eqb n (name_enc "or") then Or (v2test v1) (v2test v2) else
+      Test (v2cmp v0) (v2exp v1) (v2exp v2)
+    end
+  end.
 
-Definition v2exp_def:
-  v2exp v =
-    (if isNum v then num2exp (getNum v) else
-       let n = getNum (head v) in
-         if n = name "'" then Const (getNum (el1 v)) else
-         if n = name "+" then Op Add (v2exps (tail v)) else
-         if n = name "-" then Op Sub (v2exps (tail v)) else
-         if n = name "div" then Op Div (v2exps (tail v)) else
-         if n = name "cons" then conses (v2exps (tail v)) else
-         if n = name "cons*" then Op Cons (v2exps (tail v)) else
-         if n = name "list" then conses (v2exps (tail v) ++ [Const 0]) else
-         if n = name "head" then Op Head (v2exps (tail v)) else
-         if n = name "tail" then Op Tail (v2exps (tail v)) else
-         if n = name "read" then Op Read (v2exps (tail v)) else
-         if n = name "case" then v2case (v2exp (el1 v)) (tail (tail v)) else
-         if n = name "write" then Op Write (v2exps (tail v)) else
-         if n = name "if" then
-           If (v2test (head (el1 v)))
-             (v2exps (tail (el1 v))) (v2exp (el2 v)) (v2exp (el3 v)) else
-         if n = name "let" then v2lets (tail v) else
-         if n = name "var" then Var (getNum (head (tail v))) else
-         if n = name "call" then
-           Call (getNum (el1 v)) (v2exps (tail (tail v)))
-         else otherwise (if is_upper n then
-           conses (Const n :: (v2exps (tail v) ++ [Const 0]))
-         else Call (getNum (el0 v)) (v2exps (tail v)))) ∧
-  v2exps v =
-    (if isNil v then [] else v2exp (head v) :: v2exps (tail v)) ∧
-  v2lets v =
-    (if isNum v then Const 0 else
-       Let (getNum (el0 (el0 v))) (v2exp (el1 (el0 v)))
-         if isNum (tail (tail v)) then v2exp (el1 v) else v2lets (tail v)) ∧
-  v2case x v =
-    (if isNum v then Const 0 else
-       let row = el0 v in
-       let pat = head row in
-       let rhs = el1 row in
-         if isNum pat then
-           if getNum pat = name "_" then
-             If Less [Const 0; Const 1] (v2exp rhs) (v2case x (tail v))
-           else
-             If Equal [x; Const (getNum pat)] (v2exp rhs) (v2case x (tail v))
-         else
-           If Equal [Const (getNum (head pat)); Op Head [x]]
-             (pat_lets (Op Tail [x]) (tail pat) (v2exp rhs)) (v2case x (tail v)))
-Termination
-  WF_REL_TAC ‘measure (λx. case x of INL v => v_size v
-                                   | INR (INL v) => v_size v
-                                   | INR (INR (INL v)) => v_size v
-                                   | INR (INR (INR (x, v))) => v_size v)’
-  \\ CONV_TAC (apply_at_pat_conv “name _” EVAL)
-  \\ rpt strip_tac
-  \\ Cases_on ‘v’ \\ full_simp_tac std_ss [isNum_def,head_def,tail_def,v_size_def]
-  \\ rpt (pop_assum kall_tac) \\ fs []
-  \\ rpt (goal_term (fn tm => tmCases_on (find_term is_var (rator tm)) [] \\ fs []))
-End
+(* TODO: can I use v2list here? *)
+Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
+  match v with
+  | Num _ => Skip
+  | Pair v0 v1 =>
+    match v0 with
+    | Pair _ _ =>
+      Seq (v2cmd v0) (v2cmd v1)
+    | Num _ =>
+      let n := vgetNum v0 in
+      if N.eqb n (name_enc "abort") then Abort else
+      if N.eqb n (name_enc "return") then Return (v2exp v1) else
+      if N.eqb n (name_enc "getchar") then GetChar (vgetNum v1) else
+      if N.eqb n (name_enc "putchar") then PutChar (v2exp v1) else
+      match v1 with
+      | Num _ => Skip (* fail? *)
+      | Pair v1 v2 =>
+        if N.eqb n (name_enc "assign") then Assign (vgetNum v1) (v2exp v2) else
+        if N.eqb n (name_enc "while") then While (v2test v1) (v2cmd v2) else
+        if N.eqb n (name_enc "alloc") then Alloc (vgetNum v1) (v2exp v2) else
+        match v2 with
+        | Num _ => Skip (* fail? *)
+        | Pair v2 v3 =>
+          if N.eqb n (name_enc "update") then Update (v2exp v1) (v2exp v2) (v2exp v3) else
+          if N.eqb n (name_enc "if") then If (v2test v1) (v2cmd v2) (v2cmd v3) else
+          Call (vgetNum v1) (vgetNum v2) (v2exps v3)
+        end
+      end
+    end
+  end.
 
-Definition vs2args_def:
-  vs2args [] = [] ∧
-  vs2args (v::vs) = getNum (el1 v) :: vs2args vs
-End
+Fixpoint vs2args (vs: list Value) :=
+  match vs with
+  | [] => []
+  | v :: vs =>
+    match v with
+    | Num _ => [] (* fail? *)
+    | Pair v0 _ =>
+      vgetNum v0 :: vs2args vs
+    end
+  end.
 
-Definition v2dec_def:
-  v2dec v = Defun (getNum (el1 v))
-                  (vs2args (v2list (el2 v)))
-                  (v2exp (el3 v))
-End
+Definition v2dec (v: Value) :=
+  match v with
+  | Num _ => ImpSyntax.Func (0%N) [] Skip (* fail? *)
+  | Pair v0 v1 =>
+    match v1 with
+    | Num _ => ImpSyntax.Func (0%N) [] Skip (* fail? *)
+    | Pair v1 v2 =>
+      match v2 with
+      | Num _ => ImpSyntax.Func (0%N) [] Skip (* fail? *)
+      | Pair v2 v3 =>
+        match v3 with
+        | Num _ => ImpSyntax.Func (0%N) [] Skip (* fail? *)
+        | Pair v3 _ =>
+          ImpSyntax.Func (vgetNum v1)
+            (vs2args (v2list v2))
+            (v2cmd v3)
+        end
+      end
+    end
+  end.
 
-Definition vs2prog_def:
-  vs2prog [] = Program [] (Const 0) ∧
-  vs2prog [v] = Program [] (v2exp v) ∧
-  vs2prog (v::vs) =
-    case vs2prog vs of Program ds m => Program (v2dec v :: ds) m
-End
+Fixpoint vdecs (vs: list Value) :=
+  match vs with
+  | [] => []
+  | v :: vs =>
+    v2dec v :: vdecs vs
+  end.
+
+Definition vs2prog (vs: list Value) :=
+  let ds := vdecs vs in
+  ImpSyntax.Program ds.
 
 (* entire parser *)
 
-Definition parser_def:
-  parser tokens =
-    vs2prog (v2list (parse tokens (Num 0) []))
-End *)
+Definition parser tokens :=
+  vs2prog (v2list (parse tokens (Num 0) [])).

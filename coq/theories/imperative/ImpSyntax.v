@@ -32,7 +32,7 @@ Inductive test : Type :=
 
 Inductive cmd : Type :=
 | Skip
-| Seq (c1 : cmd) (c2 : cmd)                   (*  c1; c2                  *)
+| Seq (c1: cmd) (c2: cmd)                     (*  c1; c2                  *)
 | Assign (n: name) (e: exp)                   (*  n := e                  *)
 | Update (a: exp) (e: exp) (e': exp)          (*  a[e] := e'              *)
 | If (t: test) (c1: cmd) (c2: cmd)            (*  if (t) ... else ...     *)

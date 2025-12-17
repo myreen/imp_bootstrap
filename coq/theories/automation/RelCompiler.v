@@ -1,4 +1,4 @@
-(* From impboot Require Import utils.Core.
+From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
 From coqutil Require Import dlet.
 From coqutil Require Import Word.Interface.
@@ -7,15 +7,16 @@ Require Import impboot.functional.FunSemantics.
 Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
 Require Import impboot.utils.Env.
-From impboot Require Import automation.Ltac2Utils.
+From impboot.automation.ltac2 Require Import Messages Constrs Stdlib2 UnfoldFix.
+From impboot.automation Require Import Ltac2Utils RelCompileUnfolding FunDeps.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf Fresh.
 Import Ltac2.Constr.Unsafe.
 From coqutil Require Import
   Tactics.reference_to_string
   Tactics.ident_of_string
   Tactics.ident_to_string.
-From Coq Require Import derive.Derive.
-From Coq Require Import FunInd.
+From Stdlib Require Import derive.Derive.
+From Stdlib Require Import FunInd.
 
 (* Important notes *)
 (* 1. every destruct has to have a `eqn:?` (Otherwise, we can get a bunch of
@@ -24,56 +25,6 @@ From Coq Require Import FunInd.
 (* 2. For polymorphic functions always provide them with @ e.g. @length *)
 
 Open Scope nat.
-
-Ltac2 rec string_of_relevance (r: Binder.relevance): string :=
-  match r with
-  | Binder.Relevant => "Relevant"
-  | Binder.Irrelevant => "Irrelevant"
-  | Binder.RelevanceVar (_) => "RelevanceVar"
-  end.
-
-Ltac2 message_of_option (opt: message option): message :=
-  Option.default (fprintf "None") opt.
-
-Ltac2 message_of_binder (b: binder): message :=
-  match Binder.name b with
-  | None =>
-    fprintf "(_, %t)" (Binder.type b)
-  | Some n =>
-    fprintf "(%I, %t)" n (Binder.type b)
-  end.
-
-Ltac2 message_of_cenv (cenv: (constr option * constr) list): message :=
-  message_of_list (
-    List.map (fun p =>
-      fprintf "(%a, %t)"
-        (fun () c => message_of_option (Option.map Message.of_constr c))
-        (fst p)
-        (snd p)
-    )
-    cenv
-  ).
-
-Ltac2 print_full_goal () :=
-  let hyps := Control.hyps () in
-  List.iter (fun h =>
-    match h with
-    | (id, body, ty) =>
-      (match body with
-       | None => printf "%I : %t" id ty
-       | Some b => printf "%I := %t : %t" id b ty
-       end)
-    end
-  ) hyps;
-  printf "----------------------------------------";
-  let g := Control.goal () in
-  printf "|- %t" g.
-
-Ltac2 constr_is_sort (c: constr): bool :=
-  match Unsafe.kind c with
-  | Unsafe.Sort _ => true
-  | _ => false
-  end.
 
 Ltac2 rec split_thm_args (c: constr): constr list :=
   match Unsafe.kind c with
@@ -147,7 +98,7 @@ Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (named_conts: (ide
       Control.throw (Oopsie (
         fprintf "Unapplied named continuations left after applying lemma %s, namely %a"
           lname
-          (fun () nl => message_of_list (List.map Message.of_ident nl))
+          (fun () nl => Messages.message_of_list (List.map Message.of_ident nl))
           names_left
       ))
     else if Bool.neg (Int.equal (List.length conts) 0) then
@@ -196,10 +147,7 @@ Ltac2 app_lemma (lname: string) (named_conts: (string * (unit -> unit)) list)
       | Some i => [(i, snd p)]
       | _ => []
       end) named_conts in
-  refine (
-    let c := assemble_lemma lemma_inst lname named_conts_id conts in
-    printf ">>>>>> %t" c;
-    c).
+  refine (assemble_lemma lemma_inst lname named_conts_id conts).
 
 (* Lookup the funciton `fname` in the `f_lookup` map *)
 Ltac2 is_in_loopkup (f_lookup : string list) (fname : string) : bool :=
@@ -238,13 +186,6 @@ Ltac2 rec extract_fun (e: constr): (constr * constr list) option :=
       Some (f, [])
     else
       None
-  end.
-
-Ltac2 rec apply_to_args (fn: constr) (args: constr list) :=
-  match args with
-  | [] => fn
-  | arg :: args =>
-    apply_to_args open_constr:($fn $arg) args
   end.
 
 Ltac2 rec list_to_constr_encode (l: constr list): constr :=
@@ -324,7 +265,7 @@ Ltac2 rec get_cenv_from_fenv_constr (fenv: constr): (constr option * constr) lis
     t1
   end. *)
 
-Ltac2 get_f_lookup_from_hyps () : string list :=
+Ltac2 get_f_lookup_from_context () : string list :=
   let hyps := Control.hyps () in
   let f_lookup := List.flatten (List.map (fun (_iden, _, t) =>
     match! t with
@@ -335,7 +276,7 @@ Ltac2 get_f_lookup_from_hyps () : string list :=
   ) hyps) in
   f_lookup.
 
-Ltac2 fname_if_in_f_lookup (f_lookup: string list) (f: constr) :=
+Ltac2 fname_if_in_f_lookup (f_lookup: string list) (f: constr): string option :=
   let f_name_r: reference option := reference_of_constr_opt f in
   let f_name_str := Option.bind f_name_r reference_to_string in
   Option.bind f_name_str (fun n => if is_in_loopkup f_lookup n then Some n else None).
@@ -352,33 +293,6 @@ Ltac2 rec binders_names_of_constr_lambda (c: constr) (avoid: ident list): constr
       constr_string_of_string (Ident.to_string n) :: binders_names_of_constr_lambda c1 (n :: avoid)
     end
   | _ => []
-  end.
-
-Ltac2 rec binders_of_constr_lambda (c: constr): binder list :=
-  match Unsafe.kind c with
-  | Lambda b c1 =>
-    b :: binders_of_constr_lambda c1
-  | _ => []
-  end.
-
-Ltac2 rec in_contexts (bs: binder list) (c: unit -> constr) (): constr :=
-  match bs with
-  | [] => c ()
-  | b :: bs =>
-    (* let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in *)
-    let name := Option.get (Binder.name b) in
-    (* it should ideally be (Binder.type b) instead of open_constr:(_), but it breaks the current procedure for dependent types *)
-    Constr.in_context name open_constr:(_) (fun () =>
-      (* let b_hyp := Control.hyp name in *)
-      let r := in_contexts bs c in
-      Control.refine r
-    )
-  end.
-
-Ltac2 rec lambda_to_prod (c: constr): constr :=
-  match Unsafe.kind c with
-  | Lambda b body => make (Prod b (lambda_to_prod body))
-  | _ => c
   end.
 
 (* TODO: extract this magic pattern as a utility function *)
@@ -427,108 +341,11 @@ Ltac2 collect_non_prop_tpe_prod_names (c: constr): constr :=
       end in
       if Constr.equal constr:(Prop) (Constr.type (Binder.type b)) then
         None
-      else if constr_is_sort (Binder.type b) then
+      else if Constrs.is_sort (Binder.type b) then
         None
       else
         Some open_constr:(name_enc $cstr)) in
   constr:($cres: list N).
-
-Ltac2 rec collect_prod_binders_impl (c: constr): binder list :=
-  match Unsafe.kind c with
-  | Prod b c =>
-    b :: collect_prod_binders_impl c
-  | _ => []
-  end.
-Ltac2 collect_prod_binders (c: constr): binder list :=
-  collect_prod_binders_impl (Constr.type c).
-
-Ltac2 rec struct_of_fix_impl (c: constr): int :=
-  match Unsafe.kind c with
-  | Fix structs _ _ _ =>
-    Array.get structs 0
-  | Lambda _ c =>
-    Int.add 1 (struct_of_fix_impl c)
-  | _ =>
-    Control.throw (Oopsie (fprintf "not a fix; %t" c))
-  end.
-Ltac2 struct_of_fix (fconstr: constr): int :=
-  let fref := reference_of_constr fconstr in
-  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
-  struct_of_fix_impl unfolded.
-
-Ltac2 unfold_fix_impl (fconstr: constr): unit :=
-  let fref := reference_of_constr fconstr in
-  let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
-  match Unsafe.kind unfolded with
-  | Fix structs _i bs cs =>
-    let body := Array.get cs 0 in
-    let struct := Array.get structs 0 in
-    let fix_b := Array.get bs 0 in
-    let _fix_name := Option.get (Binder.name fix_b) in
-    let body_bs := binders_of_constr_lambda body in
-    let body_bs_names := List.map (fun b => Option.get (Binder.name b)) body_bs in
-    let struct_name := List.nth body_bs_names struct in
-    let res := in_contexts body_bs (fun () =>
-      let outer_args := List.map Control.hyp body_bs_names in
-      let fconstr_applied := apply_to_args fconstr outer_args in
-      let rhs := fun () => Control.enter (fun () =>
-        let ind_clause := {
-          indcl_arg := (ElimOnIdent struct_name);
-          indcl_eqn := None;
-          indcl_as := None;
-          indcl_in := None;
-        } in
-        Std.destruct false [ind_clause] None;
-        Control.refine (fun () => open_constr:(_))
-      ) in
-      open_constr:($fconstr_applied = ltac2:(rhs ()))
-    ) in
-    let res := fun () => Std.eval_cbv beta (res ()) in
-    let res := fun () => lambda_to_prod (res ()) in
-    Control.refine res
-  | _ =>
-    Control.throw (Oopsie (fprintf "Wrong definition passed to unfold_tpe, namely %t" fconstr))
-  end.
-
-Ltac2 unfold_fix_gen (fconstr: constr): unit :=
-  let fref := reference_of_constr fconstr in
-  let unfolded_fix_template := open_constr:(ltac2:(unfold_fix_impl fconstr)) in
-  ltac1:(unfolded_fix_template |- instantiate(1 := unfolded_fix_template)) (Ltac1.of_constr unfolded_fix_template);
-  let bs := collect_prod_binders_impl (Control.goal ()) in
-  let nms := List.map (fun b => Fresh.in_goal (Option.get (Binder.name b))) bs in
-  Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
-  let struct_name := List.nth nms (struct_of_fix fconstr) in
-  let struct_hyp := Control.hyp struct_name in
-  destruct $struct_hyp;
-  Control.enter (fun () =>
-    unfold $fref; fold $fconstr;
-    reflexivity ()
-  ).
-
-Ltac2 unfold_fix_type fn :=
-  let unfolded := open_constr:(ltac2:(Control.enter (fun () => unfold_fix_gen fn))) in
-  let t := Constr.type unfolded in
-  Control.refine (fun () => open_constr:($t)).
-
-Ltac2 unfold_fix_proof (fconstr: constr): unit :=
-  let fref := reference_of_constr fconstr in
-  let bs := collect_prod_binders_impl (Control.goal ()) in
-  let nms := List.map (fun b => Fresh.in_goal (Option.get (Binder.name b))) bs in
-  Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
-  let struct_name := List.nth nms (struct_of_fix fconstr) in
-  let struct_hyp := Control.hyp struct_name in
-  destruct $struct_hyp;
-  Control.enter (fun () =>
-    unfold $fref; fold $fconstr;
-    reflexivity ()
-  ).
-
-Ltac2 rec var_ident_of_constr (c: constr): ident :=
-  match Unsafe.kind c with
-  | Var i => i
-  | _ =>
-    Control.throw (Oopsie (fprintf "Error: Expected the argument of a compiled function to be an variable reference, got: %t" c))
-  end.
 
 Ltac2 exactk (c: constr): unit -> unit :=
   fun () => exact $c.
@@ -613,14 +430,27 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_word4_n2w" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
         | (@word.of_Z 64 _ (Z.of_nat ?x)) =>
           app_lemma "auto_word64_n2w" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
-        | (Z.to_N (@word.unsigned 4 _ ?x)) =>
+        | (@word.of_Z 64 _ (Z.of_N ?x)) =>
+          app_lemma "auto_word64_N2w" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
+        | (Z.to_nat (@word.unsigned 4 _ ?x)) =>
           app_lemma "auto_word4_w2n" [("env", exactk fenv); ("x", exactk x)] [compile]
-        | (Z.to_N (@word.unsigned 64 _ ?x)) =>
+        | (Z.to_nat (@word.unsigned 64 _ ?x)) =>
           app_lemma "auto_word64_w2n" [("env", exactk fenv); ("x", exactk x)] [compile]
+        | (Z.to_N (@word.unsigned 4 _ ?x)) =>
+          app_lemma "auto_word4_w2N" [("env", exactk fenv); ("x", exactk x)] [compile]
+        | (Z.to_N (@word.unsigned 64 _ ?x)) =>
+          app_lemma "auto_word64_w2N" [("env", exactk fenv); ("x", exactk x)] [compile]
         (* num *)
         | (?n1 + ?n2)%nat =>
           app_lemma "auto_nat_add"
             [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
+        | S ?n%nat =>
+          printf "S case detected: %t" e;
+          if Constr.is_var n then
+            app_lemma "auto_nat_succ"
+              [("env", exactk fenv); ("n", exactk n)] [compile]
+          else
+            app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk constr:(S $n))] []
         | (?n1 - ?n2)%nat =>
           app_lemma "auto_nat_sub"
             [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
@@ -664,20 +494,24 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_nat_case"
             [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2); ("n", exactk n_constr)]
             [compile; (fun () =>
-              (* printf "======== %t" (Control.goal ()); *)
-              (* Std.case false (v0, NoBindings); intros; Control.enter compile *)
-              destruct $v0 eqn:?; Control.enter compile
-              (* Control.refine (fun () =>
+              (* We would like to use this: (but it give a weird unification for the type of the match) *)
+              (* destruct $v0 eqn:Htmp; Control.enter (fun () => rewrite <-&Htmp; clear Htmp; compile()) *)
+              (* This is a workaround: manual refinement *)
+              Control.refine (fun () =>
                 match! goal with
                 | [ |- (match _ with | 0 => ?g0 | S n' => @?gs n' end)] =>
                   open_constr:(
                     match $v0 as v0t return (match v0t with | 0 => $g0 | S n' => $gs n' end) with
-                    | 0%nat => (ltac2:(printf "%t" v0; compile ()): $g0)
-                    | S n' => (ltac2:(compile ()): ltac2:(Control.refine (fun () => eval_cbv beta constr:($gs &n'))))
+                    | 0%nat => (ltac2:(compile ()): $g0)
+                    | S n' =>
+                      (ltac2:(
+                        let n_fresh := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "n'")) in
+                        Std.intros false [IntroNaming (IntroFresh n_fresh)] ; compile ()): 
+                        ltac2:(Control.refine (fun () => eval_cbv beta(lambda_to_prod gs)))) n'
                     end
                   )
-                  end
-              ) *)
+                end
+              )
             )]
         | (match ?v0 with | 0%N => ?v1 | N.pos _ => ?v2 end) =>
           app_lemma "auto_N_case"
@@ -827,28 +661,6 @@ Ltac2 rec compile () : unit :=
               ("n17", exactk n17); ("n18", exactk n18); ("n19", exactk n19); ("n20", exactk n20)]
             [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile));
               (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
-        (* cond *)
-        | ASMSyntax.Always =>
-          app_lemma "auto_cond_cons_Always" [("env", exactk fenv)] []
-        | ASMSyntax.Less ?r1 ?r2 =>
-          app_lemma "auto_cond_cons_Less" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
-        | ASMSyntax.Equal ?r1 ?r2 =>
-          app_lemma "auto_cond_cons_Equal" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
-        | (match ?v0 with
-           | ASMSyntax.Always => ?v1
-           | ASMSyntax.Less r1 r2 => @?v2 r1 r2
-           | ASMSyntax.Equal r1 r2 => @?v3 r1 r2
-           end) =>
-          let binders_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
-          let binders_v3 := binders_names_of_constr_lambda v3 names_in_cenv in
-          let n1 := List.nth binders_v2 0 in
-          let n2 := List.nth binders_v2 1 in
-          let n3 := List.nth binders_v3 0 in
-          let n4 := List.nth binders_v3 1 in
-          app_lemma "auto_cond_CASE" [("env", exactk fenv); ("v0", exactk v0);
-                                       ("v1", exactk v1); ("v2", exactk v2); ("v3", exactk v3);
-                                       ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4)]
-                                     [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ()); (fun () => ())]
         (* exp *)
         | ImpSyntax.Var ?n =>
           app_lemma "auto_exp_cons_Var" [("env", exactk fenv); ("n", exactk n)] [compile]
@@ -1025,11 +837,8 @@ Ltac2 rec compile () : unit :=
           ("nLoad_RSP1", exactk nLoad_RSP1); ("nLoad_RSP2", exactk nLoad_RSP2); ("nStore_RSP1", exactk nStore_RSP1); ("nStore_RSP2", exactk nStore_RSP2);
           ("nLoad1", exactk nLoad1); ("nLoad2", exactk nLoad2); ("nLoad3", exactk nLoad3); ("nStore1", exactk nStore1);
           ("nStore2", exactk nStore2); ("nStore3", exactk nStore3); ("nComment1", exactk nComment1)]
-               [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ());
-          (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
-          (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
-          (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());
-          (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ())]
+              [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile));
+               (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());(fun () => ()); (fun () => ())]
         (* prog *)
         | ImpSyntax.Program ?funcs =>
           app_lemma "auto_prog_cons_Program" [("env", exactk fenv); ("funcs", exactk funcs)] [compile]
@@ -1115,6 +924,23 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_cond_cons_Less" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
         | ASMSyntax.Equal ?r1 ?r2 =>
           app_lemma "auto_cond_cons_Equal" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2)] [compile; compile]
+        | (match ?v0 with
+           | ASMSyntax.Always => ?f_Always
+           | ASMSyntax.Less r1 r2 => @?f_Less r1 r2
+           | ASMSyntax.Equal r1 r2 => @?f_Equal r1 r2
+           end) =>
+          let binders_f_Less := binders_names_of_constr_lambda f_Less names_in_cenv in
+          let binders_f_Equal := binders_names_of_constr_lambda f_Equal names_in_cenv in
+          let n1 := List.nth binders_f_Less 0 in
+          let n2 := List.nth binders_f_Less 1 in
+          let n3 := List.nth binders_f_Equal 0 in
+          let n4 := List.nth binders_f_Equal 1 in
+          printf "f_Always: %tn" f_Always;
+          app_lemma "auto_cond_CASE"
+            [("env", exactk fenv); ("v0", exactk v0);
+             ("f_Always", exactk f_Always); ("f_Less", exactk f_Less); ("f_Equal", exactk f_Equal);
+             ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3); ("n4", exactk n4)]
+            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ()); (fun () => ())]
         (* instr *)
         | ASMSyntax.Const ?r ?w =>
           app_lemma "auto_instr_cons_Const" [("env", exactk fenv); ("r", exactk r); ("w", exactk w)] [compile; compile]
@@ -1173,7 +999,27 @@ Ltac2 rec compile () : unit :=
           app_lemma "auto_string_case"
             [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2);
              ("n1", exactk n1); ("n2", exactk n2)]
-            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ())]
+            [compile; (fun () =>
+              (* We would like to use this: (but it give a weird unification for the type of the match) *)
+              (* destruct $v0 eqn:Htmp; Control.enter (fun () => rewrite <-&Htmp; clear Htmp; compile()) *)
+              (* This is a workaround: manual refinement *)
+              Control.refine (fun () =>
+                match! goal with
+                | [ |- (match _ with | EmptyString => ?ge | String h t => @?gc h t end)] =>
+                  open_constr:(
+                    match $v0 as v0t return (match v0t with | EmptyString => $ge | String h t => $gc h t end) with
+                    | EmptyString => (ltac2:(compile ()): $ge)
+                    | String h t =>
+                      (ltac2:(
+                        let h_fresh := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "h")) in
+                        let t_fresh := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "t")) in
+                        Std.intros false [IntroNaming (IntroFresh h_fresh); IntroNaming (IntroFresh t_fresh)]; compile ()): 
+                        ltac2:(Control.refine (fun () => eval_cbv beta(lambda_to_prod gc)))) h t
+                    end
+                  )
+                end
+              )
+            ); (fun () => ())]
         (* bool *)
         | true =>
           app_lemma "auto_bool_T" [("env", exactk fenv)] []
@@ -1227,9 +1073,10 @@ Ltac2 rec compile () : unit :=
           (* TODO: for proper Prop erasure *)
           Bool.and
             (Bool.neg (Constr.equal constr:(Prop) (Constr.type (Constr.type c))))
-            (Bool.neg (constr_is_sort (Constr.type c)))
+            (Bool.neg (Constrs.is_sort (Constr.type c)))
         ) args in
-        let f_lookup := get_f_lookup_from_hyps () in
+        let f_lookup := get_f_lookup_from_context
+       () in
         let fname_opt := fname_if_in_f_lookup f_lookup f in
         match fname_opt with
         | Some fname =>
@@ -1276,24 +1123,6 @@ Ltac2 rec has_make_env (c: constr): bool :=
   | _ => false
   end.
 
-Ltac2 unfold_ref_everywhere (r: reference): unit :=
-  let cl := default_on_concl None in
-  Std.unfold [(r, AllOccurrences)] cl.
-
-Ltac2 opt_is_empty (opt: 'a option): bool :=
-  match opt with
-  | None => true
-  | _ => false
-  end.
-
-Ltac2 rec index_of (i: ident) (l: ident list): int option :=
-  match l with
-  | [] => None
-  | j :: l =>
-    if Ident.equal i j then Some 0
-    else Option.map (Int.add 1) (index_of i l)
-  end.
-
 (* Top level tactic that compiles a program into FunLang *)
 (* Handles expression evaluation and function evaluation as goals *)
 Ltac2 rec docompile () :=
@@ -1305,7 +1134,8 @@ Ltac2 rec docompile () :=
   | [ h : (lookup_fun (name_enc ?fname) _ = Some (?params, ?_body))
   |- eval_app (name_enc ?fname) ?args _ (encode ?c, _) ] =>
     let h_hyp := Control.hyp h in
-    (* let f_lookup := get_f_lookup_from_hyps () in *)
+    (* let f_lookup := get_f_lookup_from_context
+   () in *)
     (* let argsl := constr_list_of_encode_constr args in *)
     match extract_fun c with
     (* function reference --> unfold *)
@@ -1320,20 +1150,7 @@ Ltac2 rec docompile () :=
       (*  Check if the encoded name is the same as the compiled top level function *)
       if String.equal fname_str cname_str then
         (* If its a fixpoint apply `fname_equation`, otherwise unfold `fname` *)
-        (if isFix fconstr then
-          let all_fargs_ids := List.map var_ident_of_constr fargs in
-          let non_type_fargs_ids := List.map var_ident_of_constr (List.filter (fun c => Bool.neg (constr_is_sort (Constr.type c))) fargs) in
-          Std.revert non_type_fargs_ids;
-          let struct_idx := struct_of_fix fconstr in
-          let struct_id := List.nth all_fargs_ids struct_idx in
-          let new_struct_idx := Option.get (index_of struct_id non_type_fargs_ids) in
-          let hname := Fresh.in_goal (Option.get (Ident.of_string "IH")) in
-          Std.fix_ hname (Int.add new_struct_idx 1);
-          intros;
-          rewrite_with_equation fconstr
-        else
-          unfold_ref_everywhere cname_ref
-        );
+        unfold_once fconstr fargs;
         docompile ()
       else (
         refine open_constr:(trans_app
@@ -1413,6 +1230,10 @@ Ltac2 relcompile_impl (): unit :=
     | (i, _, _) => i
     end in
   subst $prog_id;
+  ltac1:(match goal with
+  | H: ?g = FunSyntax.Defun ?nm ?args ?body |- _ =>
+    instantiate(1 := FunSyntax.Defun nm args _) in H; inversion H; clear H; subst body
+  end);
   unshelve (docompile ());
   crush_NoDup ();
   crush_side_conditions ().
@@ -1429,11 +1250,11 @@ Ltac2 rec mk_constr_list (args: constr list): constr :=
   end.
 
 Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: constr) (): constr :=
-  printf "gen_eval_app_impl f.type: %t fpargs: %a f_constr_name: %t f: %t"
+  (* printf "gen_eval_app_impl f.type: %t fpargs: %a f_constr_name: %t f: %t"
     (Constr.type f)
     (fun () x => message_of_list (List.map Message.of_constr x)) fpargs
     f_constr_name
-    f;
+    f; *)
   match Unsafe.kind (Constr.type f) with
   | Prod b _ =>
     let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
@@ -1441,7 +1262,7 @@ Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: co
     lambda_to_prod (Constr.in_context name open_constr:(_) (fun () =>
       let b_hyp := Control.hyp name in
       Control.refine (fun () =>
-        if constr_is_sort (Binder.type b) then
+        if Constrs.is_sort (Binder.type b) then
           let nameR := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "Refinable_inst")) in
           lambda_to_prod (Constr.in_context nameR open_constr:(Refinable $b_hyp) (fun () =>
             Control.refine (fun () =>
@@ -1470,64 +1291,6 @@ Ltac2 gen_eval_app (f: constr) (): constr :=
   let f_constr_name_c := constr_string_of_string f_constr_name in
   open_constr:(ltac2:(Control.refine (gen_eval_app_impl [] f_constr_name_c f))).
 
-Ltac2 rec dedup_go (acc: 'a list) (l: 'a list) (eq: 'a -> 'a -> bool): 'a list :=
-  match l with
-  | [] => acc
-  | h :: l =>
-    if List.exist (eq h) acc then dedup_go acc l eq
-    else dedup_go (h :: acc) l eq
-  end.
-Ltac2 dedup (l: 'a list) (eq: 'a -> 'a -> bool): 'a list :=
-  dedup_go [] l eq.
-
-(* The problem with automatically detecting dependencies is: how do I know which are the "real" rependencies? *)
-(*   i.e. why is "add" not a dependency? *)
-(*   Actually, maybe just black-list some built-in functions? *)
-Ltac2 rec collect_deps (bs: ident list) (c: constr): constr list :=
-  Message.print (message_of_list (List.map Message.of_ident bs));
-  match kind c with
-  | Var i =>
-    if List.exist (fun b => Ident.equal i b) bs then []
-    else [c]
-  | Constant _ _ => [c]
-  | Rel _ | Meta _ | Sort _ | Ind _ _
-  | Constructor _ _ | Uint63 _ | Float _ | String _ => []
-  | Cast c _ _t => collect_deps bs c
-  | Prod b c =>
-    let new_bs := (List.append (opt_to_list (Binder.name b)) bs) in
-    collect_deps new_bs c
-  | Lambda b c =>
-    let new_bs := (List.append (opt_to_list (Binder.name b)) bs) in
-    collect_deps new_bs c
-  | LetIn b t c =>
-    let new_bs := (List.append (opt_to_list (Binder.name b)) bs) in
-    List.append (collect_deps bs t) (collect_deps new_bs c)
-  | App c l =>
-    List.append (collect_deps bs c) (List.concat (List.map (collect_deps bs) (Array.to_list l)))
-  | Evar _ _l => []
-  | Case _ x _iv y bl =>
-    List.append
-      (List.append (match x with (x,_) => collect_deps bs x end) (List.concat (List.map (collect_deps bs) (Array.to_list bl))))
-      (collect_deps bs y)
-  | Proj _p _ c =>
-    collect_deps bs c
-  | Fix _ _ tl bl =>
-    let new_bs := (List.append (List.flat_map (fun b => opt_to_list (Binder.name b)) (Array.to_list tl)) bs) in
-    (* TODO: is this correct? vvvvvvvvvvvvvvvvvvvvvv *)
-    List.concat (List.map (collect_deps new_bs) (Array.to_list bl))
-  | CoFix _ tl bl =>
-    let new_bs := (List.append (List.flat_map (fun b => opt_to_list (Binder.name b)) (Array.to_list tl)) bs) in
-    (* TODO: is this correct? vvvvvvvvvvvvvvvvvvvvvv *)
-    List.concat (List.map (collect_deps new_bs) (Array.to_list bl))
-  | Array _u t def _ty =>
-    List.append (List.concat (List.map (collect_deps bs) (Array.to_list t))) (collect_deps bs def)
-  end.
-Ltac2 get_fun_deps (f: constr): constr list :=
-  let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
-  let f_name_r := reference_of_constr f in
-  let all_deps := collect_deps (opt_to_list (Ident.of_string f_constr_name)) (Std.eval_unfold [(f_name_r, AllOccurrences)] f) in
-  dedup all_deps (Constr.equal).
-
 Ltac2 rec mk_refine_impls (args: (unit -> constr) list) (res: unit -> constr) (): constr :=
   match args with
   | a :: args =>
@@ -1542,20 +1305,22 @@ Ltac2 rec mk_refine_impls (args: (unit -> constr) list) (res: unit -> constr) ()
 Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
   let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
   let f_constr_name_c := constr_string_of_string f_constr_name in
-  printf "relcompile_tpe for function: %t" f_constr_name_c;
-  printf "relcompile_tpe for function_c: %t" f_constr_name_c;
+  (* printf "relcompile_tpe for function: %t" f_constr_name_c; *)
+  (* printf "relcompile_tpe for function_c: %t" f_constr_name_c; *)
   let encoded_b_names := collect_non_prop_tpe_prod_names f in
-  printf "encoded_b_names: %t" encoded_b_names;
+  (* printf "encoded_b_names: %t" encoded_b_names; *)
   let eval_app_cont := gen_eval_app f in
   let deps_eval_app_conts := List.map gen_eval_app deps in
-  printf "HERE";
+  (* printf "HERE"; *)
   Control.refine (fun () =>
-    open_constr:(forall (s: state),
+    open_constr:(
+      forall body, $prog = FunSyntax.Defun (name_enc $f_constr_name_c) $encoded_b_names body ->
+      forall (s: state),
       ltac2:(Control.refine (
         mk_refine_impls
           deps_eval_app_conts
           (fun () => open_constr:(
-            lookup_fun (name_enc $f_constr_name_c) &s.(funs) = Some ($encoded_b_names, $prog) ->
+            lookup_fun (name_enc $f_constr_name_c) &s.(funs) = Some ($encoded_b_names, &body) ->
             ltac2:(Control.refine eval_app_cont)
           ))
       ))
@@ -1577,32 +1342,13 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
 (* TODO: for some reason, need this for generated derivation statement proofs *)
 Opaque encode.
 
-Definition nat_modulo (n1 n2: nat): nat :=
-  match n2 with
-  | 0%nat => 0
-  | S _ => n1 - n2 * (n1 / n2)
-  end.
-
-Fixpoint num2str_f (n: nat) (fuel: nat) (str: string) {struct fuel}: nat :=
+Fixpoint num2str_f1 (n: nat) {struct n}: nat :=
   0.
 
-(* no warning? :/ *)
-(* Function num2str_f1 (n: nat) (fuel: nat) (str: string): string :=
-  match fuel with
-  | 0 => if n <? 10 then String (ascii_of_nat (48 + n)) str else ""%string
-  | S n0 =>
-    if n <? 10
-    then String (ascii_of_nat (48 + n)) str
-    else num2str_f (n / 10) n0 (String (ascii_of_nat (48 + nat_modulo n 10)) str)
-  end. *)
-
-(* Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
-Proof. unfold_fix_proof 'num2str_f. Qed.
-About num2str_f_equation. *)
-Axiom num2str_f_equation:
-∀ (n fuel : nat) (str : string),
-num2str_f n fuel str =
-match fuel with
+Axiom num2str_f1_equation:
+∀ (n : nat),
+num2str_f1 n =
+match n with
 | 0 => 10
 | S _ => 0
 end.
@@ -1619,15 +1365,15 @@ Proof.
 )); ("n", exactk constr:(10))] [].
   Show Proof. *)
 
-Derive num2str_f_prog
-  in ltac2:(relcompile_tpe 'num2str_f_prog 'num2str_f [])
-  as num2str_f_prog_proof.
+(* Derive num2str_f1_prog
+  in ltac2:(relcompile_tpe 'num2str_f1_prog 'num2str_f1 [])
+  as num2str_f1_prog_proof.
 Proof.
-  intros; subst num2str_f_prog.
+  intros; subst num2str_f1_prog.
   eapply trans_app.
   3: ltac1:(eassumption).
   2: reflexivity ().
-  rewrite num2str_f_equation.
+  rewrite num2str_f1_equation.
   (* let lname := "auto_nat_case" in
   let named_conts := [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty));
       ("v0", exactk constr:(fuel)); ("v1", exactk constr:(10)); ("v2", exactk constr:(fun n0: nat => 0)); ("n", exactk constr:("steve"%string))]
@@ -1650,19 +1396,19 @@ Proof.
     _ _ _ _ "steve"%string fuel 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(destruct fuel; Control.enter compile)
   )). *)
   refine(open_constr:(
-    auto_nat_case (make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty)
-    s _ _ _ "steve"%string fuel 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(cbv zeta; print_full_goal (); destruct fuel; Control.enter compile)
+    auto_nat_case (make_env [name_enc "n"] [encode n] FEnv.empty)
+    s _ _ _ "steve"%string n 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(print_full_goal (); destruct n eqn:?; Control.enter (fun () => print_full_goal(); compile()))
   )).
   1: destruct fuel; Control.enter compile.
   (* NOTES: works as a step after refine, doesn't as part of refine *)
   (*    diff goals between the two *)
   (*    use semicolon instead of dot *)
   (* The difference is *)
-  (* H : lookup_fun (name_enc "num2str_f") (funs s) = Some ([name_enc "n"; name_enc "fuel"; name_enc "str"],
+  (* H : lookup_fun (name_enc "num2str_f1") (funs s) = Some ([name_enc "n"; name_enc "fuel"; name_enc "str"],
 FunSyntax.If FunSyntax.Equal [FunSyntax.Var (name_enc "fuel"); FunSyntax.Const 0] ?x1
 (FunSyntax.Let (name_enc "steve") (FunSyntax.Op FunSyntax.Sub [FunSyntax.Var (name_enc "fuel"); FunSyntax.Const 1]) ?x2)) *)
  (* vs *)
- (* H : (lookup_fun (name_enc "num2str_f") (funs s) = Some ([name_enc "n"; name_enc "fuel"; name_enc "str"], ?body)) *)
+ (* H : (lookup_fun (name_enc "num2str_f1") (funs s) = Some ([name_enc "n"; name_enc "fuel"; name_enc "str"], ?body)) *)
   (* app_lemma "auto_nat_case"
     [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty));
       ("v0", exactk constr:(fuel)); ("v1", exactk constr:(10)); ("v2", exactk constr:(fun n0: nat => 0)); ("n", exactk constr:("steve"%string))]
@@ -1687,12 +1433,16 @@ FunSyntax.If FunSyntax.Equal [FunSyntax.Var (name_enc "fuel"); FunSyntax.Const 0
 )); ("n", exactk constr:(10))] [].
   Show Proof.
   }
-Qed.
+Qed. *)
 
-Definition xd: int = "".
+Definition nat_modulo1 (n1 n2: nat): nat :=
+  match n2 with
+  | 0%nat => 0
+  | S _ => n1 - n2 * (n1 / n2)
+  end.
 
 Remark gcd_oblig:
-  forall (a b: nat) (NE: b <> 0), nat_modulo a b < b.
+  forall (a b: nat) (NE: b <> 0), nat_modulo1 a b < b.
 Proof.
 Admitted.
 
@@ -1700,17 +1450,17 @@ Function gcd_rec (a b: nat) (ACC: Acc lt b) {struct ACC}: nat :=
   match Nat.eq_dec b 0 with
   | left EQ => a
   | right NE =>
-    gcd_rec b (nat_modulo a b) (Acc_inv ACC (gcd_oblig a b NE))
+    gcd_rec b (nat_modulo1 a b) (Acc_inv ACC (gcd_oblig a b NE))
   end.
 
 Derive gcd_rec_prog
-  in ltac2:(relcompile_tpe 'gcd_rec_prog 'gcd_rec ['nat_modulo])
+  in ltac2:(relcompile_tpe 'gcd_rec_prog 'gcd_rec ['nat_modulo1])
   as gcd_rec_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
-Set Printing Implicit.
+(* Set Printing Implicit. *)
 
 Definition idd {A: Type} (a: list A): list A := a.
 
@@ -1726,6 +1476,7 @@ Fixpoint polylength {A: Type} (l: list A) :=
   | [] => 0
   | _ :: l => 1 + polylength l
   end.
+About polylength.
 Lemma polylength_equation: ltac2:(unfold_fix_type '@polylength).
 Proof. unfold_fix_proof '@polylength. Qed.
 
@@ -1742,14 +1493,6 @@ Definition double_polylength (l: list nat) : nat :=
 Derive double_polylength_prog
   in ltac2:(relcompile_tpe 'double_polylength_prog 'double_polylength ['@polylength])
   as double_polylength_prog_proof.
-(* Derive double_polylength_prog
-  in (∀ s : state,
-  (∀ (A : Type) (Refinable_inst : Refinable A) (l : list A),
-    eval_app (name_enc "polylength") [encode l] s (encode (polylength l), s)) →
-  lookup_fun (name_enc "double_polylength") (funs s) = Some ([name_enc "l"], double_polylength_prog) →
-  ∀ l : list nat,
-    eval_app (name_enc "double_polylength") [encode l] s (encode (double_polylength l), s))
-  as double_polylength_prog_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1762,11 +1505,6 @@ Function has_match (l: list nat) : nat :=
   end.
 
 Derive has_match_prog in ltac2:(relcompile_tpe 'has_match_prog 'has_match []) as has_match_proof.
-(* Derive has_match_prog in (forall s,
-  lookup_fun (name_enc "has_match") s.(funs) = Some ([name_enc "l"], has_match_prog) ->
-  forall l,
-    eval_app (name_enc "has_match") [encode l] s (encode (has_match l), s)
-) as has_match_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1780,24 +1518,14 @@ Lemma sum_n_equation : ltac2:(unfold_fix_type 'sum_n).
 Proof. unfold_fix_proof 'sum_n. Qed.
 
 Derive sum_n_prog in ltac2:(relcompile_tpe 'sum_n_prog 'sum_n []) as sum_n_prog_proof.
-(* Derive sum_n_prog in (forall (s: state),
-    lookup_fun (name_enc "sum_n") s.(funs) = Some ([name_enc "n"], sum_n_prog) ->
-    forall (n : nat),
-      eval_app (name_enc "sum_n") [encode n] s (encode (sum_n n), s))
-  as sum_n_prog_proof. *)
 Proof.
-  relcompile.
+  time relcompile.
 Qed.
 
 Definition bool_ops (b: bool): bool :=
   b && true.
 
 Derive bool_ops_prog in ltac2:(relcompile_tpe 'bool_ops_prog 'bool_ops []) as bool_ops_prog_proof.
-(* Derive bool_ops_prog in (forall (s : state),
-  lookup_fun (name_enc "bool_ops") s.(funs) = Some ([name_enc "b"], bool_ops_prog) ->
-  forall (b : bool),
-    eval_app (name_enc "bool_ops") [encode b] s (encode (bool_ops b), s))
-  as bool_ops_prog_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1813,11 +1541,6 @@ Definition has_cases (n : nat) : nat :=
   end.
 
 Derive has_cases_prog in ltac2:(relcompile_tpe 'has_cases_prog 'has_cases []) as has_cases_proof.
-(* Derive has_cases_prog in (forall (s : state),
-    lookup_fun (name_enc "has_cases") s.(funs) = Some ([name_enc "n"], has_cases_prog) ->
-    forall (n: nat),
-      eval_app (name_enc "has_cases") [encode n] s (encode (has_cases n), s))
-  as has_cases_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1833,11 +1556,6 @@ Definition has_cases_list (l : list nat) : nat :=
   end.
 
 Derive has_cases_list_prog in ltac2:(relcompile_tpe 'has_cases_list_prog 'has_cases_list []) as has_cases_list_proof.
-(* Derive has_cases_list_prog in (forall (s : state),
-    lookup_fun (name_enc "has_cases_list") s.(funs) = Some ([name_enc "l"], has_cases_list_prog) ->
-    forall (l : list nat),
-      eval_app (name_enc "has_cases_list") [encode l] s (encode (has_cases_list l), s))
-  as has_cases_list_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1847,14 +1565,7 @@ Definition foo (n : nat) : nat :=
   let/d y := n + x in
   y.
 
-(* TODO: The statements are the same, but eauto can prove one side condition, but not the other :thinking: *)
-(*       Ask Clement? *)
 Derive foo_prog in ltac2:(relcompile_tpe 'foo_prog 'foo []) as foo_prog_proof.
-(* Derive foo_prog in (forall (s : state),
-    lookup_fun (name_enc "foo") s.(funs) = Some ([name_enc "n"], foo_prog) ->
-    forall (n : nat),
-      eval_app (name_enc "foo") [encode n] s (encode (foo n), s))
-  as foo_prog_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1863,12 +1574,6 @@ Definition bar (n : nat) : nat :=
   foo (n + 1).
 
 Derive bar_prog in ltac2:(relcompile_tpe 'bar_prog 'bar ['foo]) as bar_prog_proof.
-(* Derive bar_prog in (forall (s : state),
-    (forall m, eval_app (name_enc "foo") [encode m] s (encode (foo m), s)) ->
-    lookup_fun (name_enc "bar") s.(funs) = Some ([name_enc "n"], bar_prog) ->
-    forall (n : nat),
-      eval_app (name_enc "bar") [encode n] s (encode (bar n), s))
-  as bar_prog_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1878,11 +1583,6 @@ Definition baz (n m : nat) : nat :=
   z.
 
 Derive baz_prog in ltac2:(relcompile_tpe 'baz_prog 'baz []) as baz_prog_proof.
-(* Derive baz_prog in (forall (s : state),
-    lookup_fun (name_enc "baz") s.(funs) = Some ([name_enc "n"; name_enc "m"], baz_prog) ->
-    forall (n m : nat),
-      eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s))
-  as baz_prog_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1892,12 +1592,6 @@ Definition baz2 (n : nat) : nat :=
   m.
 
 Derive baz2_prog in ltac2:(relcompile_tpe 'baz2_prog 'baz2 ['baz]) as baz2_prog_proof.
-(* Derive baz2_prog in (forall (s : state),
-    (forall n m, eval_app (name_enc "baz") [encode n; encode m] s (encode (baz n m), s)) ->
-    lookup_fun (name_enc "baz2") s.(funs) = Some ([name_enc "n"], baz2_prog) ->
-    forall (n : nat),
-      eval_app (name_enc "baz2") [encode n] s (encode (baz2 n), s))
-  as baz2_prog_proof. *)
 Proof.
   relcompile.
 Qed.
@@ -1913,4 +1607,4 @@ Derive sum_acc_prog
   as sum_acc_prog_proof.
 Proof.
   relcompile.
-Qed. *)
+Qed.

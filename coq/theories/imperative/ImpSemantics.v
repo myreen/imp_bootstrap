@@ -237,10 +237,8 @@ Definition eval_cmp (c: cmp) (v1 v2: Value): SRM bool :=
     cont (w1 <w w2)
   | Equal, Word w1, Word w2 =>
     cont (w1 =w w2)
-  (* TODO(kπ) *)
-  (* assume that every allocated address is greater than zero (we should know that) *)
-  (* | Equal, Pointer _, Word w =>
-    (if w =w (word.of_Z 0) then cont false else stop Crash) *)
+  | Equal, Pointer _, Word w =>
+    (if w =w (word.of_Z 0) then cont false else stop Crash)
   | _, _, _ => stop Crash
   end.
 
@@ -423,74 +421,6 @@ Fixpoint EVAL_CMD (fuel: nat) (c : cmd) {struct fuel} : SRM unit :=
     eval_cmd c (EVAL_CMD fuel)
   end.
 
-(* TODO(kπ) we need something like this, so that we know that:
-  When we increase fuel for any diverging program ->
-    We increase the number of steps done by the imperative evaluator ->
-      The assembly also does more steps
-*)
-Theorem eval_cmd_steps_done_ge_fuel: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
-  eval_cmd c (EVAL_CMD fuel) s = (o, s1) -> o = Stop TimeOut -> (s1.(steps_done) - s.(steps_done) >= fuel).
-Proof.
-Admitted.
-
-Theorem catch_return_steps_done_ge_fuel: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome Value),
-  catch_return (eval_cmd c (EVAL_CMD fuel)) s = (o, s1) -> o = Stop TimeOut -> (s1.(steps_done) - s.(steps_done) >= fuel).
-Proof.
-Admitted.
-
-Theorem eval_cmd_steps_done_steps_up: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
-  eval_cmd c (EVAL_CMD fuel) s = (o, s1) -> s.(steps_done) <= s1.(steps_done).
-Proof.
-  induction c; induction fuel; intros.
-  (* Opaque EVAL_CMD. *)
-  all: repeat match goal with
-  | [ H: (_, _) = (_, _) |- _ ] => inversion H; subst; clear H
-  | [ H: (let (_, _) := eval_cmd ?c _ _ in  _) = _ |- _ ] => destruct (eval_cmd c _ _) eqn:?; subst
-  | [ H: (match ?o with _ => _ end) = _ |- _ ] => destruct o eqn:?; subst
-  | [ H: (match ?o with _ => _ end) _ = _ |- _ ] => destruct o eqn:?; subst
-  | [ H: (if ?v then _ else _) _ = _ |- _ ] => destruct v eqn:?; subst
-  | [ H: find_fun _ _ = _ |- _ ] => destruct (fund_fun _ _)
-  | [ H: eval_cmd _ _ _ = _ |- _ ] => eapply IHc1 in H || eapply IHc2 in H || eapply IHc in H
-  | [ H: eval_exp _ _ = _ |- _ ] => eapply eval_exp_pure in H; subst
-  | [ H: eval_exps _ _ = _ |- _ ] => eapply eval_exps_pure in H; subst
-  | [ H: eval_test _ _ = _ |- _ ] => eapply eval_test_pure in H; subst
-  | [ H: EVAL_CMD 0 _ _ = _ |- _ ] => unfold EVAL_CMD in H; fold EVAL_CMD in H
-  | [ H: EVAL_CMD (S _) _ _ = _ |- _ ] => unfold EVAL_CMD in H; fold EVAL_CMD in H
-  | [ H: eval_cmd _ _ _ = _ |- _ ] => unfold eval_cmd in H; fold eval_cmd in H
-  (* | _ => progress simpl in * *)
-  | _ => progress unfold stop, cont, crash, assign, update, catch_return, set_varsM, get_body_and_set_vars, dest_word, put_char, get_char, alloc, get_vars in *
-  | _ => progress unfold inc_steps_done, add_steps_done, set_steps_done, bind in *
-  | _ => eapply Nat.le_refl
-  | _ => lia
-  end.
-Admitted.
-
-Theorem EVAL_CMD_steps_done_steps_up: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
-  EVAL_CMD fuel c s = (o, s1) -> s.(steps_done) <= s1.(steps_done).
-Proof.
-  intros * H.
-  destruct fuel; simpl in *; unfold stop in *; inversion H; subst.
-  - lia.
-  - unfold bind in *; simpl in *.
-    eapply eval_cmd_steps_done_steps_up in H.
-    simpl in *.
-    lia.
-Qed.
-
-Theorem EVAL_CMD_steps_done_non_zero: forall (c: cmd) (fuel: nat) (s s1: state) (o: outcome unit),
-  EVAL_CMD fuel c s = (o, s1) ->
-  fuel <> 0 ->
-  0 < s1.(steps_done) - s.(steps_done).
-Proof.
-  intros * H.
-  destruct fuel; simpl in *; unfold stop in *; inversion H; subst.
-  - lia.
-  - unfold bind in *; simpl in *.
-    eapply eval_cmd_steps_done_steps_up in H.
-    simpl in *.
-    lia.
-Qed.
-
 Definition init_state (inp: llist ascii) (funs: list func): state :=
   {| vars   := IEnv.empty;
      memory := [];
@@ -498,6 +428,9 @@ Definition init_state (inp: llist ascii) (funs: list func): state :=
      input  := inp;
      output := EmptyString;
      steps_done := 0 |}.
+
+Ltac unfold_outcome :=
+  unfold cont, crash, stop in *.
 
 Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome Value * state) :=
   match p with

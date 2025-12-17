@@ -1,4 +1,4 @@
-From impboot Require Import functional.FunSyntax.
+From impboot Require Import functional.FunSyntax functional.FunValues.
 From impboot Require Import imperative.ImpSyntax.
 From Stdlib Require Import NArith.
 From Stdlib Require Import ZArith.
@@ -28,13 +28,13 @@ Fixpoint to_exp (e: FunSyntax.exp): option ImpSyntax.exp :=
   match e with
   | FunSyntax.Var v => Some (ImpSyntax.Var v)
   | FunSyntax.Const n =>
-      if (n <? 2^64)%N then
-        Some (ImpSyntax.Const (word.of_Z (Z.of_N n)))
-      else None
+    if (n <? 2^64)%N then
+      Some (ImpSyntax.Const (word.of_Z (Z.of_N n)))
+    else None
   | FunSyntax.Op FunSyntax.Head [x] =>
-      option_map (fun e' => ImpSyntax.Read e' (ImpSyntax.Const (word.of_Z 0))) (to_exp x)
+    option_map (fun e' => ImpSyntax.Read e' (ImpSyntax.Const (word.of_Z 0))) (to_exp x)
   | FunSyntax.Op FunSyntax.Tail [x] =>
-      option_map (fun e' => ImpSyntax.Read e' (ImpSyntax.Const (word.of_Z 8))) (to_exp x)
+    option_map (fun e' => ImpSyntax.Read e' (ImpSyntax.Const (word.of_Z 8))) (to_exp x)
   | _ => None
   end.
 
@@ -62,92 +62,91 @@ Definition to_guard (t: FunSyntax.test) (es: list FunSyntax.exp): option ImpSynt
 Definition dest_Cons (e: FunSyntax.exp): option (ImpSyntax.exp * FunSyntax.exp) :=
   match e with
   | FunSyntax.Op FunSyntax.Cons [e1; e2] =>
-      option_map (fun e' => (e', e2)) (to_exp e1)
+    option_map (fun e' => (e', e2)) (to_exp e1)
   | _ => None
   end.
 
-(* TODO: is this just an optimization? *)
 Definition to_cons (v: name) (x: FunSyntax.exp): option ImpSyntax.cmd :=
   match dest_Cons x with
   | None => None
   | Some (e1, x) =>
+    match dest_Cons x with
+    | None =>
+      option_map (fun e2 => ImpSyntax.Call v (name_of_string "cons") [e1; e2]) (to_exp x)
+    | Some (e2, x) =>
       match dest_Cons x with
       | None =>
-          option_map (fun e2 => ImpSyntax.Call v (name_of_string "cons") [e1; e2]) (to_exp x)
-      | Some (e2, x) =>
-          match dest_Cons x with
-          | None =>
-              option_map (fun e3 => ImpSyntax.Call v (name_of_string "cons3") [e1; e2; e3]) (to_exp x)
-          | Some (e3, x) =>
-              match dest_Cons x with
-              | None =>
-                  option_map (fun e4 => ImpSyntax.Call v (name_of_string "cons4") [e1; e2; e3; e4]) (to_exp x)
-              | Some (e4, x) =>
-                  option_map (fun e5 => ImpSyntax.Call v (name_of_string "cons5") [e1; e2; e3; e4; e5]) (to_exp x)
-              end
-          end
+        option_map (fun e3 => ImpSyntax.Call v (name_of_string "cons3") [e1; e2; e3]) (to_exp x)
+      | Some (e3, x) =>
+        match dest_Cons x with
+        | None =>
+          option_map (fun e4 => ImpSyntax.Call v (name_of_string "cons4") [e1; e2; e3; e4]) (to_exp x)
+        | Some (e4, x) =>
+          option_map (fun e5 => ImpSyntax.Call v (name_of_string "cons5") [e1; e2; e3; e4; e5]) (to_exp x)
+        end
       end
+    end
   end.
 
 Definition to_assign (v: name) (x: FunSyntax.exp): option ImpSyntax.cmd :=
   match to_exp x with
   | Some i => Some (ImpSyntax.Assign v i)
   | None =>
-      match to_cons v x with
-      | Some r => Some r
-      | None =>
-          match x with
-          | FunSyntax.Call n es =>
-              option_map (fun xs => ImpSyntax.Call v n xs) (to_exps es)
-          | FunSyntax.Op p es =>
-              match p, to_exps es with
-              | FunSyntax.Add, Some [x1; x2] => 
-                  Some (ImpSyntax.Call v (name_of_string "add") [x1; x2])
-              | FunSyntax.Sub, Some [x1; x2] => 
-                  Some (ImpSyntax.Call v (name_of_string "sub") [x1; x2])
-              | FunSyntax.Div, Some [x1; x2] => 
-                  Some (ImpSyntax.Assign v (ImpSyntax.Div x1 x2))
-              | FunSyntax.Read, Some [] => 
-                  Some (ImpSyntax.GetChar v)
-              | FunSyntax.Write, Some [x1] => 
-                  Some (ImpSyntax.Seq (ImpSyntax.PutChar x1) 
-                                      (ImpSyntax.Assign v (ImpSyntax.Const (word.of_Z 0))))
-              | _, _ => None
-              end
-          | _ => None
-          end
+    match to_cons v x with
+    | Some r => Some r
+    | None =>
+      match x with
+      | FunSyntax.Call n es =>
+        option_map (fun xs => ImpSyntax.Call v n xs) (to_exps es)
+      | FunSyntax.Op p es =>
+        match p, to_exps es with
+        | FunSyntax.Add, Some [x1; x2] => 
+          Some (ImpSyntax.Call v (name_of_string "add") [x1; x2])
+        | FunSyntax.Sub, Some [x1; x2] => 
+          Some (ImpSyntax.Call v (name_of_string "sub") [x1; x2])
+        | FunSyntax.Div, Some [x1; x2] => 
+          Some (ImpSyntax.Assign v (ImpSyntax.Div x1 x2))
+        | FunSyntax.Read, Some [] => 
+          Some (ImpSyntax.GetChar v)
+        | FunSyntax.Write, Some [x1] => 
+          Some (ImpSyntax.Seq (ImpSyntax.PutChar x1) 
+                              (ImpSyntax.Assign v (ImpSyntax.Const (word.of_Z 0))))
+        | _, _ => None
+        end
+      | _ => None
       end
+    end
   end.
 
 Fixpoint to_cmd (e: FunSyntax.exp): option ImpSyntax.cmd :=
   match to_exp e with
   | Some i => Some (ImpSyntax.Return i)
   | None =>
-      match e with
-      | FunSyntax.If t es e1 e2 =>
-          let/o t1 := to_guard t es in
-          let/o c1 := to_cmd e1 in
-          let/o c2 := to_cmd e2 in
-          Some (ImpSyntax.If t1 c1 c2)
-      | FunSyntax.Let v x y =>
-          let/o c1 := to_assign v x in
-          let/o c2 := to_cmd y in
-          Some (ImpSyntax.Seq c1 c2)
-      | FunSyntax.Call n es =>
-          option_map (fun xs => 
-            ImpSyntax.Seq 
-              (ImpSyntax.Call (name_of_string "ret") n xs) 
-              (ImpSyntax.Return (ImpSyntax.Var (name_of_string "ret")))
-          ) (to_exps es)
-      | _ => None
-      end
+    match e with
+    | FunSyntax.If t es e1 e2 =>
+      let/o t1 := to_guard t es in
+      let/o c1 := to_cmd e1 in
+      let/o c2 := to_cmd e2 in
+      Some (ImpSyntax.If t1 c1 c2)
+    | FunSyntax.Let v x y =>
+      let/o c1 := to_assign v x in
+      let/o c2 := to_cmd y in
+      Some (ImpSyntax.Seq c1 c2)
+    | FunSyntax.Call n es =>
+      option_map (fun xs =>
+        ImpSyntax.Seq 
+          (ImpSyntax.Call (name_of_string "ret") n xs) 
+          (ImpSyntax.Return (ImpSyntax.Var (name_of_string "ret")))
+      ) (to_exps es)
+    | _ => None
+    end
   end.
 
-  Fixpoint list_uniqb {A: Type} (eqb: A -> A -> bool) (l: list A): bool :=
-    match l with
-    | [] => true
-    | x :: xs => negb (List.existsb (eqb x) xs) && list_uniqb eqb xs
-    end.
+Fixpoint list_uniqb {A: Type} (eqb: A -> A -> bool) (l: list A): bool :=
+  match l with
+  | [] => true
+  | x :: xs => negb (List.existsb (eqb x) xs) && list_uniqb eqb xs
+  end.
 
 Fixpoint to_funs (fs: list FunSyntax.defun): option (list ImpSyntax.func) :=
   match fs with
@@ -229,17 +228,17 @@ Definition to_imp (p: FunSyntax.prog): option ImpSyntax.prog :=
     if has_conflicting_names defs then None else
     match to_funs (FunSyntax.Defun (name_of_string "main") [] main :: defs) with
     | Some fs =>
-        Some (
-          ImpSyntax.Program
-            (map (fun '(n, vs, b) => ImpSyntax.Func n vs b) builtin ++ fs)
-        )
+      Some (
+        ImpSyntax.Program
+          (map (fun '(n, vs, b) => ImpSyntax.Func n vs b) builtin ++ fs)
+      )
     | None => None
     end
   end.
 
 (* examples *)
 
-Example fp_prog1 :=
+(* Example fp_prog1 :=
   FunSyntax.Program (@nil FunSyntax.defun) (
     FunSyntax.Op FunSyntax.Add [FunSyntax.Const 1; FunSyntax.Const 2]
   ).
@@ -251,6 +250,7 @@ Example fp_prog2 :=
       (FunSyntax.Op FunSyntax.Add [FunSyntax.Const 1; FunSyntax.Const 2])
       (FunSyntax.Var 1)
   ).
-Compute (to_imp fp_prog2).
+Compute (to_imp fp_prog2). *)
 
 (* TODO: forward semantics preservation *)
+

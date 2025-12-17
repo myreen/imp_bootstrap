@@ -6,10 +6,13 @@ Require Import impboot.utils.AppList.
 Require Import coqutil.Word.Interface.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.assembly.ASMSemantics.
+Require Import impboot.commons.ProofUtils.
+From Stdlib Require Import Relations.Relation_Operators.
 
 Require Import Stdlib.Program.Equality.
 
 Require Import Patat.Patat.
+
 Ltac cleanup :=
   repeat match goal with
   | [ H: _ /\ _ |- _ ] => destruct H
@@ -32,9 +35,9 @@ Proof.
 Qed.
 
 Theorem step_determ: forall x y z,
-  step x y ∧ step x z -> y = z.
+  step x y -> step x z -> y = z.
 Proof.
-  destruct x; intros; destruct H as [Hstep1 Hstep2].
+  destruct x; intros * Hstep1 Hstep2.
   2: inversion Hstep1.
   inversion Hstep1; inversion Hstep2; subst; try reflexivity; try congruence.
   all: pat `fetch s = _` at rewrite pat in *; cleanup.
@@ -54,60 +57,106 @@ Proof.
     eapply map_uninit_eq; eauto.
 Qed.
 
-Theorem steps_determ_Halt: forall s fuel s1 s2 e1 e2 o1 o2,
-  steps (s, fuel) (Halt e1 o1, s1) ->
-  steps (s, fuel) (Halt e2 o2, s2) ->
+Theorem steps_from_Halt_is_Halt: forall w o n s n1,
+  steps (Halt w o, n) (s, n1) ->
+    s = (Halt w o) ∧ n1 = n.
+Proof.
+  intros * H.
+  dependent induction H; subst; eauto.
+  all: try spat `step` at inversion spat.
+  eapply IHsteps2; eauto.
+  f_equal.
+  all: specialize (IHsteps1 w o n s2 n2 eq_refl eq_refl) as ?; cleanup; subst.
+  all: eauto.
+Qed.
+
+Theorem steps_when_step_to_Halt: forall s fuel fuel1 s1 e o,
+  step s (Halt e o) ->
+  steps (s, fuel) (s1, fuel1) ->
+  (s1 = s /\ fuel1 = fuel) \/ s1 = (Halt e o).
+Proof.
+  intros * Hstep Hsteps.
+  dependent induction Hsteps; intros; eauto.
+  - right; eapply step_determ; eauto.
+  - right; eapply step_determ; eauto.
+  - specialize IHHsteps1 with (1 := Hstep) (2 := eq_refl) (3 := eq_refl) as ?.
+    destruct H; cleanup; subst.
+    + specialize IHHsteps2 with (1 := Hstep) (2 := eq_refl) (3 := eq_refl) as ?; cleanup; subst; eauto.
+    + eapply steps_from_Halt_is_Halt in Hsteps2; cleanup; subst; eauto.
+Qed.
+
+Theorem steps_step_to_Halt_eq: forall s fuel fuel1 e1 o1 e2 o2,
+  step s (Halt e1 o1) ->
+  steps (s, fuel) (Halt e2 o2, fuel1) ->
   e1 = e2 /\ o1 = o2.
 Proof.
-Admitted.
+  intros * Hstep Hsteps.
+  dependent induction Hsteps; intros; eauto.
+  - inversion Hstep.
+  - eapply step_determ in H; eauto; subst.
+    pat `Halt _ _ = Halt _ _` at inversion H; subst; cleanup; eauto.
+  - eapply step_determ with (2 := Hstep) in H; eauto; subst.
+    pat `Halt _ _ = Halt _ _` at inversion H; subst; cleanup; eauto.
+  - pat `steps (s, fuel) _` at eapply steps_when_step_to_Halt in pat; eauto.
+    destruct Hsteps1; cleanup; subst.
+    2: eapply steps_from_Halt_is_Halt in Hsteps2; cleanup.
+    2: pat `Halt _ _ = Halt _ _` at inversion pat; subst; cleanup; eauto.
+    specialize IHHsteps2 with (1 := Hstep) (2 := eq_refl) (3 := eq_refl) as ?.
+    eauto.
+Qed.
+
+Theorem RTC_trans: forall A (R: A -> A -> Prop) x y z,
+  clos_refl_trans_1n A R x y ->
+  clos_refl_trans_1n A R y z ->
+  clos_refl_trans_1n A R x z.
+Proof.
+  intros A R x y z Hxy Hyz.
+  induction Hxy; eauto.
+  eapply rt1n_trans; eauto.
+Qed.
+
+Theorem steps_IMP_RTC: forall s1 s2 n1 n2,
+  steps (s1, n1) (s2, n2) ->
+  clos_refl_trans_1n s_or_h step s1 s2.
+Proof.
+  intros * H.
+  dependent induction H; intros; eauto.
+  - eapply rt1n_refl.
+  - eapply rt1n_trans; eauto.
+    eapply rt1n_refl.
+  - eapply rt1n_trans; eauto.
+    eapply rt1n_refl.
+  - eapply RTC_trans; eauto.
+Qed.
+
+Theorem RTC_step_determ: forall x e1 o1 e2 o2,
+  clos_refl_trans_1n s_or_h step x (Halt e1 o1) ->
+  clos_refl_trans_1n s_or_h step x (Halt e2 o2) ->
+  e1 = e2 /\ o1 = o2.
+Proof.
+  intros * Hrtc1 Hrtc2.
+  dependent induction Hrtc1; intros; eauto.
+  - inversion Hrtc2; subst; eauto.
+    pat `step (Halt _ _) _` at inversion pat.
+  - inversion Hrtc2; subst; eauto.
+    + pat `step (Halt _ _) _` at inversion pat.
+    + specialize IHHrtc1 with (1 := eq_refl).
+      pat `step x y` at eapply step_determ in pat; eauto; subst; eauto.
+Qed.
+
+Theorem steps_determ_Halt: forall s n1 n2 n3 e1 o1 e2 o2,
+  steps (s, n1) (Halt e1 o1, n2) ->
+  steps (s, n1) (Halt e2 o2, n3) ->
+  e1 = e2 /\ o1 = o2.
+Proof.
+  intros * Hsteps1 Hsteps2.
+  eapply steps_IMP_RTC in Hsteps1.
+  eapply steps_IMP_RTC in Hsteps2.
+  eapply RTC_step_determ; eauto.
+Qed.
 
 (* TODO: share the following with ImpToAsmCodegenProof  *)
-Theorem substring_noop: forall s,
-  substring 0 (length s) s = s.
-Proof.
-  induction s.
-  - simpl; reflexivity.
-  - simpl; f_equal; assumption.
-Qed.
-Theorem prefix_refl: forall o,
-  prefix o o = true.
-Proof.
-  intros; eapply prefix_correct; eapply substring_noop.
-Qed.
-Theorem prefix_trans: forall s1 s2 s3,
-  prefix s1 s2 = true ->
-  prefix s2 s3 = true ->
-  prefix s1 s3 = true.
-Proof.
-  intros s1 s2. revert s1.
-  induction s2 as [|b s2' IH]; intros s1 s3 H1 H2.
-  - destruct s1 as [|a s1'].
-    + simpl. assumption.
-    + simpl in H1. discriminate H1.
-  - destruct s1 as [|a s1'].
-    + destruct s3 as [|c s3']; simpl; reflexivity.
-    + simpl in H1.
-      destruct (ascii_dec a b) as [Heq|Hneq].
-      * subst b.
-        destruct s3 as [|c s3'].
-        -- simpl in H2.
-           destruct (ascii_dec a a) as [_|Hcontr]; [discriminate H2|contradiction].
-        -- simpl in H2.
-           destruct (ascii_dec a c) as [Heq2|Hneq2].
-           ++ subst c.
-              simpl.
-              destruct (ascii_dec a a) as [_|Hcontr]; [|contradiction].
-              eapply IH; eassumption.
-           ++ discriminate H2.
-      * discriminate H1.
-Qed.
-Lemma substring_append: forall (s s1: string),
-  substring 0 (length s) (s ++ s1) = s.
-Proof.
-  induction s; simpl; intros.
-  - destruct s1; simpl; reflexivity.
-  - f_equal; eauto.
-Qed.
+
 
 Theorem step_mono: forall s0 s1,
   step (State s0) (State s1) -> prefix s0.(output) s1.(output) = true.

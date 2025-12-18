@@ -21,6 +21,7 @@ From impboot Require Import functional.FunSemantics.
 From impboot Require Import fp2imp.FpToImpCodegen.
 From impboot Require Import assembly.ASMToString.
 From impboot Require Import imperative.Printing.
+From impboot Require Import parsing.Parser.
 
 Derive c_add_prog 
   in ltac2:(relcompile_tpe 'c_add_prog 'c_add []) 
@@ -42,6 +43,20 @@ Time Eval lazy in (
   | _ => None
   end
 ).
+
+Example c_add_reparsed :=
+  match c_add_imp_prog with
+  | Some [p] => 
+    let pretty := imp2str (Program [p]) in
+    Some (str2imp pretty)
+  | _ => None
+  end.
+Eval lazy in c_add_reparsed.
+Goal (forall fs, c_add_imp_prog = Some fs -> c_add_reparsed = Some (Program fs)).
+Proof.
+  intros * H; inversion H; lazy.
+  repeat f_equal.
+Qed.
 
 Compute (
   match c_add_imp_prog with

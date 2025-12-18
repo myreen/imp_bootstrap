@@ -46,7 +46,7 @@ Fixpoint lex q (cs: list ascii) (acc: list token) (fuel: nat): option (list toke
     match fuel with
     | 0%nat => None
     | S fuel => 
-      if List.existsb (fun c1 => Ascii.eqb c c1) (list_ascii_of_string " \t\n") then
+      if List.existsb (fun c1 => Ascii.eqb c c1) ([" "; "009"; "010"])%char then
         lex NUM cs acc fuel else
       if Ascii.eqb c "#" then lex NUM (end_line cs) acc fuel else
       if Ascii.eqb c "." then lex NUM cs (DOT :: acc) fuel else
@@ -123,24 +123,30 @@ Proof.
   end.
 Qed.
 
-Definition lexer (input: string): option (list token) :=
+Definition lexer_i (input: string): option (list token) :=
   let/d in_list := list_ascii_of_string input in
   lex NUM in_list [] (List.length in_list).
 
 Theorem lexer_terminates: forall (inp: string),
-  lexer inp <> None.
+  lexer_i inp <> None.
 Proof.
-  intros; unfold lexer, dlet.
+  intros; unfold lexer_i, dlet.
   eapply lex_terminates.
   eapply Nat.le_refl.
 Qed.
+
+Definition lexer (input: string): list token :=
+  match lexer_i input with
+  | None => []
+  | Some ts => ts
+  end.
 
 (* parsing *)
 
 Definition quote n :=
   FunValues.vlist [Num (name_enc "'"); Num n].
 
-Fixpoint parse (ts: list token) x s :=
+Fixpoint parse (ts: list token) (x: Value) (s: list Value) :=
   match ts with
   | [] => x
   | (CLOSE :: rest) => parse rest (Num 0) (x::s)
@@ -152,7 +158,7 @@ Fixpoint parse (ts: list token) x s :=
   | (NUM n :: rest) => parse rest (Pair (Num n) x) s
   | (QUOTE n :: rest) => parse rest (Pair (quote n) x) s
   | (DOT :: rest) => parse rest (FunValues.vhead x) s
-end.
+  end.
 
 (* converting from v to prog *)
 
@@ -163,15 +169,6 @@ Fixpoint v2list v :=
     v1 :: v2list v2
   end.
 
-Fixpoint pat_lets x v rhs :=
-  match v with
-  | Num _ => rhs
-  | Pair v1 v2 =>
-    let var := vgetNum v1 in
-      FunSyntax.Let var (FunSyntax.Op FunSyntax.Head [x])
-        (pat_lets (FunSyntax.Op FunSyntax.Tail [x]) v2 rhs)
-  end.
-
 Definition num2exp n :=
   if vis_upper n then ImpSyntax.Const (word.of_Z (Z.of_N n)) else Var n.
 
@@ -180,24 +177,28 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
   | Num n => num2exp n
   | Pair v0 v1 =>
     let n := vgetNum v0 in (* this can fail? *)
-    if N.eqb n (name_enc "'") then Const (word.of_Z (Z.of_N (vgetNum v1))) else
-    if N.eqb n (name_enc "var") then Var (vgetNum v1) else
     match v1 with
-    | Num _ => Var (vgetNum v) (* fail? *)
+    | Num _ => num2exp n (* fail? *)
     | Pair v1 v2 =>
-      if N.eqb n (name_enc "+") then Add (v2exp v1) (v2exp v2) else
-      if N.eqb n (name_enc "-") then Sub (v2exp v1) (v2exp v2) else
-      if N.eqb n (name_enc "div") then Div (v2exp v1) (v2exp v2) else
-      if N.eqb n (name_enc "read") then Read (v2exp v1) (v2exp v2) else
-      Var (vgetNum (vel0 v)) (* fail? *)
+      if N.eqb n (name_enc "'") then Const (word.of_Z (Z.of_N (vgetNum v1))) else
+      if N.eqb n (name_enc "var") then Var (vgetNum v1) else
+      match v2 with
+      | Num _ => num2exp n (* fail? *)
+      | Pair v2 v3 =>
+        if N.eqb n (name_enc "+") then Add (v2exp v1) (v2exp v2) else
+        if N.eqb n (name_enc "-") then Sub (v2exp v1) (v2exp v2) else
+        if N.eqb n (name_enc "div") then Div (v2exp v1) (v2exp v2) else
+        if N.eqb n (name_enc "read") then Read (v2exp v1) (v2exp v2) else
+        Var (vgetNum (vel0 v)) (* fail? *)
+      end
     end
   end.
 
-Fixpoint v2exps (v: Value): list ImpSyntax.exp :=
+Fixpoint vs2exps (v: list Value): list ImpSyntax.exp :=
   match v with
-  | Num _ => []
-  | Pair v1 v2 =>
-    v2exp v1 :: v2exps v2
+  | [] => []
+  | v1 :: vs =>
+    v2exp v1 :: vs2exps vs
   end.
 
 Definition v2cmp (v: Value): ImpSyntax.cmp :=
@@ -210,42 +211,55 @@ Fixpoint v2test (v: Value): ImpSyntax.test :=
   | Num _ => Test Less (Const (word.of_Z 0)) (Const (word.of_Z 0)) (* fail? *)
   | Pair v0 v1 =>
     let n := vgetNum v0 in (* this can fail? *)
-    if N.eqb n (name_enc "not") then Not (v2test v1) else
     match v1 with
     | Num _ => Test Less (Const (word.of_Z 0)) (Const (word.of_Z 0)) (* fail? *)
     | Pair v1 v2 =>
-      if N.eqb n (name_enc "and") then And (v2test v1) (v2test v2) else
-      if N.eqb n (name_enc "or") then Or (v2test v1) (v2test v2) else
-      Test (v2cmp v0) (v2exp v1) (v2exp v2)
+      if N.eqb n (name_enc "not") then Not (v2test v1) else
+      match v2 with
+      | Num _ => Test Less (Const (word.of_Z 0)) (Const (word.of_Z 0)) (* fail? *)
+      | Pair v2 v3 =>
+        if N.eqb n (name_enc "and") then And (v2test v1) (v2test v2) else
+        if N.eqb n (name_enc "or") then Or (v2test v1) (v2test v2) else
+        Test (v2cmp v0) (v2exp v1) (v2exp v2)
+      end
     end
   end.
 
-(* TODO: can I use v2list here? *)
 Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
   match v with
   | Num _ => Skip
   | Pair v0 v1 =>
     match v0 with
     | Pair _ _ =>
-      Seq (v2cmd v0) (v2cmd v1)
+      match v1 with
+      | Num _ => v2cmd v0
+      | Pair _ _ =>
+        Seq (v2cmd v0) (v2cmd v1)
+      end
     | Num _ =>
       let n := vgetNum v0 in
       if N.eqb n (name_enc "abort") then Abort else
-      if N.eqb n (name_enc "return") then Return (v2exp v1) else
-      if N.eqb n (name_enc "getchar") then GetChar (vgetNum v1) else
-      if N.eqb n (name_enc "putchar") then PutChar (v2exp v1) else
       match v1 with
       | Num _ => Skip (* fail? *)
       | Pair v1 v2 =>
-        if N.eqb n (name_enc "assign") then Assign (vgetNum v1) (v2exp v2) else
-        if N.eqb n (name_enc "while") then While (v2test v1) (v2cmd v2) else
-        if N.eqb n (name_enc "alloc") then Alloc (vgetNum v1) (v2exp v2) else
+        if N.eqb n (name_enc "return") then Return (v2exp v1) else
+        if N.eqb n (name_enc "getchar") then GetChar (vgetNum v1) else
+        if N.eqb n (name_enc "putchar") then PutChar (v2exp v1) else
         match v2 with
-        | Num _ => Skip (* fail? *)
+        | Num n2 => Skip (* fail? *)
         | Pair v2 v3 =>
-          if N.eqb n (name_enc "update") then Update (v2exp v1) (v2exp v2) (v2exp v3) else
-          if N.eqb n (name_enc "if") then If (v2test v1) (v2cmd v2) (v2cmd v3) else
-          Call (vgetNum v1) (vgetNum v2) (v2exps v3)
+          if N.eqb n (name_enc "assign") then Assign (vgetNum v1) (v2exp v2) else
+          if N.eqb n (name_enc "while") then While (v2test v1) (v2cmd v2) else
+          if N.eqb n (name_enc "alloc") then Alloc (vgetNum v1) (v2exp v2) else
+          match v3 with
+          | Num _ =>
+            Call (vgetNum v0) (vgetNum v1) (vs2exps (v2list v2))
+          | Pair v3 v4 =>
+            if N.eqb n (name_enc "update") then Update (v2exp v1) (v2exp v2) (v2exp v3) else
+            if N.eqb n (name_enc "if") then If (v2test v1) (v2cmd v2) (v2cmd v3) else
+            if N.eqb n (name_enc "call") then Call (vgetNum v1) (vgetNum v2) (vs2exps (v2list v3)) else
+            Call (vgetNum v0) (vgetNum v1) (vs2exps (v2list (Pair v2 v3)))
+          end
         end
       end
     end
@@ -255,46 +269,31 @@ Fixpoint vs2args (vs: list Value) :=
   match vs with
   | [] => []
   | v :: vs =>
-    match v with
-    | Num _ => [] (* fail? *)
-    | Pair v0 _ =>
-      vgetNum v0 :: vs2args vs
-    end
+    vgetNum v :: vs2args vs
   end.
 
-Definition v2dec (v: Value) :=
-  match v with
-  | Num _ => ImpSyntax.Func (0%N) [] Skip (* fail? *)
-  | Pair v0 v1 =>
-    match v1 with
-    | Num _ => ImpSyntax.Func (0%N) [] Skip (* fail? *)
-    | Pair v1 v2 =>
-      match v2 with
-      | Num _ => ImpSyntax.Func (0%N) [] Skip (* fail? *)
-      | Pair v2 v3 =>
-        match v3 with
-        | Num _ => ImpSyntax.Func (0%N) [] Skip (* fail? *)
-        | Pair v3 _ =>
-          ImpSyntax.Func (vgetNum v1)
-            (vs2args (v2list v2))
-            (v2cmd v3)
-        end
-      end
-    end
-  end.
+Definition v2func (v: Value) :=
+  ImpSyntax.Func ((vgetNum (vel1 v)))
+    (vs2args (v2list (vel2 v)))
+    (v2cmd (vel3 v)).
 
-Fixpoint vdecs (vs: list Value) :=
+Fixpoint v2funcs (vs: list Value) :=
   match vs with
   | [] => []
   | v :: vs =>
-    v2dec v :: vdecs vs
+    v2func v :: v2funcs vs
   end.
 
 Definition vs2prog (vs: list Value) :=
-  let ds := vdecs vs in
+  let ds := v2funcs vs in
   ImpSyntax.Program ds.
 
 (* entire parser *)
 
-Definition parser tokens :=
+Definition parser (tokens: list token): prog :=
   vs2prog (v2list (parse tokens (Num 0) [])).
+
+Definition str2imp (s: string): ImpSyntax.prog :=
+  let/d toks := lexer s in
+  let/d prog := parser toks in
+  prog.

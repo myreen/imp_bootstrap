@@ -74,7 +74,7 @@ Definition name2str (n: N): string :=
   end.
 
 
-(* Pretty printer for ImpSyntax - generates s-expression syntax *)
+(* Pretty printer for ImpSyntax – generates s-expression syntax *)
 
 Inductive sexpr :=
 | SNum (n: N)

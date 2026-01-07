@@ -7,7 +7,6 @@ From Stdlib Require Import Bool.
 From Stdlib Require Import String.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
-Require Import coqutil.Datatypes.List.
 Import ListNotations.
 
 (* definition of a very partial compilation from functional to imperative source *)
@@ -251,6 +250,3 @@ Example fp_prog2 :=
       (FunSyntax.Var 1)
   ).
 Compute (to_imp fp_prog2). *)
-
-(* TODO: forward semantics preservation *)
-

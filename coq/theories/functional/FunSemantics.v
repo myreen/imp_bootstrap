@@ -26,7 +26,7 @@ Record state := mkState {
   funs : list FunSyntax.defun;
   clock : nat;
   input : llist ascii;
-  output : list ascii
+  output : string
 }.
 
 Definition set_input (s : state) (inp : llist ascii) : state :=
@@ -35,7 +35,7 @@ Definition set_input (s : state) (inp : llist ascii) : state :=
      input := inp;
      output := s.(output) |}.
 
-Definition set_output (s : state) (out : list ascii) : state :=
+Definition set_output (s : state) (out : string) : state :=
   {| funs := s.(funs);
      clock := s.(clock);
      input := s.(input);
@@ -68,7 +68,7 @@ Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Val
       let (v, s') := next s in
       return_ v (set_input s' (ltail s'.(input)))
   | FunSyntax.Write, [Num n] =>
-      if n <? 256 then return_ (Num 0) (set_output s (s.(output) ++ [ascii_of_N n]))
+      if n <? 256 then return_ (Num 0) (set_output s (s.(output) ++ String (ascii_of_N n) EmptyString)%string)
       else fail s
   | _, _ => fail s
   end.
@@ -106,7 +106,7 @@ Arguments env_and_body !_ !_ /.
 
 (* TODO(kπ) Should this take a clock? *)
 Definition init_state (inp : llist ascii) (funs : list FunSyntax.defun) : state :=
-  {| funs := funs; clock := 0; input := inp; output := [] |}.
+  {| funs := funs; clock := 0; input := inp; output := EmptyString |}.
 
 Reserved Notation "env '|--' ( es , s1 ) '--->' ( vs , s2 )" (at level 40, es at next level, vs at next level).
 
@@ -165,7 +165,7 @@ Proof.
   eapply Eval_Call; eauto.
 Qed.
 
-Definition prog_terminates (input: llist ascii) (p: FunSyntax.prog) (out: list ascii): Prop :=
+Definition prog_terminates (input: llist ascii) (p: FunSyntax.prog) (out: string): Prop :=
   exists s r,
     FEnv.empty |-- ([get_main p], (init_state input (get_defs p))) ---> (r,  s) /\
       out = s.(output).

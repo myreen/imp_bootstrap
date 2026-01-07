@@ -345,7 +345,7 @@ Definition get_body_and_set_vars (nm: name) (vs: list Value) (s: state): (outcom
   match find_fun nm s.(funs) with
   | None => crash s
   | Some (params, body) =>
-      if orb (negb (List.length params =? List.length vs)) (negb (nodupb params)) then
+      if (negb (List.length params =? List.length vs)) || (negb (List.length (nodup N.eq_dec params) =? List.length params)) then
         crash s
       else
         cont body (set_vars (make_env params vs IEnv.empty) s)

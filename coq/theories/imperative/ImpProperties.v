@@ -153,11 +153,6 @@ Proof.
   all: lia.
 Qed.
 
-(* TODO(kπ) we need something like this, so that we know that:
-  When we increase fuel for any diverging program ->
-    We increase the number of steps done by the imperative evaluator ->
-      The assembly also does more steps
-*)
 Theorem eval_cmd_steps_done_ge_fuel: forall (fuel: nat) (c: cmd) (s s1: state) (o: outcome unit),
   eval_cmd c (EVAL_CMD fuel) s = (o, s1) -> o = Stop TimeOut -> (fuel <= s1.(steps_done) - s.(steps_done)).
 Proof.
@@ -251,3 +246,54 @@ Proof.
     simpl in *.
     lia.
 Qed.
+
+Theorem eval_cmd_add_clock: ∀ fuel c s res s1,
+  eval_cmd c (EVAL_CMD fuel) s = (res, s1) -> res ≠ Stop TimeOut ->
+    ∀ fuel1, eval_cmd c (EVAL_CMD (fuel + fuel1)) s = (res, s1).
+Proof.
+  Opaque eval_cmd.
+  induction fuel; induction c; simpl in *; intros.
+  Transparent eval_cmd.
+  Opaque EVAL_CMD.
+  all: simpl in *; unfold_outcome; unfold_monadic; cleanup.
+  all: try solve [reflexivity].
+  Opaque eval_cmd.
+  all: repeat lazymatch goal with
+  | IH: forall s res s1, eval_cmd ?c _ _ = _ -> _, H: context [ let (_, _) := eval_cmd ?c ?f ?s2 in _ ] |- _ =>
+    let Hd := fresh "Hd" in
+    destruct (eval_cmd c f s2) eqn:Hd; subst; cleanup; specialize IH with (1 := Hd)
+  | H: context [ match ?o with _ => _ end ] |- _ => destruct o eqn:?; subst; cleanup
+  | H: eval_exp _ _ = _ |- _ =>
+    specialize eval_exp_pure with (1 := H) as ?; subst; eapply eval_exp_not_stop with (v := TimeOut) (2 := HTimeOutneqCrash) in H; eauto
+  | H: eval_exp _ _ = (_, _) |- _ =>
+    specialize eval_exp_pure with (1 := H) as ?; subst; clear H
+  | H: eval_exps _ _ = _ |- _ =>
+    specialize eval_exps_pure with (1 := H) as ?; subst; eapply eval_exps_not_stop with (v := TimeOut) (2 := HTimeOutneqCrash1) in H; eauto
+  | H: eval_test _ _ = _ |- _ =>
+    specialize eval_test_pure with (1 := H) as ?; subst; eapply eval_test_not_stop with (v := TimeOut) (2 := HTimeOutneqCrash2) in H; eauto
+  | H: EVAL_CMD 0 _ _ = _ |- _ => with_strategy transparent [EVAL_CMD] unfold EVAL_CMD in H
+  | H: Cont _ = Stop _ |- _ => inversion H; clear H; subst
+  | H: Stop TimeOut <> Stop TimeOut |- _ => congruence
+  | H: (_, _) = (_, _) |- _ => inversion H; clear H; subst
+  | _ => (unfold assign, alloc, update, get_vars, get_body_and_set_vars, set_varsM,
+    catch_return, set_vars, set_memory, dest_word, get_char, put_char, set_output, inc_steps_done, add_steps_done, set_steps_done in *)
+        || unfold_outcome || unfold_monadic || (simpl in *)
+  end.
+  all: unfold assign, alloc, update, get_vars, get_body_and_set_vars, set_varsM,
+    catch_return, set_vars, set_memory, dest_word, get_char, put_char, set_output, inc_steps_done, add_steps_done, set_steps_done in *.
+  all: unfold_outcome; unfold_monadic.
+  all: try solve [exists 0; rewrite Nat.add_0_r; destruct s1; simpl; eauto].
+  (* all: simpl in *; cleanup; eexists. *)
+  (* - eapply IHc2 in H; eauto; clear IHc2; rewrite IHc1; eauto; congruence.
+  - rewrite IHc1; eauto; congruence.
+  - rewrite IHc; eauto; congruence.
+  - rewrite IHc; eauto; congruence.
+  - congruence.
+  - eapply IHc2 in H; eauto; clear IHc2; rewrite IHc1; eauto; congruence.
+  - rewrite IHc1; eauto; congruence.
+  - specialize eval_test_pure with (1 := Heqp) as ?; subst.
+    rewrite IHc; try congruence; rewrite Heqp1; eauto.
+    destruct eval_cmd eqn:?; subst; cleanup.
+    rewrite IHfuel in Heqp2. ; eauto; congruence. *)
+Admitted.
+

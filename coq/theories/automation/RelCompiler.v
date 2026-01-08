@@ -247,24 +247,6 @@ Ltac2 rec get_cenv_from_fenv_constr (fenv: constr): (constr option * constr) lis
   | _ => []
   end.
 
-(* Apply the hypothesis `iden` to wildcards, until it is a top-level `eval_app` *)
-(* Ltac2 rec refine_up_to_eval_app (iden : ident) (t : constr) : constr :=
-  lazy_match! t with
-  | (forall x, @?t1 x) =>
-    let t1_refined := refine_up_to_eval_app iden t1 in
-    open_constr:($t1_refined _)
-  | (fun _ => ?t1) =>
-    let t1_refined := refine_up_to_eval_app iden t1 in
-    open_constr:($t1_refined _)
-  | (_ -> ?t1) =>
-    let t1_refined := refine_up_to_eval_app iden t1 in
-    open_constr:($t1_refined _)
-  | eval_app _ _ _ _ =>
-    Control.hyp iden
-  | ?t1 =>
-    t1
-  end. *)
-
 Ltac2 get_f_lookup_from_context () : string list :=
   let hyps := Control.hyps () in
   let f_lookup := List.flatten (List.map (fun (_iden, _, t) =>
@@ -349,6 +331,13 @@ Ltac2 collect_non_prop_tpe_prod_names (c: constr): constr :=
 
 Ltac2 exactk (c: constr): unit -> unit :=
   fun () => exact $c.
+
+Ltac2 Type exn ::= [
+  NoMoreExtensionTactics
+].
+
+Ltac2 mutable relCompilerDB: ((unit -> unit) -> unit) :=
+  fun _r => Control.zero NoMoreExtensionTactics.
 
 (* The priority of lemmas is as follows: *)
 (* 1: variables *)
@@ -1039,29 +1028,31 @@ Ltac2 rec compile () : unit :=
         (*       We can use names to have subsets of tactics (e.g. arithmetic only) *)
         (* const *)
         | ?n =>
-          if Constr.equal (Constr.type (Constr.type n)) constr:(Prop) then
-            app_lemma "auto_Prop" [("env", exactk fenv); ("v", exactk n)] []
-          else if proper_const n then
-            if Constr.equal (Constr.type n) constr:(nat) then
-              app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk n)] []
-            else if Constr.equal (Constr.type n) constr:(N) then
-              app_lemma "auto_N_const" [("env", exactk fenv); ("n", exactk n)] []
-            (* else if Constr.equal (Constr.type n) constr:(string) then
-              app_lemma "auto_string_const" [("env", exactk fenv); ("str", exactk n)] [(fun () => simpl list_ascii_of_string; compile ())] *)
-            else if Constr.equal (Constr.type n) constr:(ascii) then
-              app_lemma "auto_char_const" [("env", exactk fenv); ("chr", exactk n)] []
+          Control.plus (fun () => relCompilerDB compile) (fun _ =>
+            if Constr.equal (Constr.type (Constr.type n)) constr:(Prop) then
+              app_lemma "auto_Prop" [("env", exactk fenv); ("v", exactk n)] []
+            else if proper_const n then
+              if Constr.equal (Constr.type n) constr:(nat) then
+                app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk n)] []
+              else if Constr.equal (Constr.type n) constr:(N) then
+                app_lemma "auto_N_const" [("env", exactk fenv); ("n", exactk n)] []
+              (* else if Constr.equal (Constr.type n) constr:(string) then
+                app_lemma "auto_string_const" [("env", exactk fenv); ("str", exactk n)] [(fun () => simpl list_ascii_of_string; compile ())] *)
+              else if Constr.equal (Constr.type n) constr:(ascii) then
+                app_lemma "auto_char_const" [("env", exactk fenv); ("chr", exactk n)] []
+              else
+                Control.throw (Oopsie (fprintf
+                  "Error: Tried to compile a constant of unsupported type: namely: %t of type %t"
+                  n
+                  (Constr.type n)
+                ))
             else
               Control.throw (Oopsie (fprintf
-                "Error: Tried to compile a constant of unsupported type: namely: %t of type %t"
+                "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
                 n
-                (Constr.type n)
+                (kind_string_of_constr n)
               ))
-          else
-            Control.throw (Oopsie (fprintf
-              "Error: Tried to compile a non-constant expression %t as a constant expression (%s kind)"
-              n
-              (kind_string_of_constr n)
-            ))
+          )
         end
       in
       match extract_fun e with

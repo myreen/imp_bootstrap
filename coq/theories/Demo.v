@@ -101,6 +101,50 @@ Proof.
   time relcompile.
 Qed.
 
+Theorem addMyNat_equation: ltac2:(unfold_fix_type '@addMyNat).
+Proof. unfold_fix_proof '@addMyNat. Qed.
+
+Lemma auto_my_nat_case: forall {A} `{ra: Refinable A} env s name1 x_n n x_Zero x_Succ (f_Zero: A) (f_Succ: MyNat -> A),
+  env |-- ([x_n], s) ---> ([encode n], s) ->
+  match n with
+  | MyO =>
+    env |-- ([x_Zero], s) ---> ([encode f_Zero], s)
+  | MyS n' =>
+    (FEnv.insert (name_enc name1, Some (encode n')) env) |-- ([x_Succ], s) ---> ([encode (f_Succ n')], s)
+  end ->
+  env |-- ([FunSyntax.If FunSyntax.Equal [Op Head [x_n]; (FunSyntax.Const (name_enc "MyO"))]
+    x_Zero
+    (Let (name_enc name1) (Op Head [Op Tail [x_n]]) x_Succ)], s) ---> (
+      [encode (match n with
+      | MyO => f_Zero
+      | MyS n' => @f_Succ n' 
+      end)], s).
+Proof.
+  Opaque name_enc.
+  intros.
+  destruct n eqn:?.
+  all: ltac1:(Eval_eq).
+Qed.
+Ltac2 auto_my_nat_case_tac (r: unit -> unit) :=
+  match! goal with
+  | [ |- ?fenv |-- (_, _) ---> ([encode (match ?n with MyO => ?f_Zero | MyS n' => @?f_Succ n' end)], _) ] =>
+    refine open_constr:(auto_my_nat_case
+      (* env *) $fenv
+      (* s *) _
+      (* name1 *) "n'"
+      (* x_n *) _
+      (* n *) $n
+      (* x_Zero *) _
+      (* x_Succ *) _
+      (* f_Zero *) $f_Zero
+      (* f_Succ *) $f_Succ
+      (* compile n *) ltac2:(Control.enter r)
+      (* compile match case *) ltac2:(destruct $n; Control.enter r)
+    )
+  end.
+Ltac2 Set relCompilerDB as olddb :=
+  fun r => Control.plus (fun () => olddb r) (fun _ => auto_my_nat_case_tac r).
+
 Derive addMyNat_prog
   in ltac2:(relcompile_tpe 'addMyNat_prog 'addMyNat [])
   as addMyNat_prog_proof.

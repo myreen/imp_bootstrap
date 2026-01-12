@@ -430,10 +430,49 @@ Proof.
       simpl in *; destruct x as [|warg1 x]; cleanup.
       destruct x as [|warg2 x]; cleanup.
       destruct x; cleanup.
-      do 3 eexists.
+      inversion H0; inversion H1; subst.
+      exists 1%nat.
       simpl in *; unfold_monadic; rewrite H.
       unfold get_body_and_set_vars.
-      admit.
+      specialize func_rel_from_state_rel with (1:= Hstate_rel) as Hfunc_rel.
+      unfold func_rel in Hfunc_rel; destruct Hfunc_rel as [Hbuiltin _].
+      simpl in *.
+      spat ` (name_of_string "add", ?args, ?cs1)` at assert (find_fun (name_of_string "add") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin; eauto); clear Hbuiltin.
+      rewrite Hfind_fun.
+      simpl in *; unfold_monadic; unfold catch_return; simpl; unfold_outcome.
+      Opaque word.add.
+      with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
+      unfold bind, inc_steps_done, add_steps_done, set_steps_done, combine_word in *; simpl in *.
+      destruct (word.ltu _ _) eqn:?; simpl in *; unfold_outcome; cleanup.
+      1: { (* Abort *)
+        do 2 eexists.
+        split; [reflexivity|].
+        split; [|apply mem_prefix_refl].
+        unfold res_rel; simpl; eauto.
+      }
+      destruct (word.ltu _ (word.of_Z (Z.of_N narg2))) eqn:?; simpl in *; unfold_outcome; cleanup.
+      1: { (* Abort *)
+        do 2 eexists.
+        split; [reflexivity|].
+        split; [|apply mem_prefix_refl].
+        unfold res_rel; simpl; eauto.
+      }
+      unfold set_vars; simpl.
+      rewrite word.unsigned_ltu in *; try lia.
+      rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
+      
+      (* The following might be useful. *)
+      (* rewrite word.unsigned_add_nowrap in *; try lia.
+      eapply IH with (t := set_vars _ _) in Heval2; eauto; simpl in *; cleanup.
+      3: eapply env_rel_update; eauto.
+      2: eapply state_rel_set_vars; eauto.
+      2: econstructor.
+      do 2 eexists.
+      split; [reflexivity|]. *)
+      
+
+
+      
     }
     all: admit.
   - (* If *)
@@ -512,19 +551,18 @@ Proof.
       all: split; [|assumption].
       all: eauto.
     - (* Call *)
-      (* destruct to_exp eqn:Hto_exp; try discriminate; cleanup.
-      inversion Heval1; subst.
+      destruct to_exp eqn:Hto_exp; try discriminate; cleanup.
+      destruct to_exps eqn:Hto_exps; try discriminate; cleanup.
+      simpl in *; cleanup.
       eapply to_exps_thm in Hto_exps; eauto; cleanup; subst.
       specialize list_rel_length_same with (1:= H1) as Hlen.
-      specialize Eval_length with (1 := EVAL_ARGS) as Hlen_eval.
-      destruct (to_cmd exp2) eqn:Hto_cmd2; try discriminate; cleanup.
       unfold env_and_body in *; destruct lookup_fun as [ [fparams fbody] | ] eqn:Hlookup_fun; try discriminate; cleanup.
       destruct (_ =? _)%nat eqn:Hlen_params; rewrite ?Nat.eqb_eq in *; try discriminate; cleanup.
       simpl in *; cleanup; unfold_monadic; simpl; unfold_monadic; unfold_outcome.
       unfold get_vars, get_body_and_set_vars, set_varsM, assign, catch_return, set_vars; simpl; unfold_outcome.
       specialize func_rel_from_state_rel with (1:= Hstate_rel) as Hfunc_rel.
       eapply Hfunc_rel in Hlookup_fun; cleanup; clear Hfunc_rel.
-      eapply IH with (t := set_vars _ (set_steps_done _ _)) in EVAL_BODY; eauto; cleanup; simpl in *; cleanup.
+      eapply IH with (t := set_vars _ (set_steps_done _ _)) in Heval2; eauto; cleanup; simpl in *; cleanup.
       3: eapply env_rel_make_env; eauto; congruence.
       2: eapply state_rel_set_vars; eauto.
       pat `eval_cmd _ (EVAL_CMD ?f) (set_vars _ _) = _` at rename f into fuel0.
@@ -537,14 +575,12 @@ Proof.
         rewrite H0.
         spat `NoDup` at eapply nodup_fixed_point in spat; rewrite spat.
         rewrite Hlen_params, Hlen; rewrite Nat.eqb_refl; simpl; unfold nodupb.
+        with_strategy transparent [EVAL_CMD] simpl.
         unfold_monadic; unfold_outcome; unfold set_vars, inc_steps_done, add_steps_done, set_steps_done in *; simpl in *.
         rewrite H4; unfold res_rel in *|-; simpl in *; cleanup.
         split; eauto; split; eauto; simpl; eauto.
       }
-      eapply IH with (t := set_vars _ _) in Heval2; eauto; simpl in *; cleanup.
-      3: eapply env_rel_update; eauto.
-      2: eapply state_rel_set_vars; eauto.
-      exists (S (fuel0 + x1)); do 2 eexists.
+      exists (S (fuel0)); do 2 eexists.
       Opaque EVAL_CMD.
       rewrite H.
       rewrite H0.
@@ -552,15 +588,8 @@ Proof.
       rewrite Hlen_params, Hlen; rewrite Nat.eqb_refl; simpl; unfold nodupb.
       with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
       unfold_monadic; unfold_outcome; unfold set_vars, inc_steps_done, add_steps_done, set_steps_done in *; simpl in *.
-      eapply eval_cmd_add_clock with (fuel1 := x1) in H4; try congruence.
       rewrite H4; unfold res_rel in *|-; simpl in *; cleanup.
-      rewrite Nat.add_comm.
-      destruct x2; cleanup; destruct v0; cleanup; eauto.
-      all: eapply eval_cmd_add_clock with (fuel1 := (fuel0 + 1)%nat) in H8; try congruence.
-      all: rewrite Nat.add_assoc, Nat.add_1_r in H8.
-      all: split; eauto.
-      all: split; eauto.
-      all: unfold res_rel; simpl; eauto.
-      all: eapply mem_prefix_trans; eauto. *)
-    admit.
+      split; eauto.
+      split; eauto.
+      unfold res_rel; simpl; eauto.
 Admitted.

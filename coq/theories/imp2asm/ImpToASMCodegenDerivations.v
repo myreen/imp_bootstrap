@@ -1,4 +1,4 @@
-(* From impboot Require Import utils.Core.
+From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.assembly.ASMToString.
@@ -11,6 +11,7 @@ From impboot Require Import functional.FunSemantics.
 Require Import impboot.automation.RelCompiler.
 Require Import impboot.automation.ltac2.UnfoldFix.
 Require Import impboot.automation.AutomationLemmas.
+Require Import impboot.commons.PrintingUtils.
 Require Import coqutil.Word.Interface.
 Require Import ZArith.
 From Stdlib Require Import FunInd.
@@ -37,6 +38,50 @@ Derive init_prog
   as init_prog_proof.
 Proof.
   time relcompile.
+Qed.
+
+Derive c_assign_prog 
+  in ltac2:(relcompile_tpe 'c_assign_prog 'c_assign ['index_of]) 
+  as c_assign_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+Derive nat_modulo_prog
+  in ltac2:(relcompile_tpe 'nat_modulo_prog 'nat_modulo []) 
+  as nat_modulo_prog_proof.
+Proof.
+  time relcompile.
+  ltac1:(lia).
+Qed.
+
+Derive N_modulo_prog
+  in ltac2:(relcompile_tpe 'N_modulo_prog 'N_modulo []) 
+  as N_modulo_prog_proof.
+Proof.
+  time relcompile.
+  ltac1:(lia).
+Qed.
+
+Theorem N_modulo_bounds: forall n b,
+  (0 <> b)%N ->
+  (N_modulo n b < b)%N.
+Proof.
+  intros; unfold N_modulo.
+  destruct (N.to_nat b); try ltac1:(lia).
+  unfold dlet.
+  rewrite <- N.Div0.mod_eq.
+  destruct b eqn:?; try ltac1:(lia).
+  eapply N.mod_upper_bound.
+  ltac1:(lia).
+Qed.
+
+Derive name2str_prog
+  in ltac2:(relcompile_tpe 'name2str_prog 'name2str ['N_modulo]) 
+  as name2str_prog_proof.
+Proof.
+  time relcompile.
+  subst; eapply N_modulo_bounds; ltac1:(lia).
 Qed.
 
 Derive list_append_prog
@@ -196,13 +241,6 @@ Proof.
   time relcompile.
 Qed.
 
-Derive c_assign_prog 
-  in ltac2:(relcompile_tpe 'c_assign_prog 'c_assign ['index_of]) 
-  as c_assign_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
 Derive c_add_prog 
   in ltac2:(relcompile_tpe 'c_add_prog 'c_add []) 
   as c_add_prog_proof.
@@ -340,40 +378,6 @@ Proof.
   time relcompile.
 Qed.
 
-Derive nat_modulo_prog
-  in ltac2:(relcompile_tpe 'nat_modulo_prog 'nat_modulo []) 
-  as nat_modulo_prog_proof.
-Proof.
-  time relcompile.
-  ltac1:(lia).
-Qed.
-
-Derive N_modulo_prog
-  in ltac2:(relcompile_tpe 'N_modulo_prog 'N_modulo []) 
-  as N_modulo_prog_proof.
-Proof.
-  time relcompile.
-  ltac1:(lia).
-Qed.
-
-Theorem N_modulo_bounds: forall n b,
-  (0 <> b)%N ->
-  (N_modulo n b < b)%N.
-Proof.
-  intros; unfold N_modulo; rewrite <- N.Div0.mod_eq.
-  destruct b eqn:?; try ltac1:(lia).
-  eapply N.mod_upper_bound.
-  ltac1:(lia).
-Qed.
-
-Derive name2str_prog
-  in ltac2:(relcompile_tpe 'name2str_prog 'name2str ['N_modulo]) 
-  as name2str_prog_proof.
-Proof.
-  time relcompile.
-  eapply N_modulo_bounds; ltac1:(lia).
-Qed.
-
 Derive get_funcs_prog 
   in ltac2:(relcompile_tpe 'get_funcs_prog 'get_funcs []) 
   as get_funcs_prog_proof.
@@ -401,11 +405,3 @@ Derive codegen_prog
 Proof.
   time relcompile.
 Qed.
-
-(* Derive codegen_test_prog
-  in (forall s p input,
-    FEnv.empty |-- ([FunSyntax.get_main codegen_test_prog], (init_state input (FunSyntax.get_defs codegen_test_prog))) ---> ([encode (codegen p)],  s)
-  )
-  as codegen_test_prog_proof.
-Proof.
-  subst codegen_test_prog; intros. *) *)

@@ -2,8 +2,27 @@ From impboot Require Import utils.Core.
 Require Import impboot.utils.Words4Naive.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
-From impboot Require Import imp2asm.ImpToASMCodegen.
 From impboot Require Import commons.ProofUtils.
+
+Definition nat_modulo (n1 n2: nat): nat :=
+  match n2 with
+  | 0%nat => 0
+  | S _ =>
+    let/d d := (n1 / n2) in
+    let/d m := n2 * d in
+    let/d res := n1 - m in
+    res
+  end.
+
+Definition N_modulo (n1 n2: N): N :=
+  match (N.to_nat n2) with
+  | 0%nat => 0
+  | _ =>
+    let/d d := (n1 / n2)%N in
+    let/d m := (n2 * d)%N in
+    let/d res := (n1 - m)%N in
+    res
+  end.
 
 Theorem nat_modulo_le: forall (n m: nat),
   nat_modulo n m <= m.
@@ -14,6 +33,29 @@ Proof.
   (* rewrite mul_div_id. *)
   (* ltac1:(lia). *)
 Admitted.
+
+Locate "/".
+Print Nat.div.
+
+(* 
+let n := 1 in
+"n" -> n // 
+n
+
+(* destruct *)
+match n with
+| 0 => ... // n -> 0
+| S n1 => ... // n -> S n1
+end
+
+refine(
+  match n with
+  | 0 => ... // n -> n
+  | S n1 => ... // n -> n ∧ n = S n1
+  end
+)
+
+*)
 
 Fixpoint num2str_f (n: nat) (fuel: nat) (str: string): string :=
   if (n <? 10)%nat then

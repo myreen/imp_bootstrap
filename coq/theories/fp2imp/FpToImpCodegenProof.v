@@ -31,8 +31,11 @@ Inductive v_rel: list mem_block -> FunValues.Value -> ImpSyntax.Value -> Prop :=
   (v1_rel: v_rel mem v1 w1) (v2_rel: v_rel mem v2 w2):
     v_rel mem (Pair v1 v2) (Pointer p).
 
+Definition builtins_available (t: list func) : Prop :=
+  (∀ n ps cs, In (n, ps, cs) builtin -> find_fun n t = Some (ps,cs)).
+
 Definition func_rel (s: list defun) (t: list func) :=
-  (∀ n ps cs, In (n, ps, cs) builtin -> find_fun n t = Some (ps,cs)) ∧
+  builtins_available t ∧
   ∀ fname params body,
     lookup_fun fname s = Some (params,body) ->
     ∃ cs, find_fun fname t = Some (params,cs) ∧
@@ -222,29 +225,30 @@ Theorem env_rel_make_env: forall (rs: list FunValues.Value) ws params m,
   list_rel (v_rel m) rs ws -> List.length params = List.length ws ->
   env_rel m (FunSemantics.make_env params rs FEnv.empty) (make_env params ws IEnv.empty).
 Proof.
-Admitted.
-  (* fs [env_rel_def,PULL_FORALL,AND_IMP_INTRO] \\ rw []
-  \\ qsuff_tac ‘
-    ∀rs ws params m1 m2.
-       LIST_REL (v_rel m) rs ws ∧
-       LENGTH params = LENGTH ws ∧
-       (∀n v1. m1 n = SOME v1 -> ∃v2. FLOOKUP m2 n = SOME v2 ∧ v_rel m v1 v2) ∧
-       make_env params rs m1 n = SOME v ->
-       ∃w. FLOOKUP (m2 |++ ZIP (params,ws)) n = SOME w ∧ v_rel m v w’
-  >-
-   (disch_then irule \\ fs []
-    \\ rpt $ first_x_assum $ irule_at Any
-    \\ fs [empty_env_def])
-  \\ rpt $ pop_assum kall_tac
-  \\ Induct \\ fs [make_env_def,PULL_EXISTS,FUPDATE_LIST]
-  \\ gen_tac \\ Cases \\ fs [] \\ rw []
-  \\ fs [make_env_def]
-  \\ last_x_assum $ drule_at $ Pos last
-  \\ disch_then drule \\ fs []
-  \\ disch_then irule
-  \\ gvs [APPLY_UPDATE_THM,FLOOKUP_UPDATE]
-  \\ rw [] \\ fs [] *)
-(* QED *)
+  intros rs ws params m Hlist_rel Hlen.
+  assert (Hgen: forall fenv ienv,
+    env_rel m fenv ienv ->
+    env_rel m (FunSemantics.make_env params rs fenv) (make_env params ws ienv)).
+  2: {
+    apply Hgen. unfold env_rel. intros. rewrite FEnv.lookup_empty in H. discriminate.
+  }
+  generalize dependent ws.
+  generalize dependent rs.
+  induction params as [|p params' IHparams]; intros rs ws Hlist_rel Hlen fenv ienv Henv_rel.
+  - (* [] *)
+    destruct ws; simpl in Hlen; try discriminate.
+    destruct rs; simpl in Hlist_rel; try contradiction.
+    simpl. assumption.
+  - (* p :: params' *)
+    destruct ws as [|w ws']; simpl in Hlen; try discriminate.
+    destruct rs as [|r rs']; simpl in Hlist_rel; try contradiction.
+    destruct Hlist_rel as [Hvrel Hlist_rel'].
+    simpl.
+    apply IHparams.
+    + exact Hlist_rel'.
+    + simpl in Hlen. lia.
+    + apply env_rel_update; assumption.
+Qed.
 
 Lemma state_rel_set_vars: ∀s t vars
   (Hstate_rel: state_rel s t),
@@ -290,6 +294,115 @@ Proof.
   specialize Henv_rel with (1:= H); cleanup.
   eapply v_rel_mem_prefix in Hmem_prefix; eauto.
 Qed.
+
+(* Theorems about calling cons builtins - translated from HOL4 *)
+
+(* Helper: all builtin functions are in the state's function list *)
+
+Theorem Call_cons:
+  forall (t: state) (e1 e2: exp) (x y: FunValues.Value) (w w': Value) (n: name),
+  v_rel t.(memory) y w' ->
+  v_rel t.(memory) x w ->
+  eval_exp e2 t = (Cont w', t) ->
+  eval_exp e1 t = (Cont w, t) ->
+  builtins_available t.(funs) ->
+  exists m1 ptr,
+    (forall (fuel: nat) (c2: cmd),
+      eval_cmd (Seq (Call n (name_of_string "cons") [e1; e2]) c2) (EVAL_CMD (S fuel)) t =
+      eval_cmd c2 (EVAL_CMD fuel)
+        (set_vars (IEnv.insert (n, Some ptr) t.(vars))
+          (set_memory (t.(memory) ++ m1) t))) /\
+    v_rel (t.(memory) ++ m1) (Pair x y) ptr.
+Proof.
+  intros t e1 e2 x y w w' n Hvrel_y Hvrel_x Heval_e2 Heval_e1 Hbuiltin.
+  exists [[Some w; Some w']].
+  exists (Pointer (List.length t.(memory))).
+  split.
+  - intros fuel c2.
+    simpl; unfold_outcome; unfold_monadic.
+    rewrite Heval_e1, Heval_e2.
+    unfold get_vars; unfold_outcome; simpl; unfold get_body_and_set_vars.
+    unfold builtins_available in Hbuiltin.
+    simpl in *.
+    spat ` (name_of_string "cons", ?args, ?cs1)` at assert (find_fun (name_of_string "cons") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin; eauto); clear Hbuiltin.
+    rewrite Hfind_fun.
+    (* This proof requires detailed unfolding of the semantics *)
+    (* The cons builtin allocates 16 bytes, stores w at offset 0 and w' at offset 8 *)
+    admit.
+  - (* v_rel for the result *)
+    econstructor.
+    + rewrite nth_error_app2 by lia.
+      rewrite Nat.sub_diag. simpl. reflexivity.
+    + eapply v_rel_mem_prefix; eauto.
+      clear. induction (memory t); simpl; eauto.
+    + eapply v_rel_mem_prefix; eauto.
+      clear. induction (memory t); simpl; eauto.
+Admitted.
+
+Theorem Call_cons3:
+  forall (t: state) (e1 e2 e3: exp) (x y z: FunValues.Value) (w w' w'': Value) (n: name),
+  v_rel t.(memory) z w'' ->
+  v_rel t.(memory) y w' ->
+  v_rel t.(memory) x w ->
+  eval_exp e3 t = (Cont w'', t) ->
+  eval_exp e2 t = (Cont w', t) ->
+  eval_exp e1 t = (Cont w, t) ->
+  builtins_available t.(funs) ->
+  exists m1 ptr,
+    (forall (fuel: nat) (c2: cmd),
+      eval_cmd (Seq (Call n (name_of_string "cons3") [e1; e2; e3]) c2) (EVAL_CMD (S (S (S fuel)))) t =
+      eval_cmd c2 (EVAL_CMD fuel)
+        (set_vars (IEnv.insert (n, Some ptr) t.(vars))
+          (set_memory (t.(memory) ++ m1) t))) /\
+    v_rel (t.(memory) ++ m1) (Pair x (Pair y z)) ptr.
+Proof.
+Admitted.
+
+Theorem Call_cons4:
+  forall (t: state) (e1 e2 e3 e4: exp) (x y z q: FunValues.Value) (w w' w'' w''': Value) (n: name),
+  v_rel t.(memory) q w''' ->
+  v_rel t.(memory) z w'' ->
+  v_rel t.(memory) y w' ->
+  v_rel t.(memory) x w ->
+  eval_exp e4 t = (Cont w''', t) ->
+  eval_exp e3 t = (Cont w'', t) ->
+  eval_exp e2 t = (Cont w', t) ->
+  eval_exp e1 t = (Cont w, t) ->
+  builtins_available t.(funs) ->
+  exists m1 ptr,
+    (forall (fuel: nat) (c2: cmd),
+      eval_cmd (Seq (Call n (name_of_string "cons4") [e1; e2; e3; e4]) c2) (EVAL_CMD (S (S (S (S (S fuel)))))) t =
+      eval_cmd c2 (EVAL_CMD fuel) 
+        (set_vars (IEnv.insert (n, Some ptr) t.(vars)) 
+          (set_memory (t.(memory) ++ m1) t))) /\
+    v_rel (t.(memory) ++ m1) (Pair x (Pair y (Pair z q))) ptr.
+Proof.
+Admitted.
+
+Theorem Call_cons5:
+  forall (t: state) (e1 e2 e3 e4 e5: exp) (x y z q r: FunValues.Value) 
+         (w w' w'' w''' w'''': Value) (n: name),
+  v_rel t.(memory) r w'''' ->
+  v_rel t.(memory) q w''' ->
+  v_rel t.(memory) z w'' ->
+  v_rel t.(memory) y w' ->
+  v_rel t.(memory) x w ->
+  eval_exp e5 t = (Cont w'''', t) ->
+  eval_exp e4 t = (Cont w''', t) ->
+  eval_exp e3 t = (Cont w'', t) ->
+  eval_exp e2 t = (Cont w', t) ->
+  eval_exp e1 t = (Cont w, t) ->
+  builtins_available t.(funs) ->
+  exists m1 ptr,
+    (forall (fuel: nat) (c2: cmd),
+      eval_cmd (Seq (Call n (name_of_string "cons5") [e1; e2; e3; e4; e5]) c2) 
+               (EVAL_CMD (S (S (S (S (S (S (S fuel)))))))) t =
+      eval_cmd c2 (EVAL_CMD fuel) 
+        (set_vars (IEnv.insert (n, Some ptr) t.(vars)) 
+          (set_memory (t.(memory) ++ m1) t))) /\
+    v_rel (t.(memory) ++ m1) (Pair x (Pair y (Pair z (Pair q r)))) ptr.
+Proof.
+Admitted.
 
 Theorem to_cmd_thm: ∀ es env s rs s1
   (Heval: env |-- (es, s) ---> (rs, s1)),
@@ -460,7 +573,16 @@ Proof.
       unfold set_vars; simpl.
       rewrite word.unsigned_ltu in *; try lia.
       rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
-      
+      rewrite Z.ltb_ge in *; try lia.
+      specialize (Properties.word.unsigned_range (word.add (word.of_Z (Z.of_N narg1)) (word.of_Z (Z.of_N narg2)): word64)) as ?; cleanup.
+      (* rewrite Properties.word.unsigned_add_nowrap in *; try lia.
+      2: exact H3. *)
+      (* 2,3: eapply word.unsigned_range_nowrap; try lia. *)
+      eapply IH with (t := set_vars _ _) in Heval2; eauto; simpl in *; cleanup.
+      3: eapply env_rel_update; eauto.
+      2: eapply state_rel_set_vars; eauto.
+      2: econstructor; try lia.
+      2: admit.
       (* The following might be useful. *)
       (* rewrite word.unsigned_add_nowrap in *; try lia.
       eapply IH with (t := set_vars _ _) in Heval2; eauto; simpl in *; cleanup.
@@ -469,10 +591,11 @@ Proof.
       2: econstructor.
       do 2 eexists.
       split; [reflexivity|]. *)
+
       
 
 
-      
+      admit.
     }
     all: admit.
   - (* If *)
@@ -592,4 +715,10 @@ Proof.
       split; eauto.
       split; eauto.
       unfold res_rel; simpl; eauto.
+Admitted.
+
+Theorem to_imp_thm: forall input prog output imp_prog,
+  FunSemantics.prog_terminates input prog output ∧ to_imp prog = Some imp_prog ->
+  imp_weak_termination input imp_prog output.
+Proof.
 Admitted.

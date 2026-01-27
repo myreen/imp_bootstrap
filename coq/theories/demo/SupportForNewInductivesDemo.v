@@ -12,6 +12,7 @@ Import ListNotations.
 Require Import impboot.imp2asm.ImpToASMCodegen.
 Require Import Derive.
 Require Import Ltac2.Ltac2.
+Require Import impboot.utils.Core.
 Require Import impboot.automation.RelCompiler.
 Require Import impboot.automation.ltac2.UnfoldFix.
 Require Import impboot.automation.AutomationLemmas.
@@ -22,6 +23,10 @@ From impboot Require Import fp2imp.FpToImpCodegen.
 From impboot Require Import assembly.ASMToString.
 From impboot Require Import imperative.Printing.
 From impboot Require Import parsing.Parser.
+
+(* ================================= *)
+(* Adding support for new inductives *)
+(* ================================= *)
 
 Inductive MyNat : Type := 
 | MyO : MyNat

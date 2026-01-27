@@ -5,6 +5,7 @@ Require Import impboot.utils.Env.
 Require Import impboot.utils.AppList.
 Require Import coqutil.Word.Interface.
 Require Import impboot.imp2asm.ImpToASMCodegen.
+Require Import impboot.commons.ProofUtils.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.imperative.ImpSemantics.
 Require Import impboot.imperative.ImpProperties.
@@ -140,8 +141,8 @@ Definition cmd_res_rel (ri: outcome unit) (l1: nat)
     env_ok s1.(vars) vs curr1 pmap /\
     t1.(pc) = l1
   | Stop (ImpSemantics.Abort) => False
-  (* | Stop TimeOut =>  *)
-  | _ => True (* TODO(kπ) is this correct? *)
+  | Stop (ImpSemantics.TimeOut) => True
+  | Stop (ImpSemantics.Crash) => True
   end.
 
 Definition exp_res_rel (ri: outcome Value) (l1: nat)

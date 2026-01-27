@@ -46,6 +46,8 @@ Proof.
   eapply Eval_Call with (vs := vs) (s2 := s2); eauto.
 Qed.
 
+(* Wrap variables in some opaque definition (that is id) *)
+(* then this would only compile (var _) *)
 Theorem trans_Var : forall {A} `{ra: Refinable A} env s n (v: A),
   FEnv.lookup env (name_enc n) = Some (encode v) ->
   env |-- ([Var (name_enc n)], s) ---> ([encode v], s).
@@ -99,10 +101,20 @@ Proof.
   Eval_eq.
 Qed.
 
-Theorem auto_let : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env x1 y1 s1 s2 s3 (v1: A) let_n f,
+(* Theorem auto_let : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env x1 y1 s1 s2 s3 (v1: A) let_n f,
   env |-- ([x1], s1) ---> ([ra.(encode) v1], s2) ->
   (FEnv.insert ((name_enc let_n), Some (ra.(encode) v1)) env) |-- ([y1], s2) --->
       ([rb.(encode) (f v1)], s3) ->
+  env |-- ([Let (name_enc let_n) x1 y1], s1) ---> ([rb.(encode) (dlet v1 f)], s3).
+Proof.
+  intros.
+  eapply Eval_Let; eauto.
+Qed. *)
+
+Theorem auto_let : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env x1 y1 s1 s2 s3 (v1: A) let_n f,
+  env |-- ([x1], s1) ---> ([ra.(encode) v1], s2) ->
+  (forall v2, v2 = v1 -> (FEnv.insert ((name_enc let_n), Some (ra.(encode) v2)) env) |-- ([y1], s2) --->
+      ([rb.(encode) (f v2)], s3)) ->
   env |-- ([Let (name_enc let_n) x1 y1], s1) ---> ([rb.(encode) (dlet v1 f)], s3).
 Proof.
   intros.
@@ -198,6 +210,16 @@ Proof.
   intros. apply Eval_Const.
 Qed.
 
+Theorem auto_N_to_nat: forall env s x1 (n: N),
+  env |-- ([x1], s) ---> ([encode n], s) ->
+  env |-- ([x1], s) ---> ([encode (N.to_nat n)], s).
+Proof.
+  intros.
+  simpl.
+  rewrite Nnat.N2Nat.id.
+  repeat econstructor; eauto.
+Qed.
+
 Theorem auto_nat_add : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
   env |-- ([x2], s1) ---> ([encode n2], s2) ->
@@ -233,6 +255,9 @@ Theorem auto_nat_div : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
   env |-- ([x2], s1) ---> ([encode n2], s2) ->
   (N.of_nat n2) <> 0 ->
+  (* Clement: It isn't ideal that we have the preconditions *)
+  (* TODO: can do this vvv and remove the precondition *)
+  (* env |-- ([If Equal [Const 0; x2] (Const 0) (Op FunSyntax.Div [x1; x2])], s0) ---> ([encode (n1 / n2)%nat], s2). *)
   env |-- ([Op FunSyntax.Div [x1; x2]], s0) ---> ([encode (n1 / n2)%nat], s2).
 Proof.
   intros.
@@ -702,6 +727,8 @@ Proof.
 Qed.
 
 Theorem auto_word64_n2w : forall env s x1 x,
+  (* TODO: can do this and remove the pre-condition *)
+  (* env |-- ([x1], s) ---> ([encode (Nat.modulo x (2 ^ 64))], s) -> *)
   env |-- ([x1], s) ---> ([encode x], s) ->
   ((N.of_nat x) < 2 ^ 64) ->
   env |-- ([x1], s) ---> ([encode ((word.of_Z (Z.of_nat x)) : word64)], s).

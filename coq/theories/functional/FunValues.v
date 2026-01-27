@@ -1,5 +1,6 @@
 From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
+Require Import impboot.commons.PrintingUtils.
 From coqutil Require Import dlet.
 
 Open Scope N.
@@ -120,12 +121,6 @@ Definition vel2 v :=
 
 Definition vel3 v :=
   vel2 (vtail v).
-
-Definition N_modulo (n1 n2: N): N :=
-  match n2 with
-  | 0%N => 0
-  | N.pos _ => n1 - n2 * (n1 / n2)
-  end.
 
 (* checks whether string (represented as num) starts with uppercase letter *)
 Definition vis_upper (n: N) :=

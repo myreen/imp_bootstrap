@@ -24,20 +24,17 @@ Arguments result : clear implicits.
 
 Record state := mkState {
   funs : list FunSyntax.defun;
-  clock : nat;
   input : llist ascii;
   output : string
 }.
 
 Definition set_input (s : state) (inp : llist ascii) : state :=
   {| funs := s.(funs);
-     clock := s.(clock);
      input := inp;
      output := s.(output) |}.
 
 Definition set_output (s : state) (out : string) : state :=
   {| funs := s.(funs);
-     clock := s.(clock);
      input := s.(input);
      output := out |}.
 
@@ -104,9 +101,8 @@ Definition env_and_body (n : name) (args : list Value) (s : state) : option (FEn
   end.
 Arguments env_and_body !_ !_ /.
 
-(* TODO(kπ) Should this take a clock? *)
 Definition init_state (inp : llist ascii) (funs : list FunSyntax.defun) : state :=
-  {| funs := funs; clock := 0; input := inp; output := EmptyString |}.
+  {| funs := funs; input := inp; output := EmptyString |}.
 
 Reserved Notation "env '|--' ( es , s1 ) '--->' ( vs , s2 )" (at level 40, es at next level, vs at next level).
 

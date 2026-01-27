@@ -1,8 +1,15 @@
 {
   "servers": {
-    "VsCoq": {
-      "type": "http",
-      "url": "http://localhost:2137/mcp"
+    "vsrocqmcp": {
+      "type": "stdio",
+      "command": "/home/kpi/.opam/rocq/bin/vsrocqtop",
+      "args": [
+        "-mcp",
+        "-coqlib",
+        "/home/kpi/.opam/rocq/lib/coq",
+        "-vsrocq-d",
+        "all"
+      ]
     }
   }
 }

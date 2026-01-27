@@ -2,10 +2,12 @@ From impboot Require Import utils.Core.
 Require Import impboot.assembly.ASMSyntax.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.utils.AppList.
+Require Import impboot.commons.PrintingUtils.
 Require Import coqutil.Word.Interface.
 Require Import ZArith.
 Require Import FunInd.
 Require Import Ascii.
+
 
 Require Import impboot.automation.ltac2.UnfoldFix.
 Require Import Ltac2.Ltac2.
@@ -216,19 +218,8 @@ Definition c_var (n: name) (l: nat) (vs: v_stack): asm_appl * nat :=
     let/d res := (asm1, l1) in
     res.
 
-(* Fixpoint c_declare_binders_rec (binders: list name) (l: nat) (vs: v_stack) (acc_asm: asm_appl): (asm_appl * nat * v_stack) :=
-  match binders with
-  | nil => (acc_asm, l, vs)
-  | binder_name :: binders =>
-    c_declare_binders_rec binders (l + 1) ((Some binder_name) :: vs) (acc_asm +++ List [ASMSyntax.Push RDI])
-  end.
-
-Definition c_declare_binders (binders: list name) (l: nat) (vs: v_stack): (asm_appl * nat * v_stack) :=
-  let/d '(asm1, l1, vs1) := c_declare_binders_rec binders (l + 1) vs (List []) in
-  (asm1 +++ List [ASMSyntax.Const RDI (word.of_Z (Z.of_nat 0))], l1, vs1). *)
-
 (* assign variable with name `n`, based on stack *)
-Definition c_assign (n : name) (l : nat) (vs : v_stack) : (asm_appl * nat) :=
+Definition c_assign (n: name) (l: nat) (vs: v_stack): (asm_appl * nat) :=
   let/d k := index_of vs n 0 in
   match k return (asm_appl * nat) with
   | 0%nat =>
@@ -882,26 +873,6 @@ Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
     res
   end.
 
-Definition nat_modulo (n1 n2: nat): nat :=
-  match n2 with
-  | 0%nat => 0
-  | S _ =>
-    let/d d := (n1 / n2) in
-    let/d m := n2 * d in
-    let/d res := n1 - m in
-    res
-  end.
-
-Definition N_modulo (n1 n2: N): N :=
-  match n2 with
-  | 0%N => 0
-  | N.pos _ =>
-    let/d d := (n1 / n2)%N in
-    let/d m := (n2 * d)%N in
-    let/d res := (n1 - m)%N in
-    res
-  end.
-
 (* TODO: Can we use the same helper as with ASMToString.name2str? *)
 Definition name2str (n: N) (acc: string): string :=
   let/d n_mod := N_modulo n 256 in
@@ -957,8 +928,10 @@ Definition codegen (prog : prog) : asm :=
   let/d empty_fs := [] in
   let/d '(_, fs, _) := c_fundefs funs init_l empty_fs in
   let/d '(asm1, _, _) := c_fundefs funs init_l fs in
-  let/d main_str := "main"%string in
-  let/d main_name := name_of_string main_str in
+  (* let/d main_str := "main"%string in *)
+  (* let/d main_name := name_of_string main_str in *)
+  (* name_of_string "main"%string *)
+  let/d main_name := 107776%N in
   let/d main_l := lookup fs main_name in
   let/d main_init := init main_l in
   let/d main_init_list := List main_init in

@@ -148,7 +148,8 @@ Proof.
       assert (Z.to_nat 8 = 8%nat) as Htmp by lia; rewrite Htmp in *; clear Htmp.
       spat `nth_error` at rewrite spat in *; rewrite Nat.div_same in *; try lia; simpl in *; unfold_outcome; cleanup.
       eexists; eauto.
-Admitted. (* Cannot Qed? *)
+      Opaque Pos.compare. (* This is important for the Qed to not time out *)
+Qed.
 
 Theorem to_exp_thm: ∀ (e: FunSyntax.exp) (s: FunSemantics.state) (t: ImpSemantics.state)
   (env: FEnv.env) (v: FunValues.Value) (s1: FunSemantics.state)

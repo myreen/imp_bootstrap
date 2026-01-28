@@ -412,6 +412,33 @@ Theorem Call_cons5:
 Proof.
 Admitted.
 
+Lemma div_2: ∀a b: nat,
+  (b <> 0)%nat ->
+  (a < b * 2)%nat ->
+  (a >= b)%nat ->
+  (a / b = 1)%nat.
+Proof.
+  intros.
+  assert (b * 1 <= a)%nat as Hlt by lia.
+  specialize Nat.div_le_lower_bound with (a := a) (b := b) (q := 1%nat) (1 := H) (2 := Hlt) as ?.
+  specialize Nat.Div0.div_lt_upper_bound with (a := a) (b := b) (q := 2%nat) (1 := H0) as ?.
+  lia.
+Qed.
+
+Theorem Z_div_between_1: ∀a b: Z,
+  (a >= 0)%Z ->
+  (0 < b)%Z ->
+  (a >= b)%Z ->
+  (a < 2 * b)%Z ->
+  (a / b = 1)%Z.
+Proof.
+  intros.
+  assert (b * 1 <= a)%Z as Hlt by lia.
+  specialize Z.div_le_lower_bound with (a := a) (b := b) (q := 1%Z) (1 := H0) (2 := Hlt) as ?.
+  specialize Z.div_lt_upper_bound with (a := a) (b := b) (q := 2%Z) (1 := H0) as ?.
+  lia.
+Qed.
+
 Lemma no_overflow_addition: ∀ narg1 narg2,
   narg1 < N.pos (2 ^ 64) ->
   narg2 < N.pos (2 ^ 64) ->
@@ -434,12 +461,18 @@ Proof.
   rewrite Harg1, Harg2 in *.
   clear Harg1 Harg2.
   rewrite Z.ltb_ge in *.
-  assert (narg1 <= (narg1 + narg2) mod N.pos (2 ^ 64))%N.
-  1: admit.
-  assert (narg2 <= (narg1 + narg2) mod N.pos (2 ^ 64))%N.
-  1: admit.
-  
-Admitted.
+  destruct (N.lt_ge_cases (narg1 + narg2) (N.pos (2^64))) as [Hlt | Hge]; auto.
+  exfalso.
+  assert (Z.of_N narg1 + Z.of_N narg2 >= 2^64)%Z as HgeZ by lia.
+  assert (Z.of_N narg1 + Z.of_N narg2 < 2 * 2^64)%Z as Hlt2 by lia.
+  assert ((Z.of_N narg1 + Z.of_N narg2) / 2^64 = 1)%Z as Hdiv1.
+  1: apply Z_div_between_1; lia.
+  assert ((Z.of_N narg1 + Z.of_N narg2) mod 2^64 = Z.of_N narg1 + Z.of_N narg2 - 2^64)%Z as Hmod.
+  1: rewrite Zmod_eq_full by lia; rewrite Hdiv1; lia.
+  simpl in *.
+  rewrite Hmod in H1, H2.
+  lia.
+Qed.
 
 Theorem to_cmd_thm: ∀ es env s rs s1
   (Heval: env |-- (es, s) ---> (rs, s1)),

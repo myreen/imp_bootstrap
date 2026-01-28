@@ -145,7 +145,7 @@ Definition EOF_CONST : word64 := word.of_Z (0xFFFFFFFF : Z).
 Definition read_ascii (input : llist ascii) : (word64 * llist ascii) :=
   match input with
   | Lnil => (EOF_CONST, input)
-  | Lcons c cs => (word.of_Z (Z.of_nat (nat_of_ascii c)), cs)
+  | Lcons c cs => (word.of_Z (Z.of_N (N_of_ascii c)), cs)
   end.
 
 Inductive step: s_or_h -> s_or_h -> Prop :=
@@ -239,7 +239,7 @@ Inductive step: s_or_h -> s_or_h -> Prop :=
     (List.length s.(stack)) mod 2 = 0 ->
     step (State s)
           (State (unset_regs [RET_REG; ARG_REG; RDX]
-                    (inc (put_ascii (ascii_of_nat (Z.to_nat (word.unsigned n))) s))))
+                    (inc (put_ascii (ascii_of_N (Z.to_N (word.unsigned n))) s))))
 | step_exit : forall s exit_code,
     fetch s = Some Exit ->
     s.(regs) ARG_REG = Some exit_code ->

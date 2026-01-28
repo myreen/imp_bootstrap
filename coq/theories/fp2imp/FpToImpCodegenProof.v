@@ -258,6 +258,13 @@ Proof.
   unfold state_rel; intros; cleanup; eauto.
 Qed.
 
+Lemma state_rel_add_steps_done: ∀s t k
+  (Hstate_rel: state_rel s t),
+  state_rel s (add_steps_done k t).
+Proof.
+  unfold state_rel; intros; cleanup; eauto.
+Qed.
+
 Lemma func_rel_from_state_rel: ∀s t,
   state_rel s t -> func_rel s.(FunSemantics.funs) t.(funs).
 Proof.
@@ -405,6 +412,35 @@ Theorem Call_cons5:
 Proof.
 Admitted.
 
+Lemma no_overflow_addition: ∀ narg1 narg2,
+  narg1 < N.pos (2 ^ 64) ->
+  narg2 < N.pos (2 ^ 64) ->
+  word.ltu (word.add (word.of_Z (Z.of_N narg1): word64) (word.of_Z (Z.of_N narg2))) (word.of_Z (Z.of_N narg1)) = false ->
+  word.ltu (word.add (word.of_Z (Z.of_N narg1): word64) (word.of_Z (Z.of_N narg2))) (word.of_Z (Z.of_N narg2)) = false ->
+  narg1 + narg2 < 2 ^ 64.
+Proof.
+  intros.
+  assert (Z.of_N narg1 < 2 ^ 64)%Z as Harg1Z by lia.
+  assert (Z.of_N narg2 < 2 ^ 64)%Z as Harg2Z by lia.
+  assert (Z.of_N narg1 >= 0)%Z as Harg1ge0 by lia.
+  assert (Z.of_N narg2 >= 0)%Z as Harg2ge0 by lia.
+  with_strategy transparent [word.add] simpl word.add in *.
+  unfold Naive.wrap in *; simpl in *.
+  assert (word.unsigned (word.of_Z (Z.of_N narg1): word64) = (Z.of_N narg1)) as Harg1.
+  1: rewrite Properties.word.unsigned_of_Z_nowrap; eauto; lia.
+  assert (word.unsigned (word.of_Z (Z.of_N narg2): word64) = (Z.of_N narg2)) as Harg2.
+  1: rewrite Properties.word.unsigned_of_Z_nowrap; eauto; lia.
+  with_strategy transparent [word.unsigned] simpl word.unsigned in *.
+  rewrite Harg1, Harg2 in *.
+  clear Harg1 Harg2.
+  rewrite Z.ltb_ge in *.
+  assert (narg1 <= (narg1 + narg2) mod N.pos (2 ^ 64))%N.
+  1: admit.
+  assert (narg2 <= (narg1 + narg2) mod N.pos (2 ^ 64))%N.
+  1: admit.
+  
+Admitted.
+
 Theorem to_cmd_thm: ∀ es env s rs s1
   (Heval: env |-- (es, s) ---> (rs, s1)),
   ∀ e cs t r,
@@ -414,7 +450,7 @@ Theorem to_cmd_thm: ∀ es env s rs s1
       eval_cmd cs (EVAL_CMD fuel) t = (r1,t1) ∧
       res_rel t1.(memory) r r1 s1 t1 ∧ mem_prefix t.(memory) t1.(memory).
 Proof.
-  Opaque word.ltu word.eqb.
+  Opaque word.ltu word.eqb word.add word.sub word.divu.
   Opaque to_exp.
   fix IH 6.
   intros * Heval; destruct Heval; try discriminate; intros * Hes Hrs Hto_cmd Hstate_rel Henv_rel; simpl in *; subst; cleanup; simpl in *.
@@ -526,79 +562,227 @@ Proof.
     }
     (* Op *)
     destruct o eqn:?; cleanup.
+    all: clear Hto_exp Hto_exp1 Hto_cons.
+    all: inversion Heval1; cleanup; subst; simpl in *.
+    all: destruct to_exps as [iargs|] eqn:Hto_exps; cleanup.
+    all: destruct iargs as [|iarg1 iargs]; cleanup.
+    all: try destruct iargs as [|iarg2 iargs]; cleanup.
+    all: try destruct iargs; cleanup.
+    all: destruct to_cmd eqn:?; cleanup.
+    all: eapply to_exps_thm in Hto_exps; eauto; cleanup; subst.
+    Opaque eval_exps.
+    all: simpl in *; unfold_monadic; unfold fail in *.
+    all: destruct vs as [|varg1 vs]; cleanup.
+    all: try destruct varg1 as [|narg1]; cleanup.
+    all: try destruct vs as [|varg2 vs]; cleanup.
+    all: try destruct varg2 as [|narg2]; cleanup.
+    all: try destruct vs; unfold return_ in *; cleanup.
+    all: simpl in *; destruct x as [|warg1 x]; cleanup.
+    all: try destruct x as [|warg2 x]; cleanup.
+    all: try destruct x; cleanup.
+    all: try inversion H0; try inversion H1; subst.
+    all: simpl in *; unfold_monadic; try rewrite H.
+    all: unfold get_body_and_set_vars.
+    all: specialize func_rel_from_state_rel with (1:= Hstate_rel) as Hfunc_rel.
+    all: unfold func_rel in Hfunc_rel; destruct Hfunc_rel as [Hbuiltin _].
+    all: unfold builtins_available in *; simpl in *.
     1: { (* Add *)
-      destruct to_exps as [iargs|] eqn:Hto_exps; cleanup.
-      destruct iargs as [|iarg1 iargs]; cleanup.
-      destruct iargs as [|iarg2 iargs]; cleanup.
-      destruct iargs; cleanup.
-      destruct to_cmd eqn:?; cleanup.
-      inversion Heval1; cleanup; subst.
-      eapply to_exps_thm in Hto_exps; eauto; cleanup; subst.
-      Opaque eval_exps.
-      simpl in *; unfold_monadic; unfold fail in *.
-      destruct vs as [|varg1 vs]; cleanup.
-      destruct varg1 as [|narg1]; cleanup.
-      destruct vs as [|varg2 vs]; cleanup.
-      destruct varg2 as [|narg2]; cleanup.
-      destruct vs; unfold return_ in *; cleanup.
-      simpl in *; destruct x as [|warg1 x]; cleanup.
-      destruct x as [|warg2 x]; cleanup.
-      destruct x; cleanup.
-      inversion H0; inversion H1; subst.
-      exists 1%nat.
-      simpl in *; unfold_monadic; rewrite H.
-      unfold get_body_and_set_vars.
-      specialize func_rel_from_state_rel with (1:= Hstate_rel) as Hfunc_rel.
-      unfold func_rel in Hfunc_rel; destruct Hfunc_rel as [Hbuiltin _].
-      simpl in *.
       spat ` (name_of_string "add", ?args, ?cs1)` at assert (find_fun (name_of_string "add") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin; eauto); clear Hbuiltin.
       rewrite Hfind_fun.
       simpl in *; unfold_monadic; unfold catch_return; simpl; unfold_outcome.
+      (* TODO(paper/post?): this is a pain point in Rocq *)
+      (* 1. Reconstruct the evaluation of add body with some enough fuel *)
+      match goal with
+      | |- context C [EVAL_CMD _ ?c ?s] => remember (EVAL_CMD 1 c s) as eval_cmd_add_fun
+      end.
       Opaque word.add.
-      with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
+      with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1 in Heqeval_cmd_add_fun.
       unfold bind, inc_steps_done, add_steps_done, set_steps_done, combine_word in *; simpl in *.
       destruct (word.ltu _ _) eqn:?; simpl in *; unfold_outcome; cleanup.
       1: { (* Abort *)
-        do 2 eexists.
+        exists 1%nat; do 2 eexists.
+        with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
+        unfold bind, inc_steps_done, add_steps_done, set_steps_done, combine_word in *; simpl in *.
+        rewrite Heqb.
         split; [reflexivity|].
         split; [|apply mem_prefix_refl].
         unfold res_rel; simpl; eauto.
       }
       destruct (word.ltu _ (word.of_Z (Z.of_N narg2))) eqn:?; simpl in *; unfold_outcome; cleanup.
       1: { (* Abort *)
-        do 2 eexists.
+        exists 1%nat; do 2 eexists.
+        simpl in *.
+        with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
+        unfold bind, inc_steps_done, add_steps_done, set_steps_done, combine_word in *; simpl in *.
+        rewrite Heqb.
+        unfold_outcome; simpl in *.
+        rewrite Heqb0.
         split; [reflexivity|].
         split; [|apply mem_prefix_refl].
         unfold res_rel; simpl; eauto.
       }
-      unfold set_vars; simpl.
-      rewrite word.unsigned_ltu in *; try lia.
-      rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
-      rewrite Z.ltb_ge in *; try lia.
-      specialize (Properties.word.unsigned_range (word.add (word.of_Z (Z.of_N narg1)) (word.of_Z (Z.of_N narg2)): word64)) as ?; cleanup.
-      (* rewrite Properties.word.unsigned_add_nowrap in *; try lia.
-      2: exact H3. *)
-      (* 2,3: eapply word.unsigned_range_nowrap; try lia. *)
-      eapply IH with (t := set_vars _ _) in Heval2; eauto; simpl in *; cleanup.
-      3: eapply env_rel_update; eauto.
-      2: eapply state_rel_set_vars; eauto.
+      clear Heqeval_cmd_add_fun.
+      (* 2. Use IH and use info from 1. to prove its premises -> get fuel_ih from this *)
+      assert (narg1 + narg2 < 2 ^ 64) as Hno_overflow by (eapply no_overflow_addition; eauto).
+      eapply IH with (t := set_vars _ (add_steps_done 1 _)) in Heval2; eauto; simpl in *; cleanup.
+      2: eapply state_rel_set_vars; eapply state_rel_add_steps_done; eauto.
+      2: eapply env_rel_update; eauto.
       2: econstructor; try lia.
-      2: admit.
-      (* The following might be useful. *)
-      (* rewrite word.unsigned_add_nowrap in *; try lia.
-      eapply IH with (t := set_vars _ _) in Heval2; eauto; simpl in *; cleanup.
-      3: eapply env_rel_update; eauto.
-      2: eapply state_rel_set_vars; eauto.
-      2: econstructor.
-      do 2 eexists.
-      split; [reflexivity|]. *)
-
-      
-
-
-      admit.
+      (* 3. Instantiate fuel in goal with fuel_ih *)
+      exists (S x); do 2 eexists.
+      with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
+      unfold_monadic; unfold_outcome; unfold set_vars, inc_steps_done, add_steps_done, set_steps_done in *; simpl in *.
+      rewrite Heqb.
+      simpl in *.
+      rewrite Heqb0.
+      simpl in *; unfold set_vars; simpl.
+      assert (x0 <> Stop TimeOut) as Hnotimeout by (unfold res_rel in *|-; destruct x0; simpl in *; try congruence; destruct v; congruence).
+      spat `eval_cmd` at eapply eval_cmd_add_clock with (fuel1 := 1%nat) in spat; eauto.
+      assert (
+        word.of_Z (Z.of_N (narg1 + narg2)) = word.add (word.of_Z (Z.of_N narg1): word64) (word.of_Z (Z.of_N narg2))
+      ) as <-.
+      1: {
+        rewrite N2Z.inj_add.
+        rewrite word.ring_morph_add.
+        reflexivity.
+      }
+      rewrite Nat.add_1_r in *|-.
+      split; eauto.
     }
-    all: admit.
+    1: { (* Sub *)
+      spat ` (name_of_string "sub", ?args, ?cs1)` at assert (find_fun (name_of_string "sub") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin; eauto); clear Hbuiltin.
+      rewrite Hfind_fun.
+      simpl in *; unfold_monadic; unfold catch_return; simpl; unfold_outcome.
+      eapply IH with (t := set_vars _ (add_steps_done 1 _)) in Heval2; eauto; simpl in *; cleanup.
+      2: eapply state_rel_set_vars; eapply state_rel_add_steps_done; eauto.
+      2: eapply env_rel_update; eauto; econstructor; try lia.
+      exists (S x); do 2 eexists.
+      with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
+      unfold_monadic; unfold_outcome; unfold set_vars, inc_steps_done, add_steps_done, set_steps_done in *; simpl in *.
+      split; eauto.
+      assert (x0 <> Stop TimeOut) as Hnotimeout by (unfold res_rel in *|-; destruct x0; simpl in *; try congruence; destruct v; congruence).
+      destruct (word.ltu _ _) eqn:?; simpl in *; unfold_outcome; cleanup.
+      1: { (* a1 < a2 *)
+        rewrite word.unsigned_ltu, Z.ltb_lt in *.
+        do 2 rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
+        assert (Z.of_N 0 = 0%Z) as <- by lia.
+        assert (narg1 - narg2 = 0)%N as <- by lia.
+        spat `eval_cmd` at eapply eval_cmd_add_clock with (fuel1 := 1%nat) in spat; try congruence.
+        unfold set_vars; simpl; rewrite Nat.add_1_r in *|-.
+        eauto.
+      }
+      (* a1 >= a2 *)
+      rewrite word.unsigned_ltu, Z.ltb_ge in *.
+      do 2 rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
+      assert (narg2 <= narg1)%N as Hge by lia.
+      assert (
+        word.of_Z (Z.of_N (narg1 - narg2)) = word.sub (word.of_Z (Z.of_N narg1): word64) (word.of_Z (Z.of_N narg2))
+      ) as <-.
+      1: {
+        rewrite N2Z.inj_sub; eauto.
+        rewrite word.ring_morph_sub.
+        reflexivity.
+      }
+      spat `eval_cmd` at eapply eval_cmd_add_clock with (fuel1 := 1%nat) in spat; try congruence.
+      unfold set_vars; simpl; rewrite Nat.add_1_r in *|-.
+      eauto.
+    }
+    Transparent eval_exps.
+    all: clear Hbuiltin.
+    all: simpl in *; unfold bind in *.
+    all: try destruct eval_exp eqn:?; try destruct o eqn:?; cleanup; subst.
+    all: try destruct (eval_exp iarg2 _) eqn:?; try destruct o eqn:?; cleanup; subst.
+    all: unfold_outcome; cleanup.
+    1: { (* Div *)
+      simpl in *; unfold_monadic; unfold catch_return; simpl; unfold_outcome.
+      destruct (_ =? _)%N eqn:?; cleanup; rewrite N.eqb_neq in *.
+      assert (narg1 / narg2 <= narg1) as Hdiv_le.
+      1: {
+        destruct (N.eq_dec narg2 0) as [Hz | Hnz]; subst.
+        - rewrite N.div_0_r; lia.
+        - apply N.Div0.div_le_upper_bound.
+          eapply N.le_mul_l; eauto.
+      }
+      eapply IH with (t := set_vars _ _) in Heval2; eauto; simpl in *; cleanup.
+      2: eapply state_rel_set_vars; eauto.
+      2: eapply env_rel_update; eauto; econstructor; try lia.
+      with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
+      unfold_monadic; unfold_outcome; unfold set_vars, inc_steps_done, add_steps_done, set_steps_done in *; simpl in *.
+      assert (x0 <> Stop TimeOut) as Hnotimeout by (unfold res_rel in *|-; destruct x0; simpl in *; try congruence; destruct v; congruence).
+      assert (word.eqb (word.of_Z (Z.of_N narg2): word64) (word.of_Z 0) = false) as Hneq.
+      1: {
+        rewrite word.unsigned_eqb, Z.eqb_neq, word.unsigned_of_Z_nowrap; try lia.
+        rewrite word.unsigned_of_Z_0; lia.
+      }
+      rewrite Hneq.
+      assert (
+        word.of_Z (Z.of_N (narg1 / narg2)) = word.divu (word.of_Z (Z.of_N narg1): word64) (word.of_Z (Z.of_N narg2))
+      ) as <-.
+      1: {
+        rewrite N2Z.inj_div; eauto.
+        with_strategy transparent [word.divu] simpl word.divu at 1.
+        rewrite word.unsigned_eqb, word.unsigned_of_Z_0 in *.
+        with_strategy transparent [word.unsigned] simpl word.unsigned in Hneq.
+        rewrite Hneq.
+        assert (word.unsigned (word.of_Z (Z.of_N narg1): word64) = Z.of_N narg1) as Harg1 by (rewrite Properties.word.unsigned_of_Z_nowrap; try lia).
+        assert (word.unsigned (word.of_Z (Z.of_N narg2): word64) = Z.of_N narg2) as Harg2 by (rewrite Properties.word.unsigned_of_Z_nowrap; try lia).
+        with_strategy transparent [word.unsigned] simpl word.unsigned in Harg1, Harg2.
+        rewrite Harg1, Harg2.
+        reflexivity.
+      }
+      unfold assign, set_vars; unfold_outcome; simpl.
+      exists x; do 2 eexists.
+      split; eauto.
+    }
+    1: {
+      destruct (FunSemantics.next _) eqn:?; cleanup.
+      inversion EVAL_ARGS; subst; clear H3.
+      unfold FunSemantics.next in *.
+      assert (∃ n1, v1 = Num n1 ∧ n1 < 2^32); cleanup; subst.
+      1: destruct (FunSemantics.input s4); cleanup; eexists; split; try reflexivity; eauto.
+      1: specialize N_ascii_bounded with (a := a) as ?; lia.
+      eapply IH with (t := set_vars _ (set_input _ _)) in Heval2; eauto; simpl in *; cleanup.
+      2: eapply state_rel_set_vars; eauto.
+      2: {
+        unfold state_rel in *; cleanup.
+        unfold set_input, FunSemantics.set_input in *; simpl in *.
+        destruct (FunSemantics.input s4); simpl in *; eauto; cleanup; subst; eauto.
+      }
+      2: eapply env_rel_update; eauto.
+      2: econstructor; try lia.
+      exists x0; do 2 eexists.
+      unfold set_vars, set_input in *; simpl in *.
+      split; eauto.
+      unfold state_rel in *; cleanup.
+      spat `input _ = _` at rewrite spat.
+      destruct (FunSemantics.input s4) eqn:Heqin; simpl in *; cleanup; subst; eauto; try rewrite Heqin in *; simpl in *; eauto.
+    }
+    (* Write *)
+    Opaque word.unsigned.
+    destruct (_ <? _)%N eqn:?; cleanup; rewrite N.ltb_lt in *.
+    unfold put_char, w2n in *; unfold_outcome; simpl in *.
+    assert (Z.to_nat (word.unsigned (word.of_Z (Z.of_N narg1): word64)) <? 256 = true)%nat as Hlt256.
+    1: {
+      rewrite Nat.ltb_lt in *.
+      rewrite Properties.word.unsigned_of_Z_nowrap in *; try lia.
+    }
+    eapply IH with (t := set_vars _ (set_output _ _)) in Heval2; eauto; simpl in *; cleanup.
+    2: eapply state_rel_set_vars; eauto.
+    2: {
+      unfold state_rel in *; cleanup.
+      unfold set_output, FunSemantics.set_output in *; simpl in *.
+      eauto.
+    }
+    2: eapply env_rel_update; eauto.
+    2: econstructor; try lia.
+    exists x; do 2 eexists.
+    rewrite Hlt256.
+    unfold_monadic; unfold_outcome; unfold assign, set_vars in *; simpl in *.
+    split; eauto.
+    unfold state_rel in *; cleanup.
+    spat `output _ = _` at rewrite spat.
+    rewrite word.unsigned_of_Z_nowrap in *; try lia.
+    rewrite N2Z.id in *; eauto.
   - (* If *)
     destruct to_exp eqn:Hto_exp; try discriminate; cleanup.
     unfold option_bind in *; cleanup.

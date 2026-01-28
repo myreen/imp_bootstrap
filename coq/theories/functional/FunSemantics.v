@@ -63,7 +63,7 @@ Definition eval_op (f : FunSyntax.op) (vs : list Value) (s : state) : result Val
   | FunSyntax.Tail, [Pair x y] => return_ y s
   | FunSyntax.Read, [] =>
       let (v, s') := next s in
-      return_ v (set_input s' (ltail s'.(input)))
+      return_ v s'
   | FunSyntax.Write, [Num n] =>
       if n <? 256 then return_ (Num 0) (set_output s (s.(output) ++ String (ascii_of_N n) EmptyString)%string)
       else fail s

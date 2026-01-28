@@ -84,7 +84,7 @@ Arguments cont _ !v !s /.
 Definition next (input : llist ascii) : Value :=
   match input with
   | Lnil => Word (word.of_Z (2 ^ 32 - 1))
-  | Lcons c cs => Word (word.of_Z (Z.of_nat (nat_of_ascii c)))
+  | Lcons c cs => Word (word.of_Z (Z.of_N (N_of_ascii c)))
   end.
 
 Definition lookup_var (n : name) (s : state) : (outcome Value * state) :=
@@ -315,7 +315,7 @@ Definition put_char (v: Value) (s: state): (outcome unit * state) :=
   | (Pointer p) => crash s
   | (Word w) =>
     if w2n w <? 256 then
-      cont tt (set_output (String.append s.(output) (String (ascii_of_nat (w2n w)) EmptyString)) s)
+      cont tt (set_output (String.append s.(output) (String (ascii_of_N (Z.to_N (word.unsigned w))) EmptyString)) s)
     else crash s
   end.
 

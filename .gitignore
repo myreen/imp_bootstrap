@@ -9,6 +9,7 @@
 .HOLMK
 .hollogs
 .holobjs
+.hol
 
 # Generated assembly
 *.S

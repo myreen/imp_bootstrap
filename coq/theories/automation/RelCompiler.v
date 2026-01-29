@@ -364,10 +364,6 @@ Ltac2 rec compile () : unit :=
   let c := Control.goal () in
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
-    (lazy_match! goal with
-    | [ _h : (lookup_fun (name_enc ?_fname) _ = Some (?_params, ?body)) |- _ ] =>
-      printf "lookup_fun := %t" body
-    end);
     let cenv := get_cenv_from_fenv_constr fenv in
     let names_in_cenv := List.concat (List.map opt_to_list (List.map (fun p => Option.bind (fst p) (fun c => Ident.of_string (string_of_constr_string c))) cenv)) in
     printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_cenv cenv) cenv;
@@ -858,19 +854,22 @@ Ltac2 rec compile () : unit :=
         let nStore3 := List.nth binders_f_Store 2 in
         let nComment1 := List.nth binders_f_Comment 0 in
         app_lemma "auto_instr_CASE" [("env", exactk fenv); ("v0", exactk v0);
-        ("f_Const", exactk f_Const); ("f_Add", exactk f_Add); ("f_Sub", exactk f_Sub); ("f_Div", exactk f_Div);
-        ("f_Jump", exactk f_Jump); ("f_Call", exactk f_Call); ("f_Mov", exactk f_Mov); ("f_Ret", exactk f_Ret);
-        ("f_Pop", exactk f_Pop); ("f_Push", exactk f_Push); ("f_Add_RSP", exactk f_Add_RSP); ("f_Sub_RSP", exactk f_Sub_RSP);
-        ("f_Load_RSP", exactk f_Load_RSP); ("f_Store_RSP", exactk f_Store_RSP); ("f_Load", exactk f_Load); ("f_Store", exactk f_Store);
-        ("f_GetChar", exactk f_GetChar); ("f_PutChar", exactk f_PutChar); ("f_Exit", exactk f_Exit); ("f_Comment", exactk f_Comment);
-        ("nConst1", exactk nConst1); ("nConst2", exactk nConst2); ("nAdd1", exactk nAdd1); ("nAdd2", exactk nAdd2);
+        ("f_Const", exactk f_Const); ("f_Add", exactk f_Add); ("f_Sub", exactk f_Sub);
+        ("f_Div", exactk f_Div); ("f_Jump", exactk f_Jump); ("f_Call", exactk f_Call);
+        ("f_Mov", exactk f_Mov); ("f_Ret", exactk f_Ret); ("f_Pop", exactk f_Pop);
+        ("f_Push", exactk f_Push); ("f_Add_RSP", exactk f_Add_RSP); ("f_Sub_RSP", exactk f_Sub_RSP);
+        ("f_Load_RSP", exactk f_Load_RSP); ("f_Store_RSP", exactk f_Store_RSP); ("f_Load", exactk f_Load);
+        ("f_Store", exactk f_Store); ("f_GetChar", exactk f_GetChar); ("f_PutChar", exactk f_PutChar);
+        ("f_Exit", exactk f_Exit); ("f_Comment", exactk f_Comment); ("nConst1", exactk nConst1);
+        ("nConst2", exactk nConst2); ("nAdd1", exactk nAdd1); ("nAdd2", exactk nAdd2);
         ("nSub1", exactk nSub1); ("nSub2", exactk nSub2); ("nDiv1", exactk nDiv1); ("nJump1", exactk nJump1);
         ("nJump2", exactk nJump2); ("nCall1", exactk nCall1); ("nMov1", exactk nMov1); ("nMov2", exactk nMov2);
-        ("nPop1", exactk nPop1); ("nPush1", exactk nPush1); ("nAdd_RSP1", exactk nAdd_RSP1); ("nSub_RSP1", exactk nSub_RSP1);
-        ("nLoad_RSP1", exactk nLoad_RSP1); ("nLoad_RSP2", exactk nLoad_RSP2); ("nStore_RSP1", exactk nStore_RSP1); ("nStore_RSP2", exactk nStore_RSP2);
-        ("nLoad1", exactk nLoad1); ("nLoad2", exactk nLoad2); ("nLoad3", exactk nLoad3); ("nStore1", exactk nStore1);
+        ("nPop1", exactk nPop1); ("nPush1", exactk nPush1); ("nAdd_RSP1", exactk nAdd_RSP1);
+        ("nSub_RSP1", exactk nSub_RSP1); ("nLoad_RSP1", exactk nLoad_RSP1); ("nLoad_RSP2", exactk nLoad_RSP2);
+        ("nStore_RSP1", exactk nStore_RSP1); ("nStore_RSP2", exactk nStore_RSP2); ("nLoad1", exactk nLoad1);
+        ("nLoad2", exactk nLoad2); ("nLoad3", exactk nLoad3); ("nStore1", exactk nStore1);
         ("nStore2", exactk nStore2); ("nStore3", exactk nStore3); ("nComment1", exactk nComment1)]
-            [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile));
+            [compile; (fun () => destruct $v0 eqn:? at 1; (Control.enter compile));
               (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ()); (fun () => ());(fun () => ()); (fun () => ())]
       (* prog *)
       | ImpSyntax.Program ?funcs =>

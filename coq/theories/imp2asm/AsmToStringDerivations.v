@@ -41,14 +41,13 @@ Proof. unfold_fix_proof 'instrs2str. Qed.
 
 (* Set Printing Depth 100000. *)
 
-Derive reg2str_prog
-  in ltac2:(relcompile_tpe 'reg2str_prog 'reg2str ['String.append])
-  as reg2str_prog_proof.
+Derive reg2str1_prog
+  in ltac2:(relcompile_tpe 'reg2str1_prog 'reg2str1 ['append])
+  as reg2str1_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
-Print num2str_f.
 Derive num2str_f_prog
   in ltac2:(relcompile_tpe 'num2str_f_prog 'num2str_f ['nat_modulo])
   as num2str_f_prog_proof.
@@ -88,10 +87,70 @@ Proof.
   time relcompile.
 Qed.
 
+(* Definition reg2str (r: reg) (str: string): string :=
+  match r with
+  | RAX => "%rax"
+  | RDI => "%rdi"
+  | RBX => "%rbx"
+  | RBP => "%rbp"
+  | R12 => "%r12"
+  | R13 => "%r13"
+  | R14 => "%r14"
+  | R15 => "%r15"
+  | RDX => "%rdx"
+  end ++ str.
+
+Definition str_test (n: nat) (r: reg) (str: string): string :=
+  (reg2str r (num2str n str)).
+
+Opaque name_enc.
+
+Print reg2str.
+Print num2str.
+
+Derive str_test_prog
+  in ltac2:(relcompile_tpe 'str_test_prog 'str_test ['num2str; 'reg2str])
+  as str_test_prog_proof.
+Proof.
+  ltac1:(timeout 2 ltac2:(relcompile)). (* fails *)
+  time relcompile.
+Qed.
+
+Definition reg2str1 (r: reg) (str: string): string :=
+  match r with
+  | RAX => "%rax"
+  | RDI => "%rdi"
+  | RBX => "%rbx"
+  | RBP => "%rbp"
+  | R12 => "%r12"
+  | R13 => "%r13"
+  | R14 => "%r14"
+  | R15 => "%r15"
+  | RDX => "%rdx"
+  end ++ str.
+
+Definition str_test1 (n: nat) (r: reg) (str: string): string :=
+  (reg2str1 r (num2str n str)).
+
+Opaque name_enc.
+
+Print reg2str1.
+Print num2str.
+
+Derive str_test_prog
+  in ltac2:(relcompile_tpe 'str_test_prog 'str_test1 ['num2str; 'reg2str1])
+  as str_test_prog_proof.
+Proof.
+  ltac1:(timeout 2 ltac2:(relcompile)). (* succeeds *)
+  time relcompile.
+Qed. *)
+
+
 Derive inst2str_prog
-  in ltac2:(relcompile_tpe 'inst2str_prog 'inst2str ['reg2str; 'num2str; 'N2str; 'lab; 'clean; 'append])
+  in ltac2:(relcompile_tpe 'inst2str_prog 'inst2str ['reg2str1; 'num2str; 'N2str; 'lab; 'clean; 'append])
   as inst2str_prog_proof.
 Proof.
+  (* ltac1:(timeout 10 ltac2:(relcompile)). *)
   time relcompile.
 Qed.
 
@@ -105,11 +164,12 @@ Qed.
 Theorem concat_strings_equation: ltac2:(unfold_fix_type '@concat_strings).
 Proof. unfold_fix_proof '@concat_strings. Qed.
 Derive concat_strings_prog
-  in ltac2:(relcompile_tpe 'concat_strings_prog 'concat_strings [])
+  in ltac2:(relcompile_tpe 'concat_strings_prog 'concat_strings ['append])
   as concat_strings_prog_proof.
 Proof.
   time relcompile.
 Qed.
+
 Derive asm2str_prog
   in ltac2:(relcompile_tpe 'asm2str_prog 'asm2str ['instrs2str; 'concat_strings; 'append])
   as asm2str_prog_proof.

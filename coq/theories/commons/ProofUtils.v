@@ -80,3 +80,18 @@ Proof.
     rewrite Nat.mul_comm in Hdm.
     exact (eq_sym Hdm).
 Qed.
+
+Lemma nth_error_list_update_eq: forall {A: Type} n (v: A) xs,
+  (exists v0, nth_error xs n = Some v0) <->
+  nth_error (list_update n v xs) n = Some v.
+Proof.
+  induction n; destruct xs; simpl; split; intros; eauto; cleanup.
+  1: rewrite <- IHn; eauto.
+  rewrite IHn; eauto.
+Qed.
+
+Lemma nth_error_list_update_eq1: forall {A: Type} n (v0 v: A) xs,
+  nth_error (list_update n v xs) n = Some v0 -> nth_error (list_update n v xs) n = Some v.
+Proof.
+  induction n; destruct xs; simpl; intros; eauto; cleanup.
+Qed.

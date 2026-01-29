@@ -69,7 +69,9 @@ Definition inst2str (i: instr) (str: string): string :=
   | GetChar => "movq stdin(%rip), %rdi ; call _IO_getc@PLT" ++ str
   | PutChar => "movq stdout(%rip), %rsi ; call _IO_putc@PLT" ++ str
   | Exit => "call exit@PLT" ++ str
-  | Comment c => "\n\n\t/* " ++ clean c (" */" ++ str)
+  | Comment c => "
+  
+  	/* " ++ clean c (" */" ++ str)
   end.
 
 Fixpoint instrs2str (n: nat) (is: asm): string :=
@@ -88,18 +90,31 @@ Fixpoint concat_strings (ss: list string): string :=
     res
   end.
 
-(* TODO: special characters are wrong *)
 Definition asm2str (is: asm): string := concat_strings
-  ["\t.bss\n";
-    "\t.p2align 3          /* 8-byte align        */\n";
-    "heapS:\n";
-    "\t.space 8*1024*1024  /* bytes of heap space */\n";
-    "\t.p2align 3          /* 8-byte align        */\n";
-    "heapE:\n\n";
-    "\t.text\n";
-    "\t.globl main\n";
-    "main:\n";
-    "\tsubq $8, %rsp        /* 16-byte align %rsp */\n";
-    "\tmovabs $heapS, %r14  /* r14 := heap start  */\n";
-    "\tmovabs $heapE, %r15  /* r15 := heap end    */\n\n"]%string
+  ["	.bss
+  ";
+    "	.p2align 3          /* 8-byte align        */
+    ";
+    "heapS:
+    ";
+    "	.space 8*1024*1024  /* bytes of heap space */
+    ";
+    "	.p2align 3          /* 8-byte align        */
+    ";
+    "heapE:
+    
+    ";
+    "	.text
+    ";
+    "	.globl main
+    ";
+    "main:
+    ";
+    "	subq $8, %rsp        /* 16-byte align %rsp */
+    ";
+    "	movabs $heapS, %r14  /* r14 := heap start  */
+    ";
+    "	movabs $heapE, %r15  /* r15 := heap end    */
+    
+    "]%string
   ++ instrs2str 0 is.

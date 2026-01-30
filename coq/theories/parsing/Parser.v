@@ -2,10 +2,15 @@ From impboot Require Import
   utils.Core
   utils.Llist.
 Import Llist.
+Require Import impboot.parsing.ParserData.
+Require Import impboot.imp2asm.ImpToASMCodegen.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.functional.FunValues.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
+
+Require Import impboot.automation.ltac2.UnfoldFix.
+From Ltac2 Require Import Ltac2.
 
 Require Import Patat.Patat.
 
@@ -14,126 +19,138 @@ Open Scope string.
 
 (* lexing *)
 
-Inductive token :=
-  | OPEN
-  | CLOSE
-  | DOT
-  | NUM (n: N)
-  | QUOTE (s: N).
-
 Fixpoint read_num (l h: ascii) (f x: N) (acc: N) (cs: list ascii): (N * list ascii) :=
   match cs with
-  [] => (acc, [])
-  | c :: cs =>
-    if (andb (N_of_ascii l <=? N_of_ascii c) (N_of_ascii c <=? N_of_ascii h))%N then
-      read_num l h f x (f * acc + (N_of_ascii c - x)) cs
-    else (acc, c::cs)
+  [] => 
+    let/d empty_list := [] in
+    let/d result := (acc, empty_list) in
+    result
+  | c :: cs1 =>
+    let/d l_ascii := N_of_ascii l in
+    let/d c_ascii := N_of_ascii c in
+    let/d h_ascii := N_of_ascii h in
+    if (c_ascii <? l_ascii)%N then
+      let/d result := (acc, cs) in
+      result
+    else
+      if (h_ascii <? c_ascii)%N then
+        let/d result := (acc, cs) in
+        result
+      else
+        let/d f_mult_acc := f * acc in
+        let/d c_minus_x := c_ascii - x in
+        let/d new_acc := f_mult_acc + c_minus_x in
+        let/d result := read_num l h f x new_acc cs1 in
+        result
   end.
+Theorem read_num_equation: ltac2:(unfold_fix_type '@read_num).
+Proof. unfold_fix_proof '@read_num. Qed.
 
 Fixpoint end_line (cs: list ascii) :=
   match cs with
-  | [] => []
+  | [] => 
+    let/d empty_list := [] in
+    empty_list
   | c :: cs =>
-    (*             vvvvv \n *)
-    if Ascii.eqb c "010" then cs else end_line cs
+    let/d newline_char := "010"%char in
+    if Ascii.eqb c newline_char then 
+      cs 
+    else 
+      let/d result := end_line cs in
+      result
+  end.
+Theorem end_line_equation: ltac2:(unfold_fix_type '@end_line).
+Proof. unfold_fix_proof '@end_line. Qed.
+
+Definition q_from_nat (n: nat) (arg: N) :=
+  match n with
+  | 0%nat => NUM arg
+  | _ => QUOTE arg
   end.
 
-Fixpoint lex q (cs: list ascii) (acc: list token) (fuel: nat): option (list token) :=
-  (* TODO: change the order of matches? *)
+Fixpoint lex (q: nat) (cs: list ascii) (acc: list token) (fuel: nat): option (list token) :=
   match cs with
-  | [] => Some acc
+  | [] => 
+    let/d result := Some acc in
+    result
   | c :: cs =>
     match fuel with
-    | 0%nat => None
-    | S fuel => 
-      if List.existsb (fun c1 => Ascii.eqb c c1) ([" "; "009"; "010"])%char then
-        lex NUM cs acc fuel else
-      if Ascii.eqb c "#" then lex NUM (end_line cs) acc fuel else
-      if Ascii.eqb c "." then lex NUM cs (DOT :: acc) fuel else
-      if Ascii.eqb c "(" then lex NUM cs (OPEN :: acc) fuel else
-      if Ascii.eqb c ")" then lex NUM cs (CLOSE :: acc) fuel else
-      if Ascii.eqb c "'" then lex QUOTE cs acc fuel else
-        let (n, rest) := read_num "0" "9" 10 (N_of_ascii "0") 0 (c :: cs) in
-        if negb (Nat.eqb (List.length rest) (List.length (c :: cs))) then
-          lex NUM rest (q n :: acc) fuel
-        else
-          let (n, rest) := read_num "*" "z" 256 0 0 (c :: cs) in
-          if negb (Nat.eqb (List.length rest) (List.length (c :: cs))) then
-            lex NUM rest (q n :: acc) fuel
-          else lex NUM cs acc fuel
+    | 0%nat => 
+      let/d result := None in
+      result
+    | S fuel =>
+      if Ascii.eqb c " "%char then
+        let/d result := lex 0 cs acc fuel in
+        result
+      else if Ascii.eqb c "009"%char then
+        let/d result := lex 0 cs acc fuel in
+        result
+      else if Ascii.eqb c "010"%char then
+        let/d result := lex 0 cs acc fuel in
+        result
+      else if Ascii.eqb c "#"%char then 
+        let/d line_end := end_line cs in
+        let/d result := lex 0 line_end acc fuel in
+        result
+      else if Ascii.eqb c "."%char then 
+        let/d dot_token := DOT in
+        let/d new_acc := dot_token :: acc in
+        let/d result := lex 0 cs new_acc fuel in
+        result
+      else if Ascii.eqb c "("%char then 
+        let/d open_token := OPEN in
+        let/d new_acc := open_token :: acc in
+        let/d result := lex 0 cs new_acc fuel in
+        result
+      else if Ascii.eqb c ")"%char then 
+        let/d close_token := CLOSE in
+        let/d new_acc := close_token :: acc in
+        let/d result := lex 0 cs new_acc fuel in
+        result
+      else if Ascii.eqb c "'"%char then 
+        let/d result := lex 1 cs acc fuel in
+        result
+      else
+        let/d zero_char := "0"%char in
+        let/d nine_char := "9"%char in
+        let/d zero_ascii := N_of_ascii zero_char in
+        let/d c_cons_cs := c :: cs in
+        let/d digit_result := read_num zero_char nine_char 10 zero_ascii 0 c_cons_cs in
+        match digit_result return (option (list token)) with
+        | (n, rest) =>
+          let/d rest_length := list_length rest in
+          let/d original_length := list_length c_cons_cs in
+          if Nat.eqb rest_length original_length then
+            let/d star_char := "*"%char in
+            let/d z_char := "z"%char in
+            let/d alpha_result := read_num star_char z_char 256 0 0 c_cons_cs in
+            match alpha_result return (option (list token)) with
+            | (n2, rest2) =>
+              let/d rest2_length := list_length rest2 in
+              let/d original_length2 := list_length c_cons_cs in
+              if Nat.eqb rest2_length original_length2 then
+                let/d result := lex 0 cs acc fuel in
+                result
+              else
+                let/d q_token2 := q_from_nat q n2 in
+                let/d new_acc2 := q_token2 :: acc in
+                let/d result := lex 0 rest2 new_acc2 fuel in
+                result
+            end
+          else
+            let/d q_token := q_from_nat q n in
+            let/d new_acc := q_token :: acc in
+            let/d result := lex 0 rest new_acc fuel in
+            result
+        end
     end
   end.
-
-Ltac cleanup :=
-  repeat match goal with
-  | H: _ /\ _ |- _ => destruct H; clear H
-  | H: (_, _) = (_, _) |- _ => inversion H; clear H; subst
-  end.
-
-Theorem read_num_length: ∀l h xs n ys f acc x,
-  read_num l h f x acc xs = (n, ys) ->
-    List.length ys ≤ List.length xs ∧ (xs ≠ ys -> List.length ys < List.length xs)%nat.
-Proof.
-  induction xs; intros; simpl in *; cleanup; simpl.
-  1: split; eauto; intros; congruence.
-  destruct andb eqn:?; rewrite ?andb_true_iff, ?andb_false_iff, ?N.leb_le, ?N.leb_gt in *; cleanup; simpl in *.
-  1: {
-    pat `read_num _ _ _ _ _ _ = _` at rename pat into Hread_num.
-    pat `forall n ys f acc x, _` at eapply pat in Hread_num.
-    split; [lia|].
-    intros; lia.
-  }
-  split; [lia|].
-  intros; congruence.
-Qed.
-
-Theorem end_line_length: ∀cs,
-  (List.length (end_line cs) <= List.length cs)%nat.
-Proof.
-  induction cs; simpl; [lia|].
-  destruct (_ =? _)%char eqn:?; lia.
-Qed.
-
-Theorem lex_terminates: forall fuel q cs acc,
-  (List.length cs <= fuel)%nat -> lex q cs acc fuel <> None.
-Proof.
-  Opaque Ascii.eqb.
-  induction fuel; intros; simpl.
-  1: inversion H; simpl; destruct cs eqn:?; simpl in *; try congruence.
-  destruct cs eqn:?; try congruence; simpl in *.
-  repeat match goal with
-  | |- (if ?c then _ else _) <> _ => destruct c eqn:?
-  | |- lex _ _ _ _ <> _ =>
-    eapply IHfuel
-  | |- (let (_, _) := if ?c then _ else _ in _) <> _ =>
-    destruct c eqn:?
-  | |- (let (_, _) := read_num _ _ _ _ _ cs in _) <> _ =>
-    destruct read_num eqn:?
-  | H: _ = _ :: ?l |- (let (_, _) := read_num ?a1 ?a2 ?a3 ?a4 ?a5 ?l in _) <> _ =>
-    destruct (read_num a1 a2 a3 a4 a5 l) eqn:?
-  | |- (List.length (end_line _) <= _)%nat =>
-    eapply Nat.le_trans; [eapply end_line_length|]; lia
-  | H: (S _ <= S _)%nat |- _ =>
-    eapply le_S_n in H
-  | H: cs = ?h :: ?t |- (List.length (?h :: ?t) <= _)%nat =>
-    rewrite negb_true_iff, Nat.eqb_neq in *; simpl in *; congruence
-  | H: read_num _ _ _ _ _ ?t = (_, _) |- _ =>
-    eapply read_num_length in H
-  | _ => lia
-  end.
-Qed.
+Theorem lex_equation: ltac2:(unfold_fix_type '@lex).
+Proof. unfold_fix_proof '@lex. Qed.
 
 Definition lexer_i (input: string): option (list token) :=
   let/d in_list := list_ascii_of_string input in
-  lex NUM in_list [] (List.length in_list).
-
-Theorem lexer_terminates: forall (inp: string),
-  lexer_i inp <> None.
-Proof.
-  intros; unfold lexer_i, dlet.
-  eapply lex_terminates.
-  eapply Nat.le_refl.
-Qed.
+  lex 0 in_list [] (list_length in_list).
 
 Definition lexer (input: string): list token :=
   match lexer_i input with
@@ -144,86 +161,246 @@ Definition lexer (input: string): list token :=
 (* parsing *)
 
 Definition quote n :=
-  FunValues.vlist [Num (name_enc "'"); Num n].
+  let/d quote_str := "'" in
+  let/d quote_enc := name_enc quote_str in
+  let/d quote_num := Num quote_enc in
+  let/d n_num := Num n in
+  let/d pair_list := [quote_num; n_num] in
+  let/d result := FunValues.vlist pair_list in
+  result.
 
 Fixpoint parse (ts: list token) (x: Value) (s: list Value) :=
   match ts with
   | [] => x
-  | (CLOSE :: rest) => parse rest (Num 0) (x::s)
+  | (CLOSE :: rest) => 
+    let/d zero_num := Num 0 in
+    let/d x_cons_s := x :: s in
+    let/d result := parse rest zero_num x_cons_s in
+    result
   | (OPEN :: rest) =>
     match s with
-    | [] => parse rest x s
-    | (y::ys) => parse rest (Pair x y) ys
+    | [] => 
+      let/d result := parse rest x s in
+      result
+    | (y :: ys) => 
+      let/d pair_x_y := Pair x y in
+      let/d result := parse rest pair_x_y ys in
+      result
     end
-  | (NUM n :: rest) => parse rest (Pair (Num n) x) s
-  | (QUOTE n :: rest) => parse rest (Pair (quote n) x) s
-  | (DOT :: rest) => parse rest (FunValues.vhead x) s
+  | (NUM n :: rest) => 
+    let/d n_num := Num n in
+    let/d pair_n_x := Pair n_num x in
+    let/d result := parse rest pair_n_x s in
+    result
+  | (QUOTE n :: rest) => 
+    let/d quote_n := quote n in
+    let/d pair_quote_x := Pair quote_n x in
+    let/d result := parse rest pair_quote_x s in
+    result
+  | (DOT :: rest) => 
+    let/d vhead_x := FunValues.vhead x in
+    let/d result := parse rest vhead_x s in
+    result
   end.
+Theorem parse_equation: ltac2:(unfold_fix_type '@parse).
+Proof. unfold_fix_proof '@parse. Qed.
 
 (* converting from v to prog *)
 
 Fixpoint v2list v :=
   match v with
-  | Num _ => []
+  | Num _ => 
+    let/d empty_list := [] in
+    empty_list
   | Pair v1 v2 =>
-    v1 :: v2list v2
+    let/d v2_list := v2list v2 in
+    let/d result := v1 :: v2_list in
+    result
   end.
+Theorem v2list_equation: ltac2:(unfold_fix_type '@v2list).
+Proof. unfold_fix_proof '@v2list. Qed.
 
 Definition num2exp n :=
-  if vis_upper n then ImpSyntax.Const (word.of_Z (Z.of_N n)) else Var n.
+  let/d is_upper := vis_upper n in
+  if is_upper then 
+    let/d n_z := Z.of_N n in
+    let/d word_val := word.of_Z n_z in
+    let/d result := ImpSyntax.Const word_val in
+    result
+  else 
+    let/d result := Var n in
+    result.
 
 Fixpoint v2exp (v: Value): ImpSyntax.exp :=
   match v with
-  | Num n => num2exp n
+  | Num n => 
+    let/d result := num2exp n in
+    result
   | Pair v0 v1 =>
-    let n := vgetNum v0 in (* this can fail? *)
-    match v1 with
-    | Num _ => num2exp n (* fail? *)
+    let/d n := vgetNum v0 in (* this can fail? *)
+    match v1 return ImpSyntax.exp with
+    | Num _ => 
+      let/d result := num2exp n in (* fail? *)
+      result
     | Pair v1 v2 =>
-      if N.eqb n (name_enc "'") then Const (word.of_Z (Z.of_N (vgetNum v1))) else
-      if N.eqb n (name_enc "var") then Var (vgetNum v1) else
-      match v2 with
-      | Num _ => num2exp n (* fail? *)
-      | Pair v2 v3 =>
-        if N.eqb n (name_enc "+") then Add (v2exp v1) (v2exp v2) else
-        if N.eqb n (name_enc "-") then Sub (v2exp v1) (v2exp v2) else
-        if N.eqb n (name_enc "div") then Div (v2exp v1) (v2exp v2) else
-        if N.eqb n (name_enc "read") then Read (v2exp v1) (v2exp v2) else
-        Var (vgetNum (vel0 v)) (* fail? *)
-      end
+      let/d quote_str := "'" in
+      let/d quote_enc := name_enc quote_str in
+      let/d is_quote := N.eqb n quote_enc in
+      if is_quote then 
+        let/d v1_num := vgetNum v1 in
+        let/d v1_z := Z.of_N v1_num in
+        let/d word_val := word.of_Z v1_z in
+        let/d result := Const word_val in
+        result
+      else
+        let/d var_str := "var" in
+        let/d var_enc := name_enc var_str in
+        let/d is_var := N.eqb n var_enc in
+        if is_var then 
+          let/d v1_num := vgetNum v1 in
+          let/d result := Var v1_num in
+          result
+        else
+          match v2 with
+          | Num _ => 
+            let/d result := num2exp n in (* fail? *)
+            result
+          | Pair v2 v3 =>
+            let/d plus_str := "+" in
+            let/d plus_enc := name_enc plus_str in
+            let/d is_plus := N.eqb n plus_enc in
+            if is_plus then 
+              let/d v1_exp := v2exp v1 in
+              let/d v2_exp := v2exp v2 in
+              let/d result := Add v1_exp v2_exp in
+              result
+            else
+              let/d minus_str := "-" in
+              let/d minus_enc := name_enc minus_str in
+              let/d is_minus := N.eqb n minus_enc in
+              if is_minus then 
+                let/d v1_exp := v2exp v1 in
+                let/d v2_exp := v2exp v2 in
+                let/d result := Sub v1_exp v2_exp in
+                result
+              else
+                let/d div_str := "div" in
+                let/d div_enc := name_enc div_str in
+                let/d is_div := N.eqb n div_enc in
+                if is_div then 
+                  let/d v1_exp := v2exp v1 in
+                  let/d v2_exp := v2exp v2 in
+                  let/d result := Div v1_exp v2_exp in
+                  result
+                else
+                  let/d read_str := "read" in
+                  let/d read_enc := name_enc read_str in
+                  let/d is_read := N.eqb n read_enc in
+                  if is_read then 
+                    let/d v1_exp := v2exp v1 in
+                    let/d v2_exp := v2exp v2 in
+                    let/d result := Read v1_exp v2_exp in
+                    result
+                  else
+                    let/d vel0_v := vel0 v in
+                    let/d vel0_num := vgetNum vel0_v in
+                    let/d result := Var vel0_num in (* fail? *)
+                    result
+          end
     end
   end.
+Theorem v2exp_equation: ltac2:(unfold_fix_type '@v2exp).
+Proof. unfold_fix_proof '@v2exp. Qed.
 
 Fixpoint vs2exps (v: list Value): list ImpSyntax.exp :=
   match v with
-  | [] => []
+  | [] => 
+    let/d empty_list := [] in
+    empty_list
   | v1 :: vs =>
-    v2exp v1 :: vs2exps vs
+    let/d v1_exp := v2exp v1 in
+    let/d vs_exps := vs2exps vs in
+    let/d result := v1_exp :: vs_exps in
+    result
   end.
+Theorem vs2exps_equation: ltac2:(unfold_fix_type '@vs2exps).
+Proof. unfold_fix_proof '@vs2exps. Qed.
 
 Definition v2cmp (v: Value): ImpSyntax.cmp :=
-  if N.eqb (vgetNum v) (name_enc "<") then Less else
-  if N.eqb (vgetNum v) (name_enc "=") then Equal else
-  Less. (* fail? *)
+  let/d v_num := vgetNum v in
+  let/d less_str := "<" in
+  let/d less_enc := name_enc less_str in
+  let/d is_less := N.eqb v_num less_enc in
+  if is_less then 
+    Less 
+  else
+    let/d equal_str := "=" in
+    let/d equal_enc := name_enc equal_str in
+    let/d is_equal := N.eqb v_num equal_enc in
+    if is_equal then 
+      Equal 
+    else
+      Less. (* fail? *)
 
 Fixpoint v2test (v: Value): ImpSyntax.test :=
   match v with
-  | Num _ => Test Less (Const (word.of_Z 0)) (Const (word.of_Z 0)) (* fail? *)
+  | Num _ => 
+    let/d zero_word := word.of_Z 0 in
+    let/d zero_const := Const zero_word in
+    let/d result := Test Less zero_const zero_const in (* fail? *)
+    result
   | Pair v0 v1 =>
-    let n := vgetNum v0 in (* this can fail? *)
-    match v1 with
-    | Num _ => Test Less (Const (word.of_Z 0)) (Const (word.of_Z 0)) (* fail? *)
+    let/d n := vgetNum v0 in (* this can fail? *)
+    match v1 return ImpSyntax.test with
+    | Num _ => 
+      let/d zero_word := word.of_Z 0 in
+      let/d zero_const := Const zero_word in
+      let/d result := Test Less zero_const zero_const in (* fail? *)
+      result
     | Pair v1 v2 =>
-      if N.eqb n (name_enc "not") then Not (v2test v1) else
-      match v2 with
-      | Num _ => Test Less (Const (word.of_Z 0)) (Const (word.of_Z 0)) (* fail? *)
-      | Pair v2 v3 =>
-        if N.eqb n (name_enc "and") then And (v2test v1) (v2test v2) else
-        if N.eqb n (name_enc "or") then Or (v2test v1) (v2test v2) else
-        Test (v2cmp v0) (v2exp v1) (v2exp v2)
-      end
+      let/d not_str := "not" in
+      let/d not_enc := name_enc not_str in
+      let/d is_not := N.eqb n not_enc in
+      if is_not then 
+        let/d v1_test := v2test v1 in
+        let/d result := Not v1_test in
+        result
+      else
+        match v2 with
+        | Num _ => 
+          let/d zero_word := word.of_Z 0 in
+          let/d zero_const := Const zero_word in
+          let/d result := Test Less zero_const zero_const in (* fail? *)
+          result
+        | Pair v2 v3 =>
+          let/d and_str := "and" in
+          let/d and_enc := name_enc and_str in
+          let/d is_and := N.eqb n and_enc in
+          if is_and then 
+            let/d v1_test := v2test v1 in
+            let/d v2_test := v2test v2 in
+            let/d result := And v1_test v2_test in
+            result
+          else
+            let/d or_str := "or" in
+            let/d or_enc := name_enc or_str in
+            let/d is_or := N.eqb n or_enc in
+            if is_or then 
+              let/d v1_test := v2test v1 in
+              let/d v2_test := v2test v2 in
+              let/d result := Or v1_test v2_test in
+              result
+            else
+              let/d v0_cmp := v2cmp v0 in
+              let/d v1_exp := v2exp v1 in
+              let/d v2_exp := v2exp v2 in
+              let/d result := Test v0_cmp v1_exp v2_exp in
+              result
+        end
     end
   end.
+Theorem v2test_equation: ltac2:(unfold_fix_type '@v2test).
+Proof. unfold_fix_proof '@v2test. Qed.
 
 Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
   match v with
@@ -232,68 +409,191 @@ Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
     match v0 with
     | Pair _ _ =>
       match v1 with
-      | Num _ => v2cmd v0
+      | Num _ => 
+        let/d result := v2cmd v0 in
+        result
       | Pair _ _ =>
-        Seq (v2cmd v0) (v2cmd v1)
+        let/d v0_cmd := v2cmd v0 in
+        let/d v1_cmd := v2cmd v1 in
+        let/d result := Seq v0_cmd v1_cmd in
+        result
       end
     | Num _ =>
-      let n := vgetNum v0 in
-      if N.eqb n (name_enc "abort") then Abort else
-      match v1 with
-      | Num _ => Skip (* fail? *)
-      | Pair v1 v2 =>
-        if N.eqb n (name_enc "return") then Return (v2exp v1) else
-        if N.eqb n (name_enc "getchar") then GetChar (vgetNum v1) else
-        if N.eqb n (name_enc "putchar") then PutChar (v2exp v1) else
-        match v2 with
-        | Num n2 => Skip (* fail? *)
-        | Pair v2 v3 =>
-          if N.eqb n (name_enc "assign") then Assign (vgetNum v1) (v2exp v2) else
-          if N.eqb n (name_enc "while") then While (v2test v1) (v2cmd v2) else
-          if N.eqb n (name_enc "alloc") then Alloc (vgetNum v1) (v2exp v2) else
-          match v3 with
-          | Num _ =>
-            Call (vgetNum v0) (vgetNum v1) (vs2exps (v2list v2))
-          | Pair v3 v4 =>
-            if N.eqb n (name_enc "update") then Update (v2exp v1) (v2exp v2) (v2exp v3) else
-            if N.eqb n (name_enc "if") then If (v2test v1) (v2cmd v2) (v2cmd v3) else
-            if N.eqb n (name_enc "call") then Call (vgetNum v1) (vgetNum v2) (vs2exps (v2list v3)) else
-            Call (vgetNum v0) (vgetNum v1) (vs2exps (v2list (Pair v2 v3)))
-          end
+      let/d n := vgetNum v0 in
+      let/d abort_str := "abort" in
+      let/d abort_enc := name_enc abort_str in
+      let/d is_abort := N.eqb n abort_enc in
+      if is_abort then 
+        Abort 
+      else
+        match v1 with
+        | Num _ => Skip (* fail? *)
+        | Pair v1 v2 =>
+          let/d return_str := "return" in
+          let/d return_enc := name_enc return_str in
+          let/d is_return := N.eqb n return_enc in
+          if is_return then 
+            let/d v1_exp := v2exp v1 in
+            let/d result := Return v1_exp in
+            result
+          else
+            let/d getchar_str := "getchar" in
+            let/d getchar_enc := name_enc getchar_str in
+            let/d is_getchar := N.eqb n getchar_enc in
+            if is_getchar then 
+              let/d v1_num := vgetNum v1 in
+              let/d result := GetChar v1_num in
+              result
+            else
+              let/d putchar_str := "putchar" in
+              let/d putchar_enc := name_enc putchar_str in
+              let/d is_putchar := N.eqb n putchar_enc in
+              if is_putchar then 
+                let/d v1_exp := v2exp v1 in
+                let/d result := PutChar v1_exp in
+                result
+              else
+                match v2 with
+                | Num n2 => Skip (* fail? *)
+                | Pair v2 v3 =>
+                  let/d assign_str := "assign" in
+                  let/d assign_enc := name_enc assign_str in
+                  let/d is_assign := N.eqb n assign_enc in
+                  if is_assign then 
+                    let/d v1_num := vgetNum v1 in
+                    let/d v2_exp := v2exp v2 in
+                    let/d result := Assign v1_num v2_exp in
+                    result
+                  else
+                    let/d while_str := "while" in
+                    let/d while_enc := name_enc while_str in
+                    let/d is_while := N.eqb n while_enc in
+                    if is_while then 
+                      let/d v1_test := v2test v1 in
+                      let/d v2_cmd := v2cmd v2 in
+                      let/d result := While v1_test v2_cmd in
+                      result
+                    else
+                      let/d alloc_str := "alloc" in
+                      let/d alloc_enc := name_enc alloc_str in
+                      let/d is_alloc := N.eqb n alloc_enc in
+                      if is_alloc then 
+                        let/d v1_num := vgetNum v1 in
+                        let/d v2_exp := v2exp v2 in
+                        let/d result := Alloc v1_num v2_exp in
+                        result
+                      else
+                        match v3 with
+                        | Num _ =>
+                          let/d v0_num := vgetNum v0 in
+                          let/d v1_num := vgetNum v1 in
+                          let/d v2_list := v2list v2 in
+                          let/d v2_exps := vs2exps v2_list in
+                          let/d result := Call v0_num v1_num v2_exps in
+                          result
+                        | Pair v3 v4 =>
+                          let/d update_str := "update" in
+                          let/d update_enc := name_enc update_str in
+                          let/d is_update := N.eqb n update_enc in
+                          if is_update then 
+                            let/d v1_exp := v2exp v1 in
+                            let/d v2_exp := v2exp v2 in
+                            let/d v3_exp := v2exp v3 in
+                            let/d result := Update v1_exp v2_exp v3_exp in
+                            result
+                          else
+                            let/d if_str := "if" in
+                            let/d if_enc := name_enc if_str in
+                            let/d is_if := N.eqb n if_enc in
+                            if is_if then 
+                              let/d v1_test := v2test v1 in
+                              let/d v2_cmd := v2cmd v2 in
+                              let/d v3_cmd := v2cmd v3 in
+                              let/d result := If v1_test v2_cmd v3_cmd in
+                              result
+                            else
+                              let/d call_str := "call" in
+                              let/d call_enc := name_enc call_str in
+                              let/d is_call := N.eqb n call_enc in
+                              if is_call then 
+                                let/d v1_num := vgetNum v1 in
+                                let/d v2_num := vgetNum v2 in
+                                let/d v3_list := v2list v3 in
+                                let/d v3_exps := vs2exps v3_list in
+                                let/d result := Call v1_num v2_num v3_exps in
+                                result
+                              else
+                                let/d v0_num := vgetNum v0 in
+                                let/d v1_num := vgetNum v1 in
+                                let/d v2_v3_pair := Pair v2 v3 in
+                                let/d pair_list := v2list v2_v3_pair in
+                                let/d pair_exps := vs2exps pair_list in
+                                let/d result := Call v0_num v1_num pair_exps in
+                                result
+                        end
+                end
         end
-      end
     end
   end.
+Theorem v2cmd_equation: ltac2:(unfold_fix_type '@v2cmd).
+Proof. unfold_fix_proof '@v2cmd. Qed.
 
 Fixpoint vs2args (vs: list Value) :=
   match vs with
-  | [] => []
+  | [] => 
+    let/d empty_list := [] in
+    empty_list
   | v :: vs =>
-    vgetNum v :: vs2args vs
+    let/d v_num := vgetNum v in
+    let/d vs_args := vs2args vs in
+    let/d result := v_num :: vs_args in
+    result
   end.
+Theorem vs2args_equation: ltac2:(unfold_fix_type '@vs2args).
+Proof. unfold_fix_proof '@vs2args. Qed.
 
 Definition v2func (v: Value) :=
-  ImpSyntax.Func ((vgetNum (vel1 v)))
-    (vs2args (v2list (vel2 v)))
-    (v2cmd (vel3 v)).
+  let/d vel1_v := vel1 v in
+  let/d func_name := vgetNum vel1_v in
+  let/d vel2_v := vel2 v in
+  let/d vel2_list := v2list vel2_v in
+  let/d args := vs2args vel2_list in
+  let/d vel3_v := vel3 v in
+  let/d body := v2cmd vel3_v in
+  let/d result := ImpSyntax.Func func_name args body in
+  result.
 
 Fixpoint v2funcs (vs: list Value) :=
   match vs with
-  | [] => []
+  | [] => 
+    let/d empty_list := [] in
+    empty_list
   | v :: vs =>
-    v2func v :: v2funcs vs
+    let/d v_func := v2func v in
+    let/d vs_funcs := v2funcs vs in
+    let/d result := v_func :: vs_funcs in
+    result
   end.
+Theorem v2funcs_equation: ltac2:(unfold_fix_type '@v2funcs).
+Proof. unfold_fix_proof '@v2funcs. Qed.
 
 Definition vs2prog (vs: list Value) :=
-  let ds := v2funcs vs in
-  ImpSyntax.Program ds.
+  let/d ds := v2funcs vs in
+  let/d result := ImpSyntax.Program ds in
+  result.
 
 (* entire parser *)
 
 Definition parser (tokens: list token): prog :=
-  vs2prog (v2list (parse tokens (Num 0) [])).
+  let/d zero_num := Num 0 in
+  let/d empty_stack := [] in
+  let/d parsed_val := parse tokens zero_num empty_stack in
+  let/d val_list := v2list parsed_val in
+  let/d result := vs2prog val_list in
+  result.
 
 Definition str2imp (s: string): ImpSyntax.prog :=
   let/d toks := lexer s in
   let/d prog := parser toks in
-  prog.
+  let/d result := prog in
+  result.

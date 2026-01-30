@@ -405,3 +405,27 @@ Derive codegen_prog
 Proof.
   time relcompile.
 Qed.
+
+(* Derive codegen_program_prog
+  in (
+    ∀ functions : list FunSyntax.func,
+    codegen_program_prog = 
+    ∀ body : FunSyntax.exp,
+      codegen_prog = FunSyntax.Defun (name_enc "codegen") ([name_enc "prog"] : list N) body →
+      ∀ s : state,
+      (∀ (ds : list func) (l : nat) (fs : f_lookup),
+      eval_app (name_enc "c_fundefs") [encode ds; encode l; encode fs] s
+      (encode (c_fundefs ds l fs), s)) →
+      (∀ (fs : f_lookup) (n : N),
+        eval_app (name_enc "lookup") [encode fs; encode n] s (encode (lookup fs n), s))
+      (∀ k : nat, eval_app (name_enc "init") [encode k] s (encode (init k), s)) →
+      (∀ p : prog, eval_app (name_enc "get_funcs") [encode p] s (encode (get_funcs p), s)) →
+      (∀ (A : Type) (Refinable_inst : Refinable A) (xs : app_list A),
+        eval_app (name_enc "app_list_length") [encode xs] s
+        (encode (app_list_length xs), s)) →
+      (∀ (A : Type) (Refinable_inst : Refinable A) (xs : app_list A),
+        eval_app (name_enc "flatten") [encode xs] s (encode (flatten xs), s)) →
+      lookup_fun (name_enc "codegen") (funs s) = Some ([name_enc "prog"] : list N, body) →
+      ∀ prog : ImpSyntax.prog,
+        eval_app (name_enc "codegen") [encode prog] s (encode (codegen prog), s)
+  ) as codegen_program_prog_proof. *)

@@ -1,3 +1,4 @@
+Require Import impboot.parsing.ParserData.
 Require Import impboot.functional.FunSyntax.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.functional.FunProperties.
@@ -231,6 +232,15 @@ Proof.
   reflexivity.
 Qed.
 
+Theorem auto_N_add : forall env s0 s1 s2 x1 x2 (n1 n2: N),
+  env |-- ([x1], s0) ---> ([encode n1], s1) ->
+  env |-- ([x2], s1) ---> ([encode n2], s2) ->
+  env |-- ([Op FunSyntax.Add [x1; x2]], s0) ---> ([encode (n1 + n2)%N], s2).
+Proof.
+  intros; simpl.
+  repeat econstructor; eauto; simpl.
+Qed.
+
 Theorem auto_nat_sub : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
   env |-- ([x2], s1) ---> ([encode n2], s2) ->
@@ -375,6 +385,20 @@ Proof.
   all: try rewrite N.ltb_lt in *; try rewrite N.ltb_nlt in *; subst.
   all: eauto.
   all: lia.
+Qed.
+
+Theorem auto_N_if_less : forall {A} `{ra: Refinable A} env s x1 x2 y z (n1 n2: N) (t f : A),
+  env |-- ([x1], s) ---> ([encode n1], s) ->
+  env |-- ([x2], s) ---> ([encode n2], s) ->
+  env |-- ([y], s) ---> ([encode t], s) ->
+  env |-- ([z], s) ---> ([encode f], s) ->
+  env |-- ([If Less [x1; x2] y z], s) ---> ([encode (if (n1 <? n2)%N then t else f)], s).
+Proof.
+  intros.
+  destruct (_ <? _)%N eqn:Heq.
+  all: repeat econstructor; eauto.
+  all: unfold take_branch, return_; try reflexivity.
+  all: rewrite Heq; eauto.
 Qed.
 
 (* TODO: change "nat -> N" *)
@@ -619,7 +643,7 @@ Proof.
   rewrite N_ascii_embedding; auto.
 Qed.
 
-Theorem auto_char_ORD : forall env s x1 x,
+Theorem auto_char_to_nat : forall env s x1 x,
   env |-- ([x1], s) ---> ([encode x], s) ->
   env |-- ([x1], s) ---> ([encode (nat_of_ascii x)], s).
 Proof.
@@ -630,12 +654,45 @@ Proof.
   assumption.
 Qed.
 
+Theorem auto_char_to_N : forall env s x1 x,
+  env |-- ([x1], s) ---> ([encode x], s) ->
+  env |-- ([x1], s) ---> ([encode (N_of_ascii x)], s).
+Proof.
+  intros.
+  simpl in *.
+  unfold nat_of_ascii.
+  assumption.
+Qed.
+
 Theorem auto_char_const: forall env s (chr: ascii),
   env |-- ([Const (N_of_ascii chr)], s) ---> ([encode chr], s).
 Proof.
   intros.
   simpl in *.
   Eval_eq.
+Qed.
+
+Theorem auto_char_if_eq : forall {A} `{ra: Refinable A} env s x1 x2 y z (n1 n2: ascii) (t f : A),
+  env |-- ([x1], s) ---> ([encode n1], s) ->
+  env |-- ([x2], s) ---> ([encode n2], s) ->
+  env |-- ([y], s) ---> ([encode t], s) ->
+  env |-- ([z], s) ---> ([encode f], s) ->
+  env |-- ([If Equal [x1; x2] y z], s) ---> ([encode (if Ascii.eqb n1 n2 then t else f)], s).
+Proof.
+  intros.
+  destruct (Ascii.eqb _ _) eqn:Heq.
+  all: repeat econstructor; eauto.
+  all: unfold take_branch, return_; try reflexivity.
+  all: destruct (_ =? _) eqn:?; try rewrite Nat.eqb_eq in *; try rewrite Nat.eqb_neq in *; subst.
+  all: try rewrite N.eqb_eq in *; try rewrite N.eqb_neq in *; subst.
+  all: eauto.
+  all: rewrite ?Ascii.eqb_eq, ?Ascii.eqb_neq in *; subst.
+  all: try congruence.
+  all: unfold enc_char in *.
+  assert (ascii_of_N (N_of_ascii n1) = ascii_of_N (N_of_ascii n2)).
+  1: rewrite Heqb; reflexivity.
+  do 2 rewrite ascii_N_embedding in *.
+  congruence.
 Qed.
 
 (* string *)
@@ -685,6 +742,15 @@ Proof.
   Eval_eq.
   + rewrite remove_env_update; eauto.
   + simpl; reflexivity.
+Qed.
+
+Theorem auto_string_to_list: forall env s x1 str,
+  env |-- ([x1], s) ---> ([encode str], s) ->
+  env |-- ([x1], s) ---> ([encode (list_ascii_of_string str)], s).
+Proof.
+  intros.
+  simpl in *.
+  assumption.
 Qed.
 
 (* word *)
@@ -1982,3 +2048,98 @@ Qed.
 
 (* TODO(kπ) might need some more things for the parser *)
 
+(* 
+Inductive token :=
+  | OPEN
+  | CLOSE
+  | DOT
+  | NUM (n: N)
+  | QUOTE (s: N).
+*)
+
+Definition encode_token (t: token) : Value :=
+  match t with
+  | OPEN =>
+    value_list_of_values [value_name "OPEN"]
+  | CLOSE =>
+    value_list_of_values [value_name "CLOSE"]
+  | DOT =>
+    value_list_of_values [value_name "DOT"]
+  | NUM n =>
+    value_list_of_values [value_name "NUM"; Num n]
+  | QUOTE s =>
+    value_list_of_values [value_name "QUOTE"; Num s]
+  end.
+
+Global Instance Refinable_token : Refinable token :=
+  { encode := encode_token }.
+
+Theorem auto_token_cons_OPEN: forall env s,
+  env |-- ([Op Cons [Const (name_enc "OPEN"); Const 0]], s) --->
+        ([encode OPEN], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_token_cons_CLOSE: forall env s,
+  env |-- ([Op Cons [Const (name_enc "CLOSE"); Const 0]], s) --->
+        ([encode CLOSE], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_token_cons_DOT: forall env s,
+  env |-- ([Op Cons [Const (name_enc "DOT"); Const 0]], s) --->
+        ([encode DOT], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_token_cons_NUM: forall env s x_n n,
+  env |-- ([x_n], s) ---> ([encode n], s) ->
+  env |-- ([Op Cons [Const (name_enc "NUM");
+                      Op Cons [x_n; Const 0]]], s) --->
+        ([encode (NUM n)], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_token_cons_QUOTE: forall env s x_s str,
+  env |-- ([x_s], s) ---> ([encode str], s) ->
+  env |-- ([Op Cons [Const (name_enc "QUOTE");
+                      Op Cons [x_s; Const 0]]], s) --->
+        ([encode (QUOTE str)], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_token_CASE: forall {A} `{ra: Refinable A} env s x0 v0
+  OPEN_case CLOSE_case DOT_case NUM_case QUOTE_case
+  f_OPEN f_CLOSE f_DOT f_NUM f_QUOTE
+  n1 n2,
+
+  env |-- ([x0], s) ---> ([encode v0], s) ->
+
+  (match v0 with
+   | OPEN => env |-- ([OPEN_case], s) ---> ([encode f_OPEN], s)
+   | CLOSE => env |-- ([CLOSE_case], s) ---> ([encode f_CLOSE], s)
+   | DOT => env |-- ([DOT_case], s) ---> ([encode f_DOT], s)
+   | NUM n =>
+     (FEnv.insert (name_enc n1, Some (encode n)) env) |-- ([NUM_case], s) ---> ([encode (f_NUM n)], s)
+   | QUOTE str =>
+     (FEnv.insert (name_enc n2, Some (encode str)) env) |-- ([QUOTE_case], s) ---> ([encode (f_QUOTE str)], s)
+   end) ->
+
+  env |-- ([If Equal [Op Head [x0]; Const (name_enc "OPEN")] OPEN_case
+          (If Equal [Op Head [x0]; Const (name_enc "CLOSE")] CLOSE_case
+          (If Equal [Op Head [x0]; Const (name_enc "DOT")] DOT_case
+          (If Equal [Op Head [x0]; Const (name_enc "NUM")]
+            (Let (name_enc n1) (Op Head [Op Tail [x0]]) NUM_case)
+          (If Equal [Op Head [x0]; Const (name_enc "QUOTE")]
+            (Let (name_enc n2) (Op Head [Op Tail [x0]]) QUOTE_case)
+          (Const 0)))))], s) --->
+     ([encode (
+       match v0 with
+       | OPEN => f_OPEN
+       | CLOSE => f_CLOSE
+       | DOT => f_DOT
+       | NUM n => f_NUM n
+       | QUOTE str => f_QUOTE str
+       end)], s).
+Proof.
+  Opaque name_enc.
+  intros.
+  destruct v0 eqn:?.
+  all: simpl in *; unfold value_list_of_values in *; simpl in *; subst.
+  all: Eval_eq.
+Qed.

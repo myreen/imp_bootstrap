@@ -2,6 +2,8 @@ From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
 From coqutil Require Import dlet.
 From coqutil Require Import Word.Interface.
+Require Import impboot.parsing.ParserData.
+Require Import impboot.parsing.Parser.
 Require Import impboot.functional.FunValues.
 Require Import impboot.functional.FunSemantics.
 Require Import impboot.automation.AutomationLemmas.
@@ -376,7 +378,6 @@ Ltac2 rec compile () : unit :=
           compile ()
         )
       | (dlet ?val ?body) =>
-        (* freshen based on names in cenv *)
         let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
         let let_n_constr := List.nth binders_of_body 0 in
         refine open_constr:(auto_let
@@ -409,8 +410,14 @@ Ltac2 rec compile () : unit :=
       | (ascii_of_N ?x) =>
         app_lemma "auto_char_of_N" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
       | (nat_of_ascii ?x) =>
-        app_lemma "auto_char_ORD" [("env", exactk fenv); ("x", exactk x)] [compile]
-      (* word *)
+        app_lemma "auto_char_to_nat" [("env", exactk fenv); ("x", exactk x)] [compile]
+      | (N_of_ascii ?x) =>
+        app_lemma "auto_char_to_N" [("env", exactk fenv); ("x", exactk x)] [compile]
+      | (if Ascii.eqb ?n1 ?n2 then ?t else ?f) =>
+        app_lemma "auto_char_if_eq"
+          [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+          [compile; compile; compile; compile]
+        (* word *)
       | (@word.of_Z 4 _ (Z.of_nat ?x)) =>
         app_lemma "auto_word4_n2w" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
       | (@word.of_Z 64 _ (Z.of_nat ?x)) =>
@@ -430,6 +437,9 @@ Ltac2 rec compile () : unit :=
         app_lemma "auto_N_to_nat" [("env", exactk fenv); ("n", exactk n)] [compile]
       | (?n1 + ?n2)%nat =>
         app_lemma "auto_nat_add"
+          [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
+      | (?n1 + ?n2)%N =>
+        app_lemma "auto_N_add"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
       | S ?n%nat =>
         printf "S case detected: %t" e;
@@ -475,6 +485,10 @@ Ltac2 rec compile () : unit :=
           [compile; compile; compile; compile]
       | (if Nat.ltb ?n1 ?n2 then ?t else ?f) =>
         app_lemma "auto_nat_if_less"
+          [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+          [compile; compile; compile; compile]
+      | (if N.ltb ?n1 ?n2 then ?t else ?f) =>
+        app_lemma "auto_N_if_less"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
           [compile; compile; compile; compile]
       | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
@@ -1014,6 +1028,34 @@ Ltac2 rec compile () : unit :=
         app_lemma "auto_instr_cons_Exit" [("env", exactk fenv)] []
       | ASMSyntax.Comment ?s =>
         app_lemma "auto_instr_cons_Comment" [("env", exactk fenv); ("s", exactk s)] [compile]
+      (* token *)
+      | OPEN =>
+        app_lemma "auto_token_cons_OPEN" [("env", exactk fenv)] []
+      | CLOSE =>
+        app_lemma "auto_token_cons_CLOSE" [("env", exactk fenv)] []
+      | DOT =>
+        app_lemma "auto_token_cons_DOT" [("env", exactk fenv)] []
+      | NUM ?n =>
+        app_lemma "auto_token_cons_NUM" [("env", exactk fenv); ("n", exactk n)] [compile]
+      | QUOTE ?str => 
+        app_lemma "auto_token_cons_QUOTE" [("env", exactk fenv); ("str", exactk str)] [compile]
+      | (match ?v0 with
+        | OPEN => ?f_OPEN
+        | CLOSE => ?f_CLOSE
+        | DOT => ?f_DOT
+        | NUM n => @?f_NUM n
+        | QUOTE str => @?f_QUOTE str
+        end) =>
+        let binders_f_NUM := binders_names_of_constr_lambda f_NUM names_in_cenv in
+        let binders_f_QUOTE := binders_names_of_constr_lambda f_QUOTE names_in_cenv in
+        let n1 := List.nth binders_f_NUM 0 in
+        let n2 := List.nth binders_f_QUOTE 0 in
+        app_lemma "auto_token_CASE"
+          [("env", exactk fenv); ("v0", exactk v0);
+            ("f_OPEN", exactk f_OPEN); ("f_CLOSE", exactk f_CLOSE); ("f_DOT", exactk f_DOT);
+            ("f_NUM", exactk f_NUM); ("f_QUOTE", exactk f_QUOTE);
+            ("n1", exactk n1); ("n2", exactk n2)]
+          [compile; (fun () => destruct $v0 eqn:? at 1; (Control.enter compile))]
       (* string *)
       | EmptyString =>
         app_lemma "auto_string_nil" [("env", exactk fenv)] []
@@ -1052,6 +1094,8 @@ Ltac2 rec compile () : unit :=
               end
             )
           ); (fun () => ())]
+      | (list_ascii_of_string ?str) =>
+        app_lemma "auto_string_to_list" [("env", exactk fenv); ("str", exactk str)] [compile]
       (* bool *)
       | true =>
         app_lemma "auto_bool_T" [("env", exactk fenv)] []

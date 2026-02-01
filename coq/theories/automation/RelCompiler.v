@@ -1056,6 +1056,25 @@ Ltac2 rec compile () : unit :=
             ("f_NUM", exactk f_NUM); ("f_QUOTE", exactk f_QUOTE);
             ("n1", exactk n1); ("n2", exactk n2)]
           [compile; (fun () => destruct $v0 eqn:? at 1; (Control.enter compile))]
+      (* FunValues.Value *)
+      | FunValues.Pair ?v1 ?v2 =>
+        app_lemma "auto_value_cons_Pair" [("env", exactk fenv); ("v1", exactk v1); ("v2", exactk v2)] [compile; compile]
+      | FunValues.Num ?n =>
+        app_lemma "auto_value_cons_Num" [("env", exactk fenv); ("n", exactk n)] [compile]
+      | (match ?v0 with
+        | FunValues.Pair v1 v2 => @?f_Pair v1 v2
+        | FunValues.Num n => @?f_Num n
+        end) =>
+        let binders_f_Pair := binders_names_of_constr_lambda f_Pair names_in_cenv in
+        let binders_f_Num := binders_names_of_constr_lambda f_Num names_in_cenv in
+        let n1 := List.nth binders_f_Pair 0 in
+        let n2 := List.nth binders_f_Pair 1 in
+        let n3 := List.nth binders_f_Num 0 in
+        app_lemma "auto_value_case"
+          [("env", exactk fenv); ("v0", exactk v0);
+            ("f_Pair", exactk f_Pair); ("f_Num", exactk f_Num);
+            ("n1", exactk n1); ("n2", exactk n2); ("n3", exactk n3)]
+          [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile)); (fun () => ())]
       (* string *)
       | EmptyString =>
         app_lemma "auto_string_nil" [("env", exactk fenv)] []

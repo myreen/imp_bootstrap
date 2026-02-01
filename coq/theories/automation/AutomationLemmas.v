@@ -1038,31 +1038,31 @@ Global Instance Refinable_test : Refinable ImpSyntax.test :=
 
 Theorem auto_test_cons_Test: forall env s x_cmp x_e1 x_e2 c e1 e2,
   env |-- ([x_cmp], s) ---> ([encode c], s) ->
-  env |-- ([x_e1], s) ---> ([encode_exp e1], s) ->
-  env |-- ([x_e2], s) ---> ([encode_exp e2], s) ->
+  env |-- ([x_e1], s) ---> ([encode e1], s) ->
+  env |-- ([x_e2], s) ---> ([encode e2], s) ->
   env |-- ([Op Cons [Const (name_enc "Test");
                      Op Cons [x_cmp; Op Cons [x_e1; Op Cons [x_e2; Const 0]]]]], s) --->
         ([encode (ImpSyntax.Test c e1 e2)], s).
 Proof. Eval_eq. Qed.
 
 Theorem auto_test_cons_And: forall env s x_t1 x_t2 t1 t2,
-  env |-- ([x_t1], s) ---> ([encode_test t1], s) ->
-  env |-- ([x_t2], s) ---> ([encode_test t2], s) ->
+  env |-- ([x_t1], s) ---> ([encode t1], s) ->
+  env |-- ([x_t2], s) ---> ([encode t2], s) ->
   env |-- ([Op Cons [Const (name_enc "And");
                      Op Cons [x_t1; Op Cons [x_t2; Const 0]]]], s) --->
         ([encode (ImpSyntax.And t1 t2)], s).
 Proof. Eval_eq. Qed.
 
 Theorem auto_test_cons_Or: forall env s x_t1 x_t2 t1 t2,
-  env |-- ([x_t1], s) ---> ([encode_test t1], s) ->
-  env |-- ([x_t2], s) ---> ([encode_test t2], s) ->
+  env |-- ([x_t1], s) ---> ([encode t1], s) ->
+  env |-- ([x_t2], s) ---> ([encode t2], s) ->
   env |-- ([Op Cons [Const (name_enc "Or");
                      Op Cons [x_t1; Op Cons [x_t2; Const 0]]]], s) --->
         ([encode (ImpSyntax.Or t1 t2)], s).
 Proof. Eval_eq. Qed.
 
 Theorem auto_test_cons_Not: forall env s x_t t,
-  env |-- ([x_t], s) ---> ([encode_test t], s) ->
+  env |-- ([x_t], s) ---> ([encode t], s) ->
   env |-- ([Op Cons [Const (name_enc "Not");
                      Op Cons [x_t; Const 0]]], s) --->
         ([encode (ImpSyntax.Not t)], s).
@@ -1173,7 +1173,7 @@ Proof. Eval_eq. Qed.
 
 Theorem auto_cmd_cons_Assign: forall env s x_n x_e n e,
   env |-- ([x_n], s) ---> ([encode n], s) ->
-  env |-- ([x_e], s) ---> ([encode_exp e], s) ->
+  env |-- ([x_e], s) ---> ([encode e], s) ->
   env |-- ([Op Cons [Const (name_enc "Assign");
                      Op Cons [x_n; Op Cons [x_e; Const 0]]]], s) --->
         ([encode (ImpSyntax.Assign n e)], s).
@@ -2142,4 +2142,72 @@ Proof.
   destruct v0 eqn:?.
   all: simpl in *; unfold value_list_of_values in *; simpl in *; subst.
   all: Eval_eq.
+Qed.
+
+(* FunValues.Value *)
+
+Fixpoint encode_value (v: FunValues.Value) : Value :=
+  match v with
+  | FunValues.Pair v1 v2 =>
+    value_list_of_values [value_name "Pair"; encode_value v1; encode_value v2]
+  | FunValues.Num n =>
+    value_list_of_values [value_name "Num"; Num n]
+  end.
+
+Global Instance Refinable_value : Refinable FunValues.Value :=
+  { encode := encode_value }.
+
+Theorem auto_value_cons_Pair: forall env s x_v1 x_v2 v1 v2,
+  env |-- ([x_v1], s) ---> ([encode v1], s) ->
+  env |-- ([x_v2], s) ---> ([encode v2], s) ->
+  env |-- ([Op Cons [Const (name_enc "Pair");
+                     Op Cons [x_v1; Op Cons [x_v2; Const 0]]]], s) --->
+        ([encode (FunValues.Pair v1 v2)], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_value_cons_Num: forall env s x_n n,
+  env |-- ([x_n], s) ---> ([encode n], s) ->
+  env |-- ([Op Cons [Const (name_enc "Num");
+                     Op Cons [x_n; Const 0]]], s) --->
+        ([encode (FunValues.Num n)], s).
+Proof. Eval_eq. Qed.
+
+Theorem auto_value_case: forall {A} `{ra: Refinable A} env s x0 v0
+  Pair_case Num_case
+  f_Pair f_Num
+  n1 n2 n3,
+
+  env |-- ([x0], s) ---> ([encode v0], s) ->
+
+  (match v0 with
+   | FunValues.Pair v1 v2 =>
+     (FEnv.insert (name_enc n2, Some (encode v2))
+       (FEnv.insert (name_enc n1, Some (encode v1)) env)) |-- ([Pair_case], s) ---> ([encode (f_Pair v1 v2)], s)
+   | FunValues.Num n =>
+     (FEnv.insert (name_enc n3, Some (encode n)) env) |-- ([Num_case], s) ---> ([encode (f_Num n)], s)
+   end) ->
+
+  NoDup ([name_enc n1] ++ free_vars x0) ->
+
+  env |-- ([If Equal [Op Head [x0]; Const (name_enc "Pair")]
+            (Let (name_enc n1) (Op Head [Op Tail [x0]])
+              (Let (name_enc n2) (Op Head [Op Tail [Op Tail [x0]]]) Pair_case))
+       (If Equal [Op Head [x0]; Const (name_enc "Num")]
+            (Let (name_enc n3) (Op Head [Op Tail [x0]]) Num_case)
+       (Const 0))], s) --->
+
+      ([encode (
+         match v0 with
+         | FunValues.Pair v1 v2 => f_Pair v1 v2
+         | FunValues.Num n => f_Num n
+         end
+       )], s).
+Proof.
+  Opaque name_enc.
+  intros.
+  destruct v0 eqn:?.
+  all: simpl in *; unfold value_list_of_values in *; simpl in *; subst.
+  all: Eval_eq.
+  all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
+  all: simpl; try reflexivity.
 Qed.

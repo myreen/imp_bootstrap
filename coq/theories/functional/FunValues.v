@@ -1,6 +1,7 @@
 From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
 Require Import impboot.commons.PrintingUtils.
+Require Import FunInd.
 From coqutil Require Import dlet.
 
 Open Scope N.
@@ -66,19 +67,19 @@ Global Instance Refinable_Prop {A: Prop}: Refinable A :=
 Definition vhead v :=
   match v with
   | Pair x y => x
-  | v => v
+  | Num n => Num n
   end.
 
 Definition vtail v :=
   match v with
   | Pair x y => y
-  | v => v
+  | Num n => Num n
   end.
 
 Definition vcons (x y : Value) : Value :=
   Pair x y.
 
-Fixpoint vlist (ls : list Value) : Value :=
+Function vlist (ls : list Value): Value :=
   match ls with
   | [] => Num 0
   | x :: xs => vcons x (vlist xs)
@@ -110,6 +111,12 @@ Definition vgetNum (v: Value) :=
   | _ => 0
   end.
 
+Definition visPair (v: Value) :=
+  match v with
+  | Pair _ _ => true
+  | _ => false
+  end.
+
 Definition vel0 v :=
   vhead v.
 
@@ -123,7 +130,34 @@ Definition vel3 v :=
   vel2 (vtail v).
 
 (* checks whether string (represented as num) starts with uppercase letter *)
-Definition vis_upper (n: N) :=
-  let n1 := N_modulo n 256 in
-  if n <? 65 (* ord A = 65 *) then false else
-  if n <? 91 (* ord Z = 90 *) then true else false.
+Fixpoint vis_upper_f (n: N) (fuel: nat): option bool :=
+  if (n <? 256)%N then
+    if n <? 65 (* ord A = 65 *) then Some false else
+    if n <? 91 (* ord Z = 90 *) then Some true else Some false
+  else
+    match fuel with
+    | O => None
+    | S fuel' =>
+      vis_upper_f (n / 256) fuel'
+    end.
+
+Theorem vis_upper_f_terminates: forall (fuel: nat) (n: N),
+  (n <= (N.of_nat fuel))%N -> vis_upper_f n fuel <> None.
+Proof.
+  Opaque N.div.
+  induction fuel; intros; simpl; unfold dlet; simpl.
+  1: assert (N.of_nat 0 = 0%N) as Htmp by lia; rewrite Htmp in *; clear Htmp; destruct n; try lia; simpl; congruence.
+  destruct (_ <? 256)%N eqn:?; rewrite ?N.ltb_lt, ?N.ltb_ge in *; subst.
+  1: destruct (n <? 65)%N eqn:?; destruct (n <? 91)%N; congruence.
+  eapply IHfuel.
+  assert (n / 256 <= N.of_nat (S fuel) / 256)%N.
+  1: eapply N.Div0.div_le_mono; try lia.
+  specialize N.Div0.div_lt_upper_bound with (a := n) (q := N.of_nat fuel) (b := 256) as ?.
+  assert (n / 256 < N.of_nat fuel)%N; lia.
+Qed.
+
+Definition vis_upper (n: N): bool :=
+  match vis_upper_f n (N.to_nat n) with
+  | Some b => b
+  | None => false
+  end.

@@ -30,10 +30,34 @@ Proof.
   intros.
   unfold nat_modulo, dlet.
   destruct m; try lia.
-  (* rewrite mul_div_id. *)
-  (* ltac1:(lia). *)
-Admitted.
+  rewrite <- Nat.Div0.mod_eq.
+  specialize Nat.mod_upper_bound with (a := n) (b := S m) as ?.
+  lia.
+Qed.
 
+Theorem N_modulo_le: forall (n m: N),
+  (N_modulo n m <= m)%N.
+Proof.
+  Opaque N.add N.div N.mul.
+  intros.
+  unfold N_modulo, dlet.
+  destruct (N.to_nat m) eqn:?; simpl; try lia.
+  rewrite <- N.Div0.mod_eq.
+  specialize N.mod_lt with (a := n) (b := m) as ?.
+  lia.
+Qed.
+
+Theorem N_modulo_lt: forall (n m: N),
+  (m <> 0%N) -> (N_modulo n m < m)%N.
+Proof.
+  intros.
+  specialize N_modulo_le with (n := n) (m := m) as ?.
+  unfold N_modulo, dlet in *; simpl.
+  destruct (N.to_nat m) eqn:?; simpl in *; try lia.
+  destruct m as [|p]; simpl in *; try lia.
+  rewrite <- N.Div0.mod_eq.
+  eapply N.mod_lt; lia.
+Qed.
 Locate "/".
 Print Nat.div.
 

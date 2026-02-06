@@ -1,6 +1,6 @@
 From impboot Require Import utils.Core.
 Require Import impboot.functional.FunSyntax.
-Require Import impboot.commons.PrintingUtils.
+Require Import impboot.commons.CompilerUtils.
 Require Import FunInd.
 From coqutil Require Import dlet.
 
@@ -67,22 +67,32 @@ Global Instance Refinable_Prop {A: Prop}: Refinable A :=
 Definition vhead v :=
   match v with
   | Pair x y => x
-  | Num n => Num n
+  | Num n =>
+    let/d res := Num n in
+    res
   end.
 
 Definition vtail v :=
   match v with
   | Pair x y => y
-  | Num n => Num n
+  | Num n =>
+    let/d res := Num n in
+    res
   end.
 
 Definition vcons (x y : Value) : Value :=
-  Pair x y.
+  let/d res := Pair x y in
+  res.
 
 Function vlist (ls : list Value): Value :=
   match ls with
-  | [] => Num 0
-  | x :: xs => vcons x (vlist xs)
+  | [] =>
+    let/d res := Num 0 in
+    res
+  | x :: xs =>
+    let/d t := vlist xs in
+    let/d res := vcons x t in
+    res
   end.
 
 Definition vpair (f g: Value -> Value) (p: Value * Value) :=
@@ -118,27 +128,48 @@ Definition visPair (v: Value) :=
   end.
 
 Definition vel0 v :=
-  vhead v.
+  let/d res := vhead v in
+  res.
 
 Definition vel1 v :=
-  vhead (vtail v).
+  let/d t := vtail v in
+  let/d res := vhead t in
+  res.
 
 Definition vel2 v :=
-  vel1 (vtail v).
+  let/d t := vtail v in
+  let/d res := vel1 t in
+  res.
 
 Definition vel3 v :=
-  vel2 (vtail v).
+  let/d t := vtail v in
+  let/d res := vel2 t in
+  res.
 
 (* checks whether string (represented as num) starts with uppercase letter *)
 Fixpoint vis_upper_f (n: N) (fuel: nat): option bool :=
   if (n <? 256)%N then
-    if n <? 65 (* ord A = 65 *) then Some false else
-    if n <? 91 (* ord Z = 90 *) then Some true else Some false
+    if n <? 65 (* ord A = 65 *) then
+      let/d f := false in
+      let/d res := Some f in
+      res
+    else if n <? 91 (* ord Z = 90 *) then
+      let/d t := true in
+      let/d res := Some t in
+      res
+    else
+      let/d f := false in
+      let/d res := Some f in
+      res
   else
     match fuel with
-    | O => None
+    | O =>
+      let/d none := None in
+      none
     | S fuel' =>
-      vis_upper_f (n / 256) fuel'
+      let/d n1 := (n / 256) in
+      let/d res := vis_upper_f n1 fuel' in
+      res
     end.
 
 Theorem vis_upper_f_terminates: forall (fuel: nat) (n: N),
@@ -159,5 +190,7 @@ Qed.
 Definition vis_upper (n: N): bool :=
   match vis_upper_f n (N.to_nat n) with
   | Some b => b
-  | None => false
+  | None =>
+    let/d res := false in
+    res
   end.

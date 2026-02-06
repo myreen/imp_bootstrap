@@ -10,6 +10,7 @@ Require Import coqutil.Word.Properties.
 Require Import coqutil.Datatypes.List.
 Import ListNotations.
 Require Import impboot.imp2asm.ImpToASMCodegen.
+Require Import impboot.commons.CompilerUtils.
 Require Import Derive.
 Require Import Ltac2.Ltac2.
 Require Import impboot.automation.RelCompiler.

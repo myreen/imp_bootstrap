@@ -2,6 +2,7 @@ From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
 From coqutil Require Import dlet.
 From coqutil Require Import Word.Interface.
+Require Import impboot.commons.CompilerUtils.
 Require Import impboot.parsing.ParserData.
 Require Import impboot.parsing.Parser.
 Require Import impboot.functional.FunValues.
@@ -10,7 +11,7 @@ Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.utils.Llist.
 Require Import impboot.utils.Env.
 From impboot.automation.ltac2 Require Import Messages Constrs Stdlib2 UnfoldFix.
-From impboot.automation Require Import Ltac2Utils RelCompileUnfolding FunDeps.
+From impboot.automation Require Import Ltac2Utils RelCompileUnfolding FunDeps ToLowerable.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf Fresh.
 Import Ltac2.Constr.Unsafe.
 From coqutil Require Import
@@ -363,6 +364,7 @@ Ltac2 mutable relCompilerDB: ((unit -> unit) -> unit) :=
 (*   3.x: "normal" automation lemmas *)
 (*   3.last: constants *)
 Ltac2 rec compile () : unit :=
+  rewrite_lowerable ();
   let c := Control.goal () in
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
@@ -441,13 +443,13 @@ Ltac2 rec compile () : unit :=
       | (?n1 + ?n2)%N =>
         app_lemma "auto_N_add"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
-      | S ?n%nat =>
+      (* | S ?n%nat =>
         printf "S case detected: %t" e;
         if Constr.is_var n then
           app_lemma "auto_nat_succ"
             [("env", exactk fenv); ("n", exactk n)] [compile]
         else
-          app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk constr:(S $n))] []
+          app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk constr:(S $n))] [] *)
       (* | S ?n%nat =>
         app_lemma "auto_nat_succ"[("env", exactk fenv); ("n", exactk n)] [compile] *)
       | (?n1 - ?n2)%nat =>
@@ -490,7 +492,7 @@ Ltac2 rec compile () : unit :=
       | (if N.ltb ?n1 ?n2 then ?t else ?f) =>
         app_lemma "auto_N_if_less"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
-          [compile; compile; compile; compile]
+          [compile; compile; (fun () => intros; compile ()); (fun () => intros; compile ())]
       | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
         let binders_of_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
         let n_constr := List.nth binders_of_v2 0 in
@@ -559,7 +561,7 @@ Ltac2 rec compile () : unit :=
       | (match ?v0 with | 0%N => ?v1 | N.pos _ => ?v2 end) =>
         app_lemma "auto_N_case"
           [("env", exactk fenv); ("v0", exactk v0); ("v1", exactk v1); ("v2", exactk v2)]
-          [compile; (fun () => destruct $v0 eqn:?; (Control.enter compile))]
+          [compile; (fun () => destruct $v0 eqn:? at 1; (Control.enter compile))]
       (* list *)
       | [] =>
         app_lemma "auto_list_nil" [("env", exactk fenv); ("ra", (fun () => eauto))] []
@@ -788,8 +790,8 @@ Ltac2 rec compile () : unit :=
         app_lemma "auto_instr_cons_Sub_RSP" [("env", exactk fenv); ("n", exactk n)] [compile]
       | ASMSyntax.Load_RSP ?r ?n =>
         app_lemma "auto_instr_cons_Load_RSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
-      | ASMSyntax.Store_RSP ?r ?n =>
-        app_lemma "auto_instr_cons_Store_RSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
+      | ASMSyntax.StoreRSP ?r ?n =>
+        app_lemma "auto_instr_cons_StoreRSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
       | ASMSyntax.Load ?r1 ?r2 ?w =>
         app_lemma "auto_instr_cons_Load" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2); ("w", exactk w)] [compile; compile; compile]
       | ASMSyntax.Store ?r1 ?r2 ?w =>
@@ -816,7 +818,7 @@ Ltac2 rec compile () : unit :=
           | ASMSyntax.Add_RSP n => @?f_Add_RSP n
           | ASMSyntax.Sub_RSP n => @?f_Sub_RSP n
           | ASMSyntax.Load_RSP r n => @?f_Load_RSP r n
-          | ASMSyntax.Store_RSP r n => @?f_Store_RSP r n
+          | ASMSyntax.StoreRSP r n => @?f_StoreRSP r n
           | ASMSyntax.Load r1 r2 w => @?f_Load r1 r2 w
           | ASMSyntax.Store r1 r2 w => @?f_Store r1 r2 w
           | ASMSyntax.GetChar => ?f_GetChar
@@ -836,7 +838,7 @@ Ltac2 rec compile () : unit :=
         let binders_f_Add_RSP := binders_names_of_constr_lambda f_Add_RSP names_in_cenv in
         let binders_f_Sub_RSP := binders_names_of_constr_lambda f_Sub_RSP names_in_cenv in
         let binders_f_Load_RSP := binders_names_of_constr_lambda f_Load_RSP names_in_cenv in
-        let binders_f_Store_RSP := binders_names_of_constr_lambda f_Store_RSP names_in_cenv in
+        let binders_f_StoreRSP := binders_names_of_constr_lambda f_StoreRSP names_in_cenv in
         let binders_f_Load := binders_names_of_constr_lambda f_Load names_in_cenv in
         let binders_f_Store := binders_names_of_constr_lambda f_Store names_in_cenv in
         let binders_f_Comment := binders_names_of_constr_lambda f_Comment names_in_cenv in
@@ -858,8 +860,8 @@ Ltac2 rec compile () : unit :=
         let nSub_RSP1 := List.nth binders_f_Sub_RSP 0 in
         let nLoad_RSP1 := List.nth binders_f_Load_RSP 0 in
         let nLoad_RSP2 := List.nth binders_f_Load_RSP 1 in
-        let nStore_RSP1 := List.nth binders_f_Store_RSP 0 in
-        let nStore_RSP2 := List.nth binders_f_Store_RSP 1 in
+        let nStoreRSP1 := List.nth binders_f_StoreRSP 0 in
+        let nStoreRSP2 := List.nth binders_f_StoreRSP 1 in
         let nLoad1 := List.nth binders_f_Load 0 in
         let nLoad2 := List.nth binders_f_Load 1 in
         let nLoad3 := List.nth binders_f_Load 2 in
@@ -872,7 +874,7 @@ Ltac2 rec compile () : unit :=
         ("f_Div", exactk f_Div); ("f_Jump", exactk f_Jump); ("f_Call", exactk f_Call);
         ("f_Mov", exactk f_Mov); ("f_Ret", exactk f_Ret); ("f_Pop", exactk f_Pop);
         ("f_Push", exactk f_Push); ("f_Add_RSP", exactk f_Add_RSP); ("f_Sub_RSP", exactk f_Sub_RSP);
-        ("f_Load_RSP", exactk f_Load_RSP); ("f_Store_RSP", exactk f_Store_RSP); ("f_Load", exactk f_Load);
+        ("f_Load_RSP", exactk f_Load_RSP); ("f_StoreRSP", exactk f_StoreRSP); ("f_Load", exactk f_Load);
         ("f_Store", exactk f_Store); ("f_GetChar", exactk f_GetChar); ("f_PutChar", exactk f_PutChar);
         ("f_Exit", exactk f_Exit); ("f_Comment", exactk f_Comment); ("nConst1", exactk nConst1);
         ("nConst2", exactk nConst2); ("nAdd1", exactk nAdd1); ("nAdd2", exactk nAdd2);
@@ -880,7 +882,7 @@ Ltac2 rec compile () : unit :=
         ("nJump2", exactk nJump2); ("nCall1", exactk nCall1); ("nMov1", exactk nMov1); ("nMov2", exactk nMov2);
         ("nPop1", exactk nPop1); ("nPush1", exactk nPush1); ("nAdd_RSP1", exactk nAdd_RSP1);
         ("nSub_RSP1", exactk nSub_RSP1); ("nLoad_RSP1", exactk nLoad_RSP1); ("nLoad_RSP2", exactk nLoad_RSP2);
-        ("nStore_RSP1", exactk nStore_RSP1); ("nStore_RSP2", exactk nStore_RSP2); ("nLoad1", exactk nLoad1);
+        ("nStoreRSP1", exactk nStoreRSP1); ("nStoreRSP2", exactk nStoreRSP2); ("nLoad1", exactk nLoad1);
         ("nLoad2", exactk nLoad2); ("nLoad3", exactk nLoad3); ("nStore1", exactk nStore1);
         ("nStore2", exactk nStore2); ("nStore3", exactk nStore3); ("nComment1", exactk nComment1)]
             [compile; (fun () => destruct $v0 eqn:? at 1; (Control.enter compile));
@@ -1014,8 +1016,8 @@ Ltac2 rec compile () : unit :=
         app_lemma "auto_instr_cons_Sub_RSP" [("env", exactk fenv); ("n", exactk n)] [compile]
       | ASMSyntax.Load_RSP ?r ?n =>
         app_lemma "auto_instr_cons_Load_RSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
-      | ASMSyntax.Store_RSP ?r ?n =>
-        app_lemma "auto_instr_cons_Store_RSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
+      | ASMSyntax.StoreRSP ?r ?n =>
+        app_lemma "auto_instr_cons_StoreRSP" [("env", exactk fenv); ("r", exactk r); ("n", exactk n)] [compile; compile]
       | ASMSyntax.Load ?r1 ?r2 ?w =>
         app_lemma "auto_instr_cons_Load" [("env", exactk fenv); ("r1", exactk r1); ("r2", exactk r2); ("w", exactk w)] [compile; compile; compile]
       | ASMSyntax.Store ?r1 ?r2 ?w =>
@@ -1637,10 +1639,18 @@ Proof.
   relcompile.
 Qed.
 
-Fixpoint sum_n (n : nat) : nat :=
+(* Fixpoint sum_n (n : nat) : nat :=
   match n with
   | 0 => 0
   | S n1 => (sum_n n1) + n
+  end.
+Lemma sum_n_equation : ltac2:(unfold_fix_type 'sum_n).
+Proof. unfold_fix_proof 'sum_n. Qed. *)
+
+Fixpoint sum_n (n : nat) : nat :=
+  match n with
+  | 0 => 0
+  | S n1 => (sum_n n1) + (1 + n1)
   end.
 Lemma sum_n_equation : ltac2:(unfold_fix_type 'sum_n).
 Proof. unfold_fix_proof 'sum_n. Qed.
@@ -1663,12 +1673,14 @@ Definition has_cases (n : nat) : nat :=
   | 0 => 0
   | S n1 =>
     match n1 with
-    | 0 => 1
+    | 0 =>
+      let/d s := "ab" ++ "cd" in
+      List.length (list_ascii_of_string s)
     | S n2 => n1 + n2
     end
   end.
 
-Derive has_cases_prog in ltac2:(relcompile_tpe 'has_cases_prog 'has_cases []) as has_cases_proof.
+Derive has_cases_prog in ltac2:(relcompile_tpe 'has_cases_prog 'has_cases ['string_append; '@list_length]) as has_cases_proof.
 Proof.
   relcompile.
 Qed.

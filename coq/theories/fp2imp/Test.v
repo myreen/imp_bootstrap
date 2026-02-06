@@ -10,6 +10,7 @@ Require Import coqutil.Word.Properties.
 Require Import coqutil.Datatypes.List.
 Import ListNotations.
 Require Import impboot.imp2asm.ImpToASMCodegen.
+Require Import impboot.commons.CompilerUtils.
 Require Import Derive.
 Require Import Ltac2.Ltac2.
 Require Import impboot.automation.RelCompiler.
@@ -48,7 +49,7 @@ Example c_add_reparsed :=
   match c_add_imp_prog with
   | Some [p] => 
     let pretty := imp2str (Program [p]) in
-    Some (str2imp pretty)
+    Some (str2imp (list_ascii_of_string pretty))
   | _ => None
   end.
 Eval lazy in c_add_reparsed.

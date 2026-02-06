@@ -77,7 +77,6 @@ Definition take_branch (test : FunSyntax.test) (vs : list Value) (s : state) : r
   | FunSyntax.Less, [Num m; Num n] => return_ (m <? n) s
   | _, _ => fail s
   end.
-Arguments take_branch !_ !_ !_ /.
 
 Fixpoint make_env (keys : list name) (values : list Value) (acc : FEnv.env) : FEnv.env :=
   match keys, values with
@@ -85,21 +84,18 @@ Fixpoint make_env (keys : list name) (values : list Value) (acc : FEnv.env) : FE
   | k :: ks, v :: vs => make_env ks vs (FEnv.insert (k, Some v) acc)
   | _, _ => acc
   end.
-Arguments make_env !_ !_ /.
 
 Fixpoint lookup_fun (n : name) (fs : list FunSyntax.defun) : option (list name * FunSyntax.exp) :=
   match fs with
   | [] => None
   | FunSyntax.Defun k ps body :: rest => if (k =? n)%N then Some (ps, body) else lookup_fun n rest
   end.
-Arguments lookup_fun !_ !_ /.
 
 Definition env_and_body (n : name) (args : list Value) (s : state) : option (FEnv.env * FunSyntax.exp) :=
   match lookup_fun n s.(funs) with
   | None => None
   | Some (params, body) => if (List.length params =? List.length args)%nat then Some (make_env params args FEnv.empty, body) else None
   end.
-Arguments env_and_body !_ !_ /.
 
 Definition init_state (inp : llist ascii) (funs : list FunSyntax.defun) : state :=
   {| funs := funs; input := inp; output := EmptyString |}.

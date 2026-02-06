@@ -1,8 +1,18 @@
 From impboot Require Import utils.Core.
+From impboot Require Import utils.AppList.
 Require Import impboot.utils.Words4Naive.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
 From impboot Require Import commons.ProofUtils.
+
+Fixpoint mul_nat (a b: nat): nat :=
+  match b with
+  | 0%nat => 0%nat
+  | S b' =>
+    let/d rec := mul_nat a b' in
+    let/d res := a + rec in
+    res
+  end.
 
 Definition nat_modulo (n1 n2: nat): nat :=
   match n2 with
@@ -13,6 +23,82 @@ Definition nat_modulo (n1 n2: nat): nat :=
     let/d res := n1 - m in
     res
   end.
+
+Lemma mul_N_f_oblig:
+  forall (b_min_1 b: N) (NE: b <> 0%N) (BMIN1EQ: b_min_1 = (b - 1)%N), (b_min_1 < b)%N.
+Proof.
+  intros; subst.
+  apply N.sub_lt; lia.
+Qed.
+
+Fixpoint mul_N_f (a b: N) (fuel: nat): N :=
+  match fuel with
+  | 0%nat => 0%N
+  | S fuel =>
+    match b with
+    | 0%N => 0%N
+    | _ =>
+      let/d b_min_1 := (b - 1)%N in
+      let/d rec := mul_N_f a b_min_1 fuel in
+      let/d res := (a + rec)%N in
+      res
+    end
+  end.
+
+Definition mul_N (a b: N): N :=
+  let/d fuel := (1 + (N.to_nat b)) in
+  let/d res := mul_N_f a b fuel in
+  res.
+
+Lemma mul_N_f_terminates: forall (fuel: nat) (a b: N) ,
+  a <> 0%N -> b <> 0%N ->
+  fuel = S (N.to_nat b) ->
+  mul_N_f a b fuel <> 0%N.
+Proof.
+  intros fuel a b Ha Hb Hfuel.
+  destruct fuel; [lia|].
+  simpl; unfold dlet; simpl.
+  destruct b; [lia|].
+  lia.
+Qed.
+
+Lemma mul_N_f_spec: forall (fuel: nat) (a b: N),
+  fuel = S (N.to_nat b) ->
+  mul_N_f a b fuel = (a * b)%N.
+Proof.
+  induction fuel; intros.
+  - lia.
+  - simpl. destruct b as [|p].
+    + simpl. lia.
+    + unfold dlet; simpl.
+      match goal with
+      | |- context [mul_N_f ?a ?x ?f] =>
+        replace x with (N.pos p - 1)%N by reflexivity
+      end.
+      rewrite IHfuel.
+      * rewrite N.mul_sub_distr_l, N.mul_1_r.
+        assert (a <= a * N.pos p)%N by (rewrite <- N.mul_1_r at 1; apply N.mul_le_mono_l; lia).
+        lia.
+      * rewrite Nnat.N2Nat.inj_sub. simpl in *. lia.
+Qed.
+
+Theorem mul_N_spec: forall (a b: N),
+  mul_N a b = (a * b)%N.
+Proof.
+  intros.
+  unfold mul_N, dlet.
+  apply mul_N_f_spec.
+  lia.
+Qed.
+
+Theorem mul_nat_spec: forall (a b: nat),
+  mul_nat a b = a * b.
+Proof.
+  induction b; intros; simpl; unfold dlet; simpl.
+  - lia.
+  - rewrite IHb.
+    lia.
+Qed.
 
 Definition N_modulo (n1 n2: N): N :=
   match (N.to_nat n2) with
@@ -58,28 +144,6 @@ Proof.
   rewrite <- N.Div0.mod_eq.
   eapply N.mod_lt; lia.
 Qed.
-Locate "/".
-Print Nat.div.
-
-(* 
-let n := 1 in
-"n" -> n // 
-n
-
-(* destruct *)
-match n with
-| 0 => ... // n -> 0
-| S n1 => ... // n -> S n1
-end
-
-refine(
-  match n with
-  | 0 => ... // n -> n
-  | S n1 => ... // n -> n ∧ n = S n1
-  end
-)
-
-*)
 
 Fixpoint num2str_f (n: nat) (fuel: nat) (str: string): string :=
   if (n <? 10)%nat then
@@ -161,7 +225,9 @@ Proof.
 Qed.
 
 Definition N2str (n: N) (str: string): string :=
-  let/d res := N2str_f n (N.to_nat (n / 10 + 1)) str in
+  let/d n1 := (n / 10)%N in
+  let/d n2 := N.to_nat (n1 + 1) in
+  let/d res := N2str_f n n2 str in
   res.
 
 Theorem N2str_terminates: forall (n: N) str,
@@ -172,4 +238,75 @@ Proof.
   rewrite N.mul_comm, N.mul_add_distr_r, N.mul_1_l.
   assert (n mod 10 < 10)%N by (eapply N.mod_lt; lia).
   destruct (n mod 10)%N eqn:?; rewrite ?N.eqb_eq, ?N.eqb_neq in *; subst; try lia.
+Qed.
+
+Fixpoint list_length {A: Type} (l: list A): nat :=
+  match l with
+  | x :: l => 
+    let/d rec := list_length l in
+    let/d res := 1 + rec in 
+    res
+  | [] => 0
+  end.
+
+Theorem list_length_spec: forall {A: Type} (l: list A),
+  list_length l = List.length l.
+Proof.
+  induction l; simpl; unfold dlet; simpl; eauto.
+Qed.
+
+Fixpoint list_append {A: Type} (l1 l2: list A): list A :=
+  match l1 with
+  | x :: l1 =>
+    let/d rec := list_append l1 l2 in
+    let/d res := x :: rec in
+    res
+  | [] => l2
+  end.
+
+Theorem list_append_spec: ∀ {A: Type} (l1 l2: list A),
+  list_append l1 l2 = l1 ++ l2.
+Proof.
+  induction l1; simpl; unfold dlet; simpl; eauto.
+  intros; f_equal; eauto.
+Qed.
+
+Fixpoint flatten {A: Type} (xs: app_list A): list A :=
+  match xs with
+  | List l => l
+  | Append l1 l2 =>
+    let/d flatten_l1 := flatten l1 in
+    let/d flatten_l2 := flatten l2 in
+    let/d res := list_append flatten_l1 flatten_l2 in
+    res
+  end.
+
+Fixpoint app_list_length {A: Type} (xs: app_list A): nat :=
+  match xs with
+  | List l => 
+    let/d res := list_length l in
+    res
+  | Append l1 l2 =>
+    let/d app_list_length_l1 := app_list_length l1 in
+    let/d app_list_length_l2 := app_list_length l2 in
+    let/d res := app_list_length_l1 + app_list_length_l2 in
+    res
+  end.
+
+Fixpoint string_append (s1 s2: string): string :=
+  match s1 with
+  | EmptyString => s2
+  | String c s1 =>
+    let/d res := string_append s1 s2 in
+    let/d res1 := String c res in
+    res1
+  end.
+
+Lemma string_append_spec: forall s1 s2,
+  string_append s1 s2 = (s1 ++ s2)%string.
+Proof.
+  induction s1; intros; simpl; unfold dlet; simpl.
+  - reflexivity.
+  - rewrite IHs1.
+    reflexivity.
 Qed.

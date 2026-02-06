@@ -200,8 +200,8 @@ Inductive step: s_or_h -> s_or_h -> Prop :=
     offset < List.length s.(stack) ->
     nth_error s.(stack) offset = Some (Word w) ->
     step (State s) (State (write_reg r w (inc s)))
-| step_store_rsp : forall s r w offset,
-    fetch s = Some (Store_RSP r offset) ->
+| step_storersp : forall s r w offset,
+    fetch s = Some (StoreRSP r offset) ->
     offset < List.length s.(stack) ->
     s.(regs) r = Some w ->
     step (State s) (State (update_stack offset w (inc s)))

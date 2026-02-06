@@ -50,11 +50,19 @@ Ltac2 unfold_fix_gen (fconstr: constr): unit :=
   let struct_hyp := Control.hyp struct_name in
   print_full_goal ();
   (* Std.case true (struct_hyp, NoBindings); *)
-  destruct $struct_hyp;
+  destruct $struct_hyp eqn:Heqleft at 1;
   Control.enter (fun () =>
-    print_full_goal ();
-    unfold $fref; fold $fconstr;
-    reflexivity ()
+    (* print_full_goal (); *)
+    destruct $struct_hyp eqn:Heqright at 1;
+    Control.enter (fun () =>
+      rewrite &Heqleft in Heqright; inversion Heqright; subst;
+      Control.plus (fun () => (ltac1:(congruence))) (fun _ =>
+        (* print_full_goal (); *)
+        unfold $fref; fold $fconstr;
+        (* print_full_goal (); *)
+        reflexivity ()
+      )
+    )
   ).
 
 Ltac2 unfold_fix_type fn :=
@@ -83,6 +91,13 @@ Ltac2 unfold_fix_proof (fconstr: constr): unit :=
   end.
 Lemma sum_n_equation : ltac2:(unfold_fix_type 'sum_n). *)
 
+Fixpoint sum_n1 (n : nat) : nat :=
+  match n with
+  | 0 => 0
+  | S n1 => (sum_n1 n1) + (n1 + 1)
+  end.
+Lemma sum_n1_equation : ltac2:(unfold_fix_type 'sum_n1).
+Proof. unfold_fix_proof 'sum_n1. Qed.
 
 Fixpoint is_even (n: nat): bool :=
   match n with

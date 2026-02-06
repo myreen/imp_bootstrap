@@ -36,7 +36,7 @@ Inductive instr :=
 | Add_RSP (n : nat)
 | Sub_RSP (n : nat)
 | Load_RSP (r : reg) (n : nat)
-| Store_RSP (r : reg) (n : nat)
+| StoreRSP (r : reg) (n : nat)
   (* memory *)
 | Load (r1 r2 : reg) (w : word4)
 | Store (r1 r2 : reg) (w : word4)

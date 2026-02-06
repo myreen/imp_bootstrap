@@ -6,7 +6,7 @@ Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.functional.FunValues.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
-Require Import impboot.commons.PrintingUtils.
+Require Import impboot.commons.CompilerUtils.
 
 Require Import Patat.Patat.
 
@@ -72,7 +72,6 @@ Definition name2str (n: N): string :=
   | None => N2str n ""
   | Some s => s
   end.
-
 
 (* Pretty printer for ImpSyntax – generates s-expression syntax *)
 

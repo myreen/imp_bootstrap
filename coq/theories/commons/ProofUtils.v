@@ -95,3 +95,21 @@ Lemma nth_error_list_update_eq1: forall {A: Type} n (v0 v: A) xs,
 Proof.
   induction n; destruct xs; simpl; intros; eauto; cleanup.
 Qed.
+
+Lemma string_app_r_nil: forall (s: string),
+  (s ++ ""%string)%string = s.
+Proof.
+  induction s; simpl; intros; f_equal; eauto.
+Qed.
+
+Lemma string_app_assoc: forall (s1 s2 s3: string),
+  (s1 ++ (s2 ++ s3))%string = ((s1 ++ s2) ++ s3)%string.
+Proof.
+  induction s1; simpl; intros; f_equal; eauto.
+Qed.
+
+Lemma string_cons_nil_app: forall (c: ascii) (s: string),
+  (String c "" ++ s)%string = (String c s)%string.
+Proof.
+  simpl; intros; f_equal; eauto.
+Qed.

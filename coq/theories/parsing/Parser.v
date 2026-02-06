@@ -6,7 +6,7 @@ Require Import impboot.parsing.ParserData.
 Require Import impboot.imp2asm.ImpToASMCodegen.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.functional.FunValues.
-Require Import impboot.commons.PrintingUtils.
+Require Import impboot.commons.CompilerUtils.
 Require Import coqutil.Word.Interface.
 Require Import coqutil.Word.Properties.
 
@@ -65,8 +65,12 @@ Proof. unfold_fix_proof '@end_line. Qed.
 
 Definition q_from_nat (n: nat) (arg: N) :=
   match n with
-  | 0%nat => NUM arg
-  | _ => QUOTE arg
+  | 0%nat =>
+    let/d res := NUM arg in
+    res
+  | _ =>
+    let/d res := QUOTE arg in
+    res
   end.
 
 Fixpoint lex (q: nat) (cs: list ascii) (acc: list token) (fuel: nat): option (list token) :=
@@ -149,13 +153,16 @@ Fixpoint lex (q: nat) (cs: list ascii) (acc: list token) (fuel: nat): option (li
 Theorem lex_equation: ltac2:(unfold_fix_type '@lex).
 Proof. unfold_fix_proof '@lex. Qed.
 
-Definition lexer_i (input: string): option (list token) :=
-  let/d in_list := list_ascii_of_string input in
-  lex 0 in_list [] (list_length in_list).
+Definition lexer_i (input: list ascii): option (list token) :=
+  let/d len := list_length input in
+  let/d empty_list := [] in
+  lex 0 input empty_list len.
 
-Definition lexer (input: string): list token :=
+Definition lexer (input: list ascii): list token :=
   match lexer_i input with
-  | None => []
+  | None =>
+    let/d res := [] in
+    res
   | Some ts => ts
   end.
 
@@ -222,8 +229,8 @@ Proof. unfold_fix_proof '@v2list. Qed.
 
 Definition num2exp (n: N) :=
   let/d is_upper := vis_upper n in
-  if is_upper then 
-    let/d n1 := N_modulo n (2 ^ 64) in
+  if is_upper then
+    let/d n1 := N_modulo n (2 ^ 64 - 1) in
     let/d word_val := word.of_Z (Z.of_N n1) in
     let/d result := ImpSyntax.Const word_val in
     result
@@ -245,7 +252,7 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
     | Pair v1 v2 =>
       if N.eqb n (name_enc "'") then 
         let/d v1_num := vgetNum v1 in
-        let/d v1_num_mod := N_modulo v1_num (2 ^ 64) in
+        let/d v1_num_mod := N_modulo v1_num (2 ^ 64 - 1) in
         let/d word_val := word.of_Z (Z.of_N v1_num_mod) in
         let/d result := Const word_val in
         result
@@ -307,18 +314,22 @@ Proof. unfold_fix_proof '@vs2exps. Qed.
 Definition v2cmp (v: Value): ImpSyntax.cmp :=
   let/d v_num := vgetNum v in
   if N.eqb v_num (name_enc "<") then 
-    Less 
+    let/d res := Less in
+    res 
   else if N.eqb v_num (name_enc "=") then 
-    Equal
+    let/d res := Equal in
+    res
   else
-    Less. (* fail? *)
+    let/d res := Less in
+    res. (* fail? *)
 
 Fixpoint v2test (v: Value): ImpSyntax.test :=
   match v with
   | Num _ => 
     let/d zero_word := word.of_Z (Z.of_N 0) in
     let/d zero_const := Const zero_word in
-    let/d result := Test Less zero_const zero_const in (* fail? *)
+    let/d less := Less in
+    let/d result := Test less zero_const zero_const in (* fail? *)
     result
   | Pair v0 v1 =>
     let/d n := vgetNum v0 in (* this can fail? *)
@@ -326,7 +337,8 @@ Fixpoint v2test (v: Value): ImpSyntax.test :=
     | Num _ => 
       let/d zero_word := word.of_Z (Z.of_N 0) in
       let/d zero_const := Const zero_word in
-      let/d result := Test Less zero_const zero_const in (* fail? *)
+      let/d less := Less in
+      let/d result := Test less zero_const zero_const in (* fail? *)
       result
     | Pair v1 v2 =>
       if N.eqb n (name_enc "not") then 
@@ -338,7 +350,8 @@ Fixpoint v2test (v: Value): ImpSyntax.test :=
         | Num _ => 
           let/d zero_word := word.of_Z (Z.of_N 0) in
           let/d zero_const := Const zero_word in
-          let/d result := Test Less zero_const zero_const in (* fail? *)
+          let/d less := Less in
+          let/d result := Test less zero_const zero_const in (* fail? *)
           result
         | Pair v2 v3 =>
           if N.eqb n (name_enc "and") then 
@@ -365,7 +378,9 @@ Proof. unfold_fix_proof '@v2test. Qed.
 
 Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
   match v with
-  | Num _ => Skip
+  | Num _ =>
+    let/d res := Skip in
+    res
   | Pair v0 v1 =>
     let/d iPv0 := visPair v0 in
     if iPv0 then
@@ -384,7 +399,9 @@ Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
         Abort
       else
         match v1 with
-        | Num _ => Skip (* fail? *)
+        | Num _ => (* fail? *)
+          let/d res := Skip in
+          res
         | Pair v1 v2 =>
           if N.eqb n (name_enc "return") then
             let/d v1_exp := v2exp v1 in
@@ -400,7 +417,9 @@ Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
             result
           else
             match v2 with
-            | Num n2 => Skip (* fail? *)
+            | Num n2 => (* fail? *)
+              let/d res := Skip in
+              res
             | Pair v2 v3 =>
               if N.eqb n (name_enc "assign") then
                 let/d v1_num := vgetNum v1 in
@@ -515,7 +534,7 @@ Definition parser (tokens: list token): prog :=
   let/d result := vs2prog val_list in
   result.
 
-Definition str2imp (str: string): ImpSyntax.prog :=
+Definition str2imp (str: list ascii): ImpSyntax.prog :=
   let/d toks := lexer str in
   let/d prog := parser toks in
   let/d result := prog in

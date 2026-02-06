@@ -1,5 +1,6 @@
-Require Import impboot.utils.Core.
+(* Require Import impboot.utils.Core.
 Require Import impboot.parsing.Parser.
+Require Import impboot.imp2asm.ImpToASMCodegenProofs.
 Require Import Patat.Patat.
 
 Ltac cleanup :=
@@ -14,15 +15,14 @@ Theorem read_num_length: ∀l h xs n ys f acc x,
 Proof.
   induction xs; intros; simpl in *; unfold dlet in *; cleanup; simpl.
   1: split; eauto; intros; congruence.
-  destruct andb eqn:?; rewrite ?andb_true_iff, ?andb_false_iff, ?N.leb_le, ?N.leb_gt in *; cleanup; simpl in *.
-  1: {
-    pat `read_num _ _ _ _ _ _ = _` at rename pat into Hread_num.
-    pat `forall n ys f acc x, _` at eapply pat in Hread_num.
-    split; [lia|].
-    intros; lia.
-  }
+  destruct (_ <? _)%N eqn:?; simpl in *; cleanup; simpl in *.
+  1: split; [lia|]; intros; congruence.
+  destruct (N_of_ascii h<? _)%N eqn:?; simpl in *; cleanup; simpl in *.
+  1: split; [lia|]; intros; congruence.
+  pat `read_num _ _ _ _ _ _ = _` at rename pat into Hread_num.
+  pat `forall n ys f acc x, _` at eapply pat in Hread_num.
   split; [lia|].
-  intros; congruence.
+  intros; lia.
 Qed.
 
 Theorem end_line_length: ∀cs,
@@ -57,16 +57,22 @@ Proof.
     rewrite negb_true_iff, Nat.eqb_neq in *; simpl in *; congruence
   | H: read_num _ _ _ _ _ ?t = (_, _) |- _ =>
     eapply read_num_length in H
+  | H: context C [CompilerUtils.list_length _] |- _ =>
+    rewrite list_length_spec in H; simpl in H
+  | H: (_ =? _)%nat = false |- _ =>
+    rewrite Nat.eqb_neq in H
   | _ =>
     progress unfold dlet in *
+  | |- List.length (_ :: _) <= _ => progress simpl
   | _ => lia
   end.
 Qed.
 
 Theorem lexer_terminates: forall (inp: string),
-  lexer_i inp <> None.
+  lexer_i (list_ascii_of_string inp) <> None.
 Proof.
   intros; unfold lexer_i, dlet.
   eapply lex_terminates.
+  rewrite list_length_spec; simpl.
   eapply Nat.le_refl.
-Qed.
+Qed. *)

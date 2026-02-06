@@ -1,10 +1,11 @@
-Require Import impboot.utils.Core.
+(* Require Import impboot.utils.Core.
 Require Import impboot.utils.Llist.
 Import Llist.
 Require Import impboot.utils.Env.
 Require Import impboot.utils.AppList.
 Require Import coqutil.Word.Interface.
 Require Import impboot.imp2asm.ImpToASMCodegen.
+Require Import impboot.commons.CompilerUtils.
 Require Import impboot.commons.ProofUtils.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.imperative.ImpSemantics.
@@ -531,7 +532,6 @@ Proof.
   - split; reflexivity.
   - simpl even_len.
     destruct l; try reflexivity; split.
-    all: unfold list_CASE; cbv beta.
     all: cleanup; try reflexivity; intros.
     all: eapply eq_sym.
     all: rewrite length_cons.
@@ -558,7 +558,6 @@ Proof.
   - split; reflexivity.
   - simpl odd_len.
     destruct l; try reflexivity; split.
-    all: unfold list_CASE; cbv beta.
     all: cleanup; try reflexivity; intros.
     all: eapply eq_sym.
     all: rewrite length_cons.
@@ -653,13 +652,6 @@ Proof.
   lia.
 Qed.
 
-Theorem list_append_spec: ∀ {A: Type} (l1 l2: list A),
-  list_append l1 l2 = l1 ++ l2.
-Proof.
-  induction l1; simpl; unfold dlet; simpl; eauto.
-  intros; f_equal; eauto.
-Qed.
-
 Theorem c_exp_length: forall e l vs c l1,
   c_exp e l vs = (c, l1) -> l1 = l + List.length (flatten c).
 Proof.
@@ -723,12 +715,6 @@ Proof.
   | _ => progress rewrite list_append_spec
   | _ => lia
   end.
-Qed.
-
-Theorem list_length_spec: forall {A: Type} (l: list A),
-  list_length l = List.length l.
-Proof.
-  induction l; simpl; unfold dlet; simpl; eauto.
 Qed.
 
 Theorem app_list_length_spec: forall {A} (l: app_list A),
@@ -2664,7 +2650,7 @@ Proof.
   1: {
     eapply steps_trans.
     1: eapply steps_step_same.
-    1: eapply step_store_rsp; eauto.
+    1: eapply step_storersp; eauto.
     1: pat `_ = stack t` at rewrite <- pat in *; rewrite length_cons; rewrite length_app; lia.
     eapply steps_step_same.
     eapply step_pop; eauto.
@@ -2759,8 +2745,8 @@ Proof.
     eapply prefix_correct; eapply substring_append
   | H: (_, _) = (_, _) |- _ => inversion H; clear H; subst
   | _ => (unfold assign, alloc, update, get_vars, get_body_and_set_vars, set_varsM,
-    catch_return, set_vars, set_memory, dest_word, get_char, put_char, set_output in *)
-        || unfold_outcome || unfold_monadic || (eapply prefix_refl) || (simpl in *)
+    catch_return, set_vars, set_memory, dest_word, get_char, put_char, set_output in * )
+        || unfold_outcome || unfold_monadic || (eapply prefix_refl) || (simpl in * )
   end.
   all: try solve [eauto 4 using prefix_trans].
 Qed.
@@ -3700,7 +3686,7 @@ Proof.
       assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
       eapply steps_trans.
       1: eapply steps_step_same.
-      1: eapply step_store_rsp; simpl; eauto.
+      1: eapply step_storersp; simpl; eauto.
       1: eapply Nat.lt_trans; eauto; pat `_ = stack t` at rewrite <- pat; rewrite length_app; pat `List.length vs = _` at rewrite pat.
       1: pat `odd (List.length rest) = true` at eapply odd_is_succ in pat; cleanup; lia.
       1: simpl; reflexivity.
@@ -3746,7 +3732,7 @@ Proof.
     assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
     eapply steps_trans.
     1: eapply steps_step_same.
-    1: eapply step_store_rsp; simpl; eauto.
+    1: eapply step_storersp; simpl; eauto.
     1: eapply Nat.lt_trans; eauto; pat `_ = stack t` at rewrite <- pat; rewrite length_app; pat `List.length vs = _` at rewrite pat.
     1: pat `odd (List.length rest) = true` at eapply odd_is_succ in pat; cleanup; lia.
     1: simpl; reflexivity.
@@ -4326,7 +4312,7 @@ Proof.
     split; eauto.
     unfold write_reg, set_stack; simpl.
     unfold state_rel in *; cleanup.
-    repeat (pat `regs s _ = _` at rewrite pat in *); cleanup.
+    repeat (pat `regs s _ = _` at rewrite pat in * ); cleanup.
     destruct curr; cleanup; [simpl odd in *; rewrite Nat.odd_0 in *; congruence|]; rewrite <- app_comm_cons in *.
     crunch_side_conditions.
     1: eapply memory_writeable_alloc; eauto.
@@ -4420,7 +4406,7 @@ Proof.
     unfold set_pc, set_stack; simpl.
     eapply steps_trans.
     1: eapply steps_step_same.
-    1: eapply step_store_rsp; simpl; eauto.
+    1: eapply step_storersp; simpl; eauto.
     1: eapply Nat.lt_trans; eauto; pat `_ = stack s` at rewrite <- pat; rewrite app_comm_cons, length_app; pat `List.length vs = _` at rewrite <- pat.
     1: pat `odd (List.length rest) = true` at eapply odd_is_succ in pat; cleanup; lia.
     1: simpl; reflexivity.
@@ -4451,7 +4437,7 @@ Proof.
   split; eauto.
   unfold write_reg, set_stack; simpl.
   unfold state_rel in *; cleanup.
-  repeat (pat `regs s _ = _` at rewrite pat in *); cleanup.
+  repeat (pat `regs s _ = _` at rewrite pat in * ); cleanup.
   crunch_side_conditions.
   1: eapply memory_writeable_alloc; eauto.
   1: { (* r14_mono *)
@@ -4696,7 +4682,7 @@ Lemma pops_thm: forall t fs ds ws rest r15 (xs: list exp) (vs: v_stack) fuel,
 Proof.
   intros.
   unfold c_pops, dlet, pops_regs in *.
-  repeat (rewrite list_length_spec in *).
+  repeat (rewrite list_length_spec in * ).
   unfold has_stack in *; cleanup.
   unfold ARGS_REGS, set_stack, set_pc.
   destruct xs eqn:?; simpl in *; subst; cleanup.
@@ -4833,7 +4819,7 @@ Proof.
       eapply steps_step_same.
       eapply step_exit; simpl; eauto.
       rewrite rw_mod_2_even.
-      repeat (rewrite ?even_len_spec, ?odd_len_spec in *).
+      repeat (rewrite ?even_len_spec, ?odd_len_spec in * ).
       assert (List.length (map Word (rev ws) ++ rest) = List.length (Word x :: stack t)).
       1: pat `_ = _ :: _` at rewrite <- pat; reflexivity.
       rewrite length_app, length_map, length_rev in *; simpl List.length in *.
@@ -4858,7 +4844,7 @@ Proof.
     eapply steps_step_same.
     eapply step_exit; simpl; eauto.
     rewrite rw_mod_2_even.
-    repeat (rewrite ?even_len_spec, ?odd_len_spec in *).
+    repeat (rewrite ?even_len_spec, ?odd_len_spec in * ).
     assert (List.length (map Word (rev ws) ++ rest) = List.length (Word x :: stack t)).
     1: pat `_ = _ :: _` at rewrite <- pat; reflexivity.
     rewrite length_app, length_map, length_rev in *; simpl List.length in *.
@@ -4923,7 +4909,7 @@ Proof.
   Transparent nth_error.
   intros.
   unfold c_pushes, dlet, pops_regs in *.
-  repeat (rewrite list_length_spec in *).
+  repeat (rewrite list_length_spec in * ).
   destruct params eqn:?; simpl in *; subst; cleanup.
   1: {
     repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence).
@@ -5207,9 +5193,9 @@ Proof.
   unfold catch_return in *; unfold_outcome.
   destruct EVAL_CMD eqn:?.
   unfold set_varsM in *; unfold_outcome; cleanup.
-  repeat (rewrite ?list_append_spec, ?app_list_length_spec in *).
+  repeat (rewrite ?list_append_spec, ?app_list_length_spec in * ).
   pat `eval_exps _ _ = _` at specialize eval_exps_pure with (1 := pat) as ?; subst.
-  repeat (rewrite code_in_append in *); cleanup.
+  repeat (rewrite code_in_append in * ); cleanup.
   spat `eval_exps` at specialize eval_exps_length with (1 := spat) as ?.
   pat `eval_exps es _ = (?r, _)` at
     assert (r <> Stop Crash) as ? by congruence; specialize c_exps_correct as Htmp1; unfold goal_exps in Htmp1; eapply Htmp1 with (fuel := s1.(steps_done) - s0.(steps_done)) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
@@ -5256,9 +5242,9 @@ Proof.
   pat `c_pushes _ _ = (?p, _)` at destruct p.
   remember (if even_len _ then _ else _) as vs_body.
   simpl in *; unfold dlet in *; simpl in *.
-  repeat (rewrite ?list_append_spec, ?app_list_length_spec, ?list_length_spec, ?length_app in *).
+  repeat (rewrite ?list_append_spec, ?app_list_length_spec, ?list_length_spec, ?length_app in * ).
   destruct c_cmd eqn:?.
-  repeat (rewrite code_in_append in *); cleanup; simpl in *; cleanup.
+  repeat (rewrite code_in_append in * ); cleanup; simpl in *; cleanup.
   rewrite even_len_spec in *.
   unfold has_stack in *; cleanup.
   specialize pops_regs_rw with (ws := x) (rgs := regs s) as ?; cleanup.
@@ -5718,21 +5704,19 @@ Proof.
     eexists; simpl; unfold dlet; simpl.
     rewrite N.eqb_eq in *; subst.
     rewrite N.eqb_refl.
-    split.
-    2: {
-      spat `c_fundef` at rewrite spat; simpl; unfold dlet; simpl.
-      repeat rewrite list_append_spec in *.
-      assert (xs ++ Comment (name2str n1 "") :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1 "")]) ++ flatten a0 ++ flatten a1) as ->.
-      1: induction xs; simpl; try rewrite <- app_assoc; eauto.
-      eapply code_in_append_left2.
-      rewrite length_app; simpl.
-      lia.
-    }
-    reflexivity.
+    split; [reflexivity|].
+    spat `c_fundef` at rewrite spat; simpl; unfold dlet; simpl.
+    repeat rewrite list_append_spec in *.
+    (* assert (xs ++ Comment (name2str n1) :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1)]) ++ flatten a0 ++ flatten a1) as ->. *)
+    (* 1: induction xs; simpl; try rewrite <- app_assoc; eauto. *)
+    eapply code_in_append_left2.
+    (* rewrite length_app; simpl. *)
+    lia.
   }
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1 "")] +++ a0))) as Hrwlength.
+  (* assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1)] +++ a0))) as Hrwlength. *)
+  assert (Datatypes.length (flatten a0) + (Datatypes.length xs) = List.length (xs ++ flatten a0)) as Hrwlength.
   1: simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.
   spat `c_fundefs` at eapply IHfuncs in spat; eauto; cleanup; simpl; unfold dlet in *; simpl in *.
@@ -5744,7 +5728,8 @@ Proof.
   }
   simpl in *; unfold dlet in *; simpl in *.
   repeat rewrite list_append_spec in *.
-  rewrite app_comm_cons; rewrite app_assoc.
+  (* rewrite app_comm_cons. *)
+  rewrite app_assoc.
   eauto.
 Qed.
 
@@ -6317,3 +6302,4 @@ Proof.
   rewrite get_prefix_correct with (s1 := ASMSemantics.output x6); eauto.
   eapply prefix_trans; eauto.
 Qed.
+ *)

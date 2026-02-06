@@ -166,6 +166,8 @@ Fixpoint list_Seq (cs: list ImpSyntax.cmd): ImpSyntax.cmd :=
   | x :: xs => ImpSyntax.Seq x (list_Seq xs)
   end.
 
+Coercion name_of_string: string >-> name. 
+
 Definition builtin: list (name * list name * ImpSyntax.cmd) :=
   [(name_of_string "add", [name_of_string "a"; name_of_string "b"], list_Seq
      [ImpSyntax.Assign (name_of_string "c") 

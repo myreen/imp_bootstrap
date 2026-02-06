@@ -365,7 +365,8 @@ Theorem Call_cons:
   eval_exp e2 t = (Cont w', t) ->
   eval_exp e1 t = (Cont w, t) ->
   builtins_available t.(funs) ->
-  exists m1 ptr,
+  let ptr := Pointer (List.length t.(memory)) in
+  let m1 := [[Some w; Some w']] in
     (forall (fuel: nat) (c2: cmd),
       eval_cmd (Seq (Call n (name_of_string "cons") [e1; e2]) c2) (EVAL_CMD (S fuel)) t =
       eval_cmd c2 (EVAL_CMD (S fuel))
@@ -375,8 +376,6 @@ Theorem Call_cons:
 Proof.
   Opaque EVAL_CMD.
   intros * Hvrel_y Hvrel_x Heval_e2 Heval_e1 Hbuiltin.
-  exists [[Some w; Some w']].
-  exists (Pointer (List.length t.(memory))).
   split.
   - intros fuel c2.
     simpl; unfold_outcome; unfold_monadic.
@@ -417,6 +416,21 @@ Proof.
       clear. induction (memory t); simpl; eauto.
 Qed.
 
+Axiom foo: forall (t: state) (e1 e2: exp) (x y: FunValues.Value) (w w': Value) (n: name),
+  v_rel t.(memory) y w' ->
+  v_rel t.(memory) x w ->
+  eval_exp e2 t = (Cont w', t) ->
+  eval_exp e1 t = (Cont w, t) ->
+  builtins_available t.(funs) ->
+  let ptr := Pointer (List.length t.(memory)) in
+  let m1 := [[Some w; Some w']] in
+    (forall (fuel: nat) (c2: cmd),
+      ∀ f, f = EVAL_CMD (S fuel) ->
+      eval_cmd (Seq (Call n (name_of_string "cons") [e1; e2]) c2) f t =
+      eval_cmd c2 f
+        (set_vars (IEnv.insert (n, Some ptr) t.(vars))
+          (set_memory (t.(memory) ++ m1) (add_steps_done 1 t)))).
+
 Theorem Call_cons3:
   forall (t: state) (e1 e2 e3: exp) (x y z: FunValues.Value) (w w' w'': Value) (n: name),
   v_rel t.(memory) z w'' ->
@@ -426,18 +440,21 @@ Theorem Call_cons3:
   eval_exp e2 t = (Cont w', t) ->
   eval_exp e1 t = (Cont w, t) ->
   builtins_available t.(funs) ->
-  exists m1 ptr,
+  let m1 := [[Some w; Some w'; Some w'']] in
+  let ptr := Pointer (List.length t.(memory)) in
     (forall (fuel: nat) (c2: cmd),
-      eval_cmd (Seq (Call n (name_of_string "cons3") [e1; e2; e3]) c2) (EVAL_CMD (S (S (S fuel)))) t =
-      eval_cmd c2 (EVAL_CMD (S (S (S fuel))))
+      eval_cmd (Seq (Call n (name_of_string "cons3") [e1; e2; e3]) c2) (EVAL_CMD (S (S fuel))) t =
+      eval_cmd c2 (EVAL_CMD (S (S fuel)))
         (set_vars (IEnv.insert (n, Some ptr) t.(vars))
           (set_memory (t.(memory) ++ m1) t))) /\
     v_rel (t.(memory) ++ m1) (Pair x (Pair y z)) ptr.
 Proof.
   Opaque EVAL_CMD word.unsigned.
   intros * Hvrel_z Hvrel_y Hvrel_x Heval_e3 Heval_e2 Heval_e1 Hbuiltin.
-  exists [[Some w; Some w'; Some w'']].
-  exists (Pointer (List.length t.(memory))).
+  specialize foo with (e1 := Var (name_of_string "b")) (e2 := Var (name_of_string "c")) (x := y) (y := z) (n := (name_of_string "ret")) as Hcall_cons_tail.
+  (* specialize (Hcall_cons_tail _ _ _ ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)); cleanup. *)
+
+  cbv zeta in *; cleanup.
   split.
   - intros fuel c2.
     simpl; unfold_outcome; unfold_monadic.
@@ -445,7 +462,7 @@ Proof.
     unfold get_vars; unfold_outcome; simpl; unfold get_body_and_set_vars.
     pose proof Hbuiltin as Hbuiltin1.
     unfold builtins_available in Hbuiltin1.
-    simpl in *.
+    simpl in Hbuiltin1.
     spat ` (name_of_string "cons3", ?args, ?cs1)` at assert (find_fun (name_of_string "cons3") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin1; eauto); clear Hbuiltin1.
     rewrite Hfind_fun; clear Hfind_fun.
     with_strategy transparent [EVAL_CMD] (once unfold EVAL_CMD at 1; fold EVAL_CMD).
@@ -453,6 +470,15 @@ Proof.
     | |- context [Call ]
     end. *)
     unfold_monadic; simpl orb; cbv iota.
+    unfold catch_return, inc_steps_done; unfold_monadic.
+    with_strategy transparent [EVAL_CMD] (once unfold EVAL_CMD at 1 in Hcall_cons_tail; fold EVAL_CMD in Hcall_cons_tail).
+    unfold bind, inc_steps_done, cont in Hcall_cons_tail.
+
+    (* erewrite foo with (fuel := fuel); try reflexivity.
+    1: erewrite foo with (fuel := fuel); try reflexivity. *)
+    
+    (* simpl in Hcall_cons_tail. *)
+    (* erewrite Hcall_cons_tail; eauto.
     set (Call _ _ _) as call_cons1.
     set (Call _ _ _) as call_cons2.
     once unfold eval_cmd; fold eval_cmd.
@@ -460,7 +486,7 @@ Proof.
     (* specialize Call_cons with (e1 := e2) (e2 := e3) (x := y) (y := z) (n := (name_of_string "ret")) as Hcall_cons_tail. *)
 
     simpl in *; unfold_monadic; unfold catch_return, bind, dest_word, alloc, w2n; unfold_outcome; simpl.
-    unfold add_steps_done, set_steps_done; simpl.
+    unfold add_steps_done, set_steps_done; simpl. *)
 
 
 

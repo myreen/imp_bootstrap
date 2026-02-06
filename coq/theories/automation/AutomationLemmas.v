@@ -390,8 +390,8 @@ Qed.
 Theorem auto_N_if_less : forall {A} `{ra: Refinable A} env s x1 x2 y z (n1 n2: N) (t f : A),
   env |-- ([x1], s) ---> ([encode n1], s) ->
   env |-- ([x2], s) ---> ([encode n2], s) ->
-  env |-- ([y], s) ---> ([encode t], s) ->
-  env |-- ([z], s) ---> ([encode f], s) ->
+  (n1 <? n2 = true -> env |-- ([y], s) ---> ([encode t], s)) ->
+  (n1 <? n2 = false -> env |-- ([z], s) ---> ([encode f], s)) ->
   env |-- ([If Less [x1; x2] y z], s) ---> ([encode (if (n1 <? n2)%N then t else f)], s).
 Proof.
   intros.
@@ -1728,8 +1728,8 @@ Definition encode_instr (i : ASMSyntax.instr) : Value :=
     value_list_of_values [value_name "Sub_RSP"; Num (N.of_nat n)]
   | ASMSyntax.Load_RSP r n =>
     value_list_of_values [value_name "Load_RSP"; encode r; Num (N.of_nat n)]
-  | ASMSyntax.Store_RSP r n =>
-    value_list_of_values [value_name "Store_RSP"; encode r; Num (N.of_nat n)]
+  | ASMSyntax.StoreRSP r n =>
+    value_list_of_values [value_name "StoreRSP"; encode r; Num (N.of_nat n)]
   | ASMSyntax.Load r1 r2 w =>
     value_list_of_values [value_name "Load"; encode r1; encode r2; encode w]
   | ASMSyntax.Store r1 r2 w =>
@@ -1842,12 +1842,12 @@ Theorem auto_instr_cons_Load_RSP: forall env s x_r x_n r n,
         ([encode (ASMSyntax.Load_RSP r n)], s).
 Proof. Eval_eq. Qed.
 
-Theorem auto_instr_cons_Store_RSP: forall env s x_r x_n r n,
+Theorem auto_instr_cons_StoreRSP: forall env s x_r x_n r n,
   env |-- ([x_r], s) ---> ([encode r], s) ->
   env |-- ([x_n], s) ---> ([encode n], s) ->
-  env |-- ([Op Cons [Const (name_enc "Store_RSP");
+  env |-- ([Op Cons [Const (name_enc "StoreRSP");
                      Op Cons [x_r; Op Cons [x_n; Const 0]]]], s) --->
-        ([encode (ASMSyntax.Store_RSP r n)], s).
+        ([encode (ASMSyntax.StoreRSP r n)], s).
 Proof. Eval_eq. Qed.
 
 Theorem auto_instr_cons_Load: forall env s x_r1 x_r2 x_w r1 r2 w,
@@ -1892,13 +1892,13 @@ Proof. Eval_eq. Qed.
 
 Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   Const_case Add_case Sub_case Div_case Jump_case Call_case
-  Mov_case Ret_case Pop_case Push_case Add_RSP_case Sub_RSP_case Load_RSP_case Store_RSP_case
+  Mov_case Ret_case Pop_case Push_case Add_RSP_case Sub_RSP_case Load_RSP_case StoreRSP_case
   Load_case Store_case GetChar_case PutChar_case Exit_case Comment_case
   f_Const f_Add f_Sub f_Div f_Jump f_Call f_Mov f_Ret f_Pop f_Push
-  f_Add_RSP f_Sub_RSP f_Load_RSP f_Store_RSP f_Load f_Store f_GetChar f_PutChar f_Exit f_Comment
+  f_Add_RSP f_Sub_RSP f_Load_RSP f_StoreRSP f_Load f_Store f_GetChar f_PutChar f_Exit f_Comment
   nConst1 nConst2 nAdd1 nAdd2 nSub1 nSub2 nDiv1
   nJump1 nJump2 nCall1 nMov1 nMov2 nPop1 nPush1 nAdd_RSP1 nSub_RSP1
-  nLoad_RSP1 nLoad_RSP2 nStore_RSP1 nStore_RSP2
+  nLoad_RSP1 nLoad_RSP2 nStoreRSP1 nStoreRSP2
   nLoad1 nLoad2 nLoad3 nStore1 nStore2 nStore3 nComment1,
 
   env |-- ([x0], s) ---> ([encode v0], s) ->
@@ -1935,9 +1935,9 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
    | ASMSyntax.Load_RSP r n =>
      (FEnv.insert (name_enc nLoad_RSP2, Some (encode n))
        (FEnv.insert (name_enc nLoad_RSP1, Some (encode r)) env)) |-- ([Load_RSP_case], s) ---> ([encode (f_Load_RSP r n)], s)
-   | ASMSyntax.Store_RSP r n =>
-     (FEnv.insert (name_enc nStore_RSP2, Some (encode n))
-       (FEnv.insert (name_enc nStore_RSP1, Some (encode r)) env)) |-- ([Store_RSP_case], s) ---> ([encode (f_Store_RSP r n)], s)
+   | ASMSyntax.StoreRSP r n =>
+     (FEnv.insert (name_enc nStoreRSP2, Some (encode n))
+       (FEnv.insert (name_enc nStoreRSP1, Some (encode r)) env)) |-- ([StoreRSP_case], s) ---> ([encode (f_StoreRSP r n)], s)
    | ASMSyntax.Load r1 r2 w =>
      (FEnv.insert (name_enc nLoad3, Some (encode w))
        (FEnv.insert (name_enc nLoad2, Some (encode r2))
@@ -1959,7 +1959,7 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
   NoDup ([name_enc nJump1] ++ free_vars x0) ->
   NoDup ([name_enc nMov1] ++ free_vars x0) ->
   NoDup ([name_enc nLoad_RSP1] ++ free_vars x0) ->
-  NoDup ([name_enc nStore_RSP1] ++ free_vars x0) ->
+  NoDup ([name_enc nStoreRSP1] ++ free_vars x0) ->
   NoDup ([name_enc nLoad1; name_enc nLoad2] ++ free_vars x0) ->
   NoDup ([name_enc nStore1; name_enc nStore2] ++ free_vars x0) ->
 
@@ -1994,9 +1994,9 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
        (If Equal [Op Head [x0]; Const (name_enc "Load_RSP")]
             (Let (name_enc nLoad_RSP1) (Op Head [Op Tail [x0]])
               (Let (name_enc nLoad_RSP2) (Op Head [Op Tail [Op Tail [x0]]]) Load_RSP_case))
-       (If Equal [Op Head [x0]; Const (name_enc "Store_RSP")]
-            (Let (name_enc nStore_RSP1) (Op Head [Op Tail [x0]])
-              (Let (name_enc nStore_RSP2) (Op Head [Op Tail [Op Tail [x0]]]) Store_RSP_case))
+       (If Equal [Op Head [x0]; Const (name_enc "StoreRSP")]
+            (Let (name_enc nStoreRSP1) (Op Head [Op Tail [x0]])
+              (Let (name_enc nStoreRSP2) (Op Head [Op Tail [Op Tail [x0]]]) StoreRSP_case))
        (If Equal [Op Head [x0]; Const (name_enc "Load")]
             (Let (name_enc nLoad1) (Op Head [Op Tail [x0]])
               (Let (name_enc nLoad2) (Op Head [Op Tail [Op Tail [x0]]])
@@ -2027,7 +2027,7 @@ Theorem auto_instr_CASE: forall {A} `{ra: Refinable A} env s x0 v0
          | ASMSyntax.Add_RSP n => f_Add_RSP n
          | ASMSyntax.Sub_RSP n => f_Sub_RSP n
          | ASMSyntax.Load_RSP r n => f_Load_RSP r n
-         | ASMSyntax.Store_RSP r n => f_Store_RSP r n
+         | ASMSyntax.StoreRSP r n => f_StoreRSP r n
          | ASMSyntax.Load r1 r2 w => f_Load r1 r2 w
          | ASMSyntax.Store r1 r2 w => f_Store r1 r2 w
          | ASMSyntax.GetChar => f_GetChar

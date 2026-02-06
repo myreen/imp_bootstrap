@@ -159,7 +159,8 @@ Definition lexer_i (input: list ascii): option (list token) :=
   lex 0 input empty_list len.
 
 Definition lexer (input: list ascii): list token :=
-  match lexer_i input with
+  let/d r := lexer_i input in
+  match r return (list token) with
   | None =>
     let/d res := [] in
     res
@@ -230,7 +231,8 @@ Proof. unfold_fix_proof '@v2list. Qed.
 Definition num2exp (n: N) :=
   let/d is_upper := vis_upper n in
   if is_upper then
-    let/d n1 := N_modulo n (2 ^ 64 - 1) in
+    (*                     vvvvvvvvvvvvvvvvvvvv (2 ^ 64 - 1) *)
+    let/d n1 := N_modulo n 18446744073709551615 in
     let/d word_val := word.of_Z (Z.of_N n1) in
     let/d result := ImpSyntax.Const word_val in
     result
@@ -252,7 +254,8 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
     | Pair v1 v2 =>
       if N.eqb n (name_enc "'") then 
         let/d v1_num := vgetNum v1 in
-        let/d v1_num_mod := N_modulo v1_num (2 ^ 64 - 1) in
+        (*                                  vvvvvvvvvvvvvvvvvvvv (2 ^ 64 - 1) *)
+        let/d v1_num_mod := N_modulo v1_num 18446744073709551615 in
         let/d word_val := word.of_Z (Z.of_N v1_num_mod) in
         let/d result := Const word_val in
         result
@@ -287,9 +290,7 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
             let/d result := Read v1_exp v2_exp in
             result
           else
-            let/d vel0_v := vel0 v in
-            let/d vel0_num := vgetNum vel0_v in
-            let/d result := Var vel0_num in (* fail? *)
+            let/d result := num2exp n in (* fail? *)
             result
         end
     end
@@ -396,7 +397,8 @@ Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
     else
       let/d n := vgetNum v0 in
       if N.eqb n (name_enc "abort") then
-        Abort
+        let/d res := Abort in
+        res
       else
         match v1 with
         | Num _ => (* fail? *)
@@ -417,7 +419,7 @@ Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
             result
           else
             match v2 with
-            | Num n2 => (* fail? *)
+            | Num _ => (* fail? *)
               let/d res := Skip in
               res
             | Pair v2 v3 =>

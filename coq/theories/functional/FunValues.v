@@ -188,7 +188,8 @@ Proof.
 Qed.
 
 Definition vis_upper (n: N): bool :=
-  match vis_upper_f n (N.to_nat n) with
+  let/d r := vis_upper_f n (N.to_nat n) in
+  match r return bool with
   | Some b => b
   | None =>
     let/d res := false in

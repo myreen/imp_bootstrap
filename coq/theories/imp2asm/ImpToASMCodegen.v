@@ -808,7 +808,8 @@ Fixpoint c_cmd (c: cmd) (l: nat) (fs: f_lookup) (vs: v_stack): (asm_appl * nat) 
     res
   | Abort =>
     let/d always := Always in
-    let/d jump_always_abort := Jump always abortLoc in
+    let/d aloc := abortLoc in
+    let/d jump_always_abort := Jump always aloc in
     let/d asm_list := [jump_always_abort] in
     let/d asm1 := List asm_list in
     let/d l1 := l + 1 in
@@ -968,8 +969,8 @@ Definition c_fundef (fundef: func) (l: nat) (fs: f_lookup): (asm_appl * nat) :=
     res
   end.
 
-Definition get_funcs (p: prog): list func :=
-  match p with
+Definition get_funcs (prg: prog): list func :=
+  match prg with
   | Program funcs => funcs
   end.
 

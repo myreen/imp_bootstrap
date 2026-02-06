@@ -1450,27 +1450,9 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
 (* *********************************************** *)
 (*                Examples/Tests                   *)
 (* *********************************************** *)
-
+(* 
 (* TODO: for some reason, need this for generated derivation statement proofs *)
 Opaque encode.
-
-(* Definition nat_modulo (n1 n2: nat): nat :=
-  match n2 with
-  | 0%nat => 0
-  | S _ =>
-    let/d d := (n1 / n2) in
-    let/d m := n2 * d in
-    let/d res := n1 - m in
-    res
-  end.
-
-Derive nat_modulo_prog
-  in ltac2:(relcompile_tpe 'nat_modulo_prog 'nat_modulo []) 
-  as nat_modulo_prog_proof.
-Proof.
-  time relcompile.
-  ltac1:(lia).
-Qed. *)
 
 Fixpoint num2str_f1 (n: nat) {struct n}: nat :=
   0.
@@ -1482,88 +1464,6 @@ match n with
 | 0 => 10
 | S _ => 0
 end.
-
-(* Derive foo
-  in (forall s1 n str fuel,
-    fuel = 0 ->
-    make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode 0; encode str]
-  FEnv.empty |-- ([foo], s1) ---> ([encode 10], s1)
-  ) as foo_proof.
-Proof.
-  intros; subst foo.
-  app_lemma "auto_nat_const" [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode 0; encode str] FEnv.empty
-)); ("n", exactk constr:(10))] [].
-  Show Proof. *)
-
-(* Derive num2str_f1_prog
-  in ltac2:(relcompile_tpe 'num2str_f1_prog 'num2str_f1 [])
-  as num2str_f1_prog_proof.
-Proof.
-  intros; subst num2str_f1_prog.
-  eapply trans_app.
-  3: ltac1:(eassumption).
-  2: reflexivity ().
-  rewrite num2str_f1_equation.
-  (* let lname := "auto_nat_case" in
-  let named_conts := [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty));
-      ("v0", exactk constr:(fuel)); ("v1", exactk constr:(10)); ("v2", exactk constr:(fun n0: nat => 0)); ("n", exactk constr:("steve"%string))]
-     in
-  let conts := [compile; (fun () =>
-      destruct fuel; Control.enter compile
-    )] in
-  printf "applying lemma: %s" lname;
-  let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
-  let lemma_inst: constr := Env.instantiate lemma_ref in
-  let named_conts_id :=
-    List.flat_map (fun p =>
-      match Ident.of_string (fst p) with
-      | Some i => [(i, snd p)]
-      | _ => []
-      end) named_conts in *)
-  (* refine (assemble_lemma lemma_inst lname named_conts_id conts). *)
-  (* refine(open_constr:(
-    auto_nat_case (make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty)
-    _ _ _ _ "steve"%string fuel 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(destruct fuel; Control.enter compile)
-  )). *)
-  refine(open_constr:(
-    auto_nat_case (make_env [name_enc "n"] [encode n] FEnv.empty)
-    s _ _ _ "steve"%string n 10 (fun n0: nat => 0) ltac2:(compile ()) ltac2:(print_full_goal (); destruct n eqn:?; Control.enter (fun () => print_full_goal(); compile()))
-  )).
-  1: destruct fuel; Control.enter compile.
-  (* NOTES: works as a step after refine, doesn't as part of refine *)
-  (*    diff goals between the two *)
-  (*    use semicolon instead of dot *)
-  (* The difference is *)
-  (* H : lookup_fun (name_enc "num2str_f1") (funs s) = Some ([name_enc "n"; name_enc "fuel"; name_enc "str"],
-FunSyntax.If FunSyntax.Equal [FunSyntax.Var (name_enc "fuel"); FunSyntax.Const 0] ?x1
-(FunSyntax.Let (name_enc "steve") (FunSyntax.Op FunSyntax.Sub [FunSyntax.Var (name_enc "fuel"); FunSyntax.Const 1]) ?x2)) *)
- (* vs *)
- (* H : (lookup_fun (name_enc "num2str_f1") (funs s) = Some ([name_enc "n"; name_enc "fuel"; name_enc "str"], ?body)) *)
-  (* app_lemma "auto_nat_case"
-    [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode fuel; encode str] FEnv.empty));
-      ("v0", exactk constr:(fuel)); ("v1", exactk constr:(10)); ("v2", exactk constr:(fun n0: nat => 0)); ("n", exactk constr:("steve"%string))]
-    [compile; (fun () =>
-      destruct fuel; Control.enter compile
-    )]. *)
-  (* compile ().
-  eapply auto_nat_case with (n := "n1"%string).
-  eapply auto_nat_case with (n := "n1"%string) (1:= ltac2:(compile ())). *)
-  1: compile ().
-  Show Proof.
-  1: destruct fuel; Control.enter compile.
-  Show Proof.
-  1: compile ().
-  compile ().
-
-  (* when fuel := 0 it compiles `10` as `S (S (... fuel))` *)
-  time relcompile.
-  Show Proof.
-  5: {
-  app_lemma "auto_nat_const" [("env", exactk constr:(make_env [name_enc "n"; name_enc "fuel"; name_enc "str"] [encode n; encode 0; encode str] FEnv.empty
-)); ("n", exactk constr:(10))] [].
-  Show Proof.
-  }
-Qed. *)
 
 Definition nat_modulo1 (n1 n2: nat): nat :=
   match n2 with
@@ -1747,4 +1647,4 @@ Derive sum_acc_prog
   as sum_acc_prog_proof.
 Proof.
   relcompile.
-Qed.
+Qed. *)

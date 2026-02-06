@@ -352,53 +352,49 @@ Proof.
 Qed.
 
 Definition ImpToASMCodegen_funs := [
-  init_prog;                    (* 0 *)
-  c_assign_prog;               (* 1 *)
-  list_append_prog;            (* 2 *)
-  list_length_prog;            (* 3 *)
-  flatten_prog;                (* 4 *)
-  app_list_length_prog;        (* 5 *)
-  give_up_prog;                (* 6 *)
-  abortLoc_prog;               (* 7 *)
-  c_const_prog;                (* 8 *)
-  even_len_prog;               (* 9 *)
-  odd_len_prog;                (* 10 *)
-  index_of_prog;               (* 11 *)
-  index_of_opt_prog;           (* 12 *)
-  c_var_prog;                  (* 13 *)
-  all_binders_prog;            (* 14 *)
-  names_contain_prog;          (* 15 *)
-  names_unique_prog;           (* 16 *)
-  unique_binders_prog;         (* 17 *)
-  make_vs_from_binders_prog;   (* 18 *)
-  filter_name_prog;            (* 19 *)
-  remove_names_prog;           (* 20 *)
-  call_v_stack_prog;           (* 21 *)
-  c_pushes_vs_prog;            (* 22 *)
-  c_declare_binders_prog;      (* 23 *)
-  c_add_prog;                  (* 24 *)
-  c_sub_prog;                  (* 25 *)
-  c_div_prog;                  (* 26 *)
-  c_alloc_prog;                (* 27 *)
-  c_read_prog;                 (* 28 *)
-  c_write_prog;                (* 29 *)
-  c_load_prog;                 (* 30 *)
-  c_store_prog;                (* 31 *)
-  c_exp_prog;                  (* 32 *)
-  c_exps_prog;                 (* 33 *)
-  c_cmp_prog;                  (* 34 *)
-  c_test_jump_prog;            (* 35 *)
-  lookup_prog;                 (* 36 *)
-  make_ret_prog;               (* 37 *)
-  c_pops_prog;                 (* 38 *)
-  c_pushes_prog;               (* 39 *)
-  c_call_prog;                 (* 40 *)
-  c_cmd_prog;                  (* 41 *)
-  c_fundef_prog;               (* 42 *)
-  get_funcs_prog;              (* 43 *)
-  name_of_func_prog;           (* 44 *)
-  c_fundefs_prog;              (* 45 *)
-  codegen_prog                 (* 46 *)
+  give_up_prog;                (* 0 *)
+  abortLoc_prog;               (* 1 *)
+  c_const_prog;                (* 2 *)
+  even_len_prog;               (* 3 *)
+  odd_len_prog;                (* 4 *)
+  index_of_prog;               (* 5 *)
+  index_of_opt_prog;           (* 6 *)
+  c_var_prog;                  (* 7 *) (* depends on index_of *)
+  c_assign_prog;               (* 8 *) (* depends on index_of *)
+  all_binders_prog;            (* 9 *)
+  names_contain_prog;          (* 10 *)
+  names_unique_prog;           (* 11 *) (* depends on names_contain *)
+  unique_binders_prog;         (* 12 *) (* depends on all_binders, names_unique *)
+  make_vs_from_binders_prog;   (* 13 *)
+  filter_name_prog;            (* 14 *)
+  remove_names_prog;           (* 15 *) (* depends on filter_name *)
+  call_v_stack_prog;           (* 16 *)
+  c_pushes_vs_prog;            (* 17 *) (* depends on call_v_stack *)
+  c_declare_binders_prog;      (* 18 *) (* depends on unique_binders, remove_names, make_vs_from_binders, c_pushes_vs, even_len *)
+  c_add_prog;                  (* 19 *)
+  c_sub_prog;                  (* 20 *)
+  c_div_prog;                  (* 21 *)
+  c_load_prog;                 (* 22 *)
+  c_exp_prog;                  (* 23 *) (* depends on c_var, c_const, c_add, c_sub, c_div, c_load *)
+  c_exps_prog;                 (* 24 *) (* depends on c_exp *)
+  c_cmp_prog;                  (* 25 *)
+  c_test_jump_prog;            (* 26 *) (* depends on c_exp, c_cmp *)
+  c_alloc_prog;                (* 27 *) (* depends on even_len *)
+  c_read_prog;                 (* 28 *) (* depends on even_len *)
+  c_write_prog;                (* 29 *) (* depends on even_len *)
+  c_store_prog;                (* 30 *)
+  lookup_prog;                 (* 31 *)
+  make_ret_prog;               (* 32 *)
+  c_pops_prog;                 (* 33 *) (* depends on give_up, even_len *)
+  c_pushes_prog;               (* 34 *) (* depends on call_v_stack, c_pushes_vs *)
+  c_call_prog;                 (* 35 *) (* depends on c_pops, even_len *)
+  c_cmd_prog;                  (* 36 *) (* depends on c_exp, c_assign, c_store, c_test_jump, c_exps, c_call, c_var, make_ret, c_alloc, c_read, c_write, abortLoc, lookup, odd_len *)
+  c_fundef_prog;               (* 37 *) (* depends on c_pushes, unique_binders, make_vs_from_binders, c_cmd, even_len, c_declare_binders *)
+  get_funcs_prog;              (* 38 *)
+  name_of_func_prog;           (* 39 *)
+  c_fundefs_prog;              (* 40 *) (* depends on c_fundef, name_of_func *)
+  init_prog;                   (* 41 *)
+  codegen_prog                 (* 42 *) (* depends on c_fundefs, lookup, init, get_funcs, flatten *)
 ].
 
 From impboot Require Import automation.ltac2.Messages.
@@ -420,10 +416,10 @@ Ltac2 assert_eval_app_proof (prf: constr) (list_constr: constr) (n: int) :=
 
 Ltac2 assert_eval_app_by (fname: constr) (prf: constr) (list_constr_hyp: constr) (n: int) :=
   let tpe := gen_eval_app fname () in
-  assert ($tpe) by (
-    print_full_goal ();
+  assert ($tpe) as ? by (
+    (* print_full_goal (); *)
     eapply $prf; eauto; try (reflexivity);
-    print_full_goal ();
+    (* print_full_goal (); *)
     eapply $list_constr_hyp; do n (eapply in_cons); eapply in_eq
   ).
 
@@ -482,150 +478,54 @@ Proof.
   assert_eval_app_by 'num2str 'num2str_prog_proof 'Hlookup_fun_utils 6.
   assert_eval_app_by 'N2str_f 'N2str_f_prog_proof 'Hlookup_fun_utils 7.
   assert_eval_app_by 'N2str 'N2str_prog_proof 'Hlookup_fun_utils 8.
-  assert_eval_app_by 'list_length 'list_length_prog_proof 'Hlookup_fun_utils 9.
-  assert_eval_app_by 'list_append 'list_append_prog_proof 'Hlookup_fun_utils 10.
-  assert_eval_app_by 'flatten 'flatten_prog_proof 'Hlookup_fun_utils 11.
-  assert_eval_app_by 'app_list_length 'app_list_length_prog_proof 'Hlookup_fun_utils 12.
+  assert_eval_app_by '@list_length 'list_length_prog_proof 'Hlookup_fun_utils 9.
+  assert_eval_app_by '@list_append 'list_append_prog_proof 'Hlookup_fun_utils 10.
+  assert_eval_app_by '@flatten 'flatten_prog_proof 'Hlookup_fun_utils 11.
+  assert_eval_app_by '@app_list_length 'app_list_length_prog_proof 'Hlookup_fun_utils 12.
   assert_eval_app_by 'string_append 'string_append_prog_proof 'Hlookup_fun_utils 13.
-  assert_eval_app_by 'mul_nat 'mul_nat_prog_proof 'Hlookup_fun_utils 14.
 
-
-  
-  loop_assert_eval_app_in_list (constr:(CompilerUtils_funs)) 17.
-  assert_eval_app '@list_length.
-  1: {
-    eapply list_length_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 53 (eapply in_cons); eapply in_eq.
-  }
-  assert_eval_app '@list_append.
-  1: {
-    eapply list_append_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 54 (eapply in_cons); eapply in_eq.
-  }
-  assert_eval_app '@app_list_length.
-  1: {
-    eapply app_list_length_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 56 (eapply in_cons); eapply in_eq.
-  }
-  assert_eval_app 'call_v_stack.
-  1: {
-    eapply call_v_stack_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 21 (eapply in_cons); eapply in_eq.
-  }
-  assert_eval_app '@even_len.
-  1: {
-    eapply even_len_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 9 (eapply in_cons); eapply in_eq.
-  }
-  assert_eval_app 'c_pushes.
-  1: {
-    eapply c_pushes_prog_proof; eauto; try reflexivity.
-    2: eapply Hlookup_fun; do 39 (eapply in_cons); eapply in_eq.
-    eapply c_pushes_vs_prog_proof; eauto; try reflexivity.
-    eapply Hlookup_fun; do 22 (eapply in_cons); eapply in_eq.
-  }
-  assert_eval_app 'unique_binders.
-  1: {
-    eapply unique_binders_prog_proof; eauto; try reflexivity.  
-    3: eapply Hlookup_fun; do 17 (eapply in_cons); eapply in_eq.
-    1: eapply all_binders_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 14 (eapply in_cons); eapply in_eq.
-    1: eapply names_unique_prog_proof; eauto; try reflexivity.
-    2: eapply Hlookup_fun; do 16 (eapply in_cons); eapply in_eq.
-    eapply names_contain_prog_proof; eauto; try reflexivity.
-    eapply Hlookup_fun; do 15 (eapply in_cons); eapply in_eq.
-  }
-  assert_eval_app 'string_append.
-  1: {
-    eapply string_append_prog_proof; eauto; try reflexivity.
-    eapply Hlookup_fun; do 60 (eapply in_cons); eapply in_eq.
-  }
-  eapply codegen_prog_proof; eauto; try reflexivity.
-  6: eapply Hlookup_fun; do 46 (eapply in_cons); eapply in_eq.
-  5: eapply flatten_prog_proof; eauto; try reflexivity.
-  5: eapply Hlookup_fun; do 55 (eapply in_cons); eapply in_eq.
-  1: eapply c_fundefs_prog_proof; eauto; try reflexivity.
-  3: eapply Hlookup_fun; do 45 (eapply in_cons); eapply in_eq.
-  1: eapply c_fundef_prog_proof; eauto; try reflexivity.
-  4: eapply Hlookup_fun; do 42 (eapply in_cons); eapply in_eq.
-  7: eapply get_funcs_prog_proof; eauto; try reflexivity.
-  7: eapply Hlookup_fun; do 43 (eapply in_cons); eapply in_eq.
-  6: eapply init_prog_proof; eauto; try reflexivity.
-  6: eapply Hlookup_fun; do 0 (eapply in_cons); eapply in_eq.
-  5: eapply lookup_prog_proof; eauto; try reflexivity.
-  5: eapply Hlookup_fun; do 36 (eapply in_cons); eapply in_eq.
-  4: eapply name_of_func_prog_proof; eauto; try reflexivity.
-  4: eapply Hlookup_fun; do 44 (eapply in_cons); eapply in_eq.
-  1: eapply make_vs_from_binders_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 18 (eapply in_cons); eapply in_eq.
-  2: eapply c_declare_binders_prog_proof; eauto; try reflexivity.
-  5: eapply Hlookup_fun; do 23 (eapply in_cons); eapply in_eq.
-  4: eapply c_pushes_vs_prog_proof; eauto; try reflexivity.
-  4: eapply Hlookup_fun; do 22 (eapply in_cons); eapply in_eq.
-  3: eapply make_vs_from_binders_prog_proof; eauto; try reflexivity.
-  3: eapply Hlookup_fun; do 18 (eapply in_cons); eapply in_eq.
-  2: eapply remove_names_prog_proof; eauto; try reflexivity.
-  3: eapply Hlookup_fun; do 20 (eapply in_cons); eapply in_eq.
-  2: eapply filter_name_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 19 (eapply in_cons); eapply in_eq.
-  assert_eval_app 'c_exp.
-  1: {
-    eapply c_exp_prog_proof; eauto; try reflexivity.
-    7: eapply Hlookup_fun; do 32 (eapply in_cons); eapply in_eq.
-    1: eapply c_var_prog_proof; eauto; try reflexivity.
-    2: eapply Hlookup_fun; do 13 (eapply in_cons); eapply in_eq.
-    1: eapply index_of_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 11 (eapply in_cons); eapply in_eq.
-    1: eapply c_const_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 8 (eapply in_cons); eapply in_eq.
-    1: eapply c_add_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 24 (eapply in_cons); eapply in_eq.
-    1: eapply c_sub_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 25 (eapply in_cons); eapply in_eq.
-    1: eapply c_div_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 26 (eapply in_cons); eapply in_eq.
-    1: eapply c_load_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 30 (eapply in_cons); eapply in_eq.
-  }
-  assert_eval_app 'c_assign.
-  1: {
-    eapply c_assign_prog_proof; eauto; try reflexivity.
-    2: eapply Hlookup_fun; do 1 (eapply in_cons); eapply in_eq.
-    eapply index_of_prog_proof; eauto; try reflexivity.
-    eapply Hlookup_fun; do 11 (eapply in_cons); eapply in_eq.
-  }
-  eapply c_cmd_prog_proof; eauto; try reflexivity.
-  13: eapply Hlookup_fun; do 41 (eapply in_cons); eapply in_eq.
-  1: eapply c_store_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 31 (eapply in_cons); eapply in_eq.
-  1: eapply c_test_jump_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 35 (eapply in_cons); eapply in_eq.
-  1: eapply c_cmp_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 34 (eapply in_cons); eapply in_eq.
-  1: eapply c_exps_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 33 (eapply in_cons); eapply in_eq.
-  1: eapply c_call_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 40 (eapply in_cons); eapply in_eq.
-  1: eapply c_pops_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 38 (eapply in_cons); eapply in_eq.
-  1: eapply give_up_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 6 (eapply in_cons); eapply in_eq.
-  1: eapply c_var_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 13 (eapply in_cons); eapply in_eq.
-  1: eapply index_of_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 11 (eapply in_cons); eapply in_eq.
-  1: eapply make_ret_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 37 (eapply in_cons); eapply in_eq.
-  1: eapply c_alloc_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 27 (eapply in_cons); eapply in_eq.
-  1: eapply c_read_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 28 (eapply in_cons); eapply in_eq.
-  1: eapply c_write_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 29 (eapply in_cons); eapply in_eq.
-  1: eapply abortLoc_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 7 (eapply in_cons); eapply in_eq.
-  1: eapply lookup_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 36 (eapply in_cons); eapply in_eq.
-  eapply odd_len_prog_proof; eauto; try reflexivity.
-  eapply Hlookup_fun; do 10 (eapply in_cons); eapply in_eq.
+  assert_eval_app_by 'give_up 'give_up_prog_proof 'Hlookup_fun 0.
+  assert_eval_app_by 'abortLoc 'abortLoc_prog_proof 'Hlookup_fun 1.
+  assert_eval_app_by 'c_const 'c_const_prog_proof 'Hlookup_fun 2.
+  assert_eval_app_by '@even_len 'even_len_prog_proof 'Hlookup_fun 3.
+  assert_eval_app_by '@odd_len 'odd_len_prog_proof 'Hlookup_fun 4.
+  assert_eval_app_by 'index_of 'index_of_prog_proof 'Hlookup_fun 5.
+  assert_eval_app_by 'index_of_opt 'index_of_opt_prog_proof 'Hlookup_fun 6.
+  assert_eval_app_by 'c_var 'c_var_prog_proof 'Hlookup_fun 7.
+  assert_eval_app_by 'c_assign 'c_assign_prog_proof 'Hlookup_fun 8.
+  assert_eval_app_by 'all_binders 'all_binders_prog_proof 'Hlookup_fun 9.
+  assert_eval_app_by 'names_contain 'names_contain_prog_proof 'Hlookup_fun 10.
+  assert_eval_app_by 'names_unique 'names_unique_prog_proof 'Hlookup_fun 11.
+  assert_eval_app_by 'unique_binders 'unique_binders_prog_proof 'Hlookup_fun 12.
+  assert_eval_app_by 'make_vs_from_binders 'make_vs_from_binders_prog_proof 'Hlookup_fun 13.
+  assert_eval_app_by 'filter_name 'filter_name_prog_proof 'Hlookup_fun 14.
+  assert_eval_app_by 'remove_names 'remove_names_prog_proof 'Hlookup_fun 15.
+  assert_eval_app_by 'call_v_stack 'call_v_stack_prog_proof 'Hlookup_fun 16.
+  assert_eval_app_by 'c_pushes_vs 'c_pushes_vs_prog_proof 'Hlookup_fun 17.
+  assert_eval_app_by 'c_declare_binders 'c_declare_binders_prog_proof 'Hlookup_fun 18.
+  assert_eval_app_by 'c_add 'c_add_prog_proof 'Hlookup_fun 19.
+  assert_eval_app_by 'c_sub 'c_sub_prog_proof 'Hlookup_fun 20.
+  assert_eval_app_by 'c_div 'c_div_prog_proof 'Hlookup_fun 21.
+  assert_eval_app_by 'c_load 'c_load_prog_proof 'Hlookup_fun 22.
+  assert_eval_app_by 'c_exp 'c_exp_prog_proof 'Hlookup_fun 23.
+  assert_eval_app_by 'c_exps 'c_exps_prog_proof 'Hlookup_fun 24.
+  assert_eval_app_by 'c_cmp 'c_cmp_prog_proof 'Hlookup_fun 25.
+  assert_eval_app_by 'c_test_jump 'c_test_jump_prog_proof 'Hlookup_fun 26.
+  assert_eval_app_by 'c_alloc 'c_alloc_prog_proof 'Hlookup_fun 27.
+  assert_eval_app_by 'c_read 'c_read_prog_proof 'Hlookup_fun 28.
+  assert_eval_app_by 'c_write 'c_write_prog_proof 'Hlookup_fun 29.
+  assert_eval_app_by 'c_store 'c_store_prog_proof 'Hlookup_fun 30.
+  assert_eval_app_by 'lookup 'lookup_prog_proof 'Hlookup_fun 31.
+  assert_eval_app_by 'make_ret 'make_ret_prog_proof 'Hlookup_fun 32.
+  assert_eval_app_by 'c_pops 'c_pops_prog_proof 'Hlookup_fun 33.
+  assert_eval_app_by 'c_pushes 'c_pushes_prog_proof 'Hlookup_fun 34.
+  assert_eval_app_by 'c_call 'c_call_prog_proof 'Hlookup_fun 35.
+  assert_eval_app_by 'c_cmd 'c_cmd_prog_proof 'Hlookup_fun 36.
+  assert_eval_app_by 'c_fundef 'c_fundef_prog_proof 'Hlookup_fun 37.
+  assert_eval_app_by 'get_funcs 'get_funcs_prog_proof 'Hlookup_fun 38.
+  assert_eval_app_by 'name_of_func 'name_of_func_prog_proof 'Hlookup_fun 39.
+  assert_eval_app_by 'c_fundefs 'c_fundefs_prog_proof 'Hlookup_fun 40.
+  assert_eval_app_by 'init 'init_prog_proof 'Hlookup_fun 41.
+  assert_eval_app_by 'codegen 'codegen_prog_proof 'Hlookup_fun 42.
+  eauto.
 Qed.

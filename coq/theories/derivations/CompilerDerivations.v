@@ -181,18 +181,17 @@ Proof.
   4: eapply Hlookup_fun; simpl; left; reflexivity.
   1: {
     intros; eapply str2imp_thm; eauto; try reflexivity.
-    intros; eapply Hlookup_fun; eapply in_or_app; right; eapply in_or_app; right; eapply in_or_app; right; eauto.
+    1: intros; eapply Hlookup_fun; do 4 (eapply in_or_app; right); eauto.
+    intros; eapply Hlookup_fun; do 3 (eapply in_or_app; right); eapply in_or_app; left; eauto.
   }
   1: {
     intros; eapply codegen_thm; eauto; try reflexivity.
-    intros; eapply Hlookup_fun; eapply in_or_app; right; eapply in_app_or in H; destruct H; eauto.
-    1: eapply in_or_app; left; eauto.
-    1: eapply in_or_app; right; eapply in_or_app; right; eapply in_or_app; right; eauto.
+    1: intros; eapply Hlookup_fun; do 4 (eapply in_or_app; right); eauto.
+    intros; eapply Hlookup_fun; do 1 (eapply in_or_app; right); eapply in_or_app; left; eauto.
   }
   intros; eapply asm2str_thm; eauto; try reflexivity.
-  intros; eapply Hlookup_fun; eapply in_or_app; right; eapply in_or_app; right; eapply in_app_or in H; destruct H; eauto.
-  1: eapply in_or_app; left; eauto.
-  1: eapply in_or_app; right; eapply in_or_app; right; eauto.
+  1: intros; eapply Hlookup_fun; do 4 (eapply in_or_app; right); eauto.
+  intros; eapply Hlookup_fun; do 2 (eapply in_or_app; right); eapply in_or_app; left; eauto.
 Qed.
 
 Definition compiler_main: FunSyntax.exp := (

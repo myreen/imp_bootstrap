@@ -195,6 +195,7 @@ Derive num2exp_prog
 Proof.
   time relcompile.
   subst; specialize N_modulo_lt with (n := n) (m := (2 ^ 64 - 1)%N) as Hlt.
+  assert (18446744073709551615 = 2 ^ 64 - 1)%N as -> by ltac1:(lia).
   ltac1:(lia).
 Qed.
 
@@ -204,6 +205,7 @@ Derive v2exp_prog
 Proof.
   time relcompile.
   subst; specialize N_modulo_lt with (n := (vgetNum v0_3)) (m := (2 ^ 64 - 1)%N) as Hlt.
+  assert (18446744073709551615 = 2 ^ 64 - 1)%N as -> by ltac1:(lia).
   ltac1:(lia).
 Qed.
 
@@ -292,7 +294,11 @@ Definition ParserDerivations_funs := [
   vis_upper_f_prog;
   vis_upper_prog;
   vgetNum_prog;
+  vtail_prog;
   vel0_prog;
+  vel1_prog;
+  vel2_prog;
+  vel3_prog;
   visNum_prog;
   visPair_prog;
   quote_prog;
@@ -309,148 +315,84 @@ Definition ParserDerivations_funs := [
   v2funcs_prog;
   vs2prog_prog;
   parser_prog;
-  str2imp_prog;
-  vel1_prog;
-  vel2_prog;
-  vel3_prog;
-  vtail_prog
+  str2imp_prog
 ].
 
-Ltac2 assert_lookup_fun (prog: constr) :=
-  let h := Fresh.in_goal (Option.get (Ident.of_string "Hlookup_fun_s")) in
-  assert (match $prog with
-  | FunSyntax.Defun fname args fn =>
-      lookup_fun fname (funs &s) = Some (args, fn)
-  end) as $h; try (simpl in $h).
+Ltac2 assert_eval_app (fname: constr) :=
+  let tpe := gen_eval_app fname () in
+  assert ($tpe).
+
+Ltac2 assert_eval_app_proof (prf: constr) (list_constr: constr) (n: int) :=
+  eapply $prf; eauto; try (reflexivity);
+  try (eapply $list_constr; do n (eapply in_cons); eapply in_eq).
+
+Ltac2 assert_eval_app_by (fname: constr) (prf: constr) (list_constr_hyp: constr) (n: int) :=
+  let tpe := gen_eval_app fname () in
+  assert ($tpe) by (
+    eapply $prf; eauto; try (reflexivity);
+    eapply $list_constr_hyp; do n (eapply in_cons); eapply in_eq
+  ).
 
 Theorem str2imp_thm:
   ∀ (s: state) (inp: list ascii),
     (∀ fname args fn,
-      In (FunSyntax.Defun fname args fn) (ParserDerivations_funs ++ CompilerUtils_funs) →
+      In (FunSyntax.Defun fname args fn) (CompilerUtils_funs) →
+      lookup_fun fname (funs s) = Some (args, fn)) ->
+    (∀ fname args fn,
+      In (FunSyntax.Defun fname args fn) (ParserDerivations_funs) →
       lookup_fun fname (funs s) = Some (args, fn)) ->
     eval_app (name_enc "str2imp") [encode inp] s ((encode (str2imp inp)), s).
 Proof.
   Opaque encode.
-  intros * Hlookup_fun.
-  assert_lookup_fun 'vel1_prog; simpl.
-  1: eapply Hlookup_fun; do 30 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'vel2_prog; simpl.
-  1: eapply Hlookup_fun; do 31 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'vel3_prog; simpl.
-  1: eapply Hlookup_fun; do 32 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'list_length_prog; simpl.
-  1: eapply Hlookup_fun; do 40 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'vhead_prog; simpl.
-  1: eapply Hlookup_fun; do 7 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'vtail_prog; simpl.
-  1: eapply Hlookup_fun; do 33 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'vgetNum_prog; simpl.
-  1: eapply Hlookup_fun; do 11 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'vhead_prog; simpl.
-  1: eapply Hlookup_fun; do 7 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'vel0_prog; simpl.
-  1: eapply Hlookup_fun; do 12 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'N_modulo_prog; simpl.
-  1: eapply Hlookup_fun; do 35 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'mul_N_prog; simpl.
-  1: eapply Hlookup_fun; do 46 (eapply in_cons); eapply in_eq.
-  assert_lookup_fun 'mul_N_f_prog; simpl.
-  1: eapply Hlookup_fun; do 45 (eapply in_cons); eapply in_eq.
-  eapply str2imp_prog_proof; eauto; try reflexivity.
-  3: eapply Hlookup_fun; do 29 (eapply in_cons); eapply in_eq.
-  1: {
-    eapply lexer_prog_proof; eauto; try reflexivity.
-    2: eapply Hlookup_fun; do 5 (eapply in_cons); eapply in_eq.
-    eapply lexer_i_prog_proof; eauto; try reflexivity.
-    3: eapply Hlookup_fun; do 4 (eapply in_cons); eapply in_eq.
-    2: eapply list_length_prog_proof; eauto; try reflexivity.
-    eapply lex_prog_proof; eauto; try reflexivity.
-    5: eapply Hlookup_fun; do 3 (eapply in_cons); eapply in_eq.
-    1: eapply end_line_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 1 (eapply in_cons); eapply in_eq.
-    1: eapply read_num_prog_proof; eauto; try reflexivity.
-    2: eapply Hlookup_fun; do 0 (eapply in_cons); eapply in_eq.
-    1: eapply mul_N_prog_proof; eauto; try reflexivity.
-    1: eapply mul_N_f_prog_proof; eauto; try reflexivity.
-    1: eapply q_from_nat_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 2 (eapply in_cons); eapply in_eq.
-    eapply list_length_prog_proof; eauto; try reflexivity.
-  }
-  eapply parser_prog_proof; eauto; try reflexivity.
-  4: eapply Hlookup_fun; do 28 (eapply in_cons); eapply in_eq.
-  1: {
-    eapply parse_prog_proof; eauto; try reflexivity.
-    3: eapply Hlookup_fun; do 16 (eapply in_cons); eapply in_eq.
-    1: eapply vhead_prog_proof; eauto; try reflexivity.
-    eapply quote_prog_proof; eauto; try reflexivity.
-    2: eapply Hlookup_fun; do 15 (eapply in_cons); eapply in_eq.
-    eapply vlist_prog_proof; eauto; try reflexivity.
-    2: eapply Hlookup_fun; do 8 (eapply in_cons); eapply in_eq.
-    eapply vcons_prog_proof; eauto; try reflexivity.
-    1: eapply Hlookup_fun; do 6 (eapply in_cons); eapply in_eq.
-  }
-  1: eapply v2list_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 17 (eapply in_cons); eapply in_eq.
-  eapply vs2prog_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 27 (eapply in_cons); eapply in_eq.
-  eapply v2funcs_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 26 (eapply in_cons); eapply in_eq.
-  assert (∀ v : Value, eval_app (name_enc "v2exp") [encode v] s (encode (v2exp v), s)).
-  1: eapply v2exp_prog_proof; eauto; try reflexivity.
-  5: eapply Hlookup_fun; do 19 (eapply in_cons); eapply in_eq.
-  1: eapply vgetNum_prog_proof; eauto; try reflexivity.
-  1: eapply vel0_prog_proof; eauto; try reflexivity.
-  1: eapply vhead_prog_proof; eauto; try reflexivity.  
-  1: eapply num2exp_prog_proof; eauto; try reflexivity.
-  3: eapply Hlookup_fun; do 18 (eapply in_cons); eapply in_eq.
-  1: eapply vis_upper_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 10 (eapply in_cons); eapply in_eq.
-  1: eapply vis_upper_f_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 9 (eapply in_cons); eapply in_eq.
-  1: eapply N_modulo_prog_proof; eauto; try reflexivity.
-  2: eapply N_modulo_prog_proof; eauto; try reflexivity.
-  1: eapply mul_N_prog_proof; eauto; try reflexivity.
-  1: eapply mul_N_f_prog_proof; eauto; try reflexivity.
-  1: eapply mul_N_prog_proof; eauto; try reflexivity.
-  1: eapply mul_N_f_prog_proof; eauto; try reflexivity.
-  eapply v2func_prog_proof; eauto; try reflexivity.
-  8: eapply Hlookup_fun; do 25 (eapply in_cons); eapply in_eq.
-  1: eapply vel1_prog_proof; eauto; try reflexivity.
-  1: eapply vhead_prog_proof; eauto; try reflexivity.
-  1: eapply vtail_prog_proof; eauto; try reflexivity.
-  1: eapply vel2_prog_proof; eauto; try reflexivity.
-  1: eapply vel1_prog_proof; eauto; try reflexivity.
-  1: eapply vhead_prog_proof; eauto; try reflexivity.
-  1: eapply vtail_prog_proof; eauto; try reflexivity.
-  1: eapply vtail_prog_proof; eauto; try reflexivity.
-  1: eapply vel3_prog_proof; eauto; try reflexivity.
-  1: eapply vel2_prog_proof; eauto; try reflexivity.
-  1: eapply vel1_prog_proof; eauto; try reflexivity.
-  1: eapply vhead_prog_proof; eauto; try reflexivity.
-  1: eapply vtail_prog_proof; eauto; try reflexivity.
-  1: eapply vtail_prog_proof; eauto; try reflexivity.
-  1: eapply vtail_prog_proof; eauto; try reflexivity.
-  1: eapply vgetNum_prog_proof; eauto; try reflexivity.
-  1: eapply v2list_prog_proof; eauto; try reflexivity.
-  1: eapply Hlookup_fun; do 17 (eapply in_cons); eapply in_eq.
-  1: eapply vs2args_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 24 (eapply in_cons); eapply in_eq.
-  1: eapply vgetNum_prog_proof; eauto; try reflexivity.
-  1: eapply v2cmd_prog_proof; eauto; try reflexivity.
-  7: eapply Hlookup_fun; do 23 (eapply in_cons); eapply in_eq.
-  1: eapply vgetNum_prog_proof; eauto; try reflexivity.
-  2: eapply v2list_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 17 (eapply in_cons); eapply in_eq.
-  4: eapply visPair_prog_proof; eauto; try reflexivity.
-  4: eapply Hlookup_fun; do 14 (eapply in_cons); eapply in_eq.
-  3: eapply visNum_prog_proof; eauto; try reflexivity.
-  3: eapply Hlookup_fun; do 13 (eapply in_cons); eapply in_eq.
-  2: eapply vs2exps_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 20 (eapply in_cons); eapply in_eq.
-  1: eapply v2test_prog_proof; eauto; try reflexivity.
-  3: eapply Hlookup_fun; do 22 (eapply in_cons); eapply in_eq.
-  1: eapply vgetNum_prog_proof; eauto; try reflexivity.
-  1: eapply v2cmp_prog_proof; eauto; try reflexivity.
-  2: eapply Hlookup_fun; do 21 (eapply in_cons); eapply in_eq.
-  eapply vgetNum_prog_proof; eauto; try reflexivity.
+  intros * Hlookup_fun_utils Hlookup_fun.
+  assert_eval_app_by 'mul_nat 'mul_nat_prog_proof 'Hlookup_fun_utils 0.
+  assert_eval_app_by 'mul_N_f 'mul_N_f_prog_proof 'Hlookup_fun_utils 1.
+  assert_eval_app_by 'mul_N 'mul_N_prog_proof 'Hlookup_fun_utils 2.
+  assert_eval_app_by 'nat_modulo 'nat_modulo_prog_proof 'Hlookup_fun_utils 3.
+  assert_eval_app_by 'N_modulo 'N_modulo_prog_proof 'Hlookup_fun_utils 4.
+  assert_eval_app_by 'num2str_f 'num2str_f_prog_proof 'Hlookup_fun_utils 5.
+  assert_eval_app_by 'num2str 'num2str_prog_proof 'Hlookup_fun_utils 6.
+  assert_eval_app_by 'N2str_f 'N2str_f_prog_proof 'Hlookup_fun_utils 7.
+  assert_eval_app_by 'N2str 'N2str_prog_proof 'Hlookup_fun_utils 8.
+  assert_eval_app_by '@list_length 'list_length_prog_proof 'Hlookup_fun_utils 9.
+  assert_eval_app_by '@list_append 'list_append_prog_proof 'Hlookup_fun_utils 10.
+  assert_eval_app_by '@flatten 'flatten_prog_proof 'Hlookup_fun_utils 11.
+  assert_eval_app_by '@app_list_length 'app_list_length_prog_proof 'Hlookup_fun_utils 12.
+  assert_eval_app_by 'string_append 'string_append_prog_proof 'Hlookup_fun_utils 13.
+
+  assert_eval_app_by 'read_num 'read_num_prog_proof 'Hlookup_fun 0.
+  assert_eval_app_by 'end_line 'end_line_prog_proof 'Hlookup_fun 1.
+  assert_eval_app_by 'q_from_nat 'q_from_nat_prog_proof 'Hlookup_fun 2.
+  assert_eval_app_by 'lex 'lex_prog_proof 'Hlookup_fun 3.
+  assert_eval_app_by 'lexer_i 'lexer_i_prog_proof 'Hlookup_fun 4.
+  assert_eval_app_by 'lexer 'lexer_prog_proof 'Hlookup_fun 5.
+  assert_eval_app_by 'vcons 'vcons_prog_proof 'Hlookup_fun 6.
+  assert_eval_app_by 'vhead 'vhead_prog_proof 'Hlookup_fun 7.
+  assert_eval_app_by 'vlist 'vlist_prog_proof 'Hlookup_fun 8.
+  assert_eval_app_by 'vis_upper_f 'vis_upper_f_prog_proof 'Hlookup_fun 9.
+  assert_eval_app_by 'vis_upper 'vis_upper_prog_proof 'Hlookup_fun 10.
+  assert_eval_app_by 'vgetNum 'vgetNum_prog_proof 'Hlookup_fun 11.
+  assert_eval_app_by 'vtail 'vtail_prog_proof 'Hlookup_fun 12.
+  assert_eval_app_by 'vel0 'vel0_prog_proof 'Hlookup_fun 13.
+  assert_eval_app_by 'vel1 'vel1_prog_proof 'Hlookup_fun 14.
+  assert_eval_app_by 'vel2 'vel2_prog_proof 'Hlookup_fun 15.
+  assert_eval_app_by 'vel3 'vel3_prog_proof 'Hlookup_fun 16.
+  assert_eval_app_by 'visNum 'visNum_prog_proof 'Hlookup_fun 17.
+  assert_eval_app_by 'visPair 'visPair_prog_proof 'Hlookup_fun 18.
+  assert_eval_app_by 'quote 'quote_prog_proof 'Hlookup_fun 19.
+  assert_eval_app_by 'parse 'parse_prog_proof 'Hlookup_fun 20.
+  assert_eval_app_by 'v2list 'v2list_prog_proof 'Hlookup_fun 21.
+  assert_eval_app_by 'num2exp 'num2exp_prog_proof 'Hlookup_fun 22.
+  assert_eval_app_by 'v2exp 'v2exp_prog_proof 'Hlookup_fun 23.
+  assert_eval_app_by 'vs2exps 'vs2exps_prog_proof 'Hlookup_fun 24.
+  assert_eval_app_by 'v2cmp 'v2cmp_prog_proof 'Hlookup_fun 25.
+  assert_eval_app_by 'v2test 'v2test_prog_proof 'Hlookup_fun 26.
+  assert_eval_app_by 'v2cmd 'v2cmd_prog_proof 'Hlookup_fun 27.
+  assert_eval_app_by 'vs2args 'vs2args_prog_proof 'Hlookup_fun 28.
+  assert_eval_app_by 'v2func 'v2func_prog_proof 'Hlookup_fun 29.
+  assert_eval_app_by 'v2funcs 'v2funcs_prog_proof 'Hlookup_fun 30.
+  assert_eval_app_by 'vs2prog 'vs2prog_prog_proof 'Hlookup_fun 31.
+  assert_eval_app_by 'parser 'parser_prog_proof 'Hlookup_fun 32.
+  assert_eval_app_by 'str2imp 'str2imp_prog_proof 'Hlookup_fun 33.
+  eauto.
 Qed.

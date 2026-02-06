@@ -12,14 +12,18 @@ From impboot Require Import
 
 Definition compiler_program_imp := to_imp compiler_program_prog.
 
-Compute compiler_program_imp.
+Time Eval lazy in compiler_program_imp.
 
 Definition compiler_program_asm := match compiler_program_imp with
 | None => []
 | Some p => codegen p
 end.
 
-Eval lazy in compiler_program_asm.
+Time Eval lazy in compiler_program_asm.
+
+Definition compiler_asm_str := asm2str compiler_program_asm.
+
+Eval lazy in compiler_asm_str.
 
 (* Definition get_fun_name (f: FunSyntax.defun): N :=
   match f with

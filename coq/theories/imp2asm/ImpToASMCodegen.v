@@ -1024,7 +1024,7 @@ Definition codegen (prog : prog) : asm :=
   (* let/d main_str := "main"%string in *)
   (* let/d main_name := name_of_string main_str in *)
   (* name_of_string "main"%string *)
-  let/d main_name := 107776%N in
+  let/d main_name := 1835100526%N in
   let/d main_l := lookup fs main_name in
   let/d main_init := init main_l in
   let/d main_init_list := List main_init in

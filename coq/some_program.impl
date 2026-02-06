@@ -1,0 +1,1 @@
+(defun main () ((putchar '48) (return '0)))

@@ -72,6 +72,11 @@ Proof.
   induction m; simpl; eauto.
 Qed.
 
+Lemma mem_prefix_app: ∀ m m1, mem_prefix m (m ++ m1).
+Proof.
+  induction m; intros; simpl; eauto.
+Qed.
+
 Lemma mem_prefix_trans: ∀m1 m2 m3,
   mem_prefix m1 m2 -> mem_prefix m2 m3 -> mem_prefix m1 m3.
 Proof.
@@ -416,21 +421,6 @@ Proof.
       clear. induction (memory t); simpl; eauto.
 Qed.
 
-Axiom foo: forall (t: state) (e1 e2: exp) (x y: FunValues.Value) (w w': Value) (n: name),
-  v_rel t.(memory) y w' ->
-  v_rel t.(memory) x w ->
-  eval_exp e2 t = (Cont w', t) ->
-  eval_exp e1 t = (Cont w, t) ->
-  builtins_available t.(funs) ->
-  let ptr := Pointer (List.length t.(memory)) in
-  let m1 := [[Some w; Some w']] in
-    (forall (fuel: nat) (c2: cmd),
-      ∀ f, f = EVAL_CMD (S fuel) ->
-      eval_cmd (Seq (Call n (name_of_string "cons") [e1; e2]) c2) f t =
-      eval_cmd c2 f
-        (set_vars (IEnv.insert (n, Some ptr) t.(vars))
-          (set_memory (t.(memory) ++ m1) (add_steps_done 1 t)))).
-
 Theorem Call_cons3:
   forall (t: state) (e1 e2 e3: exp) (x y z: FunValues.Value) (w w' w'': Value) (n: name),
   v_rel t.(memory) z w'' ->
@@ -440,21 +430,21 @@ Theorem Call_cons3:
   eval_exp e2 t = (Cont w', t) ->
   eval_exp e1 t = (Cont w, t) ->
   builtins_available t.(funs) ->
-  let m1 := [[Some w; Some w'; Some w'']] in
-  let ptr := Pointer (List.length t.(memory)) in
+  exists m1 ptr,
     (forall (fuel: nat) (c2: cmd),
       eval_cmd (Seq (Call n (name_of_string "cons3") [e1; e2; e3]) c2) (EVAL_CMD (S (S fuel))) t =
       eval_cmd c2 (EVAL_CMD (S (S fuel)))
+      (add_steps_done 3
         (set_vars (IEnv.insert (n, Some ptr) t.(vars))
-          (set_memory (t.(memory) ++ m1) t))) /\
+          (set_memory (t.(memory) ++ m1) t)))) /\
     v_rel (t.(memory) ++ m1) (Pair x (Pair y z)) ptr.
 Proof.
   Opaque EVAL_CMD word.unsigned.
   intros * Hvrel_z Hvrel_y Hvrel_x Heval_e3 Heval_e2 Heval_e1 Hbuiltin.
-  specialize foo with (e1 := Var (name_of_string "b")) (e2 := Var (name_of_string "c")) (x := y) (y := z) (n := (name_of_string "ret")) as Hcall_cons_tail.
-  (* specialize (Hcall_cons_tail _ _ _ ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)); cleanup. *)
-
+  specialize Call_cons with (e1 := Var (name_of_string "b")) (e2 := Var (name_of_string "c")) (x := y) (y := z) (n := (name_of_string "ret")) as Hcall_cons_tail.
+  specialize Call_cons with (e1 := Var (name_of_string "a")) (e2 := Var (name_of_string "ret")) (x := x) (y := Pair y z) (n := (name_of_string "ret")) as Hcall_cons_tail1.
   cbv zeta in *; cleanup.
+  do 2 eexists.
   split.
   - intros fuel c2.
     simpl; unfold_outcome; unfold_monadic.
@@ -466,83 +456,53 @@ Proof.
     spat ` (name_of_string "cons3", ?args, ?cs1)` at assert (find_fun (name_of_string "cons3") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin1; eauto); clear Hbuiltin1.
     rewrite Hfind_fun; clear Hfind_fun.
     with_strategy transparent [EVAL_CMD] (once unfold EVAL_CMD at 1; fold EVAL_CMD).
-    (* match goal with
-    | |- context [Call ]
-    end. *)
     unfold_monadic; simpl orb; cbv iota.
     unfold catch_return, inc_steps_done; unfold_monadic.
     with_strategy transparent [EVAL_CMD] (once unfold EVAL_CMD at 1 in Hcall_cons_tail; fold EVAL_CMD in Hcall_cons_tail).
     unfold bind, inc_steps_done, cont in Hcall_cons_tail.
-
-    (* erewrite foo with (fuel := fuel); try reflexivity.
-    1: erewrite foo with (fuel := fuel); try reflexivity. *)
-    
-    (* simpl in Hcall_cons_tail. *)
-    (* erewrite Hcall_cons_tail; eauto.
-    set (Call _ _ _) as call_cons1.
-    set (Call _ _ _) as call_cons2.
-    once unfold eval_cmd; fold eval_cmd.
-    Opaque eval_cmd.
-    (* specialize Call_cons with (e1 := e2) (e2 := e3) (x := y) (y := z) (n := (name_of_string "ret")) as Hcall_cons_tail. *)
-
-    simpl in *; unfold_monadic; unfold catch_return, bind, dest_word, alloc, w2n; unfold_outcome; simpl.
-    unfold add_steps_done, set_steps_done; simpl. *)
-
-
-
-
-    (*
-    unfold builtins_available in Hbuiltin.
-    simpl in *.
-    spat ` (name_of_string "cons", ?args, ?cs1)` at assert (find_fun (name_of_string "cons") (funs t) = Some (args, cs1)) as Hfind_fun_cons by (eapply Hbuiltin; eauto); clear Hbuiltin.
-    rewrite Hfind_fun_cons.
-    with_strategy transparent [EVAL_CMD] unfold EVAL_CMD at 1.
-    simpl in *; unfold_monadic; unfold catch_return, bind, dest_word, alloc, w2n, inc_steps_done, add_steps_done, set_steps_done, set_vars, lookup_var, get_body_and_set_vars; unfold_outcome; simpl.
-    rewrite word.unsigned_of_Z_nowrap; try lia.
-    assert (Z.to_nat 16 = 16%nat) as -> by lia.
-    with_strategy transparent [Nat.modulo] simpl.
-    simpl; unfold w2n; rewrite word.unsigned_of_Z_nowrap; try lia.
-    assert (Z.to_nat 0 = 0%nat) as -> by lia.
-    with_strategy transparent [Nat.modulo] simpl.
-    unfold update_block.
-    rewrite nth_error_app2 by lia; rewrite Nat.sub_diag; simpl.
-    rewrite Nat.Div0.div_0_l, repeat_length; simpl.
-    with_strategy transparent [Nat.div] simpl.
-    unfold w2n; rewrite word.unsigned_of_Z_nowrap; try lia.
-    assert (Z.to_nat 8 = 8%nat) as -> by lia.
-    with_strategy transparent [Nat.modulo] simpl.
-    rewrite list_update_append2 by lia.
-    rewrite nth_error_app2 by lia.
-    rewrite Nat.sub_diag; simpl.
-    rewrite Hfind_fun_cons; simpl.
-    simpl in *; unfold_monadic; unfold catch_return, bind, dest_word, alloc, w2n, inc_steps_done, add_steps_done, set_steps_done, set_vars, lookup_var, get_body_and_set_vars; unfold_outcome; simpl.
-    rewrite word.unsigned_of_Z_nowrap; try lia.
-    assert (Z.to_nat 16 = 16%nat) as -> by lia; simpl.
-    assert (16 mod 8 = 0)%nat as -> by (with_strategy transparent [Nat.modulo] simpl; reflexivity).
-    simpl; unfold w2n; rewrite word.unsigned_of_Z_nowrap; try lia.
-    assert (Z.to_nat 0 = 0%nat) as -> by lia; simpl.
-    with_strategy transparent [Nat.modulo] simpl.
-    unfold update_block.
-    rewrite nth_error_app2 by lia; rewrite Nat.sub_diag; simpl.
-    rewrite Nat.Div0.div_0_l, repeat_length; simpl.
-    *)
-
-    admit.
-    (* unfold set_vars; simpl.
-    rewrite list_update_append2 by lia.
-    rewrite Nat.sub_diag; simpl.
-    reflexivity. *)
+    set (t1 := add_steps_done 1 (set_vars _ t)).
+    assert (eval_exp (Var "c") t1 = (Cont w'', t1)).
+    1: {
+      subst t1; unfold make_env, add_steps_done, set_steps_done; simpl.
+      unfold lookup_var; simpl; unfold_monadic; reflexivity.
+    }
+    assert (eval_exp (Var "b") t1 = (Cont w', t1)).
+    1: {
+      subst t1;unfold make_env, add_steps_done, set_steps_done; simpl.
+      unfold lookup_var; simpl; unfold_monadic; reflexivity.
+    }
+    specialize (Hcall_cons_tail t1 w' w'' ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)); cleanup.
+    erewrite H1; clear H1.
+    set (t2 := set_vars _ _).
+    assert (eval_exp (Var "a") t2 = (Cont w, t2)).
+    1: {
+      subst t2; unfold make_env, add_steps_done, set_steps_done; simpl.
+      unfold lookup_var; simpl; unfold_monadic; reflexivity.
+    }
+    assert (eval_exp (Var "ret") t2 = (Cont (Pointer (List.length t.(memory))), t2)).
+    1: {
+      subst t2; unfold make_env, add_steps_done, set_steps_done; simpl.
+      unfold lookup_var; simpl; unfold_monadic; reflexivity.
+    }
+    assert (v_rel t2.(memory) x w).
+    1: simpl; eapply v_rel_mem_prefix; eauto; simpl; eapply mem_prefix_app.
+    specialize (Hcall_cons_tail1 t2 w (Pointer (List.length t.(memory))) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)); cleanup.
+    rewrite H5; clear H5.
+    with_strategy transparent [eval_cmd] simpl.
+    unfold add_steps_done, set_steps_done, set_vars, set_memory; simpl.
+    rewrite app_assoc; assert (steps_done t + 1 + 1 + 1 = steps_done t + 3)%nat as -> by lia.
+    reflexivity.
   - econstructor.
-    + rewrite nth_error_app2 by lia.
-      rewrite Nat.sub_diag. simpl.
-      admit.
-      (* reflexivity. *)
-    + eapply v_rel_mem_prefix; eauto.
-      clear. induction (memory t); simpl; eauto.
-    + eapply v_rel_mem_prefix; eauto.
-      all: admit.
-      (* clear. induction (memory t); simpl; eauto. *)
-Admitted.
+    + rewrite nth_error_app2; rewrite ?List.length_app; simpl; try lia.
+      rewrite Nat.add_sub_swap by lia; rewrite Nat.sub_diag; simpl.
+      reflexivity.
+    + eapply v_rel_mem_prefix; eauto; clear.
+      eapply mem_prefix_app.
+    + econstructor; eauto.
+      * rewrite nth_error_app2 by lia; rewrite Nat.sub_diag; simpl; reflexivity.
+      * eapply v_rel_mem_prefix; eauto; eapply mem_prefix_app.
+      * eapply v_rel_mem_prefix; eauto; eapply mem_prefix_app.
+Qed.
 
 Theorem Call_cons4:
   forall (t: state) (e1 e2 e3 e4: exp) (x y z q: FunValues.Value) (w w' w'' w''': Value) (n: name),
@@ -556,14 +516,84 @@ Theorem Call_cons4:
   eval_exp e1 t = (Cont w, t) ->
   builtins_available t.(funs) ->
   exists m1 ptr,
+  (* let m1 := [[Some w; Some w'; Some w''; Some w''']] in
+  let ptr := Pointer (List.length t.(memory)) in *)
     (forall (fuel: nat) (c2: cmd),
-      eval_cmd (Seq (Call n (name_of_string "cons4") [e1; e2; e3; e4]) c2) (EVAL_CMD (S (S (S (S (S fuel)))))) t =
-      eval_cmd c2 (EVAL_CMD fuel) 
+      eval_cmd (Seq (Call n (name_of_string "cons4") [e1; e2; e3; e4]) c2) (EVAL_CMD (S (S (S fuel)))) t =
+      eval_cmd c2 (EVAL_CMD (S (S (S fuel))))
+        (add_steps_done 5
         (set_vars (IEnv.insert (n, Some ptr) t.(vars)) 
-          (set_memory (t.(memory) ++ m1) t))) /\
+          (set_memory (t.(memory) ++ m1) t)))) /\
     v_rel (t.(memory) ++ m1) (Pair x (Pair y (Pair z q))) ptr.
 Proof.
-Admitted.
+  Opaque EVAL_CMD word.unsigned.
+  intros * Hvrel_q Hvrel_z Hvrel_y Hvrel_x Heval_e4 Heval_e3 Heval_e2 Heval_e1 Hbuiltin.
+  specialize Call_cons3 with (e1 := Var (name_of_string "b")) (e2 := Var (name_of_string "c")) (e3 := Var (name_of_string "d")) (x := y) (y := z) (z := q) (n := (name_of_string "ret")) as Hcall_cons3_tail.
+  specialize Call_cons with (e1 := Var (name_of_string "a")) (e2 := Var (name_of_string "ret")) (x := x) (y := Pair y (Pair z q)) (n := (name_of_string "ret")) as Hcall_cons_tail.
+  cbv zeta in *; cleanup.
+  simpl; unfold_outcome; unfold_monadic.
+  rewrite Heval_e1, Heval_e2, Heval_e3, Heval_e4.
+  unfold get_vars; unfold_outcome; simpl; unfold get_body_and_set_vars.
+  pose proof Hbuiltin as Hbuiltin1.
+  unfold builtins_available in Hbuiltin1.
+  simpl in Hbuiltin1.
+  spat ` (name_of_string "cons4", ?args, ?cs1)` at assert (find_fun (name_of_string "cons4") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin1; eauto 6); clear Hbuiltin1.
+  rewrite Hfind_fun; clear Hfind_fun.
+  with_strategy transparent [EVAL_CMD] (once unfold EVAL_CMD at 1; fold EVAL_CMD).
+  unfold_monadic; simpl orb; cbv iota.
+  unfold catch_return, inc_steps_done; unfold_monadic.
+  with_strategy transparent [EVAL_CMD] (once unfold EVAL_CMD at 1 in Hcall_cons_tail; fold EVAL_CMD in Hcall_cons_tail).
+  unfold bind, inc_steps_done, cont in Hcall_cons_tail.
+  set (t1 := add_steps_done 1 (set_vars _ t)).
+  assert (eval_exp (Var "d") t1 = (Cont w''', t1)).
+  1: {
+    subst t1; unfold make_env, add_steps_done, set_steps_done; simpl.
+    unfold lookup_var; simpl; unfold_monadic; reflexivity.
+  }
+  assert (eval_exp (Var "c") t1 = (Cont w'', t1)).
+  1: {
+    subst t1; unfold make_env, add_steps_done, set_steps_done; simpl.
+    unfold lookup_var; simpl; unfold_monadic; reflexivity.
+  }
+  assert (eval_exp (Var "b") t1 = (Cont w', t1)).
+  1: {
+    subst t1;unfold make_env, add_steps_done, set_steps_done; simpl.
+    unfold lookup_var; simpl; unfold_monadic; reflexivity.
+  }
+  specialize (Hcall_cons3_tail t1 w' w'' w''' ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)); cleanup.
+  do 2 eexists.
+  split.
+  - intros fuel c2.
+    erewrite H2 with (fuel := fuel); clear H2.
+    set (t2 := add_steps_done _ _).
+    assert (eval_exp (Var "a") t2 = (Cont w, t2)).
+    1: {
+      subst t2; unfold make_env, add_steps_done, set_steps_done; simpl.
+      unfold lookup_var; simpl; unfold_monadic; reflexivity.
+    }
+    assert (eval_exp (Var "ret") t2 = (Cont x1, t2)).
+    1: {
+      subst t2; unfold make_env, add_steps_done, set_steps_done; simpl.
+      unfold lookup_var; simpl; unfold_monadic. reflexivity.
+    }
+    assert (v_rel t2.(memory) x w).
+    1: simpl; eapply v_rel_mem_prefix; eauto; simpl; eapply mem_prefix_app.
+    specialize (Hcall_cons_tail t2 w x1 ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)); cleanup.
+    erewrite H6 with (fuel := S fuel); clear H6.
+    with_strategy transparent [eval_cmd] simpl.
+    unfold add_steps_done, set_steps_done, set_vars, set_memory; simpl.
+    rewrite app_assoc; assert (steps_done t + 1 + 3 + 1 = steps_done t + 5)%nat as -> by lia.
+    reflexivity.
+  - econstructor.
+    + rewrite nth_error_app2; rewrite ?List.length_app; simpl; try lia.
+      rewrite Nat.add_sub_swap by lia; rewrite Nat.sub_diag; simpl.
+      rewrite nth_error_app2 by lia; rewrite Nat.sub_diag; simpl.
+      reflexivity.
+    + eapply v_rel_mem_prefix; eauto; clear.
+      eapply mem_prefix_app.
+    + eapply v_rel_mem_prefix; eauto.
+      rewrite app_assoc; eapply mem_prefix_app.
+Qed.
 
 Theorem Call_cons5:
   forall (t: state) (e1 e2 e3 e4 e5: exp) (x y z q r: FunValues.Value) 
@@ -580,15 +610,90 @@ Theorem Call_cons5:
   eval_exp e1 t = (Cont w, t) ->
   builtins_available t.(funs) ->
   exists m1 ptr,
+  (* let m1 := [[Some w; Some w'; Some w''; Some w'''; w'''']] in
+  let ptr := Pointer (List.length t.(memory)) in *)
     (forall (fuel: nat) (c2: cmd),
       eval_cmd (Seq (Call n (name_of_string "cons5") [e1; e2; e3; e4; e5]) c2) 
                (EVAL_CMD (S (S (S (S (S (S (S fuel)))))))) t =
-      eval_cmd c2 (EVAL_CMD fuel) 
+      eval_cmd c2 (EVAL_CMD (S (S (S (S (S (S (S fuel)))))))) 
+        (add_steps_done 7
         (set_vars (IEnv.insert (n, Some ptr) t.(vars)) 
-          (set_memory (t.(memory) ++ m1) t))) /\
+          (set_memory (t.(memory) ++ m1) t)))) /\
     v_rel (t.(memory) ++ m1) (Pair x (Pair y (Pair z (Pair q r)))) ptr.
 Proof.
-Admitted.
+  Opaque EVAL_CMD word.unsigned.
+  intros * Hvrel_r Hvrel_q Hvrel_z Hvrel_y Hvrel_x Heval_e5 Heval_e4 Heval_e3 Heval_e2 Heval_e1 Hbuiltin.
+  specialize Call_cons4 with (e1 := Var (name_of_string "b")) (e2 := Var (name_of_string "c")) (e3 := Var (name_of_string "d")) (e4 := Var (name_of_string "e")) (x := y) (y := z) (z := q) (q := r) (n := (name_of_string "ret")) as Hcall_cons4_tail.
+  specialize Call_cons with (e1 := Var (name_of_string "a")) (e2 := Var (name_of_string "ret")) (x := x) (y := Pair y (Pair z (Pair q r))) (n := (name_of_string "ret")) as Hcall_cons_tail.
+  cbv zeta in *; cleanup.
+  simpl; unfold_outcome; unfold_monadic.
+  rewrite Heval_e1, Heval_e2, Heval_e3, Heval_e4, Heval_e5.
+  unfold get_vars; unfold_outcome; simpl; unfold get_body_and_set_vars.
+  pose proof Hbuiltin as Hbuiltin1.
+  unfold builtins_available in Hbuiltin1.
+  simpl in Hbuiltin1.
+  spat ` (name_of_string "cons5", ?args, ?cs1)` at assert (find_fun (name_of_string "cons5") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin1; eauto 7); clear Hbuiltin1.
+  rewrite Hfind_fun; clear Hfind_fun.
+  with_strategy transparent [EVAL_CMD] (once unfold EVAL_CMD at 1; fold EVAL_CMD).
+  unfold_monadic; simpl orb; cbv iota.
+  unfold catch_return, inc_steps_done; unfold_monadic.
+  with_strategy transparent [EVAL_CMD] (once unfold EVAL_CMD at 1 in Hcall_cons_tail; fold EVAL_CMD in Hcall_cons_tail).
+  unfold bind, inc_steps_done, cont in Hcall_cons_tail.
+  set (t1 := add_steps_done 1 (set_vars _ t)).
+  assert (eval_exp (Var "e") t1 = (Cont w'''', t1)).
+  1: {
+    subst t1; unfold make_env, add_steps_done, set_steps_done; simpl.
+    unfold lookup_var; simpl; unfold_monadic; reflexivity.
+  }
+  assert (eval_exp (Var "d") t1 = (Cont w''', t1)).
+  1: {
+    subst t1; unfold make_env, add_steps_done, set_steps_done; simpl.
+    unfold lookup_var; simpl; unfold_monadic; reflexivity.
+  }
+  assert (eval_exp (Var "c") t1 = (Cont w'', t1)).
+  1: {
+    subst t1; unfold make_env, add_steps_done, set_steps_done; simpl.
+    unfold lookup_var; simpl; unfold_monadic; reflexivity.
+  }
+  assert (eval_exp (Var "b") t1 = (Cont w', t1)).
+  1: {
+    subst t1;unfold make_env, add_steps_done, set_steps_done; simpl.
+    unfold lookup_var; simpl; unfold_monadic; reflexivity.
+  }
+  specialize (Hcall_cons4_tail t1 w' w'' w''' w'''' ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)); cleanup.
+  do 2 eexists.
+  split.
+  - intros fuel c2.
+    erewrite H3 with (fuel := (S (S (S fuel)))); clear H3.
+    set (t2 := add_steps_done _ _).
+    assert (eval_exp (Var "a") t2 = (Cont w, t2)).
+    1: {
+      subst t2; unfold make_env, add_steps_done, set_steps_done; simpl.
+      unfold lookup_var; simpl; unfold_monadic; reflexivity.
+    }
+    assert (eval_exp (Var "ret") t2 = (Cont x1, t2)).
+    1: {
+      subst t2; unfold make_env, add_steps_done, set_steps_done; simpl.
+      unfold lookup_var; simpl; unfold_monadic. reflexivity.
+    }
+    assert (v_rel t2.(memory) x w).
+    1: simpl; eapply v_rel_mem_prefix; eauto; simpl; eapply mem_prefix_app.
+    specialize (Hcall_cons_tail t2 w x1 ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)); cleanup.
+    erewrite H7 with (fuel := S (S (S (S (S fuel))))); clear H6.
+    with_strategy transparent [eval_cmd] simpl.
+    unfold add_steps_done, set_steps_done, set_vars, set_memory; simpl.
+    rewrite app_assoc; assert (steps_done t + 1 + 5 + 1 = steps_done t + 7)%nat as -> by lia.
+    reflexivity.
+  - econstructor.
+    + rewrite nth_error_app2; rewrite ?List.length_app; simpl; try lia.
+      rewrite Nat.add_sub_swap by lia; rewrite Nat.sub_diag; simpl.
+      rewrite nth_error_app2 by lia; rewrite Nat.sub_diag; simpl.
+      reflexivity.
+    + eapply v_rel_mem_prefix; eauto; clear.
+      eapply mem_prefix_app.
+    + eapply v_rel_mem_prefix; eauto.
+      rewrite app_assoc; eapply mem_prefix_app.
+Qed.
 
 Theorem Z_div_between_1: ∀a b: Z,
   (a >= 0)%Z ->
@@ -703,8 +808,29 @@ Proof.
     }
     destruct to_cons eqn:Hto_cons; cleanup.
     1: { (* assign cons *)
+
       unfold to_cons in *; cleanup.
-      admit.
+      destruct to_cmd eqn:?; cleanup.
+      destruct (dest_Cons exp1) eqn:?; cleanup; destruct p as [e1 exp1'].
+      destruct (dest_Cons exp1') eqn:?; cleanup.
+      1: destruct p as [e2 exp1'']; cleanup.
+      1: destruct (dest_Cons exp1'') eqn:?; cleanup.
+      1: destruct p as [e3 exp1''']; cleanup.
+      1: destruct (dest_Cons exp1''') eqn:?; cleanup.
+      1: destruct p as [e4 exp1'''']; cleanup.
+      all: unfold option_map in *.
+      all: match goal with
+      | H : context C [ match to_exp ?e with _ => _ end ] |- _ => destruct (to_exp e) eqn:?
+      end; cleanup.
+      all: do 3 eexists.
+      4: {
+        unfold dest_Cons in *; destruct exp1; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+        inversion Heval1; subst.
+        admit.
+      }
+      1: specialize Call_cons5 with
+        (e1 := e1) (e2 := e2) (e3 := e3) (e4 := e4) (e5 := e) as ?.
+      all: admit.
     }
     destruct exp1; try discriminate; cleanup.
     2: { (* call *)

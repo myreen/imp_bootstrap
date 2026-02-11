@@ -3,12 +3,10 @@ From impboot Require Import
   utils.Llist.
 Import Llist.
 Require Import impboot.parsing.ParserData.
-Require Import impboot.imp2asm.ImpToASMCodegen.
 Require Import impboot.imperative.ImpSyntax.
 Require Import impboot.functional.FunValues.
 Require Import impboot.commons.CompilerUtils.
 Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
 
 Require Import impboot.automation.ltac2.UnfoldFix.
 From Ltac2 Require Import Ltac2.

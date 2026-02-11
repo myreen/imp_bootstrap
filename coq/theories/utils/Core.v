@@ -6,14 +6,14 @@ From Stdlib Require Export
   Numbers.DecimalString
   Arith.PeanoNat.
 Export ListNotations.
-Require Export
+From Stdlib Require Export
   Lia
   String
   Nat
   Arith
   ZArith.
 From coqutil Require Export dlet.
-From Coq.Unicode Require Export Utf8.
+From Stdlib.Unicode Require Export Utf8.
 
 (* d/let *)
 

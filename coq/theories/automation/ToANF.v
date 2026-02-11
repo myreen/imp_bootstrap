@@ -1,103 +1,225 @@
-From Ltac2 Require Import Ltac2 Constr Std RedFlags.
+From Ltac2 Require Import Ltac2 Constr Std RedFlags FMap Message Printf.
+From impboot.automation.ltac2 Require Import Messages Constrs.
 From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
+From impboot.functional Require Import FunSemantics FunValues.
 From coqutil Require Import dlet.
 From coqutil Require Import Word.Interface.
+
+Open Scope nat.
+
+Ltac2 mutable debug_to_anf := false.
 
 Ltac2 rec proper_const_f (c: constr): bool :=
   match Constr.Unsafe.kind c with
   (* | Var _ => true *)
   (* TODO: probably should remove this (next) line – it allows too many undesirable things as consts *)
-  | Unsafe.Constant _ _ => true
+  (* | Unsafe.Constant _ _ => true *)
   | Unsafe.Constructor _ _ => true
   | Unsafe.App c cs => Bool.and (proper_const_f c) (Array.for_all proper_const_f cs)
   | _ => false
   end.
+
+Ltac2 is_list_type (c: constr): bool :=
+  match Constr.Unsafe.kind c with
+  | Unsafe.App f _ =>
+    Constr.equal f (constr:(list))
+  | _ => false
+  end.
+
+Ltac2 allowed_const_type (c: constr): bool :=
+  let tpe := Constr.type c in
+  Bool.or (Constr.equal tpe constr:(nat))
+  (Bool.or (Constr.equal tpe constr:(N))
+  (Bool.or (Constr.equal tpe constr:(Z))
+  (Bool.or (Constr.equal tpe constr:(string))
+  (Bool.or (Constr.equal tpe constr:(ascii))
+  (is_list_type c))))).
+
 Ltac2 proper_const (c: constr): bool :=
   let evaluated := eval_cbv beta c in
-  proper_const_f evaluated.
+  let is_const := proper_const_f evaluated in
+  Bool.and is_const (allowed_const_type evaluated).
+
+Ltac2 is_list_like_const (c: constr) :=
+  Bool.and (proper_const c) (Bool.or (Constr.equal (Constr.type c) constr:(string)) (is_list_type c)).
 
 Ltac2 rec is_allowed (c: constr): bool :=
   match! c with
   | word.of_Z ?c1 => is_allowed c1
+  | word.unsigned ?c1 => is_allowed c1
   | Z.of_nat ?c1 => is_allowed c1
   | Z.of_N ?c1 => is_allowed c1
+  | Z.to_N ?c1 => is_allowed c1
   | N.to_nat ?c1 => is_allowed c1
   | N.of_nat ?c1 => is_allowed c1
-  | _ => proper_const c
-  end.
-
-(* Converts an expression to ANF-like form, such that every function call,
-constructor call, operation is let bound and never nested. The allowed top level
-expressions are matches, ifs, let bindings, and simple expressions in return
-positions. All if conditions can be assumed to be correct. *)
-(* e.g.
-  f (1 + 2) (g 3)
-  ===>
-  let a := 1 + 2 in
-  let b := g 3 in
-  let c := f a b in
-  c
-
-  if a <? b then
-    h (a + 1)
-  else
-    h (b + 1)
-  ===>
-  if a <? b then
-    let d := a + 1 in
-    let e := h d in
-    e
-  else
-    let d := b + 1 in
-    let e := h d in
-    e
-
-  let x := f (1 + 2) (g 3) in
-  x + 1
-  ===>
-  let a := 1 + 2 in
-  let b := g 3 in
-  let c := f a b in
-  let d := c + 1 in
-  d
-*)
-Ltac2 rec to_anf (e: constr): constr :=
-  match! e with
-  | let/d x := ?e1 in ?e2 =>
-    let e1_anf := to_anf e1 in
-    let e2_anf := to_anf e2 in
-    constr:(let/d x := $e1_anf in $e2_anf)
-  | if ?cond then ?then_branch else ?else_branch =>
-    let cond_anf := to_anf cond in
-    let then_anf := to_anf then_branch in
-    let else_anf := to_anf else_branch in
-    constr:(if $cond_anf then $then_anf else $else_anf)
-  | match ?_scrut with _ => _ end =>
-    e (* TODO *)
-  | ?f ?arg1 ?arg2 =>
-    let arg1_anf := to_anf arg1 in
-    let arg2_anf := to_anf arg2 in
-    let tmp1 := Fresh.in_goal (Option.get (Ident.of_string "anf_tmp")) in
-    let tmp1_constr := Unsafe.make (Unsafe.Var tmp1) in
-    let tmp2 := Fresh.in_goal (Option.get (Ident.of_string "anf_tmp")) in
-    let tmp2_constr := Unsafe.make (Unsafe.Var tmp2) in
-    let f_anf := to_anf constr:($f $tmp1_constr $tmp2_constr) in
-    constr:(let/d tmp1 := $arg1_anf in
-            let/d tmp2 := $arg2_anf in
-            let res := $f_anf in
-            res)
-  | ?f ?arg =>
-    let arg_anf := to_anf arg in
-    let tmp := Fresh.in_goal (Option.get (Ident.of_string "anf_tmp")) in
-    let tmp_constr := Unsafe.make (Unsafe.Var tmp) in
-    let f_anf := to_anf constr:($f $tmp_constr) in
-    constr:(let tmp := $arg_anf in
-            let res := $f_anf in
-            res)
   | _ =>
-    e
+    Bool.or (proper_const c)
+      (Bool.or (is_var c)
+      (Constrs.is_sort (Constr.type c)))
   end.
 
-(* split strings to intermediate lets *)
-(* split lists to intermediate lets *)
+Module ConstrMap.
+  Ltac2 Type t := (constr * constr) list.
+  Ltac2 empty: t := [].
+  Ltac2 add (k: constr) (v: constr) (m: t): t := (k, v) :: m.
+  Ltac2 rec find_opt (k: constr) (m: t): constr option :=
+    match m with
+    | [] => None
+    | (k', v) :: m =>
+      if Constr.equal k k' then Some v else find_opt k m
+    end.
+  Ltac2 print (m: t): unit :=
+    printf "ConstrMap contents:\n";
+    List.iter (fun (kv: constr * constr) =>
+      let (k, v) := kv in
+      printf "  %t -> %t\n" k v
+    ) m.
+End ConstrMap.
+
+Ltac2 rec replace_with_lifts (e: constr) (lifts: ConstrMap.t): constr :=
+  match ConstrMap.find_opt e lifts with
+  | Some lifted => 
+    lifted
+  | None =>
+    if is_allowed e then e else (
+    match! e with
+    | let/d x := ?e1 in ?e2 =>
+      let e1_replaced := replace_with_lifts e1 lifts in
+      let e2_replaced := replace_with_lifts e2 lifts in
+      let result := constr:(let/d x := $e1_replaced in $e2_replaced) in
+      result
+    | _ =>
+      match Unsafe.kind e with
+      | Unsafe.App f args =>
+        let f_replaced := replace_with_lifts f lifts in
+        let args_replaced := Array.map (fun arg => replace_with_lifts arg lifts) args in
+        let unsf_app_new := Unsafe.App f_replaced args_replaced in
+        let result := Unsafe.make unsf_app_new in
+        result
+      | Unsafe.Cast c k t =>
+        let c_replaced := replace_with_lifts c lifts in
+        let unsf_cast_new := Unsafe.Cast c_replaced k t in
+        let result := Unsafe.make unsf_cast_new in
+        result
+      | _ => e
+      end
+    end)
+  end.
+
+Ltac2 rec in_letd_definitions (dlet_rhss: constr list) (to_replace: constr list) (acc_lifts: ConstrMap.t) (continuation: (ConstrMap.t) -> constr) (): constr :=
+  match dlet_rhss, to_replace with
+  | ([], []) => continuation (acc_lifts)
+  | (e :: dlet_rhss, re :: to_replace) =>
+    let tmp_ident := Fresh.in_goal (Option.get (Ident.of_string "anf_tmp")) in
+    let fn := Constr.in_context tmp_ident (Constr.type e) (fun _ =>
+      let tmp_constr := Unsafe.make (Unsafe.Var tmp_ident) in
+      let new_lifts := ConstrMap.add e tmp_constr acc_lifts in
+      let new_lifts := ConstrMap.add re tmp_constr new_lifts in
+      let to_lift_new := List.map (fun constr => replace_with_lifts constr new_lifts) dlet_rhss in
+      let lifted := in_letd_definitions to_lift_new to_replace new_lifts continuation in
+      Control.refine lifted
+    )
+    in
+    constr:(dlet $e $fn)
+  | _, _ =>
+    continuation (acc_lifts)
+  end.
+
+Ltac2 rec to_anf_alt (level: int) (e: constr) : (constr list * constr) :=
+  if is_allowed e then
+    if is_list_like_const e then
+    ([e], e)
+    else
+    ([], e)
+  else
+  match! e with
+  | dlet ?e1 ?e2 =>
+    let (e1_lifts, e1_anf) := to_anf_alt 0 e1 in
+    let (_, e2_anf) := to_anf_alt 0 e2 in
+    let all_lifts := e1_lifts in
+    let lifted_anf := in_letd_definitions all_lifts all_lifts ConstrMap.empty (fun lifts =>
+      let e1_anf_replaced := replace_with_lifts e1_anf lifts in
+      constr:(dlet $e1_anf_replaced $e2_anf)
+    ) () in
+    ([], lifted_anf)
+  | _ =>
+    match Unsafe.kind e with
+    | Unsafe.App f args =>
+      let args_lifts_and_anfs := Array.map (to_anf_alt (Int.add level 1)) args in
+      let args_lifts := Array.to_list (Array.map fst args_lifts_and_anfs) in
+      let args_anfs := Array.map snd args_lifts_and_anfs in
+      let all_lifts := List.concat args_lifts in
+      (* do not lift here, just pass them *)
+      let new_app := Unsafe.make (Unsafe.App f args_anfs) in
+      let lifts_new := if Int.equal level 0 then all_lifts else List.append all_lifts [new_app] in
+      (lifts_new, new_app)
+    | Unsafe.Cast c k t =>
+      let (c_lifts, c_anf) := to_anf_alt level c in
+      let new_cast := Unsafe.make (Unsafe.Cast c_anf k t) in
+      (c_lifts, new_cast)
+    (* don't replace under binders *)
+    | Unsafe.Case _ _ _ _ _ => ([], e)
+    | Unsafe.Lambda _ _ => ([], e)
+    | _ => 
+      let new_lifts := if Int.equal level 0 then [e] else [] in
+      (new_lifts, e)
+    end
+  end.
+Ltac2 to_anf_final (e: constr): constr :=
+  let (lift_exps, e_anf) := to_anf_alt 1 e in
+  in_letd_definitions lift_exps lift_exps ConstrMap.empty (fun lifts =>
+    let result := replace_with_lifts e_anf lifts in
+    result
+  ) ().
+
+Ltac2 try_to_anf_relcompile () :=
+  match! goal with
+  | [ |- _ |-- (_, _) ---> ([encode ?c], _) ] =>
+    let anf := to_anf_final c in
+    if debug_to_anf then printf "ANF form: %t" anf else ();
+    (* TODO: benchmark if rewrite is actually that much worse *)
+    (* try (assert ( $c = $anf) as -> by (reflexivity ())) *)
+    try (ltac1:(c anf |- change c with anf) (Ltac1.of_constr c) (Ltac1.of_constr anf))
+  end.
+
+(* TEST *)
+
+Inductive Animal := Dog | Cat | Fish.
+
+Definition foo1 (x y : nat) (l: list Animal): nat :=
+  x + y.
+
+Ltac2 toANF () :=
+  Control.enter (fun () =>
+    match! goal with
+    | [ |- ?c = _ ] =>
+      let anf := to_anf_final c in
+      printf "ANF form: %t" anf;
+      try (assert ( $c = $anf) as -> by (reflexivity ()))
+    end
+  ).
+
+Goal forall x y, match x with
+  | 0 => y
+  | S x1 => foo1 x (y + (x * 2)) [Dog; Cat]
+  end = 1.
+  intros.
+  
+  destruct x.
+  all: toANF ().
+  Show Proof.
+  (* ltac1:(replace (foo1 x (y + 1)) with (let/d a := x in
+                             let/d b := y + 1 in
+                             let/d c := foo1 a b in
+                             c) by reflexivity). *)
+Admitted.
+
+Open Scope string_scope.
+
+(* Ltac2 Set debug_to_anf := true. *)
+
+Goal (let/d s := "ab" ++ "cd" in
+      List.length (list_ascii_of_string s)) = 8.
+  toANF ().
+Admitted.

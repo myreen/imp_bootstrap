@@ -8,20 +8,13 @@ From impboot Require Import commons.ProofUtils.
 Fixpoint mul_nat (a b: nat): nat :=
   match b with
   | 0%nat => 0%nat
-  | S b' =>
-    let/d rec := mul_nat a b' in
-    let/d res := a + rec in
-    res
+  | S b' => a + mul_nat a b'
   end.
 
 Definition nat_modulo (n1 n2: nat): nat :=
   match n2 with
   | 0%nat => 0
-  | S _ =>
-    let/d d := (n1 / n2) in
-    let/d m := n2 * d in
-    let/d res := n1 - m in
-    res
+  | S _ => n1  - (n2 * (n1 / n2))
   end.
 
 Lemma mul_N_f_oblig:
@@ -37,18 +30,12 @@ Fixpoint mul_N_f (a b: N) (fuel: nat): N :=
   | S fuel =>
     match b with
     | 0%N => 0%N
-    | _ =>
-      let/d b_min_1 := (b - 1)%N in
-      let/d rec := mul_N_f a b_min_1 fuel in
-      let/d res := (a + rec)%N in
-      res
+    | _ => a + mul_N_f a (b - 1) fuel
     end
   end.
 
 Definition mul_N (a b: N): N :=
-  let/d fuel := (1 + (N.to_nat b)) in
-  let/d res := mul_N_f a b fuel in
-  res.
+  mul_N_f a b (1 + N.to_nat b).
 
 Lemma mul_N_f_terminates: forall (fuel: nat) (a b: N) ,
   a <> 0%N -> b <> 0%N ->
@@ -103,11 +90,7 @@ Qed.
 Definition N_modulo (n1 n2: N): N :=
   match (N.to_nat n2) with
   | 0%nat => 0
-  | _ =>
-    let/d d := (n1 / n2)%N in
-    let/d m := (n2 * d)%N in
-    let/d res := (n1 - m)%N in
-    res
+  | _ => n1  - (n2 * (n1 / n2))
   end.
 
 Theorem nat_modulo_le: forall (n m: nat),
@@ -148,22 +131,14 @@ Qed.
 Fixpoint num2str_f (n: nat) (fuel: nat) (str: string): string :=
   if (n <? 10)%nat then
     let/d nd := nat_modulo n 10 in
-    let/d n1 := 48 + nd in
-    let/d a:= ascii_of_nat n1 in
-    let/d res := String a str in
-    res
+    let/d a:= ascii_of_nat (48 + nd) in
+    String a str
   else match fuel with
-  | 0 =>
-    let/d res := ""%string in
-    res
+  | 0 => ""
   | S fuel =>
     let/d nd := nat_modulo n 10 in
-    let/d n1 := 48 + nd in
-    let/d a := ascii_of_nat n1 in
-    let/d str1 := String a str in
-    let/d nrest := n / 10 in
-    let/d res := num2str_f nrest fuel str1 in
-    res
+    let/d a := ascii_of_nat (48 + nd) in
+    num2str_f (n / 10) fuel (String a str)
   end.
 
 Theorem num2str_terminates_str: forall (n1: nat) (n: nat) (str: string),
@@ -178,8 +153,7 @@ Proof.
 Qed.
 
 Definition num2str (n: nat) (str: string): string :=
-  let/d res := num2str_f n n str in
-  res.
+  num2str_f n n str.
 
 Theorem num2str_terminates: forall (n: nat) (str: string),
   num2str n str <> ""%string.
@@ -189,22 +163,15 @@ Qed.
 
 Fixpoint N2str_f (n: N) (fuel: nat) (str: string): string :=
   if (n <? 10)%N then
-    let/d n1 := (48 + n)%N in
-    let/d a:= ascii_of_N n1 in
-    let/d res := String a str in
-    res
+    let/d nd := N_modulo n 10 in
+    let/d a:= ascii_of_N (48 + nd) in
+    String a str
   else match fuel with
-  | 0%nat =>
-    let/d res := EmptyString in
-    res
+  | 0 => ""
   | S fuel =>
     let/d nd := N_modulo n 10 in
-    let/d n1 := (48 + nd)%N in
-    let/d a := ascii_of_N n1 in
-    let/d str1 := String a str in
-    let/d nrest := (n / 10)%N in
-    let/d res := N2str_f nrest fuel str1 in
-    res
+    let/d a := ascii_of_N (48 + nd) in
+    N2str_f (n / 10) fuel (String a str)
   end.
 
 Theorem N2str_terminates_str: forall (n1: nat) (n: N) (str: string),
@@ -242,10 +209,7 @@ Qed.
 
 Fixpoint list_length {A: Type} (l: list A): nat :=
   match l with
-  | x :: l => 
-    let/d rec := list_length l in
-    let/d res := 1 + rec in 
-    res
+  | x :: l => 1 + list_length l
   | [] => 0
   end.
 
@@ -257,10 +221,7 @@ Qed.
 
 Fixpoint list_append {A: Type} (l1 l2: list A): list A :=
   match l1 with
-  | x :: l1 =>
-    let/d rec := list_append l1 l2 in
-    let/d res := x :: rec in
-    res
+  | x :: l1 => x :: list_append l1 l2
   | [] => l2
   end.
 
@@ -275,31 +236,21 @@ Fixpoint flatten {A: Type} (xs: app_list A): list A :=
   match xs with
   | List l => l
   | Append l1 l2 =>
-    let/d flatten_l1 := flatten l1 in
-    let/d flatten_l2 := flatten l2 in
-    let/d res := list_append flatten_l1 flatten_l2 in
-    res
+    list_append (flatten l1) (flatten l2)
   end.
 
 Fixpoint app_list_length {A: Type} (xs: app_list A): nat :=
   match xs with
-  | List l => 
-    let/d res := list_length l in
-    res
+  | List l => list_length l
   | Append l1 l2 =>
-    let/d app_list_length_l1 := app_list_length l1 in
-    let/d app_list_length_l2 := app_list_length l2 in
-    let/d res := app_list_length_l1 + app_list_length_l2 in
-    res
+    app_list_length l1 + app_list_length l2
   end.
 
 Fixpoint string_append (s1 s2: string): string :=
   match s1 with
   | EmptyString => s2
   | String c s1 =>
-    let/d res := string_append s1 s2 in
-    let/d res1 := String c res in
-    res1
+    String c (string_append s1 s2)
   end.
 
 Lemma string_append_spec: forall s1 s2,

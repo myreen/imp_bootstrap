@@ -1,7 +1,7 @@
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf.
 Import Ltac2.Constr.Unsafe.
 From coqutil Require Import Tactics.reference_to_string.
-From impboot Require Import Ltac2Utils ltac2.Constrs ltac2.Stdlib2.
+From impboot Require Import Ltac2Utils ltac2.Constrs ltac2.Stdlib2 RelCompilerCommons.
 
 Ltac rewrite_let :=
   match goal with
@@ -24,7 +24,7 @@ Ltac2 rec has_fix_inside (c: constr): bool :=
 Ltac2 isFix (fconstr: constr): bool :=
   let fref := reference_of_constr fconstr in
   let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in
-  printf "Unfolded %t is %t" fconstr unfolded;
+  if debug_relcompile then printf "Unfolded %t is %t" fconstr unfolded else ();
   has_fix_inside unfolded.
 
 Ltac2 rewrite_with_equation (fconstr: constr): unit :=

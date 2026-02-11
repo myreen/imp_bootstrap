@@ -6,12 +6,13 @@ From impboot Require Import imperative.ImpSyntax.
 From impboot Require Import imperative.Printing.
 From impboot Require Import parsing.Parser.
 From impboot Require Import imp2asm.ImpToASMCodegen.
+From impboot Require Import assembly.ASMToString.
 
 Definition some_program1 :=
   Program [
     Func (name_enc "main") [] (
       Seq (
-        PutChar (Const (word.of_Z 48))
+        PutChar (Const (word.of_Z 65))
       ) (
         Return (Const (word.of_Z 0))
       )
@@ -24,6 +25,4 @@ Eval lazy in str2imp (list_ascii_of_string (imp2str some_program1)).
 
 Eval lazy in codegen some_program1.
 
-(* Eval lazy in eval_from *)
-
-
+Eval lazy in asm2str (codegen some_program1).

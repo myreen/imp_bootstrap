@@ -23,113 +23,35 @@ Notation f_lookup := (list (name * nat)).
 
 (* Generates the initialization code for execution *)
 Definition init (k: nat): asm :=
-  let/d rax := RAX in
-  let/d rdi := RDI in
-  let/d r12 := R12 in
-  let/d r13 := R13 in
-  let/d r14 := R14 in
-  let/d r15 := R15 in
-
-  let/d zero_word := word.of_Z (Z.of_nat 0) in
-  let/d instr0 := ASMSyntax.Const rax zero_word in
-  
-  let/d sixteen_word := word.of_Z (Z.of_nat 16) in
-  let/d instr1 := ASMSyntax.Const r12 sixteen_word in
-  
-  let/d max_word := word.of_Z (Z.of_N (2^63 - 1)) in
-  let/d instr2 := ASMSyntax.Const r13 max_word in
-  
-  let/d instr3 := ASMSyntax.Call k in
-  
-  let/d exit_zero_word := word.of_Z (Z.of_nat 0) in
-  let/d instr4 := ASMSyntax.Const rdi exit_zero_word in
-  
-  let/d instr5 := ASMSyntax.Exit in
-  
-  let/d malloc_comment := "malloc" in
-  let/d instr6 := ASMSyntax.Comment malloc_comment in
-  
-  let/d instr7 := ASMSyntax.Mov rax r15 in
-  
-  let/d instr8 := ASMSyntax.Sub rax r14 in
-  
-  let/d cond9 := ASMSyntax.Less r15 r14 in
-  let/d instr9 := ASMSyntax.Jump cond9 15 in
-  
-  let/d cond10 := ASMSyntax.Less rax rdi in
-  let/d instr10 := ASMSyntax.Jump cond10 15 in
-  
-  let/d instr11 := ASMSyntax.Mov rax r14 in
-  
-  let/d instr12 := ASMSyntax.Add r14 rdi in
-  
-  let/d instr13 := ASMSyntax.Ret in
-  
-  let/d exit4_comment := "exit 4" in
-  let/d instr14 := ASMSyntax.Comment exit4_comment in
-  
-  let/d instr15 := ASMSyntax.Push r15 in
-  
-  let/d four_word := word.of_Z (Z.of_nat 4) in
-  let/d instr16 := ASMSyntax.Const rdi four_word in
-  
-  let/d instr17 := ASMSyntax.Exit in
-  
-  let/d exit1_comment := "exit 1" in
-  let/d instr18 := ASMSyntax.Comment exit1_comment in
-  
-  let/d instr19 := ASMSyntax.Push r15 in
-  
-  let/d one_word := word.of_Z (Z.of_nat 1) in
-  let/d instr20 := ASMSyntax.Const rdi one_word in
-  
-  let/d instr21 := ASMSyntax.Exit in
-  
-  let/d list1 := [
-    (*  0 *) instr0;
-    (*  1 *) instr1;
-    (*  2 *) instr2;
+  [
+    (*  0 *) ASMSyntax.Const RAX (word.of_Z (Z.of_nat 0));
+    (*  1 *) ASMSyntax.Const R12 (word.of_Z (Z.of_nat 16));
+    (*  2 *) ASMSyntax.Const R13 (word.of_Z (Z.of_N (2^63 - 1)));
     (* jump to main function *)
-    (*  3 *) instr3
-  ] in
-  let/d list2 := [
+    (*  3 *) ASMSyntax.Call k;
     (* return to exit 0 *)
-    (*  4 *) instr4;
-    (*  5 *) instr5;
+    (*  4 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 0));
+    (*  5 *) ASMSyntax.Exit;
     (* alloc routine starts here: *)
-    (*  6 *) instr6;
-    (*  7 *) instr7
-  ] in
-  let/d list3 := [
-    (*  8 *) instr8;
-    (*  9 *) instr9;
-    (* 10 *) instr10;
-    (* 11 *) instr11
-  ] in
-  let/d list4 := [
-    (* 12 *) instr12;
-    (* 13 *) instr13;
+    (*  6 *) ASMSyntax.Comment "malloc";
+    (*  7 *) ASMSyntax.Mov RAX R15;
+    (*  8 *) ASMSyntax.Sub RAX R14;
+    (*  9 *) ASMSyntax.Jump (ASMSyntax.Less R15 R14) 15;
+    (* 10 *) ASMSyntax.Jump (ASMSyntax.Less RAX RDI) 15;
+    (* 11 *) ASMSyntax.Mov RAX R14;
+    (* 12 *) ASMSyntax.Add R14 RDI;
+    (* 13 *) ASMSyntax.Ret;
     (* give up: *)
-    (* 14 *) instr14; (* Internal error – OOM or compiler limitation *)
-    (* 15 *) instr15 (* align stack *)
-  ] in
-  let/d list5 := [
-    (* 16 *) instr16;
-    (* 17 *) instr17;
+    (* 14 *) ASMSyntax.Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
+    (* 15 *) ASMSyntax.Push R15; (* align stack *)
+    (* 16 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 4));
+    (* 17 *) ASMSyntax.Exit;
     (* abort: *)
-    (* 18 *) instr18; (* Internal error – OOM or compiler limitation *)
-    (* 19 *) instr19 (* align stack *)
-  ] in
-  let/d list6 := [
-    (* 20 *) instr20;
-    (* 21 *) instr21
-  ] in
-  let/d list12 := list_append list1 list2 in
-  let/d list123 := list_append list12 list3 in
-  let/d list1234 := list_append list123 list4 in
-  let/d list12345 := list_append list1234 list5 in
-  let/d result_list := list_append list12345 list6 in
-  result_list.
+    (* 18 *) ASMSyntax.Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
+    (* 19 *) ASMSyntax.Push R15; (* align stack *)
+    (* 20 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 1));
+    (* 21 *) ASMSyntax.Exit
+  ]%string.
 
 Definition allocLoc: nat := 7.
 
@@ -990,18 +912,16 @@ Fixpoint c_fundefs (ds: list func) (l: nat) (fs: f_lookup): (asm_appl * list (na
     res
   | d :: ds' =>
     let/d fname := name_of_func d in
-    (* TODO: removed the comment for now  *)
-    (* let/d empty_str := ""%string in
     let/d fname_str := name2str fname in
     let/d comment_instr := Comment fname_str in
     let/d comment_list := [comment_instr] in
-    let/d comment := List comment_list in *)
-    let/d l_plus1 := l (* + 1 *) in
+    let/d comment := List comment_list in
+    let/d l_plus1 := l + 1 in
     let/d '(c1, l1) := c_fundef d l_plus1 fs in
     let/d fundefs_result := c_fundefs ds' l1 fs in
     let/d '(c2_fs_pair, l2) := fundefs_result in
     let/d '(c2, fs') := c2_fs_pair in
-    let/d asm_combined := (* comment +++ *) c1 +++ c2 in
+    let/d asm_combined := comment +++ c1 +++ c2 in
     let/d fname_pair := (fname, l_plus1) in
     let/d fs_new := fname_pair :: fs' in
     let/d pair1 := (asm_combined, fs_new) in
@@ -1021,10 +941,7 @@ Definition codegen (prog : prog) : asm :=
   let/d empty_fs := [] in
   let/d '(_, fs, _) := c_fundefs funs init_l empty_fs in
   let/d '(asm1, _, _) := c_fundefs funs init_l fs in
-  (* let/d main_str := "main"%string in *)
-  (* let/d main_name := name_of_string main_str in *)
-  (* name_of_string "main"%string *)
-  let/d main_name := 1835100526%N in
+  let/d main_name := name_of_string ("main"%string) in
   let/d main_l := lookup fs main_name in
   let/d main_init := init main_l in
   let/d main_init_list := List main_init in

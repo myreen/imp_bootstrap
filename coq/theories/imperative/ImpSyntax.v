@@ -6,8 +6,11 @@ Notation name := N (only parsing).
 
 Open Scope N.
 
-Definition name_enc_l (s : list ascii): name :=
-  fold_right (fun c acc => (N_of_ascii c) * 256 + acc) 0 s.
+Fixpoint name_enc_l (s: list ascii): N :=
+  match s with
+  | [] => 0%N
+  | c :: s => (N_of_ascii c) * N.pow 256 (N.of_nat (List.length s)) + name_enc_l s
+  end.
 
 Definition name_of_string (s: string): name :=
   name_enc_l (list_ascii_of_string s).

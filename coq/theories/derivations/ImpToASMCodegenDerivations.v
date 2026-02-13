@@ -9,11 +9,10 @@ Require Import impboot.commons.CompilerUtils.
 From impboot Require Import automation.Ltac2Utils.
 From impboot Require Import functional.FunValues.
 From impboot Require Import functional.FunSemantics.
-Require Import impboot.automation.RelCompiler.
+From impboot.automation Require Import RelCompiler Ltac2Utils AutomationLemmas ToANF RelCompilerCommons.
 Require Import impboot.automation.ltac2.UnfoldFix.
-Require Import impboot.automation.Ltac2Utils.
-Require Import impboot.automation.AutomationLemmas.
 Require Import impboot.commons.CompilerUtils.
+From impboot Require Import fp2imp.FpToImpCodegen.
 Require Import coqutil.Word.Interface.
 Require Import ZArith.
 From Stdlib Require Import FunInd.
@@ -43,6 +42,7 @@ Derive init_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [init_prog].
 
 Derive c_assign_prog 
   in ltac2:(relcompile_tpe 'c_assign_prog 'c_assign ['index_of]) 
@@ -50,14 +50,7 @@ Derive c_assign_prog
 Proof.
   time relcompile.
 Qed.
-
-(* Derive name2str_prog
-  in ltac2:(relcompile_tpe 'name2str_prog 'name2str ['N_modulo]) 
-  as name2str_prog_proof.
-Proof.
-  time relcompile.
-  subst; eapply N_modulo_bounds; ltac1:(lia).
-Qed. *)
+Time Compute to_funs [c_assign_prog].
 
 Derive give_up_prog 
   in ltac2:(relcompile_tpe 'give_up_prog 'give_up []) 
@@ -65,6 +58,7 @@ Derive give_up_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [give_up_prog].
 
 Derive abortLoc_prog
   in ltac2:(relcompile_tpe 'abortLoc_prog 'abortLoc []) 
@@ -72,6 +66,7 @@ Derive abortLoc_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [abortLoc_prog].
 
 Derive c_const_prog
   in ltac2:(relcompile_tpe 'c_const_prog 'c_const []) 
@@ -79,6 +74,7 @@ Derive c_const_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_const_prog].
 
 Derive even_len_prog 
   in ltac2:(relcompile_tpe 'even_len_prog '@even_len []) 
@@ -86,6 +82,7 @@ Derive even_len_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [even_len_prog].
 
 Derive odd_len_prog 
   in ltac2:(relcompile_tpe 'odd_len_prog '@odd_len []) 
@@ -93,6 +90,7 @@ Derive odd_len_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [odd_len_prog].
 
 Derive index_of_prog 
   in ltac2:(relcompile_tpe 'index_of_prog 'index_of []) 
@@ -100,6 +98,7 @@ Derive index_of_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [index_of_prog].
 
 Derive index_of_opt_prog 
   in ltac2:(relcompile_tpe 'index_of_opt_prog 'index_of_opt []) 
@@ -107,6 +106,7 @@ Derive index_of_opt_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [index_of_opt_prog].
 
 Derive c_var_prog 
   in ltac2:(relcompile_tpe 'c_var_prog 'c_var ['index_of]) 
@@ -114,6 +114,7 @@ Derive c_var_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_var_prog].
 
 Derive all_binders_prog 
   in ltac2:(relcompile_tpe 'all_binders_prog 'all_binders ['@list_append]) 
@@ -121,6 +122,7 @@ Derive all_binders_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [all_binders_prog].
 
 Derive names_contain_prog 
   in ltac2:(relcompile_tpe 'names_contain_prog 'names_contain []) 
@@ -128,6 +130,7 @@ Derive names_contain_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [names_contain_prog].
 
 Derive names_unique_prog 
   in ltac2:(relcompile_tpe 'names_unique_prog 'names_unique ['names_contain]) 
@@ -135,6 +138,7 @@ Derive names_unique_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [names_unique_prog].
 
 Derive unique_binders_prog 
   in ltac2:(relcompile_tpe 'unique_binders_prog 'unique_binders ['all_binders; 'names_unique]) 
@@ -142,6 +146,7 @@ Derive unique_binders_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [unique_binders_prog].
 
 Derive make_vs_from_binders_prog 
   in ltac2:(relcompile_tpe 'make_vs_from_binders_prog 'make_vs_from_binders []) 
@@ -149,6 +154,7 @@ Derive make_vs_from_binders_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [make_vs_from_binders_prog].
 
 Derive filter_name_prog 
   in ltac2:(relcompile_tpe 'filter_name_prog 'filter_name []) 
@@ -156,6 +162,7 @@ Derive filter_name_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [filter_name_prog].
 
 Derive remove_names_prog 
   in ltac2:(relcompile_tpe 'remove_names_prog 'remove_names ['filter_name]) 
@@ -163,6 +170,7 @@ Derive remove_names_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [remove_names_prog].
 
 Derive call_v_stack_prog 
   in ltac2:(relcompile_tpe 'call_v_stack_prog 'call_v_stack []) 
@@ -170,6 +178,7 @@ Derive call_v_stack_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [call_v_stack_prog].
 
 Derive c_pushes_vs_prog 
   in ltac2:(relcompile_tpe 'c_pushes_vs_prog 'c_pushes_vs ['@list_length; 'call_v_stack]) 
@@ -177,14 +186,24 @@ Derive c_pushes_vs_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_pushes_vs_prog].
+
+Derive get_vs_binders_prog
+  in ltac2:(relcompile_tpe 'get_vs_binders_prog 'get_vs_binders ['@even_len; '@list_append])
+  as get_vs_binders_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+Time Compute to_funs [get_vs_binders_prog].
 
 Derive c_declare_binders_prog 
   in ltac2:(relcompile_tpe 'c_declare_binders_prog 'c_declare_binders
-    ['unique_binders; 'remove_names; 'make_vs_from_binders; '@list_append; 'c_pushes_vs; '@even_len; '@list_length]) 
+    ['unique_binders; 'remove_names; 'make_vs_from_binders; '@list_append; 'c_pushes_vs; '@even_len; '@list_length; 'get_vs_binders]) 
   as c_declare_binders_prog_proof.
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_declare_binders_prog].
 
 Derive c_add_prog 
   in ltac2:(relcompile_tpe 'c_add_prog 'c_add []) 
@@ -192,6 +211,7 @@ Derive c_add_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_add_prog].
 
 Derive c_sub_prog 
   in ltac2:(relcompile_tpe 'c_sub_prog 'c_sub []) 
@@ -199,6 +219,7 @@ Derive c_sub_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_sub_prog].
 
 Derive c_div_prog 
   in ltac2:(relcompile_tpe 'c_div_prog 'c_div []) 
@@ -206,6 +227,7 @@ Derive c_div_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_div_prog].
 
 Derive c_alloc_prog
   in ltac2:(relcompile_tpe 'c_alloc_prog 'c_alloc ['@even_len]) 
@@ -213,6 +235,7 @@ Derive c_alloc_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_alloc_prog].
 
 Derive c_read_prog
   in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['@even_len; '@app_list_length]) 
@@ -220,6 +243,7 @@ Derive c_read_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_read_prog].
 
 Derive c_write_prog 
   in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['@even_len; '@app_list_length]) 
@@ -227,6 +251,7 @@ Derive c_write_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_write_prog].
 
 Derive c_load_prog 
   in ltac2:(relcompile_tpe 'c_load_prog 'c_load []) 
@@ -234,6 +259,7 @@ Derive c_load_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_load_prog].
 
 Derive c_store_prog 
   in ltac2:(relcompile_tpe 'c_store_prog 'c_store ['@list_append])
@@ -241,6 +267,7 @@ Derive c_store_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_store_prog].
 
 Derive c_exp_prog 
   in ltac2:(relcompile_tpe 'c_exp_prog 'c_exp ['c_var; 'c_const; 'c_add; 'c_sub; 'c_div; 'c_load; '@app_list_length]) 
@@ -248,6 +275,7 @@ Derive c_exp_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_exp_prog].
 
 Derive c_exps_prog 
   in ltac2:(relcompile_tpe 'c_exps_prog 'c_exps ['c_exp]) 
@@ -255,6 +283,7 @@ Derive c_exps_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_exps_prog].
 
 Derive c_cmp_prog 
   in ltac2:(relcompile_tpe 'c_cmp_prog 'c_cmp []) 
@@ -262,6 +291,7 @@ Derive c_cmp_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_cmp_prog].
 
 Derive c_test_jump_prog 
   in ltac2:(relcompile_tpe 'c_test_jump_prog 'c_test_jump ['c_exp; 'c_cmp; '@app_list_length; '@list_append]) 
@@ -269,6 +299,7 @@ Derive c_test_jump_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_test_jump_prog].
 
 Derive lookup_prog 
   in ltac2:(relcompile_tpe 'lookup_prog 'lookup []) 
@@ -276,6 +307,7 @@ Derive lookup_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [lookup_prog].
 
 Derive make_ret_prog 
   in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret ['@list_length]) 
@@ -283,6 +315,7 @@ Derive make_ret_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [make_ret_prog].
 
 Derive c_pops_prog 
   in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; '@even_len; '@list_length]) 
@@ -290,6 +323,7 @@ Derive c_pops_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_pops_prog].
 
 Derive c_pushes_prog 
   in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_v_stack; '@list_length; 'c_pushes_vs]) 
@@ -297,6 +331,7 @@ Derive c_pushes_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_pushes_prog].
 
 Derive c_call_prog 
   in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; '@even_len; '@app_list_length]) 
@@ -304,6 +339,7 @@ Derive c_call_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_call_prog].
 
 Derive c_cmd_prog 
   in ltac2:(relcompile_tpe 'c_cmd_prog 'c_cmd 
@@ -314,6 +350,7 @@ Derive c_cmd_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_cmd_prog].
 
 Derive c_fundef_prog 
   in ltac2:(relcompile_tpe 'c_fundef_prog 'c_fundef 
@@ -322,6 +359,7 @@ Derive c_fundef_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_fundef_prog].
 
 Derive get_funcs_prog 
   in ltac2:(relcompile_tpe 'get_funcs_prog 'get_funcs []) 
@@ -329,6 +367,7 @@ Derive get_funcs_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [get_funcs_prog].
 
 Derive name_of_func_prog 
   in ltac2:(relcompile_tpe 'name_of_func_prog 'name_of_func []) 
@@ -336,13 +375,15 @@ Derive name_of_func_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [name_of_func_prog].
 
 Derive c_fundefs_prog 
-  in ltac2:(relcompile_tpe 'c_fundefs_prog 'c_fundefs ['c_fundef; 'name_of_func]) 
+  in ltac2:(relcompile_tpe 'c_fundefs_prog 'c_fundefs ['c_fundef; 'name_of_func; 'N2ascii_default])
   as c_fundefs_prog_proof.
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [c_fundefs_prog].
 
 Derive codegen_prog 
   in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fundefs; 'lookup; 'init; 'get_funcs; '@app_list_length; '@flatten]) 
@@ -350,51 +391,53 @@ Derive codegen_prog
 Proof.
   time relcompile.
 Qed.
+Time Compute to_funs [codegen_prog].
 
 Definition ImpToASMCodegen_funs := [
-  give_up_prog;                (* 0 *)
-  abortLoc_prog;               (* 1 *)
-  c_const_prog;                (* 2 *)
-  even_len_prog;               (* 3 *)
-  odd_len_prog;                (* 4 *)
-  index_of_prog;               (* 5 *)
-  index_of_opt_prog;           (* 6 *)
-  c_var_prog;                  (* 7 *) (* depends on index_of *)
-  c_assign_prog;               (* 8 *) (* depends on index_of *)
-  all_binders_prog;            (* 9 *)
-  names_contain_prog;          (* 10 *)
-  names_unique_prog;           (* 11 *) (* depends on names_contain *)
-  unique_binders_prog;         (* 12 *) (* depends on all_binders, names_unique *)
-  make_vs_from_binders_prog;   (* 13 *)
-  filter_name_prog;            (* 14 *)
-  remove_names_prog;           (* 15 *) (* depends on filter_name *)
-  call_v_stack_prog;           (* 16 *)
-  c_pushes_vs_prog;            (* 17 *) (* depends on call_v_stack *)
-  c_declare_binders_prog;      (* 18 *) (* depends on unique_binders, remove_names, make_vs_from_binders, c_pushes_vs, even_len *)
-  c_add_prog;                  (* 19 *)
-  c_sub_prog;                  (* 20 *)
-  c_div_prog;                  (* 21 *)
-  c_load_prog;                 (* 22 *)
-  c_exp_prog;                  (* 23 *) (* depends on c_var, c_const, c_add, c_sub, c_div, c_load *)
-  c_exps_prog;                 (* 24 *) (* depends on c_exp *)
-  c_cmp_prog;                  (* 25 *)
-  c_test_jump_prog;            (* 26 *) (* depends on c_exp, c_cmp *)
-  c_alloc_prog;                (* 27 *) (* depends on even_len *)
-  c_read_prog;                 (* 28 *) (* depends on even_len *)
-  c_write_prog;                (* 29 *) (* depends on even_len *)
-  c_store_prog;                (* 30 *)
-  lookup_prog;                 (* 31 *)
-  make_ret_prog;               (* 32 *)
-  c_pops_prog;                 (* 33 *) (* depends on give_up, even_len *)
-  c_pushes_prog;               (* 34 *) (* depends on call_v_stack, c_pushes_vs *)
-  c_call_prog;                 (* 35 *) (* depends on c_pops, even_len *)
-  c_cmd_prog;                  (* 36 *) (* depends on c_exp, c_assign, c_store, c_test_jump, c_exps, c_call, c_var, make_ret, c_alloc, c_read, c_write, abortLoc, lookup, odd_len *)
-  c_fundef_prog;               (* 37 *) (* depends on c_pushes, unique_binders, make_vs_from_binders, c_cmd, even_len, c_declare_binders *)
-  get_funcs_prog;              (* 38 *)
-  name_of_func_prog;           (* 39 *)
-  c_fundefs_prog;              (* 40 *) (* depends on c_fundef, name_of_func *)
-  init_prog;                   (* 41 *)
-  codegen_prog                 (* 42 *) (* depends on c_fundefs, lookup, init, get_funcs, flatten *)
+  give_up_prog;                
+  abortLoc_prog;               
+  c_const_prog;                
+  even_len_prog;               
+  odd_len_prog;                
+  index_of_prog;               
+  index_of_opt_prog;           
+  c_var_prog;                  
+  c_assign_prog;               
+  all_binders_prog;            
+  names_contain_prog;          
+  names_unique_prog;           
+  unique_binders_prog;         
+  make_vs_from_binders_prog;   
+  filter_name_prog;            
+  remove_names_prog;           
+  call_v_stack_prog;           
+  c_pushes_vs_prog;            
+  get_vs_binders_prog;
+  c_declare_binders_prog;      
+  c_add_prog;                  
+  c_sub_prog;                  
+  c_div_prog;                  
+  c_load_prog;                 
+  c_exp_prog;                  
+  c_exps_prog;                 
+  c_cmp_prog;                  
+  c_test_jump_prog;            
+  c_alloc_prog;                
+  c_read_prog;                 
+  c_write_prog;                
+  c_store_prog;                
+  lookup_prog;                 
+  make_ret_prog;               
+  c_pops_prog;                 
+  c_pushes_prog;               
+  c_call_prog;                 
+  c_cmd_prog;                  
+  c_fundef_prog;               
+  get_funcs_prog;              
+  name_of_func_prog;           
+  c_fundefs_prog;              
+  init_prog;                   
+  codegen_prog                 
 ].
 
 From impboot Require Import automation.ltac2.Messages.
@@ -469,20 +512,7 @@ Theorem codegen_thm:
     eval_app (name_enc "codegen") [encode p] s ((encode (codegen p)), s).
 Proof.
   intros * Hlookup_fun_utils Hlookup_fun.
-  assert_eval_app_by 'mul_nat 'mul_nat_prog_proof 'Hlookup_fun_utils 0.
-  assert_eval_app_by 'mul_N_f 'mul_N_f_prog_proof 'Hlookup_fun_utils 1.
-  assert_eval_app_by 'mul_N 'mul_N_prog_proof 'Hlookup_fun_utils 2.
-  assert_eval_app_by 'nat_modulo 'nat_modulo_prog_proof 'Hlookup_fun_utils 3.
-  assert_eval_app_by 'N_modulo 'N_modulo_prog_proof 'Hlookup_fun_utils 4.
-  assert_eval_app_by 'num2str_f 'num2str_f_prog_proof 'Hlookup_fun_utils 5.
-  assert_eval_app_by 'num2str 'num2str_prog_proof 'Hlookup_fun_utils 6.
-  assert_eval_app_by 'N2str_f 'N2str_f_prog_proof 'Hlookup_fun_utils 7.
-  assert_eval_app_by 'N2str 'N2str_prog_proof 'Hlookup_fun_utils 8.
-  assert_eval_app_by '@list_length 'list_length_prog_proof 'Hlookup_fun_utils 9.
-  assert_eval_app_by '@list_append 'list_append_prog_proof 'Hlookup_fun_utils 10.
-  assert_eval_app_by '@flatten 'flatten_prog_proof 'Hlookup_fun_utils 11.
-  assert_eval_app_by '@app_list_length 'app_list_length_prog_proof 'Hlookup_fun_utils 12.
-  assert_eval_app_by 'string_append 'string_append_prog_proof 'Hlookup_fun_utils 13.
+  assert_eval_app_compiler_utils 'Hlookup_fun_utils.
 
   assert_eval_app_by 'give_up 'give_up_prog_proof 'Hlookup_fun 0.
   assert_eval_app_by 'abortLoc 'abortLoc_prog_proof 'Hlookup_fun 1.
@@ -502,30 +532,31 @@ Proof.
   assert_eval_app_by 'remove_names 'remove_names_prog_proof 'Hlookup_fun 15.
   assert_eval_app_by 'call_v_stack 'call_v_stack_prog_proof 'Hlookup_fun 16.
   assert_eval_app_by 'c_pushes_vs 'c_pushes_vs_prog_proof 'Hlookup_fun 17.
-  assert_eval_app_by 'c_declare_binders 'c_declare_binders_prog_proof 'Hlookup_fun 18.
-  assert_eval_app_by 'c_add 'c_add_prog_proof 'Hlookup_fun 19.
-  assert_eval_app_by 'c_sub 'c_sub_prog_proof 'Hlookup_fun 20.
-  assert_eval_app_by 'c_div 'c_div_prog_proof 'Hlookup_fun 21.
-  assert_eval_app_by 'c_load 'c_load_prog_proof 'Hlookup_fun 22.
-  assert_eval_app_by 'c_exp 'c_exp_prog_proof 'Hlookup_fun 23.
-  assert_eval_app_by 'c_exps 'c_exps_prog_proof 'Hlookup_fun 24.
-  assert_eval_app_by 'c_cmp 'c_cmp_prog_proof 'Hlookup_fun 25.
-  assert_eval_app_by 'c_test_jump 'c_test_jump_prog_proof 'Hlookup_fun 26.
-  assert_eval_app_by 'c_alloc 'c_alloc_prog_proof 'Hlookup_fun 27.
-  assert_eval_app_by 'c_read 'c_read_prog_proof 'Hlookup_fun 28.
-  assert_eval_app_by 'c_write 'c_write_prog_proof 'Hlookup_fun 29.
-  assert_eval_app_by 'c_store 'c_store_prog_proof 'Hlookup_fun 30.
-  assert_eval_app_by 'lookup 'lookup_prog_proof 'Hlookup_fun 31.
-  assert_eval_app_by 'make_ret 'make_ret_prog_proof 'Hlookup_fun 32.
-  assert_eval_app_by 'c_pops 'c_pops_prog_proof 'Hlookup_fun 33.
-  assert_eval_app_by 'c_pushes 'c_pushes_prog_proof 'Hlookup_fun 34.
-  assert_eval_app_by 'c_call 'c_call_prog_proof 'Hlookup_fun 35.
-  assert_eval_app_by 'c_cmd 'c_cmd_prog_proof 'Hlookup_fun 36.
-  assert_eval_app_by 'c_fundef 'c_fundef_prog_proof 'Hlookup_fun 37.
-  assert_eval_app_by 'get_funcs 'get_funcs_prog_proof 'Hlookup_fun 38.
-  assert_eval_app_by 'name_of_func 'name_of_func_prog_proof 'Hlookup_fun 39.
-  assert_eval_app_by 'c_fundefs 'c_fundefs_prog_proof 'Hlookup_fun 40.
-  assert_eval_app_by 'init 'init_prog_proof 'Hlookup_fun 41.
-  assert_eval_app_by 'codegen 'codegen_prog_proof 'Hlookup_fun 42.
+  assert_eval_app_by 'get_vs_binders 'get_vs_binders_prog_proof 'Hlookup_fun 18.
+  assert_eval_app_by 'c_declare_binders 'c_declare_binders_prog_proof 'Hlookup_fun 19.
+  assert_eval_app_by 'c_add 'c_add_prog_proof 'Hlookup_fun 20.
+  assert_eval_app_by 'c_sub 'c_sub_prog_proof 'Hlookup_fun 21.
+  assert_eval_app_by 'c_div 'c_div_prog_proof 'Hlookup_fun 22.
+  assert_eval_app_by 'c_load 'c_load_prog_proof 'Hlookup_fun 23.
+  assert_eval_app_by 'c_exp 'c_exp_prog_proof 'Hlookup_fun 24.
+  assert_eval_app_by 'c_exps 'c_exps_prog_proof 'Hlookup_fun 25.
+  assert_eval_app_by 'c_cmp 'c_cmp_prog_proof 'Hlookup_fun 26.
+  assert_eval_app_by 'c_test_jump 'c_test_jump_prog_proof 'Hlookup_fun 27.
+  assert_eval_app_by 'c_alloc 'c_alloc_prog_proof 'Hlookup_fun 28.
+  assert_eval_app_by 'c_read 'c_read_prog_proof 'Hlookup_fun 29.
+  assert_eval_app_by 'c_write 'c_write_prog_proof 'Hlookup_fun 30.
+  assert_eval_app_by 'c_store 'c_store_prog_proof 'Hlookup_fun 31.
+  assert_eval_app_by 'lookup 'lookup_prog_proof 'Hlookup_fun 32.
+  assert_eval_app_by 'make_ret 'make_ret_prog_proof 'Hlookup_fun 33.
+  assert_eval_app_by 'c_pops 'c_pops_prog_proof 'Hlookup_fun 34.
+  assert_eval_app_by 'c_pushes 'c_pushes_prog_proof 'Hlookup_fun 35.
+  assert_eval_app_by 'c_call 'c_call_prog_proof 'Hlookup_fun 36.
+  assert_eval_app_by 'c_cmd 'c_cmd_prog_proof 'Hlookup_fun 37.
+  assert_eval_app_by 'c_fundef 'c_fundef_prog_proof 'Hlookup_fun 38.
+  assert_eval_app_by 'get_funcs 'get_funcs_prog_proof 'Hlookup_fun 39.
+  assert_eval_app_by 'name_of_func 'name_of_func_prog_proof 'Hlookup_fun 40.
+  assert_eval_app_by 'c_fundefs 'c_fundefs_prog_proof 'Hlookup_fun 41.
+  assert_eval_app_by 'init 'init_prog_proof 'Hlookup_fun 42.
+  assert_eval_app_by 'codegen 'codegen_prog_proof 'Hlookup_fun 43.
   eauto.
 Qed.

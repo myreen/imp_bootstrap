@@ -261,3 +261,58 @@ Proof.
   - rewrite IHs1.
     reflexivity.
 Qed.
+
+Open Scope string_scope.
+
+Fixpoint N2ascii_f (n: N) (fuel: nat): option string :=
+  if (n =? 0)%N then None else
+  let/d k := N_modulo n 256 in
+  if (k <? N_of_ascii "*"%char)%N then None else
+  if (N_of_ascii "z"%char <? k)%N then None else
+  if (k =? N_of_ascii "."%char)%N then None else
+  if (n <? 256)%N then Some (String (ascii_of_N k) EmptyString) else
+  match fuel with
+  | 0%nat => Some EmptyString
+  | S fuel =>
+    let/d r := N2ascii_f (n / 256) fuel in
+    match r return option string with
+    | None => None
+    | Some s => Some (s ++ String (ascii_of_N k) EmptyString)
+    end
+  end.
+
+Theorem N2ascii_f_terminates: forall (n1: nat) (n: N),
+  (n <= ((N.of_nat n1 * 256) - 1))%N -> N2ascii_f n n1 <> Some EmptyString.
+Proof.
+  Opaque N.add N.div N_modulo N_of_ascii.
+  induction n1; intros; simpl; unfold dlet; simpl.
+  all: destruct (n =? 0)%N eqn:?; rewrite ?N.eqb_eq, ?N.eqb_neq in *; subst; try lia; try congruence.
+  set (k := N_modulo n 256).
+  destruct (_ <? _)%N eqn:?; try congruence.
+  destruct (_ <? k)%N eqn:?; try congruence.
+  destruct (_ =? _)%N eqn:?; try congruence.
+  destruct (n <? _)%N eqn:?; [congruence|]; rewrite N.ltb_ge in *.
+  destruct N2ascii_f; try congruence.
+  destruct s; simpl; try congruence.
+Qed.
+Transparent N.add N.div N_modulo N_of_ascii.
+
+Definition N2ascii (n: N): option string :=
+  N2ascii_f n (N.to_nat (n / 256 + 1)).
+
+Theorem N2ascii_terminates: forall (n: N),
+  N2ascii n <> Some EmptyString.
+Proof.
+  intros; eapply N2ascii_f_terminates; rewrite Nnat.N2Nat.id.
+  rewrite (N.div_mod n 256) at 1 by discriminate.
+  rewrite N.mul_comm, N.mul_add_distr_r, N.mul_1_l.
+  assert (n mod 256 < 256)%N by (eapply N.mod_lt; lia).
+  destruct (n mod 256)%N eqn:?; rewrite ?N.eqb_eq, ?N.eqb_neq in *; subst; try lia.
+Qed.
+
+Definition N2ascii_default (n: N): string :=
+  let/d s := N2ascii n in
+  match s return string with
+  | None => ""
+  | Some sv => sv
+  end.

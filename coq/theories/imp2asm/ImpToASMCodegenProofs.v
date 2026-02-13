@@ -1,4 +1,4 @@
-(* Require Import impboot.utils.Core.
+Require Import impboot.utils.Core.
 Require Import impboot.utils.Llist.
 Import Llist.
 Require Import impboot.utils.Env.
@@ -2503,6 +2503,7 @@ Proof.
     + simpl in *; assumption.
 Qed.
 
+Open Scope list_scope.
 Theorem list_update_append: forall {A: Type} (xs1 xs2 : list A) xnew n,
   n < List.length xs1 ->
   list_update n xnew (xs1 ++ xs2) = list_update n xnew xs1 ++ xs2.
@@ -3584,7 +3585,6 @@ Proof.
   destruct c_read eqn:?; simpl in *.
   destruct c_assign eqn:?; simpl in *; cleanup.
   unfold c_assign, dlet, c_read, dlet in *.
-  rewrite app_list_length_spec in *.
   simpl in *; unfold dlet in *; simpl in *; cleanup.
   simpl flatten in *; rewrite list_append_spec in *.
   repeat rewrite code_in_append in *; cleanup.
@@ -5240,12 +5240,12 @@ Proof.
   simpl c_fundef in *; unfold dlet in *; cleanup.
   destruct c_pushes eqn:?.
   pat `c_pushes _ _ = (?p, _)` at destruct p.
-  remember (if even_len _ then _ else _) as vs_body.
+  unfold c_declare_binders in *|-; unfold dlet in *; simpl in *; cleanup.
+  remember (get_vs_binders _ _) as vs_body.
   simpl in *; unfold dlet in *; simpl in *.
   repeat (rewrite ?list_append_spec, ?app_list_length_spec, ?list_length_spec, ?length_app in * ).
   destruct c_cmd eqn:?.
   repeat (rewrite code_in_append in * ); cleanup; simpl in *; cleanup.
-  rewrite even_len_spec in *.
   unfold has_stack in *; cleanup.
   specialize pops_regs_rw with (ws := x) (rgs := regs s) as ?; cleanup.
   spat `c_pushes` at pose proof spat as Htmp; eapply pushes_thm with 
@@ -5282,8 +5282,7 @@ Proof.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_sub_rsp; simpl; eauto.
-      unfold set_stack; simpl.
-      eauto.
+      unfold set_stack; simpl; eauto.
     }
     simpl in *.
     crunch_side_conditions.
@@ -5320,7 +5319,8 @@ Proof.
   3: { (* binders_ok *)
     pat `l0 = _` at rewrite pat in *.
     Opaque call_v_stack remove_names.
-    destruct l; unfold c_pushes_vs; destruct even; simpl in *; unfold dlet in *; simpl in *.
+    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec.
+    destruct l; unfold c_pushes_vs; destruct even_len; simpl in *; unfold dlet in *; simpl in *.
     all: try eapply binders_ok_append2 with (b1 := [None]).
     all: try eapply binders_ok_append with (b2 := [None]).
     all: try (rewrite app_assoc; eapply binders_ok_append with (b2 := [None])).
@@ -5348,8 +5348,8 @@ Proof.
     subst vs_body l0.
     unfold env_ok in *; cleanup.
     rewrite length_app, length_map, make_vs_from_binders_spec in *; simpl.
+    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec, ?even_len_spec in *.
     destruct even eqn:?; rewrite ?length_map, ?length_app, ?length_map in *; simpl.
-    all: spat `even` at rewrite spat.
     all: pat `_ = List.length x8` at rewrite <- pat; simpl in *.
     all: rewrite ?length_map, ?length_app, ?length_map in *; simpl in *.
     all: try rewrite Nat.add_assoc, Nat.add_1_r, Nat.odd_succ in *; eauto.
@@ -5707,17 +5707,17 @@ Proof.
     split; [reflexivity|].
     spat `c_fundef` at rewrite spat; simpl; unfold dlet; simpl.
     repeat rewrite list_append_spec in *.
-    (* assert (xs ++ Comment (name2str n1) :: flatten a0 ++ flatten a1 = (xs ++ [Comment (name2str n1)]) ++ flatten a0 ++ flatten a1) as ->. *)
-    (* 1: induction xs; simpl; try rewrite <- app_assoc; eauto. *)
+    assert (xs ++ Comment (N2ascii_default n1) :: flatten a0 ++ Ret :: flatten a1 = (xs ++ [Comment (N2ascii_default n1)]) ++ flatten a0 ++ Ret :: flatten a1) as ->.
+    1: induction xs; simpl; try rewrite <- app_assoc; eauto.
     eapply code_in_append_left2.
-    (* rewrite length_app; simpl. *)
+    rewrite length_app; simpl.
     lia.
   }
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-  (* assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) = List.length (xs ++ flatten (List [Comment (name2str n1)] +++ a0))) as Hrwlength. *)
-  assert (Datatypes.length (flatten a0) + (Datatypes.length xs) = List.length (xs ++ flatten a0)) as Hrwlength.
-  1: simpl; repeat rewrite length_app; simpl; lia.
+  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2ascii_default n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
+  (* assert (Datatypes.length (flatten a0) + (Datatypes.length xs) = List.length (xs ++ flatten a0)) as Hrwlength. *)
+  1: simpl; rewrite list_append_spec; repeat rewrite length_app; simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.
   spat `c_fundefs` at eapply IHfuncs in spat; eauto; cleanup; simpl; unfold dlet in *; simpl in *.
   eexists; split; simpl.
@@ -5728,8 +5728,12 @@ Proof.
   }
   simpl in *; unfold dlet in *; simpl in *.
   repeat rewrite list_append_spec in *.
-  (* rewrite app_comm_cons. *)
+  rewrite app_comm_cons.
   rewrite app_assoc.
+  assert (Ret :: flatten a1 = [Ret] ++ flatten a1) as -> by (simpl; reflexivity).
+  rewrite app_assoc with (n := flatten a1).
+  rewrite <- app_assoc with (n := [Ret]).
+  rewrite <- app_comm_cons.
   eauto.
 Qed.
 
@@ -5802,7 +5806,8 @@ Proof.
   remember (lookup l _) as lookup_main_l.
   repeat rewrite list_append_spec in *.
   repeat rewrite list_length_spec in *.
-  pat `c_cmd _ _ _ ([None] ++ ?vs) = _` at remember vs as vs_binders.
+  simpl in *|-.
+  pat `c_cmd _ _ _ (None :: ?vs) = _` at remember vs as vs_binders.
   repeat (rewrite code_in_append in *; simpl in * ); cleanup.
   pose proof c_cmd_correct as Hccorrect; unfold goal_cmd in Hccorrect.
   eapply Hccorrect with (curr := (Word (word.of_Z 0)) :: (List.map (fun _ => Uninit) vs_binders)) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
@@ -5966,6 +5971,7 @@ Proof.
     assert (None :: vs_binders = [None] ++ vs_binders) as -> by (simpl; congruence).
     eapply binders_ok_append2.
     pat `vs_binders = _` at rewrite pat.
+    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec.
     destruct (make_vs_from_binders) eqn:?.
     all: pat `make_vs_from_binders _ = _` at rewrite <- pat.
     2: destruct even_len.
@@ -5975,6 +5981,7 @@ Proof.
   6: unfold odd, even; reflexivity.
   6: {
     pat `vs_binders = _` at rewrite pat.
+    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec.
     destruct (make_vs_from_binders) eqn:?.
     all: rewrite length_map; simpl; eauto.
     rewrite app_comm_cons.
@@ -5985,7 +5992,7 @@ Proof.
     all: pat `even _ = _` at rewrite pat; reflexivity.
   }
   6: { (* code_in *)
-    rewrite Nat.add_0_r in *.
+    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec.
     pat `lookup_main_l = _` at rewrite <- pat.
     pat `instructions t = _` at rewrite pat.
     eauto.
@@ -6302,4 +6309,4 @@ Proof.
   rewrite get_prefix_correct with (s1 := ASMSemantics.output x6); eauto.
   eapply prefix_trans; eauto.
 Qed.
- *)
+

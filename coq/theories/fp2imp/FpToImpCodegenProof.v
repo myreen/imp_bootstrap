@@ -808,7 +808,8 @@ Proof.
     }
     destruct to_cons eqn:Hto_cons; cleanup.
     1: { (* assign cons *)
-
+      specialize func_rel_from_state_rel with (1:= Hstate_rel) as Hfunc_rel.
+      unfold func_rel in Hfunc_rel; destruct Hfunc_rel as [Hbuiltin _].
       unfold to_cons in *; cleanup.
       destruct to_cmd eqn:?; cleanup.
       destruct (dest_Cons exp1) eqn:?; cleanup; destruct p as [e1 exp1'].
@@ -822,10 +823,26 @@ Proof.
       all: match goal with
       | H : context C [ match to_exp ?e with _ => _ end ] |- _ => destruct (to_exp e) eqn:?
       end; cleanup.
-      all: do 3 eexists.
+      all: eexists (S _); do 2 eexists.
       4: {
         unfold dest_Cons in *; destruct exp1; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+        clear Heqo1.
         inversion Heval1; subst.
+        inversion EVAL_ARGS; cleanup; subst.
+        destruct (to_exp e0) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+        destruct vs0; try destruct vs0; cleanup.
+        eapply to_exp_thm in Heqo1; eauto; cleanup; subst.
+        eapply to_exp_thm in Heqo2; eauto; cleanup; subst.
+        (* match goal with
+        | |- context [ eval_cmd (Seq (Call _ _ _) ?c2) _ ?t = _ ] =>
+          specialize Call_cons with (e1 := e1) (e2 := e) (t := t) as ?
+        end. *)
+        specialize (Call_cons t e1 e _ _ x x0 n ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)) as Hcall; cleanup.
+        cbv zeta in Hcall; destruct Hcall as [Hcall ?].
+        rewrite Hcall; clear Hcall.
+        (* unfold set_vars, set_memory, add_steps_done; simpl. *)
+        (* eapply IH.
+        split; try reflexivity. *)
         admit.
       }
       1: specialize Call_cons5 with

@@ -5,6 +5,12 @@ From impboot Require Import commons.CompilerUtils.
 
 Open Scope string.
 
+Notation "cst ::: s" :=
+  ltac:(match cst with
+        | context c[EmptyString] => let c' := context c[s] in exact c'
+        | _ => fail "Left string is not constant"
+        end) (at level 60, only parsing).
+
 (* This is named reg2str1, since when I named it reg2str, it reified forever, see example in AsmToStringDerivations.v *)
 Definition reg2str1 (r: reg) (str: string): string :=
   match r with

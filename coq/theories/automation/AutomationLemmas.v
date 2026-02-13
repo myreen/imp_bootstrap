@@ -753,6 +753,163 @@ Proof.
   assumption.
 Qed.
 
+Fixpoint reify_string (str: list ascii) (str_rest: FunSyntax.exp) :=
+  match str with
+  | [] => str_rest
+  | a :: str => FunSyntax.Op FunSyntax.Cons
+                [FunSyntax.Const (N_of_ascii a); reify_string str str_rest]
+  end.
+
+Eval cbv -[N_of_ascii] in reify_string (list_ascii_of_string "movql") (FunSyntax.Const 0).
+
+Lemma reify_string_ok (l r : list ascii) (rexp: FunSyntax.exp):
+  ∀ (env : FEnv.env) (s : state),
+    env |-- ([rexp], s) ---> ([encode r], s) ->
+    env |-- ([reify_string l rexp], s) ---> ([encode (l ++ r)%list], s).
+Proof.
+  induction l; simpl; repeat econstructor; eauto.
+Qed.
+
+From coqutil Require Import Datatypes.List.
+From impboot.commons Require Import CompilerUtils. 
+
+Definition ne (name: string) n := name_enc (name ++ (N2str n "")).
+
+Fixpoint reify_string_chunks (name: string) (n: N) (chunks: list (list ascii))
+  (onto: FunSyntax.exp -> FunSyntax.exp) :=
+  match chunks with
+  | [] => onto (FunSyntax.Const 0)
+  (* | [s] => reify_string s LATER: Save time when there's just one chunk *)
+  | s :: chunks =>
+      reify_string_chunks
+        name (n + 1) chunks
+        (fun v =>
+           let name' := ne name n in
+           FunSyntax.Let
+             name'
+             (reify_string s v)
+             (onto (FunSyntax.Var name')))
+  end.
+
+Definition reify_chunked_k (name: string) (sz: nat) (str: list ascii)
+  (onto: FunSyntax.exp -> FunSyntax.exp) :=
+  reify_string_chunks name 0 (chunk sz str) onto.
+
+Eval cbv -[N_of_ascii name_enc] in reify_chunked_k "f" 4 (list_ascii_of_string "fooxbarxbazxquuux").
+
+Definition envn (name: string) (chunks: list (list ascii)) (n: N) (env: FEnv.env) :=
+  FEnv.insert_all
+    (map (fun k => (name_enc (name ++ (N2str (N.of_nat k + n) "")),
+                  Some (encode (List.concat (skipn k chunks)))))
+       (seq 0 (List.length chunks)))
+    env.
+
+Lemma envn_step (name: string) s (chunks: list (list ascii)) (n: N) (env: FEnv.env) :
+  envn name (s :: chunks) n env =
+    FEnv.insert (ne name n, Some (encode (s ++ List.concat chunks)%list))
+      (envn name chunks (n + 1) env).
+Proof.
+  unfold envn; simpl; do 2 f_equal.
+  rewrite <- seq_shift, map_map.
+  apply map_ext; intros. do 4 f_equal.
+  lia.
+Qed.
+
+Lemma reify_string_chunks_ok (name: string) (chunks: list (list ascii)) :
+  let str := List.concat chunks in
+  forall (n: N) (onto: FunSyntax.exp -> FunSyntax.exp) (v: Value),
+  ∀ (env : FEnv.env) (s : state),
+    (forall e,
+        let env' := envn name chunks n env in
+        env' |-- ([e], s) ---> ([encode str], s) ->
+        env' |-- ([onto e], s) ---> ([v], s)) ->
+    env |-- ([reify_string_chunks name n chunks onto], s) ---> ([v], s).
+Proof.
+  induction chunks; intros str; simpl.
+  - eauto using eval.
+  - intros * Honto.
+    eapply IHchunks; intros * H.
+    econstructor.
+    + apply reify_string_ok; eauto.
+    + rewrite !envn_step in Honto.
+      eapply Honto.
+      eauto using eval, FEnv.lookup_insert_eq.
+Qed.
+
+Definition reify_chunked (name: string) (sz: nat) (str: list ascii) (k: FunSyntax.exp) :=
+  reify_chunked_k name sz str
+    (fun e => FunSyntax.Let (name_enc name) e k).
+
+Lemma reify_chunked_ok (name: string) (sz: nat) (str: list ascii) (k: FunSyntax.exp) :
+  ∀ (env : FEnv.env) (s : state) (v: Value),
+    FEnv.insert (name_enc name, Some (encode str)) (envn name (chunk sz str) 0 env)
+      |-- ([k], s) ---> ([v], s) ->
+    env |-- ([reify_chunked name sz str k], s) ---> ([v], s).
+Proof.
+  intros; apply reify_string_chunks_ok; simpl; intros.
+  rewrite concat_chunk in *.
+  eauto using eval.
+Qed.
+
+Import FunProperties FunSemantics.
+
+Lemma env_insert_equiv n0 x v env0 env1 :
+  (forall n, In n (free_vars x) ->
+        FEnv.lookup env0 n = FEnv.lookup env1 n) ->
+  (forall n, In n (free_vars x) ->
+        FEnv.lookup (FEnv.insert (n0, v) env0) n = FEnv.lookup (FEnv.insert (n0, v) env1) n).
+Proof.
+  intros * Henv **.
+  destruct (N.eq_dec n0 n); subst.
+  - do 2 rewrite FEnv.lookup_insert_eq; reflexivity.
+  - do 2 (rewrite FEnv.lookup_insert_neq; try lia; symmetry); eauto.
+Qed.
+
+Theorem eval_env_ext1 x env0 env1 res s s1 :
+    (forall n v, FEnv.lookup env0 n = Some v -> FEnv.lookup env1 n = Some v) ->
+    env0 |-- ([x], s) ---> (res, s1) -> env1 |-- ([x], s) ---> (res, s1).
+Proof.
+  intros H Heval.
+  generalize dependent env1.
+  induction Heval; intros env1 Hext; try econstructor; eauto.
+  apply IHHeval2.
+  intros * Hlookup.
+  destruct (N.eq_dec n0 n); subst; rewrite ?FEnv.lookup_insert_eq, ?FEnv.lookup_insert_neq in * by congruence.
+  1: assumption.
+  apply Hext; assumption.
+Qed.
+
+Lemma env_not_in_envn:
+  forall n0 env chunks nm name,
+  FEnv.lookup (envn name chunks nm FEnv.empty) n0 = None ->
+  FEnv.lookup (envn name chunks nm env) n0 = FEnv.lookup env n0.
+Proof.
+  induction chunks; intros.
+  - eauto using eval.
+  - rewrite envn_step in *.
+    destruct (N.eq_dec n0 (ne name nm)); subst.
+    + rewrite FEnv.lookup_insert_eq in *; inversion H.
+    + rewrite FEnv.lookup_insert_neq in *; try congruence.
+      eapply IHchunks; eauto.
+Qed.
+
+Lemma auto_string_const_dlet: ∀ (env : FEnv.env) (s : state) name x k sz str,
+  (∀ n v0, FEnv.lookup env n = Some v0 -> FEnv.lookup (envn name (chunk sz str) 0 env) n = Some v0) ->
+  (∀ strv, strv = str -> FEnv.insert (name_enc name, Some (encode str)) env |-- ([x], s) ---> ([encode (k strv)], s)) ->
+  env |-- ([reify_chunked name sz str x], s) ---> ([encode (dlet str k)], s).
+Proof.
+  intros * Henv Hk.
+  apply reify_string_chunks_ok; simpl.
+  rewrite concat_chunk in *.
+  econstructor; eauto.
+  eapply eval_env_ext1.
+  2: now eapply Hk.
+  intros.
+  destruct (N.eq_dec (name_enc name) n); subst; rewrite ?FEnv.lookup_insert_eq, ?FEnv.lookup_insert_neq in * by congruence.
+  1: assumption.
+  eapply Henv; eauto.
+Qed.
+
 (* word *)
 
 Opaque word.of_Z.

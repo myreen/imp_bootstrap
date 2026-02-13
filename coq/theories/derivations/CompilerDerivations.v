@@ -161,7 +161,7 @@ Proof.
   set (s1 := set_output s (s.(output) ++ String a "")).
   unfold set_output in *; simpl in *.
   unfold enc_char in *; rewrite ascii_N_embedding in *.
-  assert (s.(output) ++ String a EmptyString ++ str = s.(output) ++ String a str) as <-.
+  assert ((s.(output) ++ String a EmptyString ++ str)%string = (s.(output) ++ String a str)%string) as <-.
   1: rewrite string_cons_nil_app; reflexivity.
   rewrite string_app_assoc.
   destruct s; simpl in *.

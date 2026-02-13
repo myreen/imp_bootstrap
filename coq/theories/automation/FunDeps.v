@@ -3,16 +3,6 @@ Import Ltac2.Constr.Unsafe.
 From coqutil Require Import Tactics.reference_to_string.
 From impboot Require Import Ltac2Utils ltac2.Constrs ltac2.Stdlib2 ltac2.Messages.
 
-Ltac2 rec dedup_go (acc: 'a list) (l: 'a list) (eq: 'a -> 'a -> bool): 'a list :=
-  match l with
-  | [] => acc
-  | h :: l =>
-    if List.exist (eq h) acc then dedup_go acc l eq
-    else dedup_go (h :: acc) l eq
-  end.
-Ltac2 dedup (l: 'a list) (eq: 'a -> 'a -> bool): 'a list :=
-  dedup_go [] l eq.
-
 (* The problem with automatically detecting dependencies is: how do I know which are the "real" rependencies? *)
 (*   i.e. why is "add" not a dependency? *)
 (*   Actually, maybe just black-list some built-in functions? *)

@@ -18,8 +18,10 @@ Open Scope string.
 
 (* lexing *)
 
-Fixpoint read_num (l h: ascii) (f x: N) (acc: N) (cs: list ascii): (N * list ascii) :=
-  match cs with
+Fixpoint read_num (l_h: (ascii * ascii)) (f_x: (N * N)) (acc: N) (cs: list ascii): (N * list ascii) :=
+  let/d '(l, h) := l_h in
+  let/d '(f, x) := f_x in
+  match cs return (N * list ascii) with
   [] => 
     let/d empty_list := [] in
     let/d result := (acc, empty_list) in
@@ -39,7 +41,7 @@ Fixpoint read_num (l h: ascii) (f x: N) (acc: N) (cs: list ascii): (N * list asc
         let/d f_mult_acc := f * acc in
         let/d c_minus_x := c_ascii - x in
         let/d new_acc := f_mult_acc + c_minus_x in
-        let/d result := read_num l h f x new_acc cs1 in
+        let/d result := read_num (l, h) (f, x) new_acc cs1 in
         result
   end.
 Theorem read_num_equation: ltac2:(unfold_fix_type '@read_num).
@@ -118,7 +120,7 @@ Fixpoint lex (q: nat) (cs: list ascii) (acc: list token) (fuel: nat): option (li
         let/d nine_char := "9"%char in
         let/d zero_ascii := N_of_ascii zero_char in
         let/d c_cons_cs := c :: cs in
-        let/d digit_result := read_num zero_char nine_char 10 zero_ascii 0 c_cons_cs in
+        let/d digit_result := read_num (zero_char, nine_char) (10, zero_ascii) 0 c_cons_cs in
         match digit_result return (option (list token)) with
         | (n, rest) =>
           let/d rest_length := list_length rest in
@@ -126,7 +128,7 @@ Fixpoint lex (q: nat) (cs: list ascii) (acc: list token) (fuel: nat): option (li
           if Nat.eqb rest_length original_length then
             let/d star_char := "*"%char in
             let/d z_char := "z"%char in
-            let/d alpha_result := read_num star_char z_char 256 0 0 c_cons_cs in
+            let/d alpha_result := read_num (star_char, z_char) (256, 0) 0 c_cons_cs in
             match alpha_result return (option (list token)) with
             | (n2, rest2) =>
               let/d rest2_length := list_length rest2 in

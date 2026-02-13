@@ -48,18 +48,14 @@ Ltac2 unfold_fix_gen (fconstr: constr): unit :=
   Std.intros false (List.map (fun nm => IntroNaming (IntroFresh nm)) nms);
   let struct_name := List.nth nms (Constrs.struct_of_fix fconstr) in
   let struct_hyp := Control.hyp struct_name in
-  print_full_goal ();
   (* Std.case true (struct_hyp, NoBindings); *)
   destruct $struct_hyp eqn:Heqleft at 1;
   Control.enter (fun () =>
-    (* print_full_goal (); *)
     destruct $struct_hyp eqn:Heqright at 1;
     Control.enter (fun () =>
       rewrite &Heqleft in Heqright; inversion Heqright; subst;
       Control.plus (fun () => (ltac1:(congruence))) (fun _ =>
-        (* print_full_goal (); *)
         unfold $fref; fold $fconstr;
-        (* print_full_goal (); *)
         reflexivity ()
       )
     )

@@ -145,6 +145,7 @@ Derive inst2str_load_rsp_prog
 Proof.
   time relcompile.
 Qed.
+Print inst2str_load_rsp_prog.
 Time Compute to_funs [inst2str_load_rsp_prog].
 
 Derive inst2str_store_rsp_prog
@@ -342,6 +343,7 @@ Proof.
 Qed.
 Time Compute to_funs [asm2str12_prog].
 
+(* TODO: ToANF lifts out list literals *)
 Derive asm2str_prog
   in ltac2:(relcompile_tpe 'asm2str_prog 'asm2str
     ['instrs2str; 'concat_strings; '@list_append; 'string_append;
@@ -420,20 +422,7 @@ Theorem asm2str_thm:
     eval_app (name_enc "asm2str") [encode p] s ((encode (asm2str p)), s).
 Proof.
   intros * Hlookup_fun_utils Hlookup_fun.
-  assert_eval_app_by 'mul_nat 'mul_nat_prog_proof 'Hlookup_fun_utils 0.
-  assert_eval_app_by 'mul_N_f 'mul_N_f_prog_proof 'Hlookup_fun_utils 1.
-  assert_eval_app_by 'mul_N 'mul_N_prog_proof 'Hlookup_fun_utils 2.
-  assert_eval_app_by 'nat_modulo 'nat_modulo_prog_proof 'Hlookup_fun_utils 3.
-  assert_eval_app_by 'N_modulo 'N_modulo_prog_proof 'Hlookup_fun_utils 4.
-  assert_eval_app_by 'num2str_f 'num2str_f_prog_proof 'Hlookup_fun_utils 5.
-  assert_eval_app_by 'num2str 'num2str_prog_proof 'Hlookup_fun_utils 6.
-  assert_eval_app_by 'N2str_f 'N2str_f_prog_proof 'Hlookup_fun_utils 7.
-  assert_eval_app_by 'N2str 'N2str_prog_proof 'Hlookup_fun_utils 8.
-  assert_eval_app_by '@list_length 'list_length_prog_proof 'Hlookup_fun_utils 9.
-  assert_eval_app_by '@list_append 'list_append_prog_proof 'Hlookup_fun_utils 10.
-  assert_eval_app_by '@flatten 'flatten_prog_proof 'Hlookup_fun_utils 11.
-  assert_eval_app_by '@app_list_length 'app_list_length_prog_proof 'Hlookup_fun_utils 12.
-  assert_eval_app_by 'string_append 'string_append_prog_proof 'Hlookup_fun_utils 13.
+  assert_eval_app_compiler_utils 'Hlookup_fun_utils.
 
   assert_eval_app_by 'reg2str1 'reg2str1_prog_proof 'Hlookup_fun 0.
   assert_eval_app_by 'lab 'lab_prog_proof 'Hlookup_fun 1.

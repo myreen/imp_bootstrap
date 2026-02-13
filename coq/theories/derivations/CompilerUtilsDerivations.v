@@ -10,9 +10,8 @@ From impboot Require Import automation.Ltac2Utils.
 From impboot Require Import commons.CompilerUtils.
 From impboot Require Import functional.FunValues.
 From impboot Require Import functional.FunSemantics.
-Require Import impboot.automation.RelCompiler.
-Require Import impboot.automation.ltac2.UnfoldFix.
-Require Import impboot.automation.AutomationLemmas.
+From impboot.automation Require Import RelCompiler RelCompilerCommons AutomationLemmas ToANF.
+From impboot.automation.ltac2 Require Import UnfoldFix.
 From impboot Require Import fp2imp.FpToImpCodegen.
 Require Import coqutil.Word.Interface.
 Require Import ZArith.
@@ -165,6 +164,35 @@ Proof.
 Qed.
 Time Compute to_funs [mul_N_prog].
 
+Theorem N2ascii_f_equation: ltac2:(unfold_fix_type '@N2ascii_f).
+Proof. unfold_fix_proof '@N2ascii_f. Qed.
+Derive N2ascii_f_prog
+  in ltac2:(relcompile_tpe 'N2ascii_f_prog 'N2ascii_f ['N_modulo; 'string_append])
+  as N2ascii_f_prog_proof.
+Proof.
+  time relcompile.
+  all: ltac1:(try lia).
+  all: subst; specialize N_modulo_lt with (n := n) (m := 256%N) as ?; ltac1:(try lia).
+Qed.
+Time Compute to_funs [N2ascii_f_prog].
+
+Derive N2ascii_prog
+  in ltac2:(relcompile_tpe 'N2ascii_prog 'N2ascii ['N2ascii_f])
+  as N2ascii_prog_proof.
+Proof.
+  time relcompile.
+  ltac1:(try lia).
+Qed.
+Time Compute to_funs [N2ascii_prog].
+
+Derive N2ascii_default_prog
+  in ltac2:(relcompile_tpe 'N2ascii_default_prog 'N2ascii_default ['N2ascii])
+  as N2ascii_default_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+Time Compute to_funs [N2ascii_default_prog].
+
 Definition CompilerUtils_funs := [
   mul_nat_prog;
   mul_N_f_prog;
@@ -179,5 +207,42 @@ Definition CompilerUtils_funs := [
   list_append_prog;
   flatten_prog;
   app_list_length_prog;
-  string_append_prog
+  string_append_prog;
+  N2ascii_f_prog;
+  N2ascii_prog;
+  N2ascii_default_prog
 ].
+
+Ltac2 assert_eval_app (fname: constr) :=
+  let tpe := gen_eval_app fname () in
+  assert ($tpe).
+
+Ltac2 assert_eval_app_proof (prf: constr) (list_constr: constr) (n: int) :=
+  eapply $prf; eauto; try (reflexivity);
+  try (eapply $list_constr; do n (eapply in_cons); eapply in_eq).
+
+Ltac2 assert_eval_app_by (fname: constr) (prf: constr) (list_constr_hyp: constr) (n: int) :=
+  let tpe := gen_eval_app fname () in
+  assert ($tpe) by (
+    eapply $prf; eauto; try (reflexivity);
+    eapply $list_constr_hyp; do n (eapply in_cons); eapply in_eq
+  ).
+
+Ltac2 assert_eval_app_compiler_utils (hlookup_constr: constr) :=
+  assert_eval_app_by 'mul_nat 'mul_nat_prog_proof hlookup_constr 0;
+  assert_eval_app_by 'mul_N_f 'mul_N_f_prog_proof hlookup_constr 1;
+  assert_eval_app_by 'mul_N 'mul_N_prog_proof hlookup_constr 2;
+  assert_eval_app_by 'nat_modulo 'nat_modulo_prog_proof hlookup_constr 3;
+  assert_eval_app_by 'N_modulo 'N_modulo_prog_proof hlookup_constr 4;
+  assert_eval_app_by 'num2str_f 'num2str_f_prog_proof hlookup_constr 5;
+  assert_eval_app_by 'num2str 'num2str_prog_proof hlookup_constr 6;
+  assert_eval_app_by 'N2str_f 'N2str_f_prog_proof hlookup_constr 7;
+  assert_eval_app_by 'N2str 'N2str_prog_proof hlookup_constr 8;
+  assert_eval_app_by '@list_length 'list_length_prog_proof hlookup_constr 9;
+  assert_eval_app_by '@list_append 'list_append_prog_proof hlookup_constr 10;
+  assert_eval_app_by '@flatten 'flatten_prog_proof hlookup_constr 11;
+  assert_eval_app_by '@app_list_length 'app_list_length_prog_proof hlookup_constr 12;
+  assert_eval_app_by 'string_append 'string_append_prog_proof hlookup_constr 13;
+  assert_eval_app_by 'N2ascii_f 'N2ascii_f_prog_proof hlookup_constr 14;
+  assert_eval_app_by 'N2ascii 'N2ascii_prog_proof hlookup_constr 15;
+  assert_eval_app_by 'N2ascii_default 'N2ascii_default_prog_proof hlookup_constr 16.

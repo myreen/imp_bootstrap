@@ -27,9 +27,3 @@ Ltac2 rec var_ident_of_constr (c: constr): ident :=
   | _ =>
     Control.throw (Oopsie (fprintf "Error: Expected the argument of a compiled function to be an variable reference, got: %t" c))
   end.
-
-(*  *)
-
-Ltac2 mutable db: int list := [].
-Ltac2 Set db as olddb := (1 :: olddb).
-Ltac2 Eval db.

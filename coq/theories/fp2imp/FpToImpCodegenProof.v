@@ -204,29 +204,6 @@ Proof.
     eexists; rewrite IEnv.lookup_insert_neq; eauto.
 Qed.
 
-(* Theorem oEL_isPREFIX:
-  ∀xs ys n, prefix xs ys = true -> (n < String.length xs)%nat -> substring 0 n xs = substring 0 n ys.
-Proof.
-Admitted.
-  (* Induct \\ Cases_on ‘ys’ \\ fs [oEL_def] \\ rw [] *)
-(* QED *)
-
-Theorem v_rel_isPREFIX:
-  ∀m v w, v_rel m v w -> ∀m', prefix m m' = true -> v_rel m' v w.
-Proof.
-  (* Induct_on ‘v_rel’ \\ rw []
-  \\ simp [Once v_rel_cases] \\ gvs []
-  \\ drule_all oEL_isPREFIX \\ rw [] *)
-(* QED *)
-
-Theorem env_rel_isPREFIX:
-  env_rel m1 env vars ∧ prefix m1 m2 = true -> env_rel m2 env vars.
-Proof.
-  (* rw [env_rel_def] \\ res_tac \\ fs []
-  \\ drule_all v_rel_isPREFIX \\ fs [] *)
-(* QED *)
- *)
-
 Theorem env_rel_make_env: forall (rs: list FunValues.Value) ws params m,
   list_rel (v_rel m) rs ws -> List.length params = List.length ws ->
   env_rel m (FunSemantics.make_env params rs FEnv.empty) (make_env params ws IEnv.empty).
@@ -259,6 +236,13 @@ Qed.
 Lemma state_rel_set_vars: ∀s t vars
   (Hstate_rel: state_rel s t),
   state_rel s (set_vars vars t).
+Proof.
+  unfold state_rel; intros; cleanup; eauto.
+Qed.
+
+Lemma state_rel_set_memory: ∀s t m
+  (Hstate_rel: state_rel s t),
+  state_rel s (set_memory m t).
 Proof.
   unfold state_rel; intros; cleanup; eauto.
 Qed.
@@ -823,7 +807,6 @@ Proof.
       all: match goal with
       | H : context C [ match to_exp ?e with _ => _ end ] |- _ => destruct (to_exp e) eqn:?
       end; cleanup.
-      all: eexists (S _); do 2 eexists.
       4: {
         unfold dest_Cons in *; destruct exp1; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
         clear Heqo1.
@@ -833,21 +816,126 @@ Proof.
         destruct vs0; try destruct vs0; cleanup.
         eapply to_exp_thm in Heqo1; eauto; cleanup; subst.
         eapply to_exp_thm in Heqo2; eauto; cleanup; subst.
-        (* match goal with
-        | |- context [ eval_cmd (Seq (Call _ _ _) ?c2) _ ?t = _ ] =>
-          specialize Call_cons with (e1 := e1) (e2 := e) (t := t) as ?
-        end. *)
         specialize (Call_cons t e1 e _ _ x x0 n ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)) as Hcall; cleanup.
         cbv zeta in Hcall; destruct Hcall as [Hcall ?].
+        eapply IH with (cs := c0) (t := set_vars _ (set_memory (memory t ++ _) (add_steps_done 1 _))) in Heval2; eauto; cleanup; clear IH.
+        2: eapply state_rel_set_vars; eapply state_rel_set_memory; eapply state_rel_add_steps_done; eauto.
+        2: eapply env_rel_update; simpl; eauto; eapply env_rel_mem_prefix; eauto; eapply mem_prefix_app.
+        assert (x2 <> Stop TimeOut) by (destruct x2; try congruence; destruct v1; try congruence; simpl in *; contradiction).
+        pat `eval_cmd _ _ _ = _` at
+          eapply eval_cmd_add_clock with (fuel1 := 1%nat) in pat; try congruence; rewrite ?Nat.add_1_r in pat.
+        do 3 eexists.
         rewrite Hcall; clear Hcall.
-        (* unfold set_vars, set_memory, add_steps_done; simpl. *)
-        (* eapply IH.
-        split; try reflexivity. *)
-        admit.
+        split; eauto; split; eauto.
+        unfold set_vars, set_memory, add_steps_done in *; simpl in *.
+        eauto using mem_prefix_trans, mem_prefix_app.
       }
-      1: specialize Call_cons5 with
-        (e1 := e1) (e2 := e2) (e3 := e3) (e4 := e4) (e5 := e) as ?.
-      all: admit.
+      3: {
+        clear Heqo2.
+        unfold dest_Cons in *; destruct exp1; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+        destruct exp1'; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+        inversion Heval1; subst.
+        inversion EVAL_ARGS; cleanup; subst.
+        destruct (to_exp e0) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+        destruct (to_exp e4) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+        destruct vs0; try destruct vs0; cleanup.
+        inversion EVAL_TAIL; cleanup; subst; inversion EVAL_ARGS0; cleanup; subst.
+        inversion EVAL_OP; cleanup; subst; unfold return_, fail in *.
+        destruct vs0; try destruct vs0; cleanup.
+        eapply to_exp_thm in Heqo2; eauto; cleanup; subst.
+        eapply to_exp_thm in Heqo0; eauto; cleanup; subst.
+        eapply to_exp_thm in Heqo3; eauto; cleanup; subst.
+        specialize (Call_cons3 t e1 e2 e _ _ _ x x0 x1 n ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)) as Hcall; cleanup.
+        eapply IH with (cs := c0) (t := add_steps_done _ (set_vars _ (set_memory (memory t ++ _) _))) in Heval2; eauto; cleanup; clear IH.
+        2: eapply state_rel_add_steps_done; eapply state_rel_set_vars; eapply state_rel_set_memory; eauto.
+        2: simpl; eapply env_rel_update; simpl; eauto; eapply env_rel_mem_prefix; eauto; eapply mem_prefix_app.
+        pat `eval_cmd _ _ _ = (?x, _)` at
+          assert (x <> Stop TimeOut) by (destruct x; try congruence; destruct v0; try congruence; simpl in *; contradiction).
+        pat `eval_cmd _ _ _ = _` at
+          eapply eval_cmd_add_clock with (fuel1 := 2%nat) in pat; try congruence.
+        assert (x4 + 2 = S (S x4))%nat as Htmp by lia; rewrite Htmp in *; clear Htmp.
+        do 3 eexists.
+        pat `forall _ _, eval_cmd _ _ _ = _` at rewrite pat; clear pat.
+        split; eauto; split; eauto.
+        unfold set_vars, set_memory, add_steps_done in *; simpl in *.
+        eauto using mem_prefix_trans, mem_prefix_app.
+      }
+      2: {
+        clear Heqo3 Hto_exp Hto_exp1.
+        unfold dest_Cons in *; destruct exp1; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+        destruct exp1'; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+        destruct exp1''; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+        inversion Heval1; subst.
+        inversion EVAL_ARGS; cleanup; subst.
+        destruct (to_exp e0) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+        destruct (to_exp e5) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+        destruct (to_exp e7) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+        destruct vs0; try destruct vs0; cleanup.
+        inversion EVAL_TAIL; cleanup; subst; inversion EVAL_ARGS0; cleanup; subst.
+        inversion EVAL_OP; cleanup; subst; unfold return_, fail in *.
+        destruct vs0; try destruct vs0; cleanup.
+        inversion EVAL_TAIL0; cleanup; subst; inversion EVAL_ARGS1; cleanup; subst.
+        inversion EVAL_OP0; cleanup; subst; unfold return_, fail in *.
+        destruct vs0; try destruct vs0; cleanup.
+        eapply to_exp_thm in Heqo3; eauto; cleanup; subst.
+        eapply to_exp_thm in Heqo0; eauto; cleanup; subst.
+        eapply to_exp_thm in Heqo1; eauto; cleanup; subst.
+        eapply to_exp_thm in Heqo4; eauto; cleanup; subst.
+        specialize (Call_cons4 t e1 e2 e3 e _ _ _ _ x x0 x1 x2 n ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)) as Hcall; cleanup.
+        eapply IH with (cs := c0) (t := add_steps_done _ (set_vars _ (set_memory (memory t ++ _) _))) in Heval2; eauto; cleanup; clear IH.
+        2: eapply state_rel_add_steps_done; eapply state_rel_set_vars; eapply state_rel_set_memory; eauto.
+        2: simpl; eapply env_rel_update; simpl; eauto; eapply env_rel_mem_prefix; eauto; eapply mem_prefix_app.
+        pat `eval_cmd _ _ _ = (?x, _)` at
+          assert (x <> Stop TimeOut) by (destruct x; simpl in *; try congruence; destruct v2; try congruence; simpl in *; contradiction).
+        pat `eval_cmd _ _ _ = _` at
+          eapply eval_cmd_add_clock with (fuel1 := 3%nat) in pat; try congruence.
+        assert (x5 + 3 = S (S (S x5)))%nat as Htmp by lia; rewrite Htmp in *; clear Htmp.
+        do 3 eexists.
+        pat `forall _ _, eval_cmd _ _ _ = _` at rewrite pat; clear pat.
+        split; eauto; split; eauto.
+        unfold set_vars, set_memory, add_steps_done in *; simpl in *.
+        eauto using mem_prefix_trans, mem_prefix_app.
+      }
+      clear Hto_exp Hto_exp1.
+      unfold dest_Cons in *; destruct exp1; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+      destruct exp1'; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+      destruct exp1''; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+      destruct exp1'''; cleanup; destruct o; cleanup; destruct args; cleanup; destruct args; cleanup; destruct args; cleanup.
+      inversion Heval1; subst.
+      inversion EVAL_ARGS; cleanup; subst.
+      destruct (to_exp e0) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+      destruct (to_exp e6) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+      destruct (to_exp e8) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+      destruct (to_exp e10) eqn:?; simpl in *|-; cleanup; unfold_monadic; unfold_outcome; unfold fail, return_ in *.
+      destruct vs0; try destruct vs0; cleanup.
+      inversion EVAL_TAIL; cleanup; subst; inversion EVAL_ARGS0; cleanup; subst.
+      inversion EVAL_OP; cleanup; subst; unfold return_, fail in *.
+      destruct vs0; try destruct vs0; cleanup.
+      inversion EVAL_TAIL0; cleanup; subst; inversion EVAL_ARGS1; cleanup; subst.
+      inversion EVAL_OP0; cleanup; subst; unfold return_, fail in *.
+      destruct vs0; try destruct vs0; cleanup.
+      inversion EVAL_TAIL1; cleanup; subst; inversion EVAL_ARGS2; cleanup; subst.
+      inversion EVAL_OP1; cleanup; subst; unfold return_, fail in *.
+      destruct vs0; try destruct vs0; cleanup.
+      eapply to_exp_thm in Heqo5; eauto; cleanup; subst.
+      eapply to_exp_thm in Heqo0; eauto; cleanup; subst.
+      eapply to_exp_thm in Heqo1; eauto; cleanup; subst.
+      eapply to_exp_thm in Heqo2; eauto; cleanup; subst.
+      eapply to_exp_thm in Heqo4; eauto; cleanup; subst.
+      specialize (Call_cons5 t e1 e2 e3 e4 e _ _  _ _ _ x x0 x1 x2 x3 n ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto) ltac:(eauto)) as Hcall; cleanup.
+      eapply IH with (cs := c0) (t := add_steps_done _ (set_vars _ (set_memory (memory t ++ _) _))) in Heval2; eauto; cleanup; clear IH.
+      2: eapply state_rel_add_steps_done; eapply state_rel_set_vars; eapply state_rel_set_memory; eauto.
+      2: simpl; eapply env_rel_update; simpl; eauto; eapply env_rel_mem_prefix; eauto; eapply mem_prefix_app.
+      pat `eval_cmd _ _ _ = (?x, _)` at
+        assert (x <> Stop TimeOut) by (destruct x; simpl in *; try congruence; destruct v3; try congruence; simpl in *; contradiction).
+      pat `eval_cmd _ _ _ = _` at
+        eapply eval_cmd_add_clock with (fuel1 := 7%nat) in pat; try congruence.
+      assert (x6 + 7 = S (S (S (S( S (S (S x6)))))))%nat as Htmp by lia; rewrite Htmp in *; clear Htmp.
+      do 3 eexists.
+      pat `forall _ _, eval_cmd _ _ _ = _` at rewrite pat; clear pat.
+      split; eauto; split; eauto.
+      unfold set_vars, set_memory, add_steps_done in *; simpl in *.
+      eauto using mem_prefix_trans, mem_prefix_app.
     }
     destruct exp1; try discriminate; cleanup.
     2: { (* call *)
@@ -1242,10 +1330,194 @@ Proof.
       split; eauto.
       split; eauto.
       unfold res_rel; simpl; eauto.
-Admitted.
+  Unshelve.
+  all: exact 0%nat.
+Qed.
+
+Lemma builtins_available_append: forall l,
+  builtins_available (map (fun x => match x with (n, vs, b) => ImpSyntax.Func n vs b end) builtin ++ l).
+Proof.
+  intros.
+  unfold builtins_available, builtin; simpl; intros * Hfind_fun.
+  repeat (destruct Hfind_fun as [Hfind_fun | Hfind_fun]; try discriminate; cleanup).
+  all: simpl; reflexivity.
+Qed.
+
+Definition name_of_func (f: ImpSyntax.func) : N :=
+  match f with
+  | Func n _ _ => n
+  end.
+
+(* Lemma find_fun_app_no_conflicts: forall fname funs1 funs2 v,
+  (forall x, In x funs2 -> ¬ In (name_of_func x) (map name_of_func funs1)) ->
+  find_fun fname funs2 = Some v ->
+  find_fun fname (funs1 ++ funs2) = Some v.
+Proof.
+  intros * Hno_conflicts Hfind_fun.
+  induction funs1 as [|f funs1]; simpl; eauto; destruct f.
+  destruct (fname =? n)%N eqn:Hname_eq; rewrite ?N.eqb_eq in *; cleanup.
+  1: { (* conflict *)
+    exfalso; eapply Hno_conflicts with (x := Func n params body); simpl; eauto.
+  } *)
+
+Lemma list_uniqb_NoDup: forall {A} (EQ: A -> A -> bool) (EQ_REFL: forall (a: A), EQ a a = true) (l: list A),
+  list_uniqb EQ l = true -> NoDup l.
+Proof.
+  induction l; intros Huniqb; [econstructor|]; simpl in *.
+  rewrite Bool.andb_true_iff in Huniqb; destruct Huniqb as [Huniqb Huniqb_rest].
+  constructor; eauto.
+  rewrite negb_true_iff in Huniqb.
+  assert (¬ existsb (EQ a) l = true) as Hnot_in by congruence.
+  rewrite existsb_exists in *.
+  intros HIn; eapply Hnot_in; eexists; split; eauto.
+Qed.
+
+Lemma find_fun_app_no_conflicts: forall fname funs1 funs2 v,
+  (forall x, In x funs2 -> ¬ In (name_of_func x) (map name_of_func funs1)) ->
+  find_fun fname funs2 = Some v ->
+  find_fun fname (funs1 ++ funs2) = Some v.
+Proof.
+  induction funs1; intros * Hno_conflict Hfind; simpl in *; eauto.
+  destruct a as [n params body].
+  destruct (fname =? n)%N eqn:Hname_eq; eauto.
+  - rewrite N.eqb_eq in Hname_eq; subst.
+    exfalso.
+    clear IHfuns1.
+    induction funs2; simpl in *; try discriminate.
+    destruct a as [n' params' body'].
+    destruct (n =? n')%N eqn:Hn_eq.
+    + rewrite N.eqb_eq in Hn_eq; subst.
+      specialize (Hno_conflict (Func n' params' body')).
+      eapply Hno_conflict; eauto.
+    + eapply IHfuns2; eauto.
+  - eapply IHfuns1; eauto.
+    intros x HIn.
+    eapply Hno_conflict in HIn; eauto.
+Qed.
+
+Lemma to_funs_lookup_thm: forall defs funs,
+  to_funs defs = Some funs ->
+  ∀ (fname : N) (params : list N) (body : FunSyntax.exp),
+    lookup_fun fname defs = Some (params, body) →
+      ∃ (cs: cmd),
+        find_fun fname funs = Some (params, cs) ∧
+        to_cmd body = Some cs ∧ NoDup params.
+Proof.
+  induction defs; intros * Hto_funs * Hlookup_fun.
+  1: simpl in Hto_funs; discriminate.
+  simpl in *; destruct a as [n vs b]; cleanup.
+  destruct list_uniqb eqn:Huniqb; try discriminate; cleanup.
+  unfold option_bind in *; cleanup.
+  destruct to_cmd eqn:Hto_cmd; try discriminate; cleanup.
+  destruct to_funs eqn:Hto_funs_rest; try discriminate; cleanup.
+  destruct (n =? fname)%N eqn:Hname_eq; rewrite ?N.eqb_eq in *; cleanup.
+  1: { (* current function *)
+    exists c; split; simpl; rewrite ?N.eqb_refl; eauto.
+    split; eauto.
+    eapply list_uniqb_NoDup; eauto.
+    exact N.eqb_refl.
+  }
+  (* rest of the functions *)
+  assert (Some l = Some l) as Hto_funs_eq by reflexivity.
+  eapply IHdefs in Hto_funs_eq; eauto; cleanup.
+  eexists; split; eauto.
+  simpl; rewrite N.eqb_sym; rewrite Hname_eq; eauto.
+Qed.
+
+Lemma not_has_conflicting_names_IMP_no_conflicts: forall nms c,
+  has_conflicting_names nms = false ->
+  let funs1 := map (fun x => match x with (n, vs, b) => Func n vs b end) builtin ++ [Func "main" [] c] in
+  (forall x, In x nms -> ¬ In x (map name_of_func funs1)).
+Proof.
+  intros * Hno_conflicts * HIn.
+  unfold has_conflicting_names in Hno_conflicts.
+  pat `existsb ?c nms = false` at set (cond := c).
+  assert (¬ existsb cond nms = true) as Hno_conflict by (subst cond; congruence).
+  rewrite existsb_exists in Hno_conflict.
+  intros HIn1.
+  eapply Hno_conflict; eexists; split; eauto.
+  subst cond; simpl in *.
+  repeat (destruct HIn1 as [HIn1 | HIn1]; subst; try reflexivity).
+  inversion HIn1.
+Qed.
+
+Lemma to_funs_same_names: forall defs funs x,
+  to_funs defs = Some funs ->
+  In x funs ->
+  In (name_of_func x) (map get_func_name defs).
+Proof.
+  induction defs; intros * Hto_funs HIn; simpl in *.
+  1: inversion Hto_funs; subst; inversion HIn.
+  simpl in *; destruct a as [n vs b]; cleanup.
+  destruct list_uniqb eqn:?; try discriminate; cleanup.
+  unfold option_bind in *; cleanup.
+  destruct to_cmd eqn:?; try discriminate; cleanup.
+  destruct to_funs eqn:?; try discriminate; cleanup.
+  destruct HIn as [HIn | HIn]; subst.
+  1: left; simpl; eauto.
+  right; eapply IHdefs; eauto.
+Qed.
+
+Lemma to_funs_lookup_thm1: forall defs funs c,
+  has_conflicting_names (map get_func_name defs) = false ->
+  to_funs defs = Some funs ->
+  ∀ (fname : N) (params : list N) (body : FunSyntax.exp),
+    lookup_fun fname defs = Some (params, body) →
+    ∃ (cs: cmd),
+      find_fun fname ((map (fun x =>match x with (n, vs, b) => Func n vs b end) builtin ++ [Func "main" [] c]) ++ funs) = Some (params, cs) ∧
+      to_cmd body = Some cs ∧ NoDup params.
+Proof.
+  intros * Hno_conflicts Hto_funs * Hlookup_fun.
+  pose proof Hto_funs as Hto_funs_eq.
+  eapply to_funs_lookup_thm in Hto_funs; eauto; cleanup.
+  eexists; split; eauto.
+  eapply find_fun_app_no_conflicts; eauto.
+  intros; eapply not_has_conflicting_names_IMP_no_conflicts; eauto.
+  eapply to_funs_same_names with (defs := defs) in Hto_funs_eq; eauto.
+Qed.
 
 Theorem to_imp_thm: forall input prog output imp_prog,
-  FunSemantics.prog_terminates input prog output ∧ to_imp prog = Some imp_prog ->
+  FunSemantics.prog_terminates input prog output → to_imp prog = Some imp_prog ->
   imp_weak_termination input imp_prog output.
 Proof.
-Admitted.
+  intros * Heval Hto_imp.
+  destruct prog; destruct imp_prog.
+  unfold imp_weak_termination, FunSemantics.prog_terminates in *.
+  simpl get_main in *; cleanup.
+  simpl get_defs in *; cleanup.
+  specialize Eval_length with (1 := H) as Hlen_eval; simpl in Hlen_eval; destruct x0; simpl in Hlen_eval; try lia; destruct x0; simpl in Hlen_eval; try lia; clear Hlen_eval.
+  unfold eval_from, to_imp in *; destruct has_conflicting_names eqn:?; try discriminate; cleanup.
+  destruct to_funs eqn:Hto_funs; try discriminate.
+  simpl in Hto_funs; unfold option_bind in *.
+  destruct to_cmd eqn:?; try discriminate.
+  destruct to_funs eqn:?; try discriminate.
+  Opaque builtin.
+  cleanup.
+  set (funs := map (fun x => match x with (n, vs, b) => ImpSyntax.Func n vs b end) builtin ++ Func "main" [] c :: l0).
+  set (funs1 := (map (fun x => match x with (n, vs, b) => ImpSyntax.Func n vs b end) builtin ++ [Func "main" [] c]) ++ l0).
+  assert (Func "main" [] c :: l0  = [Func "main" [] c] ++ l0) as Hfuns by reflexivity.
+  eapply to_cmd_thm with (t := init_state input funs1) in Heqo; eauto; cleanup; subst.
+  3: unfold env_rel; intros * Hlookup; rewrite FEnv.lookup_empty in Hlookup; cleanup.
+  2: unfold state_rel, FunSemantics.init_state; simpl; split; eauto; split; eauto.
+  2: unfold func_rel; split; [eapply builtins_available_append|].
+  2: eapply to_funs_lookup_thm1; eauto.
+  assert (find_fun "main" funs = Some ([], c)) as Hfind_main.
+  1: with_strategy transparent [builtin] simpl find_fun at 1; reflexivity.
+  subst funs funs1.
+  rewrite Hfuns in *; rewrite app_assoc in *.
+  destruct x1; simpl in *; cleanup; destruct v0; cleanup; eauto.
+  2: { (* Abort *)
+    do 3 eexists.
+    rewrite Hfind_main; unfold catch_return.
+    rewrite H0; unfold_monadic.
+    split; eauto.
+    intros; contradiction.
+  }
+  (* Stop (Return v) *)
+  do 3 eexists.
+  rewrite Hfind_main; unfold catch_return.
+  rewrite H0; unfold_monadic.
+  split; eauto.
+  intros; eexists; split; eauto.
+  unfold state_rel in *; cleanup; eauto.
+Qed.

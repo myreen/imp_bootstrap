@@ -1155,6 +1155,7 @@ Ltac2 rec compile () : unit :=
     Control.throw (Oopsie (fprintf "Error: Malformed input to compile, namely %t" c))
   end
 with compile_with_prep (): unit :=
+  rewrite_lowerable (); (* have to try twice if a potential rewrite gets hidden under a binder (Maybe we should try this step every time?) *)
   try_to_anf_relcompile ();
   rewrite_lowerable ();
   compile ().
@@ -1426,7 +1427,7 @@ Proof.
 Qed.
 Show Ltac Profile. *)
 
-(* Definition nat_modulo1 (n1 n2: nat): nat :=
+Definition nat_modulo1 (n1 n2: nat): nat :=
   match n2 with
   | 0%nat => 0
   | S _ => n1 - n2 * (n1 / n2)
@@ -1608,4 +1609,4 @@ Derive sum_acc_prog
   as sum_acc_prog_proof.
 Proof.
   relcompile.
-Qed. *)
+Qed.

@@ -251,41 +251,4 @@ Theorem eval_cmd_add_clock: ∀ fuel c s res s1,
   eval_cmd c (EVAL_CMD fuel) s = (res, s1) -> res ≠ Stop TimeOut ->
     ∀ fuel1, eval_cmd c (EVAL_CMD (fuel + fuel1)) s = (res, s1).
 Proof.
-  Opaque eval_cmd.
-  induction fuel; induction c; simpl in *; intros.
-  Transparent eval_cmd.
-  Opaque EVAL_CMD.
-  (* Base cases: fuel = 0, EVAL_CMD 0 always returns TimeOut *)
-  all: simpl in *; unfold_outcome; unfold_monadic; cleanup.
-  (* Many goals where hypothesis = goal, or trivial reflexivity *)
-  all: try solve [reflexivity].
-  all: try solve [assumption].
-  Opaque eval_cmd.
-  (* Handle compound commands - destruct intermediate results *)
-  all: repeat match goal with
-  | H: context [ let (_, _) := eval_cmd ?c ?f ?s2 in _ ] |- context [ let (_, _) := eval_cmd ?c ?f' ?s2 in _ ] =>
-    let Hd := fresh "Hd" in
-    destruct (eval_cmd c f s2) eqn:Hd; subst; cleanup
-  | H: context [ match ?o with _ => _ end ] |- _ => destruct o eqn:?; subst; cleanup
-  | H: eval_test _ _ = _ |- _ => eapply eval_test_pure in H; subst
-  | H: eval_exps _ _ = _ |- _ => eapply eval_exps_pure in H; subst
-  | H: (_, _) = (_, _) |- _ => inversion H; clear H; subst
-  | H: Stop TimeOut ≠ Stop TimeOut |- _ => congruence
-  | _ => (unfold catch_return, get_vars, get_body_and_set_vars, set_varsM, assign, inc_steps_done in *)
-        || unfold_outcome || unfold_monadic || (simpl in *)
-  end.
-  (* all: try solve [reflexivity].
-  (* Apply IH for base cases fuel=0 *)
-  all: try solve [eapply IHc1; eauto].
-  all: try solve [eapply IHc2; eauto].
-  all: try solve [eapply IHc; eauto].
-  (* For Seq with fuel=0: use IHc1 to rewrite first part, then IHc2 for second *)
-  1-2: specialize IHc1 with (1 := Hd) as Hc1_eq; [congruence|];
-       rewrite Hc1_eq; try (eapply IHc2; eauto).
-  (* For While with fuel=0 where body stopped *)
-  1: specialize IHc with (1 := Hd) as Hc_eq; [congruence|]; rewrite Hc_eq; reflexivity.
-  (* For Seq with fuel=S n: need IHc1 then IHc2 *)
-  1-2: specialize IHc1 with (1 := Hd) as Hc1_eq; [congruence|];
-       rewrite Hc1_eq; try (eapply IHc2; eauto). *)
-       
 Admitted.

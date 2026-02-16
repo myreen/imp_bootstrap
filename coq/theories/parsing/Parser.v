@@ -38,14 +38,68 @@ Fixpoint read_num (l_h: (ascii * ascii)) (f_x: (N * N)) (acc: N) (cs: list ascii
         let/d result := (acc, cs) in
         result
       else
-        let/d f_mult_acc := f * acc in
+        let/d f_mult_acc := acc * f in
         let/d c_minus_x := c_ascii - x in
         let/d new_acc := f_mult_acc + c_minus_x in
-        let/d result := read_num (l, h) (f, x) new_acc cs1 in
+        let/d result := read_num l_h f_x new_acc cs1 in
         result
   end.
-Theorem read_num_equation: ltac2:(unfold_fix_type '@read_num).
-Proof. unfold_fix_proof '@read_num. Qed.
+
+(* read_num ("0"%char, "9"%char) (10, N_of_ascii "0"%char) *)
+Fixpoint read_num_numeric (acc: N) (cs: list ascii): (N * list ascii) :=
+  match cs return (N * list ascii) with
+  [] => 
+    let/d empty_list := [] in
+    let/d result := (acc, empty_list) in
+    result
+  | c :: cs1 =>
+    let/d l_ascii := N_of_ascii "0"%char in
+    let/d c_ascii := N_of_ascii c in
+    let/d h_ascii := N_of_ascii "9"%char in
+    if (c_ascii <? l_ascii)%N then
+      let/d result := (acc, cs) in
+      result
+    else
+      if (h_ascii <? c_ascii)%N then
+        let/d result := (acc, cs) in
+        result
+      else
+        let/d f_mult_acc := acc * 10 in
+        let/d c_minus_x := c_ascii - (N_of_ascii "0"%char) in
+        let/d new_acc := f_mult_acc + c_minus_x in
+        let/d result := read_num_numeric new_acc cs1 in
+        result
+  end.
+Theorem read_num_numeric_equation: ltac2:(unfold_fix_type '@read_num_numeric).
+Proof. unfold_fix_proof '@read_num_numeric. Qed.
+
+(* read_num ("*"%char, "z"%char) (256, 0) *)
+Fixpoint read_num_alpha (acc: N) (cs: list ascii): (N * list ascii) :=
+  match cs return (N * list ascii) with
+  [] => 
+    let/d empty_list := [] in
+    let/d result := (acc, empty_list) in
+    result
+  | c :: cs1 =>
+    let/d l_ascii := N_of_ascii "*"%char in
+    let/d c_ascii := N_of_ascii c in
+    let/d h_ascii := N_of_ascii "z"%char in
+    if (c_ascii <? l_ascii)%N then
+      let/d result := (acc, cs) in
+      result
+    else
+      if (h_ascii <? c_ascii)%N then
+        let/d result := (acc, cs) in
+        result
+      else
+        let/d f_mult_acc := acc * 256 in
+        let/d c_minus_x := c_ascii in
+        let/d new_acc := f_mult_acc + c_minus_x in
+        let/d result := read_num_alpha new_acc cs1 in
+        result
+  end.
+Theorem read_num_alpha_equation: ltac2:(unfold_fix_type '@read_num_alpha).
+Proof. unfold_fix_proof '@read_num_alpha. Qed.
 
 Fixpoint end_line (cs: list ascii) :=
   match cs with
@@ -116,19 +170,14 @@ Fixpoint lex (q: nat) (cs: list ascii) (acc: list token) (fuel: nat): option (li
         let/d result := lex 1 cs acc fuel in
         result
       else
-        let/d zero_char := "0"%char in
-        let/d nine_char := "9"%char in
-        let/d zero_ascii := N_of_ascii zero_char in
         let/d c_cons_cs := c :: cs in
-        let/d digit_result := read_num (zero_char, nine_char) (10, zero_ascii) 0 c_cons_cs in
+        let/d digit_result := read_num_numeric 0 c_cons_cs in
         match digit_result return (option (list token)) with
         | (n, rest) =>
           let/d rest_length := list_length rest in
           let/d original_length := list_length c_cons_cs in
           if Nat.eqb rest_length original_length then
-            let/d star_char := "*"%char in
-            let/d z_char := "z"%char in
-            let/d alpha_result := read_num (star_char, z_char) (256, 0) 0 c_cons_cs in
+            let/d alpha_result := read_num_alpha 0 c_cons_cs in
             match alpha_result return (option (list token)) with
             | (n2, rest2) =>
               let/d rest2_length := list_length rest2 in
@@ -228,14 +277,17 @@ Fixpoint v2list (v: FunValues.Value) :=
 Theorem v2list_equation: ltac2:(unfold_fix_type '@v2list).
 Proof. unfold_fix_proof '@v2list. Qed.
 
-Definition num2exp (n: N) :=
+Definition num2exp (n: N): exp :=
   let/d is_upper := vis_upper n in
   if is_upper then
-    (*                     vvvvvvvvvvvvvvvvvvvv (2 ^ 64 - 1) *)
-    let/d n1 := N_modulo n 18446744073709551615 in
-    let/d word_val := word.of_Z (Z.of_N n1) in
-    let/d result := ImpSyntax.Const word_val in
-    result
+    (*  vvvvvvvvvvvvvvvvvvvv (2 ^ 64 - 1) *)
+    if (18446744073709551615 <? n)%N then
+      let/d result := Const  (word.of_Z (Z.of_N 0)) in (* fail? *)
+      result
+    else
+      (let/d word_val := word.of_Z (Z.of_N n) in
+      let/d result := ImpSyntax.Const word_val in
+      result)
   else 
     let/d result := Var n in
     result.
@@ -254,11 +306,14 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
     | Pair v1 v2 =>
       if N.eqb n (name_enc "'") then 
         let/d v1_num := vgetNum v1 in
-        (*                                  vvvvvvvvvvvvvvvvvvvv (2 ^ 64 - 1) *)
-        let/d v1_num_mod := N_modulo v1_num 18446744073709551615 in
-        let/d word_val := word.of_Z (Z.of_N v1_num_mod) in
-        let/d result := Const word_val in
-        result
+        (*  vvvvvvvvvvvvvvvvvvvv (2 ^ 64 - 1) *)
+        if (18446744073709551615 <? v1_num)%N then
+          let/d result := Const  (word.of_Z (Z.of_N 0)) in (* fail? *)
+          result
+        else
+          (let/d word_val := word.of_Z (Z.of_N v1_num) in
+          let/d result := ImpSyntax.Const word_val in
+          result)
       else if N.eqb n (name_enc "var") then 
         let/d v1_num := vgetNum v1 in
         let/d result := Var v1_num in

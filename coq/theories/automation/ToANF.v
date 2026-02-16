@@ -239,7 +239,7 @@ Goal forall x y, match x with
                              let/d b := y + 1 in
                              let/d c := foo1 a b in
                              c) by reflexivity). *)
-Admitted.
+Abort.
 
 Open Scope string_scope.
 
@@ -248,7 +248,7 @@ Open Scope string_scope.
 Goal (let/d s := "ab" ++ "cd" in
       List.length (list_ascii_of_string (s ++ ""))) = 8.
   toANF ().
-Admitted.
+Abort.
 
 Definition l1: list nat := [1].
 Definition l2: list nat := [2].
@@ -262,7 +262,7 @@ Goal forall f is (instrs2str: nat -> nat -> string),
   (f [l1; l2; l3; l4; l5; l6; l7] ++ instrs2str 0 is)%string = "".
   intros.
   toANF ().
-Admitted.
+Abort.
 
 From impboot.assembly Require Import ASMSyntax.
 
@@ -279,10 +279,10 @@ Goal forall k (l: nat -> list instr),
   ]%string ++ (l 1))%list = []).
   intros.
   toANF ().
-Admitted.
+Abort.
 
 Goal forall x,
   (let/d s := (name_enc "x") + (x + 1) in s)%N = 2%N.
   intros.
   toANF ().
-Admitted.
+Abort.

@@ -26,14 +26,23 @@ From impboot Require Import derivations.CompilerUtilsDerivations.
 
 (* lexing *)
 
-Derive read_num_prog
-  in ltac2:(relcompile_tpe 'read_num_prog 'read_num ['mul_N])
-  as read_num_prog_proof.
+Derive read_num_numeric_prog
+  in ltac2:(relcompile_tpe 'read_num_numeric_prog 'read_num_numeric ['mul_N_10])
+  as read_num_numeric_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [read_num_prog].
-Ltac2 Eval assert_Some constr:(to_funs [read_num_prog]).
+Time Compute to_funs [read_num_numeric_prog].
+Ltac2 Eval assert_Some constr:(to_funs [read_num_numeric_prog]).
+
+Derive read_num_alpha_prog
+  in ltac2:(relcompile_tpe 'read_num_alpha_prog 'read_num_alpha ['mul_N_256])
+  as read_num_alpha_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+Time Compute to_funs [read_num_alpha_prog].
+Ltac2 Eval assert_Some constr:(to_funs [read_num_alpha_prog]).
 
 Derive end_line_prog
   in ltac2:(relcompile_tpe 'end_line_prog 'end_line [])
@@ -54,7 +63,7 @@ Time Compute to_funs [q_from_nat_prog].
 Ltac2 Eval assert_Some constr:(to_funs [q_from_nat_prog]).
 
 Derive lex_prog
-  in ltac2:(relcompile_tpe 'lex_prog 'lex ['end_line; 'read_num; 'q_from_nat; '@list_length])
+  in ltac2:(relcompile_tpe 'lex_prog 'lex ['end_line; 'read_num_numeric; 'read_num_alpha; 'q_from_nat; '@list_length])
   as lex_prog_proof.
 Proof.
   time relcompile.
@@ -236,25 +245,21 @@ Time Compute to_funs [v2list_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2list_prog]).
 
 Derive num2exp_prog
-  in ltac2:(relcompile_tpe 'num2exp_prog 'num2exp ['vis_upper; 'N_modulo])
+  in ltac2:(relcompile_tpe 'num2exp_prog 'num2exp ['vis_upper])
   as num2exp_prog_proof.
 Proof.
   time relcompile.
-  subst; specialize N_modulo_lt with (n := n) (m := (2 ^ 64 - 1)%N) as Hlt.
-  assert (18446744073709551615 = 2 ^ 64 - 1)%N as -> by ltac1:(lia).
-  ltac1:(lia).
+  rewrite N.ltb_ge in *; ltac1:(lia).
 Qed.
 Time Compute to_funs [num2exp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [num2exp_prog]).
 
 Derive v2exp_prog
-  in ltac2:(relcompile_tpe 'v2exp_prog 'v2exp ['vgetNum; 'vel0; 'num2exp; 'N_modulo])
+  in ltac2:(relcompile_tpe 'v2exp_prog 'v2exp ['vgetNum; 'vel0; 'num2exp])
   as v2exp_prog_proof.
 Proof.
   time relcompile.
-  subst; specialize N_modulo_lt with (n := (vgetNum v0_3)) (m := (2 ^ 64 - 1)%N) as Hlt.
-  assert (18446744073709551615 = 2 ^ 64 - 1)%N as -> by ltac1:(lia).
-  ltac1:(lia).
+  rewrite N.ltb_ge in *; ltac1:(lia).
 Qed.
 Time Compute to_funs [v2exp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2exp_prog]).
@@ -352,7 +357,8 @@ Time Compute to_funs [str2imp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [str2imp_prog]).
 
 Definition ParserDerivations_funs := [
-  read_num_prog;
+  read_num_numeric_prog;
+  read_num_alpha_prog;
   end_line_prog;
   q_from_nat_prog;
   lex_prog;
@@ -417,39 +423,40 @@ Proof.
   intros * Hlookup_fun_utils Hlookup_fun.
   assert_eval_app_compiler_utils 'Hlookup_fun_utils.
 
-  assert_eval_app_by 'read_num 'read_num_prog_proof 'Hlookup_fun 0.
-  assert_eval_app_by 'end_line 'end_line_prog_proof 'Hlookup_fun 1.
-  assert_eval_app_by 'q_from_nat 'q_from_nat_prog_proof 'Hlookup_fun 2.
-  assert_eval_app_by 'lex 'lex_prog_proof 'Hlookup_fun 3.
-  assert_eval_app_by 'lexer_i 'lexer_i_prog_proof 'Hlookup_fun 4.
-  assert_eval_app_by 'lexer 'lexer_prog_proof 'Hlookup_fun 5.
-  assert_eval_app_by 'vcons 'vcons_prog_proof 'Hlookup_fun 6.
-  assert_eval_app_by 'vhead 'vhead_prog_proof 'Hlookup_fun 7.
-  assert_eval_app_by 'vlist 'vlist_prog_proof 'Hlookup_fun 8.
-  assert_eval_app_by 'vis_upper_f 'vis_upper_f_prog_proof 'Hlookup_fun 9.
-  assert_eval_app_by 'vis_upper 'vis_upper_prog_proof 'Hlookup_fun 10.
-  assert_eval_app_by 'vgetNum 'vgetNum_prog_proof 'Hlookup_fun 11.
-  assert_eval_app_by 'vtail 'vtail_prog_proof 'Hlookup_fun 12.
-  assert_eval_app_by 'vel0 'vel0_prog_proof 'Hlookup_fun 13.
-  assert_eval_app_by 'vel1 'vel1_prog_proof 'Hlookup_fun 14.
-  assert_eval_app_by 'vel2 'vel2_prog_proof 'Hlookup_fun 15.
-  assert_eval_app_by 'vel3 'vel3_prog_proof 'Hlookup_fun 16.
-  assert_eval_app_by 'visNum 'visNum_prog_proof 'Hlookup_fun 17.
-  assert_eval_app_by 'visPair 'visPair_prog_proof 'Hlookup_fun 18.
-  assert_eval_app_by 'quote 'quote_prog_proof 'Hlookup_fun 19.
-  assert_eval_app_by 'parse 'parse_prog_proof 'Hlookup_fun 20.
-  assert_eval_app_by 'v2list 'v2list_prog_proof 'Hlookup_fun 21.
-  assert_eval_app_by 'num2exp 'num2exp_prog_proof 'Hlookup_fun 22.
-  assert_eval_app_by 'v2exp 'v2exp_prog_proof 'Hlookup_fun 23.
-  assert_eval_app_by 'vs2exps 'vs2exps_prog_proof 'Hlookup_fun 24.
-  assert_eval_app_by 'v2cmp 'v2cmp_prog_proof 'Hlookup_fun 25.
-  assert_eval_app_by 'v2test 'v2test_prog_proof 'Hlookup_fun 26.
-  assert_eval_app_by 'v2cmd 'v2cmd_prog_proof 'Hlookup_fun 27.
-  assert_eval_app_by 'vs2args 'vs2args_prog_proof 'Hlookup_fun 28.
-  assert_eval_app_by 'v2func 'v2func_prog_proof 'Hlookup_fun 29.
-  assert_eval_app_by 'v2funcs 'v2funcs_prog_proof 'Hlookup_fun 30.
-  assert_eval_app_by 'vs2prog 'vs2prog_prog_proof 'Hlookup_fun 31.
-  assert_eval_app_by 'parser 'parser_prog_proof 'Hlookup_fun 32.
-  assert_eval_app_by 'str2imp 'str2imp_prog_proof 'Hlookup_fun 33.
+  assert_eval_app_by 'read_num_numeric 'read_num_numeric_prog_proof 'Hlookup_fun 0.
+  assert_eval_app_by 'read_num_alpha 'read_num_alpha_prog_proof 'Hlookup_fun 1.
+  assert_eval_app_by 'end_line 'end_line_prog_proof 'Hlookup_fun 2.
+  assert_eval_app_by 'q_from_nat 'q_from_nat_prog_proof 'Hlookup_fun 3.
+  assert_eval_app_by 'lex 'lex_prog_proof 'Hlookup_fun 4.
+  assert_eval_app_by 'lexer_i 'lexer_i_prog_proof 'Hlookup_fun 5.
+  assert_eval_app_by 'lexer 'lexer_prog_proof 'Hlookup_fun 6.
+  assert_eval_app_by 'vcons 'vcons_prog_proof 'Hlookup_fun 7.
+  assert_eval_app_by 'vhead 'vhead_prog_proof 'Hlookup_fun 8.
+  assert_eval_app_by 'vlist 'vlist_prog_proof 'Hlookup_fun 9.
+  assert_eval_app_by 'vis_upper_f 'vis_upper_f_prog_proof 'Hlookup_fun 10.
+  assert_eval_app_by 'vis_upper 'vis_upper_prog_proof 'Hlookup_fun 11.
+  assert_eval_app_by 'vgetNum 'vgetNum_prog_proof 'Hlookup_fun 12.
+  assert_eval_app_by 'vtail 'vtail_prog_proof 'Hlookup_fun 13.
+  assert_eval_app_by 'vel0 'vel0_prog_proof 'Hlookup_fun 14.
+  assert_eval_app_by 'vel1 'vel1_prog_proof 'Hlookup_fun 15.
+  assert_eval_app_by 'vel2 'vel2_prog_proof 'Hlookup_fun 16.
+  assert_eval_app_by 'vel3 'vel3_prog_proof 'Hlookup_fun 17.
+  assert_eval_app_by 'visNum 'visNum_prog_proof 'Hlookup_fun 18.
+  assert_eval_app_by 'visPair 'visPair_prog_proof 'Hlookup_fun 19.
+  assert_eval_app_by 'quote 'quote_prog_proof 'Hlookup_fun 20.
+  assert_eval_app_by 'parse 'parse_prog_proof 'Hlookup_fun 21.
+  assert_eval_app_by 'v2list 'v2list_prog_proof 'Hlookup_fun 22.
+  assert_eval_app_by 'num2exp 'num2exp_prog_proof 'Hlookup_fun 23.
+  assert_eval_app_by 'v2exp 'v2exp_prog_proof 'Hlookup_fun 24.
+  assert_eval_app_by 'vs2exps 'vs2exps_prog_proof 'Hlookup_fun 25.
+  assert_eval_app_by 'v2cmp 'v2cmp_prog_proof 'Hlookup_fun 26.
+  assert_eval_app_by 'v2test 'v2test_prog_proof 'Hlookup_fun 27.
+  assert_eval_app_by 'v2cmd 'v2cmd_prog_proof 'Hlookup_fun 28.
+  assert_eval_app_by 'vs2args 'vs2args_prog_proof 'Hlookup_fun 29.
+  assert_eval_app_by 'v2func 'v2func_prog_proof 'Hlookup_fun 30.
+  assert_eval_app_by 'v2funcs 'v2funcs_prog_proof 'Hlookup_fun 31.
+  assert_eval_app_by 'vs2prog 'vs2prog_prog_proof 'Hlookup_fun 32.
+  assert_eval_app_by 'parser 'parser_prog_proof 'Hlookup_fun 33.
+  assert_eval_app_by 'str2imp 'str2imp_prog_proof 'Hlookup_fun 34.
   eauto.
 Qed.

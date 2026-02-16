@@ -1,1 +1,1 @@
-(defun main () ((putchar '48) (return '0)))
+(defun main () ((putchar '75) ((putchar '97) ((putchar '115) ((putchar '105) ((putchar '97) ((putchar '10) (return '0))))))))

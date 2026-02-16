@@ -45,12 +45,37 @@ L22:
   	/* main */
 L23:	subq $0, %rsp
 L24:	pushq %rax
-L25:	movq $65, %rax
+L25:	movq $75, %rax
 L26:	movq %rax, %rdi
 L27:	movq stdout(%rip), %rsi ; call _IO_putc@PLT
 L28:	popq %rax
 L29:	pushq %rax
-L30:	movq $0, %rax
-L31:	addq $8, %rsp
-L32:	ret
-L33:	ret
+L30:	movq $97, %rax
+L31:	movq %rax, %rdi
+L32:	movq stdout(%rip), %rsi ; call _IO_putc@PLT
+L33:	popq %rax
+L34:	pushq %rax
+L35:	movq $115, %rax
+L36:	movq %rax, %rdi
+L37:	movq stdout(%rip), %rsi ; call _IO_putc@PLT
+L38:	popq %rax
+L39:	pushq %rax
+L40:	movq $105, %rax
+L41:	movq %rax, %rdi
+L42:	movq stdout(%rip), %rsi ; call _IO_putc@PLT
+L43:	popq %rax
+L44:	pushq %rax
+L45:	movq $97, %rax
+L46:	movq %rax, %rdi
+L47:	movq stdout(%rip), %rsi ; call _IO_putc@PLT
+L48:	popq %rax
+L49:	pushq %rax
+L50:	movq $10, %rax
+L51:	movq %rax, %rdi
+L52:	movq stdout(%rip), %rsi ; call _IO_putc@PLT
+L53:	popq %rax
+L54:	pushq %rax
+L55:	movq $0, %rax
+L56:	addq $8, %rsp
+L57:	ret
+L58:	ret

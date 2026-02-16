@@ -17,6 +17,13 @@ Definition nat_modulo (n1 n2: nat): nat :=
   | S _ => n1  - (n2 * (n1 / n2))
   end.
 
+Definition nat_modulo_10 (n: nat): nat :=
+  n - (10 * (n / 10)).
+
+Lemma nat_modulo_10_spec: forall n,
+  nat_modulo_10 n = nat_modulo n 10.
+Proof. reflexivity. Qed.
+
 Lemma mul_N_f_oblig:
   forall (b_min_1 b: N) (NE: b <> 0%N) (BMIN1EQ: b_min_1 = (b - 1)%N), (b_min_1 < b)%N.
 Proof.
@@ -33,6 +40,85 @@ Fixpoint mul_N_f (a b: N) (fuel: nat): N :=
     | _ => a + mul_N_f a (b - 1) fuel
     end
   end.
+
+Definition mul_N_10 (a: N): N :=
+  (let/d a2 := a + a in
+  let/d a4 := a2 + a2 in
+  let/d a8 := a4 + a4 in
+  let/d a10 := a8 + a2 in
+  a10)%N.
+
+Lemma mul_N_10_spec_r: forall a,
+  mul_N_10 a = (a * 10)%N.
+Proof.
+  intros; unfold mul_N_10, dlet; simpl; lia.
+Qed.
+
+Lemma mul_N_10_spec_l: forall a,
+  mul_N_10 a = (10 * a)%N.
+Proof.
+  intros; unfold mul_N_10, dlet; simpl; destruct a; simpl; lia.
+Qed.
+
+Definition mul_N_256 (a: N): N :=
+  (let/d a2 := a + a in
+  let/d a4 := a2 + a2 in
+  let/d a8 := a4 + a4 in
+  let/d a16 := a8 + a8 in
+  let/d a32 := a16 + a16 in
+  let/d a64 := a32 + a32 in
+  let/d a128 := a64 + a64 in
+  let/d a256 := a128 + a128 in
+  a256)%N.
+
+Lemma mul_N_256_spec_r: forall a,
+  mul_N_256 a = (a * 256)%N.
+Proof.
+  intros; unfold mul_N_256, dlet; simpl; lia.
+Qed.
+
+Lemma mul_N_256_spec_l: forall a,
+  mul_N_256 a = (256 * a)%N.
+Proof.
+  intros; unfold mul_N_256, dlet; simpl; destruct a; simpl; lia.
+Qed.
+
+Definition mul_nat_8 (a: nat): nat :=
+  let/d a2 := a + a in
+  let/d a4 := a2 + a2 in
+  let/d a8 := a4 + a4 in
+  a8.
+
+Lemma mul_nat_8_spec_r: forall a,
+  mul_nat_8 a = (a * 8)%nat.
+Proof.
+  intros; unfold mul_nat_8, dlet; simpl; lia.
+Qed.
+
+Lemma mul_nat_8_spec_l: forall a,
+  mul_nat_8 a = (8 * a)%nat.
+Proof.
+  intros; unfold mul_nat_8, dlet; simpl; lia.
+Qed.
+
+Definition mul_nat_10 (a: nat): nat :=
+  let/d a2 := a + a in
+  let/d a4 := a2 + a2 in
+  let/d a8 := a4 + a4 in
+  let/d a10 := a8 + a2 in
+  a10.
+
+Lemma mul_nat_10_spec_r: forall a,
+  mul_nat_10 a = (a * 10)%nat.
+Proof.
+  intros; unfold mul_nat_10, dlet; simpl; lia.
+Qed.
+
+Lemma mul_nat_10_spec_l: forall a,
+  mul_nat_10 a = (10 * a)%nat.
+Proof.
+  intros; unfold mul_nat_10, dlet; simpl; lia.
+Qed.
 
 Definition mul_N (a b: N): N :=
   mul_N_f a b (1 + N.to_nat b).
@@ -92,6 +178,20 @@ Definition N_modulo (n1 n2: N): N :=
   | 0%nat => 0
   | _ => n1  - (n2 * (n1 / n2))
   end.
+
+Definition N_modulo_10 (n: N): N :=
+  n - (10 * (n / 10)).
+
+Lemma N_modulo_10_spec: forall n,
+  N_modulo_10 n = N_modulo n 10.
+Proof. reflexivity. Qed.
+
+Definition N_modulo_256 (n: N): N :=
+  n - (256 * (n / 256)).
+
+Lemma N_modulo_256_spec: forall n,
+  N_modulo_256 n = N_modulo n 256.
+Proof. reflexivity. Qed.
 
 Theorem nat_modulo_le: forall (n m: nat),
   nat_modulo n m <= m.
@@ -163,13 +263,13 @@ Qed.
 
 Fixpoint N2str_f (n: N) (fuel: nat) (str: string): string :=
   if (n <? 10)%N then
-    let/d nd := N_modulo n 10 in
+    let/d nd := N_modulo_10 n in
     let/d a:= ascii_of_N (48 + nd) in
     String a str
   else match fuel with
   | 0 => ""
   | S fuel =>
-    let/d nd := N_modulo n 10 in
+    let/d nd := N_modulo_10 n in
     let/d a := ascii_of_N (48 + nd) in
     N2str_f (n / 10) fuel (String a str)
   end.

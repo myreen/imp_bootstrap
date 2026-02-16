@@ -760,7 +760,7 @@ Fixpoint reify_string (str: list ascii) (str_rest: FunSyntax.exp) :=
                 [FunSyntax.Const (N_of_ascii a); reify_string str str_rest]
   end.
 
-Eval cbv -[N_of_ascii] in reify_string (list_ascii_of_string "movql") (FunSyntax.Const 0).
+(* Eval cbv -[N_of_ascii] in reify_string (list_ascii_of_string "movql") (FunSyntax.Const 0). *)
 
 Lemma reify_string_ok (l r : list ascii) (rexp: FunSyntax.exp):
   ∀ (env : FEnv.env) (s : state),
@@ -795,7 +795,7 @@ Definition reify_chunked_k (name: string) (sz: nat) (str: list ascii)
   (onto: FunSyntax.exp -> FunSyntax.exp) :=
   reify_string_chunks name 0 (chunk sz str) onto.
 
-Eval cbv -[N_of_ascii name_enc] in reify_chunked_k "f" 4 (list_ascii_of_string "fooxbarxbazxquuux").
+(* Eval cbv -[N_of_ascii name_enc] in reify_chunked_k "f" 4 (list_ascii_of_string "fooxbarxbazxquuux"). *)
 
 Definition envn (name: string) (chunks: list (list ascii)) (n: N) (env: FEnv.env) :=
   FEnv.insert_all

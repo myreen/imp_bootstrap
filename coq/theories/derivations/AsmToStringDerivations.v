@@ -140,7 +140,7 @@ Qed.
 Time Compute to_funs [inst2str_push_prog].
 
 Derive inst2str_load_rsp_prog
-  in ltac2:(relcompile_tpe 'inst2str_load_rsp_prog 'inst2str_load_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str])
+  in ltac2:(relcompile_tpe 'inst2str_load_rsp_prog 'inst2str_load_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str])
   as inst2str_load_rsp_prog_proof.
 Proof.
   time relcompile.
@@ -149,7 +149,7 @@ Print inst2str_load_rsp_prog.
 Time Compute to_funs [inst2str_load_rsp_prog].
 
 Derive inst2str_store_rsp_prog
-  in ltac2:(relcompile_tpe 'inst2str_store_rsp_prog 'inst2str_store_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str])
+  in ltac2:(relcompile_tpe 'inst2str_store_rsp_prog 'inst2str_store_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str])
   as inst2str_store_rsp_prog_proof.
 Proof.
   time relcompile.
@@ -157,7 +157,7 @@ Qed.
 Time Compute to_funs [inst2str_store_rsp_prog].
 
 Derive inst2str_add_rsp_prog
-  in ltac2:(relcompile_tpe 'inst2str_add_rsp_prog 'inst2str_add_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str])
+  in ltac2:(relcompile_tpe 'inst2str_add_rsp_prog 'inst2str_add_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str])
   as inst2str_add_rsp_prog_proof.
 Proof.
   time relcompile.
@@ -165,7 +165,7 @@ Qed.
 Time Compute to_funs [inst2str_add_rsp_prog].
 
 Derive inst2str_sub_rsp_prog
-  in ltac2:(relcompile_tpe 'inst2str_sub_rsp_prog 'inst2str_sub_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str])
+  in ltac2:(relcompile_tpe 'inst2str_sub_rsp_prog 'inst2str_sub_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str])
   as inst2str_sub_rsp_prog_proof.
 Proof.
   time relcompile.
@@ -173,7 +173,7 @@ Qed.
 Time Compute to_funs [inst2str_sub_rsp_prog].
 
 Derive inst2str_store_prog
-  in ltac2:(relcompile_tpe 'inst2str_store_prog 'inst2str_store ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str; 'N2str])
+  in ltac2:(relcompile_tpe 'inst2str_store_prog 'inst2str_store ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
   as inst2str_store_prog_proof.
 Proof.
   time relcompile.
@@ -181,7 +181,7 @@ Qed.
 Time Compute to_funs [inst2str_store_prog].
 
 Derive inst2str_load_prog
-  in ltac2:(relcompile_tpe 'inst2str_load_prog 'inst2str_load ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str; 'N2str])
+  in ltac2:(relcompile_tpe 'inst2str_load_prog 'inst2str_load ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
   as inst2str_load_prog_proof.
 Proof.
   time relcompile.
@@ -189,7 +189,7 @@ Qed.
 Time Compute to_funs [inst2str_load_prog].
 
 Derive inst2str_getchar1_prog
-  in ltac2:(relcompile_tpe 'inst2str_getchar1_prog 'inst2str_getchar1 ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str; 'N2str])
+  in ltac2:(relcompile_tpe 'inst2str_getchar1_prog 'inst2str_getchar1 ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
   as inst2str_getchar1_prog_proof.
 Proof.
   time relcompile.
@@ -197,7 +197,7 @@ Qed.
 Time Compute to_funs [inst2str_getchar1_prog].
 
 Derive inst2str_putchar_prog
-  in ltac2:(relcompile_tpe 'inst2str_putchar_prog 'inst2str_putchar ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str; 'N2str])
+  in ltac2:(relcompile_tpe 'inst2str_putchar_prog 'inst2str_putchar ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
   as inst2str_putchar_prog_proof.
 Proof.
   time relcompile.
@@ -205,7 +205,7 @@ Qed.
 Time Compute to_funs [inst2str_putchar_prog].
 
 Derive inst2str_exit_prog
-  in ltac2:(relcompile_tpe 'inst2str_exit_prog 'inst2str_exit ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str; 'N2str])
+  in ltac2:(relcompile_tpe 'inst2str_exit_prog 'inst2str_exit ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
   as inst2str_exit_prog_proof.
 Proof.
   time relcompile.
@@ -213,7 +213,7 @@ Qed.
 Time Compute to_funs [inst2str_exit_prog].
 
 Derive inst2str_comment_prog
-  in ltac2:(relcompile_tpe 'inst2str_comment_prog 'inst2str_comment ['reg2str1; 'string_append; 'lab; 'mul_nat; 'num2str; 'N2str; 'clean])
+  in ltac2:(relcompile_tpe 'inst2str_comment_prog 'inst2str_comment ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str; 'clean])
   as inst2str_comment_prog_proof.
 Proof.
   time relcompile.

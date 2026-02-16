@@ -217,16 +217,16 @@ Definition get_func_name (d: FunSyntax.defun): name :=
   | FunSyntax.Defun n _ _ => n
   end.
 
-Definition has_conflicting_names (defs: list FunSyntax.defun): bool :=
+Definition has_conflicting_names (nms: list name): bool :=
   let reserved_names := name_of_string "main" :: map (fun '(n,_,_) => n) builtin in
-  List.existsb (fun d =>
-    List.existsb (N.eqb (get_func_name d)) reserved_names
-  ) defs.
+  List.existsb (fun n =>
+    List.existsb (N.eqb n) reserved_names
+  ) nms.
 
 Definition to_imp (p: FunSyntax.prog): option ImpSyntax.prog :=
   match p with
   | FunSyntax.Program defs main =>
-    if has_conflicting_names defs then None else
+    if has_conflicting_names (map get_func_name defs) then None else
     match to_funs (FunSyntax.Defun (name_of_string "main") [] main :: defs) with
     | Some fs =>
       Some (

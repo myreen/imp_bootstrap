@@ -17,10 +17,35 @@ Qed.
 
 Ltac2 rewrite_lowerable (): unit :=
   repeat (match! goal with
-  | [ |- context [ N.mul _ _ ] ] =>
+  (* | [ |- context [ N.mul _ _ ] ] =>
     rewrite <- mul_N_spec
   | [ |- context [ Nat.mul _ _ ] ] =>
-    rewrite <- mul_nat_spec
+    rewrite <- mul_nat_spec *)
+  | [ |- context [ Nat.mul 8%nat _ ] ] =>
+    rewrite <- mul_nat_8_spec_l
+  | [ |- context [ Nat.mul _ 8%nat ] ] =>
+    rewrite <- mul_nat_8_spec_r
+  | [ |- context [ Nat.mul 10%nat _ ] ] =>
+    rewrite <- mul_nat_10_spec_l
+  | [ |- context [ Nat.mul _ 10%nat ] ] =>
+    rewrite <- mul_nat_10_spec_r
+  | [ |- context [ N.mul 10%N _ ] ] =>
+    rewrite <- mul_N_10_spec_l
+  | [ |- context [ N.mul _ 10%N ] ] =>
+    rewrite <- mul_N_10_spec_r
+  | [ |- context [ N.mul 256%N _ ] ] =>
+    rewrite <- mul_N_256_spec_l
+  | [ |- context [ N.mul _ 256%N ] ] =>
+    rewrite <- mul_N_256_spec_r
+  | [ |- context ctx [ N_modulo ?e 10%N ] ] =>
+    let inst := Pattern.instantiate ctx constr:(nat_modulo_10 $e) in
+    change $inst
+  | [ |- context ctx [ N_modulo ?e 256%N ] ] =>
+    let inst := Pattern.instantiate ctx constr:(N_modulo_256 $e) in
+    change $inst
+  | [ |- context ctx [ nat_modulo ?e 10%nat ] ] =>
+    let inst := Pattern.instantiate ctx constr:(nat_modulo_10 $e) in
+    change $inst
   | [ |- context [ (_ ++ _)%string ] ] =>
     rewrite <- string_append_spec
   | [ |- context [ (_ ++ _)%list ] ] =>
@@ -82,7 +107,7 @@ in let/d anf_tmp3 := (anf_tmp1 ++ anf_tmp2)%string
 in let/d anf_tmp4 := num2str anf_tmp0 anf_tmp3 in let/d anf_tmp5 := (anf_tmp ++ anf_tmp4)%string in anf_tmp5) = ""%string.
   intros.
   rewrite_lowerable ().
-Admitted.
+Abort.
 
 Definition test_split_list (l1 l2: list nat): list nat :=
   let/d l := [1;2;3;4;5;6;7] in
@@ -98,4 +123,14 @@ Goal forall {A} l1 l2 l3 l4 l5 l6 l7 (f: nat -> Z -> list A) a,
   (let/d l := [l1; l2; l3; l4; l5; l6; l7]%string in l ++ f 0 a) = [].
   intros.
   rewrite_lowerable ().
-Admitted.
+Abort.
+
+Goal forall (a: nat), (10 * a) = 0.
+  intros.
+  rewrite_lowerable ().
+Abort.
+
+Goal forall (a: nat), (nat_modulo a 10) = 0.
+  intros.
+  rewrite_lowerable ().
+Abort.

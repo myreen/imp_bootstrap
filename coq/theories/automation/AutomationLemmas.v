@@ -221,6 +221,15 @@ Proof.
   repeat econstructor; eauto.
 Qed.
 
+Theorem auto_N_of_nat: forall env s x1 (n: nat),
+  env |-- ([x1], s) ---> ([encode n], s) ->
+  env |-- ([x1], s) ---> ([encode (N.of_nat n)], s).
+Proof.
+  intros.
+  simpl.
+  repeat econstructor; eauto.
+Qed.
+
 Theorem auto_nat_add : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
   env |-- ([x2], s1) ---> ([encode n2], s2) ->

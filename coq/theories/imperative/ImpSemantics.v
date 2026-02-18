@@ -446,7 +446,7 @@ Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome Value 
 Definition prog_terminates (input: llist ascii) (p: prog) (fuel: nat) (output: string) (steps_done: nat) :=
   exists s r,
     eval_from fuel input p = (r, s) /\
-      r = Stop (ImpSemantics.Return (ImpSyntax.Word (word.of_Z 0))) /\ (* TODO: is this correct? *)
+      r = Stop (ImpSemantics.Return (ImpSyntax.Word (word.of_Z 0))) /\
       s.(ImpSemantics.output) = output /\
       s.(ImpSemantics.steps_done) = steps_done.
 

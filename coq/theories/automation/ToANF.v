@@ -121,7 +121,7 @@ Ltac2 rec in_letd_definitions (dlet_rhss: constr list) (to_replace: constr list)
   match dlet_rhss, to_replace with
   | ([], []) => continuation (acc_lifts)
   | (e :: dlet_rhss, re :: to_replace) =>
-    let tmp_ident := Fresh.in_goal (Option.get (Ident.of_string "anf_tmp")) in
+    let tmp_ident := Fresh.in_goal (Option.get (Ident.of_string "a")) in
     let fn := Constr.in_context tmp_ident (Constr.type e) (fun _ =>
       let tmp_constr := Unsafe.make (Unsafe.Var tmp_ident) in
       let new_lifts := ConstrMap.add e tmp_constr acc_lifts in
@@ -258,8 +258,8 @@ Definition l5: list nat := [5].
 Definition l6: list nat := [6].
 Definition l7: list nat := [7].
 
-Goal forall f is (instrs2str: nat -> nat -> string),
-  (f [l1; l2; l3; l4; l5; l6; l7] ++ instrs2str 0 is)%string = "".
+Goal forall f is (is2str: nat -> nat -> string),
+  (f [l1; l2; l3; l4; l5; l6; l7] ++ is2str 0 is)%string = "".
   intros.
   toANF ().
 Abort.

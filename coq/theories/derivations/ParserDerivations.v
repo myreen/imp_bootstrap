@@ -26,23 +26,23 @@ From impboot Require Import derivations.CompilerUtilsDerivations.
 
 (* lexing *)
 
-Derive read_num_numeric_prog
-  in ltac2:(relcompile_tpe 'read_num_numeric_prog 'read_num_numeric ['mul_N_10])
-  as read_num_numeric_prog_proof.
+Derive read_nmc_prog
+  in ltac2:(relcompile_tpe 'read_nmc_prog 'read_nmc ['mulN_10])
+  as read_nmc_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [read_num_numeric_prog].
-Ltac2 Eval assert_Some constr:(to_funs [read_num_numeric_prog]).
+Time Compute to_funs [read_nmc_prog].
+Ltac2 Eval assert_Some constr:(to_funs [read_nmc_prog]).
 
-Derive read_num_alpha_prog
-  in ltac2:(relcompile_tpe 'read_num_alpha_prog 'read_num_alpha ['mul_N_256])
-  as read_num_alpha_prog_proof.
+Derive read_alp_prog
+  in ltac2:(relcompile_tpe 'read_alp_prog 'read_alp ['mulN_256])
+  as read_alp_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [read_num_alpha_prog].
-Ltac2 Eval assert_Some constr:(to_funs [read_num_alpha_prog]).
+Time Compute to_funs [read_alp_prog].
+Ltac2 Eval assert_Some constr:(to_funs [read_alp_prog]).
 
 Derive end_line_prog
   in ltac2:(relcompile_tpe 'end_line_prog 'end_line [])
@@ -53,17 +53,17 @@ Qed.
 Time Compute to_funs [end_line_prog].
 Ltac2 Eval assert_Some constr:(to_funs [end_line_prog]).
 
-Derive q_from_nat_prog
-  in ltac2:(relcompile_tpe 'q_from_nat_prog 'q_from_nat [])
-  as q_from_nat_prog_proof.
+Derive q_of_nat_prog
+  in ltac2:(relcompile_tpe 'q_of_nat_prog 'q_of_nat [])
+  as q_of_nat_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [q_from_nat_prog].
-Ltac2 Eval assert_Some constr:(to_funs [q_from_nat_prog]).
+Time Compute to_funs [q_of_nat_prog].
+Ltac2 Eval assert_Some constr:(to_funs [q_of_nat_prog]).
 
 Derive lex_prog
-  in ltac2:(relcompile_tpe 'lex_prog 'lex ['end_line; 'read_num_numeric; 'read_num_alpha; 'q_from_nat; '@list_length])
+  in ltac2:(relcompile_tpe 'lex_prog 'lex ['end_line; 'read_nmc; 'read_alp; 'q_of_nat; '@list_len])
   as lex_prog_proof.
 Proof.
   time relcompile.
@@ -72,7 +72,7 @@ Time Compute to_funs [lex_prog].
 Ltac2 Eval assert_Some constr:(to_funs [lex_prog]).
 
 Derive lexer_i_prog
-  in ltac2:(relcompile_tpe 'lexer_i_prog 'lexer_i ['@lex; '@list_length])
+  in ltac2:(relcompile_tpe 'lexer_i_prog 'lexer_i ['@lex; '@list_len])
   as lexer_i_prog_proof.
 Proof.
   time relcompile.
@@ -120,26 +120,26 @@ Qed.
 Time Compute to_funs [vlist_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vlist_prog]).
 
-Theorem vis_upper_f_equation: ltac2:(unfold_fix_type '@vis_upper_f).
-Proof. unfold_fix_proof '@vis_upper_f. Qed.
-Derive vis_upper_f_prog
-  in ltac2:(relcompile_tpe 'vis_upper_f_prog 'vis_upper_f [])
-  as vis_upper_f_prog_proof.
+Theorem vupper_f_equation: ltac2:(unfold_fix_type '@vupper_f).
+Proof. unfold_fix_proof '@vupper_f. Qed.
+Derive vupper_f_prog
+  in ltac2:(relcompile_tpe 'vupper_f_prog 'vupper_f [])
+  as vupper_f_prog_proof.
 Proof.
   time relcompile.
   ltac1:(lia).
 Qed.
-Time Compute to_funs [vis_upper_f_prog].
-Ltac2 Eval assert_Some constr:(to_funs [vis_upper_f_prog]).
+Time Compute to_funs [vupper_f_prog].
+Ltac2 Eval assert_Some constr:(to_funs [vupper_f_prog]).
 
-Derive vis_upper_prog
-  in ltac2:(relcompile_tpe 'vis_upper_prog 'vis_upper ['vis_upper_f])
-  as vis_upper_prog_proof.
+Derive vupper_prog
+  in ltac2:(relcompile_tpe 'vupper_prog 'vupper ['vupper_f])
+  as vupper_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vis_upper_prog].
-Ltac2 Eval assert_Some constr:(to_funs [vis_upper_prog]).
+Time Compute to_funs [vupper_prog].
+Ltac2 Eval assert_Some constr:(to_funs [vupper_prog]).
 
 Derive vgetNum_prog
   in ltac2:(relcompile_tpe 'vgetNum_prog 'vgetNum [])
@@ -245,7 +245,7 @@ Time Compute to_funs [v2list_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2list_prog]).
 
 Derive num2exp_prog
-  in ltac2:(relcompile_tpe 'num2exp_prog 'num2exp ['vis_upper])
+  in ltac2:(relcompile_tpe 'num2exp_prog 'num2exp ['vupper])
   as num2exp_prog_proof.
 Proof.
   time relcompile.
@@ -357,18 +357,18 @@ Time Compute to_funs [str2imp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [str2imp_prog]).
 
 Definition ParserDerivations_funs := [
-  read_num_numeric_prog;
-  read_num_alpha_prog;
+  read_nmc_prog;
+  read_alp_prog;
   end_line_prog;
-  q_from_nat_prog;
+  q_of_nat_prog;
   lex_prog;
   lexer_i_prog;
   lexer_prog;
   vcons_prog;
   vhead_prog;
   vlist_prog;
-  vis_upper_f_prog;
-  vis_upper_prog;
+  vupper_f_prog;
+  vupper_prog;
   vgetNum_prog;
   vtail_prog;
   vel0_prog;
@@ -423,18 +423,18 @@ Proof.
   intros * Hlookup_fun_utils Hlookup_fun.
   assert_eval_app_compiler_utils 'Hlookup_fun_utils.
 
-  assert_eval_app_by 'read_num_numeric 'read_num_numeric_prog_proof 'Hlookup_fun 0.
-  assert_eval_app_by 'read_num_alpha 'read_num_alpha_prog_proof 'Hlookup_fun 1.
+  assert_eval_app_by 'read_nmc 'read_nmc_prog_proof 'Hlookup_fun 0.
+  assert_eval_app_by 'read_alp 'read_alp_prog_proof 'Hlookup_fun 1.
   assert_eval_app_by 'end_line 'end_line_prog_proof 'Hlookup_fun 2.
-  assert_eval_app_by 'q_from_nat 'q_from_nat_prog_proof 'Hlookup_fun 3.
+  assert_eval_app_by 'q_of_nat 'q_of_nat_prog_proof 'Hlookup_fun 3.
   assert_eval_app_by 'lex 'lex_prog_proof 'Hlookup_fun 4.
   assert_eval_app_by 'lexer_i 'lexer_i_prog_proof 'Hlookup_fun 5.
   assert_eval_app_by 'lexer 'lexer_prog_proof 'Hlookup_fun 6.
   assert_eval_app_by 'vcons 'vcons_prog_proof 'Hlookup_fun 7.
   assert_eval_app_by 'vhead 'vhead_prog_proof 'Hlookup_fun 8.
   assert_eval_app_by 'vlist 'vlist_prog_proof 'Hlookup_fun 9.
-  assert_eval_app_by 'vis_upper_f 'vis_upper_f_prog_proof 'Hlookup_fun 10.
-  assert_eval_app_by 'vis_upper 'vis_upper_prog_proof 'Hlookup_fun 11.
+  assert_eval_app_by 'vupper_f 'vupper_f_prog_proof 'Hlookup_fun 10.
+  assert_eval_app_by 'vupper 'vupper_prog_proof 'Hlookup_fun 11.
   assert_eval_app_by 'vgetNum 'vgetNum_prog_proof 'Hlookup_fun 12.
   assert_eval_app_by 'vtail 'vtail_prog_proof 'Hlookup_fun 13.
   assert_eval_app_by 'vel0 'vel0_prog_proof 'Hlookup_fun 14.

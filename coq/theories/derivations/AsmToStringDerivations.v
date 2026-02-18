@@ -24,24 +24,24 @@ Open Scope app_list_scope.
 (*  Derivations for ASM to String Conversion      *)
 (* *********************************************** *)
 
-Theorem num2str_f_equation: ltac2:(unfold_fix_type 'num2str_f).
-Proof. unfold_fix_proof 'num2str_f. Qed.
+Theorem num2strf_equation: ltac2:(unfold_fix_type 'num2strf).
+Proof. unfold_fix_proof 'num2strf. Qed.
 
 Theorem clean_equation: ltac2:(unfold_fix_type 'clean).
 Proof. unfold_fix_proof 'clean. Qed.
 
-Theorem instrs2str_equation: ltac2:(unfold_fix_type 'instrs2str).
-Proof. unfold_fix_proof 'instrs2str. Qed.
+Theorem is2str_equation: ltac2:(unfold_fix_type 'is2str).
+Proof. unfold_fix_proof 'is2str. Qed.
 
 (* Set Printing Depth 100000. *)
 
-Derive reg2str1_prog
-  in ltac2:(relcompile_tpe 'reg2str1_prog 'reg2str1 ['string_append])
-  as reg2str1_prog_proof.
+Derive reg2s_prog
+  in ltac2:(relcompile_tpe 'reg2s_prog 'reg2s ['str_app])
+  as reg2s_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [reg2str1_prog].
+Time Compute to_funs [reg2s_prog].
 
 Derive lab_prog
   in ltac2:(relcompile_tpe 'lab_prog 'lab ['num2str])
@@ -59,169 +59,169 @@ Proof.
 Qed.
 Time Compute to_funs [clean_prog].
 
-Derive inst2str_const_prog
-  in ltac2:(relcompile_tpe 'inst2str_const_prog 'inst2str_const ['reg2str1; 'string_append; 'N2str])
-  as inst2str_const_prog_proof.
+Derive i2s_con_prog
+  in ltac2:(relcompile_tpe 'i2s_con_prog 'i2s_con ['reg2s; 'str_app; 'N2str])
+  as i2s_con_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_const_prog].
+Time Compute to_funs [i2s_con_prog].
 
-Derive inst2str_mov_prog
-  in ltac2:(relcompile_tpe 'inst2str_mov_prog 'inst2str_mov ['reg2str1; 'string_append])
-  as inst2str_mov_prog_proof.
+Derive i2s_mov_prog
+  in ltac2:(relcompile_tpe 'i2s_mov_prog 'i2s_mov ['reg2s; 'str_app])
+  as i2s_mov_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_mov_prog].
+Time Compute to_funs [i2s_mov_prog].
 
-Derive inst2str_add_prog
-  in ltac2:(relcompile_tpe 'inst2str_add_prog 'inst2str_add ['reg2str1; 'string_append])
-  as inst2str_add_prog_proof.
+Derive i2s_add_prog
+  in ltac2:(relcompile_tpe 'i2s_add_prog 'i2s_add ['reg2s; 'str_app])
+  as i2s_add_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_add_prog].
+Time Compute to_funs [i2s_add_prog].
 
-Derive inst2str_sub_prog
-  in ltac2:(relcompile_tpe 'inst2str_sub_prog 'inst2str_sub ['reg2str1; 'string_append])
-  as inst2str_sub_prog_proof.
+Derive i2s_sub_prog
+  in ltac2:(relcompile_tpe 'i2s_sub_prog 'i2s_sub ['reg2s; 'str_app])
+  as i2s_sub_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_sub_prog].
+Time Compute to_funs [i2s_sub_prog].
 
-Derive inst2str_div_prog
-  in ltac2:(relcompile_tpe 'inst2str_div_prog 'inst2str_div ['reg2str1; 'string_append])
-  as inst2str_div_prog_proof.
+Derive i2s_div_prog
+  in ltac2:(relcompile_tpe 'i2s_div_prog 'i2s_div ['reg2s; 'str_app])
+  as i2s_div_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_div_prog].
+Time Compute to_funs [i2s_div_prog].
 
-Derive inst2str_jump_prog
-  in ltac2:(relcompile_tpe 'inst2str_jump_prog 'inst2str_jump ['reg2str1; 'string_append; 'lab])
-  as inst2str_jump_prog_proof.
+Derive i2s_jump_prog
+  in ltac2:(relcompile_tpe 'i2s_jump_prog 'i2s_jump ['reg2s; 'str_app; 'lab])
+  as i2s_jump_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_jump_prog].
+Time Compute to_funs [i2s_jump_prog].
 
-Derive inst2str_call_prog
-  in ltac2:(relcompile_tpe 'inst2str_call_prog 'inst2str_call ['reg2str1; 'string_append; 'lab])
-  as inst2str_call_prog_proof.
+Derive i2s_call_prog
+  in ltac2:(relcompile_tpe 'i2s_call_prog 'i2s_call ['reg2s; 'str_app; 'lab])
+  as i2s_call_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_call_prog].
+Time Compute to_funs [i2s_call_prog].
 
-Derive inst2str_ret_prog
-  in ltac2:(relcompile_tpe 'inst2str_ret_prog 'inst2str_ret ['reg2str1; 'string_append; 'lab])
-  as inst2str_ret_prog_proof.
+Derive i2s_ret_prog
+  in ltac2:(relcompile_tpe 'i2s_ret_prog 'i2s_ret ['reg2s; 'str_app; 'lab])
+  as i2s_ret_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_ret_prog].
+Time Compute to_funs [i2s_ret_prog].
 
-Derive inst2str_pop_prog
-  in ltac2:(relcompile_tpe 'inst2str_pop_prog 'inst2str_pop ['reg2str1; 'string_append; 'lab])
-  as inst2str_pop_prog_proof.
+Derive i2s_pop_prog
+  in ltac2:(relcompile_tpe 'i2s_pop_prog 'i2s_pop ['reg2s; 'str_app; 'lab])
+  as i2s_pop_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_pop_prog].
+Time Compute to_funs [i2s_pop_prog].
 
-Derive inst2str_push_prog
-  in ltac2:(relcompile_tpe 'inst2str_push_prog 'inst2str_push ['reg2str1; 'string_append; 'lab])
-  as inst2str_push_prog_proof.
+Derive i2s_push_prog
+  in ltac2:(relcompile_tpe 'i2s_push_prog 'i2s_push ['reg2s; 'str_app; 'lab])
+  as i2s_push_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_push_prog].
+Time Compute to_funs [i2s_push_prog].
 
-Derive inst2str_load_rsp_prog
-  in ltac2:(relcompile_tpe 'inst2str_load_rsp_prog 'inst2str_load_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str])
-  as inst2str_load_rsp_prog_proof.
+Derive i2s_lrsp_prog
+  in ltac2:(relcompile_tpe 'i2s_lrsp_prog 'i2s_lrsp ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str])
+  as i2s_lrsp_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Print inst2str_load_rsp_prog.
-Time Compute to_funs [inst2str_load_rsp_prog].
+Print i2s_lrsp_prog.
+Time Compute to_funs [i2s_lrsp_prog].
 
-Derive inst2str_store_rsp_prog
-  in ltac2:(relcompile_tpe 'inst2str_store_rsp_prog 'inst2str_store_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str])
-  as inst2str_store_rsp_prog_proof.
+Derive i2s_srsp_prog
+  in ltac2:(relcompile_tpe 'i2s_srsp_prog 'i2s_srsp ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str])
+  as i2s_srsp_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_store_rsp_prog].
+Time Compute to_funs [i2s_srsp_prog].
 
-Derive inst2str_add_rsp_prog
-  in ltac2:(relcompile_tpe 'inst2str_add_rsp_prog 'inst2str_add_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str])
-  as inst2str_add_rsp_prog_proof.
+Derive i2s_arsp_prog
+  in ltac2:(relcompile_tpe 'i2s_arsp_prog 'i2s_arsp ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str])
+  as i2s_arsp_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_add_rsp_prog].
+Time Compute to_funs [i2s_arsp_prog].
 
-Derive inst2str_sub_rsp_prog
-  in ltac2:(relcompile_tpe 'inst2str_sub_rsp_prog 'inst2str_sub_rsp ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str])
-  as inst2str_sub_rsp_prog_proof.
+Derive i2s_surs_prog
+  in ltac2:(relcompile_tpe 'i2s_surs_prog 'i2s_surs ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str])
+  as i2s_surs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_sub_rsp_prog].
+Time Compute to_funs [i2s_surs_prog].
 
-Derive inst2str_store_prog
-  in ltac2:(relcompile_tpe 'inst2str_store_prog 'inst2str_store ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
-  as inst2str_store_prog_proof.
+Derive i2s_stor_prog
+  in ltac2:(relcompile_tpe 'i2s_stor_prog 'i2s_stor ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str; 'N2str])
+  as i2s_stor_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_store_prog].
+Time Compute to_funs [i2s_stor_prog].
 
-Derive inst2str_load_prog
-  in ltac2:(relcompile_tpe 'inst2str_load_prog 'inst2str_load ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
-  as inst2str_load_prog_proof.
+Derive i2s_load_prog
+  in ltac2:(relcompile_tpe 'i2s_load_prog 'i2s_load ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str; 'N2str])
+  as i2s_load_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_load_prog].
+Time Compute to_funs [i2s_load_prog].
 
-Derive inst2str_getchar1_prog
-  in ltac2:(relcompile_tpe 'inst2str_getchar1_prog 'inst2str_getchar1 ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
-  as inst2str_getchar1_prog_proof.
+Derive i2s_gch_prog
+  in ltac2:(relcompile_tpe 'i2s_gch_prog 'i2s_gch ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str; 'N2str])
+  as i2s_gch_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_getchar1_prog].
+Time Compute to_funs [i2s_gch_prog].
 
-Derive inst2str_putchar_prog
-  in ltac2:(relcompile_tpe 'inst2str_putchar_prog 'inst2str_putchar ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
-  as inst2str_putchar_prog_proof.
+Derive i2s_pch_prog
+  in ltac2:(relcompile_tpe 'i2s_pch_prog 'i2s_pch ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str; 'N2str])
+  as i2s_pch_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_putchar_prog].
+Time Compute to_funs [i2s_pch_prog].
 
-Derive inst2str_exit_prog
-  in ltac2:(relcompile_tpe 'inst2str_exit_prog 'inst2str_exit ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str])
-  as inst2str_exit_prog_proof.
+Derive i2s_exit_prog
+  in ltac2:(relcompile_tpe 'i2s_exit_prog 'i2s_exit ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str; 'N2str])
+  as i2s_exit_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_exit_prog].
+Time Compute to_funs [i2s_exit_prog].
 
-Derive inst2str_comment_prog
-  in ltac2:(relcompile_tpe 'inst2str_comment_prog 'inst2str_comment ['reg2str1; 'string_append; 'lab; 'mul_nat_8; 'num2str; 'N2str; 'clean])
-  as inst2str_comment_prog_proof.
+Derive i2s_comm_prog
+  in ltac2:(relcompile_tpe 'i2s_comm_prog 'i2s_comm ['reg2s; 'str_app; 'lab; 'mulnat_8; 'num2str; 'N2str; 'clean])
+  as i2s_comm_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_comment_prog].
+Time Compute to_funs [i2s_comm_prog].
 
 Derive inst2str_prog
-  in ltac2:(relcompile_tpe 'inst2str_prog 'inst2str ['inst2str_const; 'inst2str_mov; 'inst2str_add; 'inst2str_sub; 'inst2str_div; 'inst2str_jump; 'inst2str_call; 'inst2str_ret; 'inst2str_pop; 'inst2str_push; 'inst2str_load_rsp; 'inst2str_store_rsp; 'inst2str_add_rsp; 'inst2str_sub_rsp; 'inst2str_store; 'inst2str_load; 'inst2str_getchar1; 'inst2str_putchar; 'inst2str_exit; 'inst2str_comment])
+  in ltac2:(relcompile_tpe 'inst2str_prog 'inst2str ['i2s_con; 'i2s_mov; 'i2s_add; 'i2s_sub; 'i2s_div; 'i2s_jump; 'i2s_call; 'i2s_ret; 'i2s_pop; 'i2s_push; 'i2s_lrsp; 'i2s_srsp; 'i2s_arsp; 'i2s_surs; 'i2s_stor; 'i2s_load; 'i2s_gch; 'i2s_pch; 'i2s_exit; 'i2s_comm])
   as inst2str_prog_proof.
 Proof.
   (* ltac1:(timeout 28 ltac2:(relcompile)). *)
@@ -229,26 +229,26 @@ Proof.
 Qed.
 Time Compute to_funs [inst2str_prog].
 
-Derive instrs2str_prog
-  in ltac2:(relcompile_tpe 'instrs2str_prog 'instrs2str ['lab; 'inst2str])
-  as instrs2str_prog_proof.
+Derive is2str_prog
+  in ltac2:(relcompile_tpe 'is2str_prog 'is2str ['lab; 'inst2str])
+  as is2str_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [instrs2str_prog].
+Time Compute to_funs [is2str_prog].
 
-Theorem concat_strings_equation: ltac2:(unfold_fix_type '@concat_strings).
-Proof. unfold_fix_proof '@concat_strings. Qed.
-Derive concat_strings_prog
-  in ltac2:(relcompile_tpe 'concat_strings_prog 'concat_strings ['string_append])
-  as concat_strings_prog_proof.
+Theorem ccat_str_equation: ltac2:(unfold_fix_type '@ccat_str).
+Proof. unfold_fix_proof '@ccat_str. Qed.
+Derive ccat_str_prog
+  in ltac2:(relcompile_tpe 'ccat_str_prog 'ccat_str ['str_app])
+  as ccat_str_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [concat_strings_prog].
+Time Compute to_funs [ccat_str_prog].
 
 Derive asm2str1_prog
-  in ltac2:(relcompile_tpe 'asm2str1_prog 'asm2str1 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str1_prog 'asm2str1 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str1_prog_proof.
 Proof.
   time relcompile.
@@ -256,7 +256,7 @@ Qed.
 Time Compute to_funs [asm2str1_prog].
 
 Derive asm2str2_prog
-  in ltac2:(relcompile_tpe 'asm2str2_prog 'asm2str2 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str2_prog 'asm2str2 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str2_prog_proof.
 Proof.
   time relcompile.
@@ -264,7 +264,7 @@ Qed.
 Time Compute to_funs [asm2str2_prog].
 
 Derive asm2str3_prog
-  in ltac2:(relcompile_tpe 'asm2str3_prog 'asm2str3 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str3_prog 'asm2str3 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str3_prog_proof.
 Proof.
   time relcompile.
@@ -272,7 +272,7 @@ Qed.
 Time Compute to_funs [asm2str3_prog].
 
 Derive asm2str4_prog
-  in ltac2:(relcompile_tpe 'asm2str4_prog 'asm2str4 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str4_prog 'asm2str4 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str4_prog_proof.
 Proof.
   time relcompile.
@@ -280,7 +280,7 @@ Qed.
 Time Compute to_funs [asm2str4_prog].
 
 Derive asm2str5_prog
-  in ltac2:(relcompile_tpe 'asm2str5_prog 'asm2str5 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str5_prog 'asm2str5 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str5_prog_proof.
 Proof.
   time relcompile.
@@ -288,7 +288,7 @@ Qed.
 Time Compute to_funs [asm2str5_prog].
 
 Derive asm2str6_prog
-  in ltac2:(relcompile_tpe 'asm2str6_prog 'asm2str6 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str6_prog 'asm2str6 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str6_prog_proof.
 Proof.
   time relcompile.
@@ -296,7 +296,7 @@ Qed.
 Time Compute to_funs [asm2str6_prog].
 
 Derive asm2str7_prog
-  in ltac2:(relcompile_tpe 'asm2str7_prog 'asm2str7 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str7_prog 'asm2str7 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str7_prog_proof.
 Proof.
   time relcompile.
@@ -304,7 +304,7 @@ Qed.
 Time Compute to_funs [asm2str7_prog].
 
 Derive asm2str8_prog
-  in ltac2:(relcompile_tpe 'asm2str8_prog 'asm2str8 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str8_prog 'asm2str8 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str8_prog_proof.
 Proof.
   time relcompile.
@@ -312,42 +312,42 @@ Qed.
 Time Compute to_funs [asm2str8_prog].
 
 Derive asm2str9_prog
-  in ltac2:(relcompile_tpe 'asm2str9_prog 'asm2str9 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
+  in ltac2:(relcompile_tpe 'asm2str9_prog 'asm2str9 ['is2str; 'ccat_str; '@list_app; 'str_app])
   as asm2str9_prog_proof.
 Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [asm2str9_prog].
 
-Derive asm2str10_prog
-  in ltac2:(relcompile_tpe 'asm2str10_prog 'asm2str10 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
-  as asm2str10_prog_proof.
+Derive asm2str0_prog
+  in ltac2:(relcompile_tpe 'asm2str0_prog 'asm2str0 ['is2str; 'ccat_str; '@list_app; 'str_app])
+  as asm2str0_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str10_prog].
+Time Compute to_funs [asm2str0_prog].
 
-Derive asm2str11_prog
-  in ltac2:(relcompile_tpe 'asm2str11_prog 'asm2str11 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
-  as asm2str11_prog_proof.
+Derive asm2stra_prog
+  in ltac2:(relcompile_tpe 'asm2stra_prog 'asm2stra ['is2str; 'ccat_str; '@list_app; 'str_app])
+  as asm2stra_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str11_prog].
+Time Compute to_funs [asm2stra_prog].
 
-Derive asm2str12_prog
-  in ltac2:(relcompile_tpe 'asm2str12_prog 'asm2str12 ['instrs2str; 'concat_strings; '@list_append; 'string_append])
-  as asm2str12_prog_proof.
+Derive asm2strb_prog
+  in ltac2:(relcompile_tpe 'asm2strb_prog 'asm2strb ['is2str; 'ccat_str; '@list_app; 'str_app])
+  as asm2strb_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str12_prog].
+Time Compute to_funs [asm2strb_prog].
 
 (* TODO: ToANF lifts out list literals *)
 Derive asm2str_prog
   in ltac2:(relcompile_tpe 'asm2str_prog 'asm2str
-    ['instrs2str; 'concat_strings; '@list_append; 'string_append;
-    'asm2str1; 'asm2str2; 'asm2str3; 'asm2str4; 'asm2str5; 'asm2str6; 'asm2str7; 'asm2str8; 'asm2str9; 'asm2str10; 'asm2str11; 'asm2str12])
+    ['is2str; 'ccat_str; '@list_app; 'str_app;
+    'asm2str1; 'asm2str2; 'asm2str3; 'asm2str4; 'asm2str5; 'asm2str6; 'asm2str7; 'asm2str8; 'asm2str9; 'asm2str0; 'asm2stra; 'asm2strb])
   as asm2str_prog_proof.
 Proof.
   time relcompile.
@@ -355,32 +355,32 @@ Qed.
 Time Compute to_funs [asm2str_prog].
 
 Definition ASMToString_funs := [
-  reg2str1_prog;
+  reg2s_prog;
   lab_prog;
   clean_prog;
-  inst2str_const_prog;
-  inst2str_mov_prog;
-  inst2str_add_prog;
-  inst2str_sub_prog;
-  inst2str_div_prog;
-  inst2str_jump_prog;
-  inst2str_call_prog;
-  inst2str_ret_prog;
-  inst2str_pop_prog;
-  inst2str_push_prog;
-  inst2str_load_rsp_prog;
-  inst2str_store_rsp_prog;
-  inst2str_add_rsp_prog;
-  inst2str_sub_rsp_prog;
-  inst2str_store_prog;
-  inst2str_load_prog;
-  inst2str_getchar1_prog;
-  inst2str_putchar_prog;
-  inst2str_exit_prog;
-  inst2str_comment_prog;
+  i2s_con_prog;
+  i2s_mov_prog;
+  i2s_add_prog;
+  i2s_sub_prog;
+  i2s_div_prog;
+  i2s_jump_prog;
+  i2s_call_prog;
+  i2s_ret_prog;
+  i2s_pop_prog;
+  i2s_push_prog;
+  i2s_lrsp_prog;
+  i2s_srsp_prog;
+  i2s_arsp_prog;
+  i2s_surs_prog;
+  i2s_stor_prog;
+  i2s_load_prog;
+  i2s_gch_prog;
+  i2s_pch_prog;
+  i2s_exit_prog;
+  i2s_comm_prog;
   inst2str_prog;
-  instrs2str_prog;
-  concat_strings_prog;
+  is2str_prog;
+  ccat_str_prog;
   asm2str1_prog;
   asm2str2_prog;
   asm2str3_prog;
@@ -390,9 +390,9 @@ Definition ASMToString_funs := [
   asm2str7_prog;
   asm2str8_prog;
   asm2str9_prog;
-  asm2str10_prog;
-  asm2str11_prog;
-  asm2str12_prog;
+  asm2str0_prog;
+  asm2stra_prog;
+  asm2strb_prog;
   asm2str_prog
 ].
 
@@ -424,32 +424,32 @@ Proof.
   intros * Hlookup_fun_utils Hlookup_fun.
   assert_eval_app_compiler_utils 'Hlookup_fun_utils.
 
-  assert_eval_app_by 'reg2str1 'reg2str1_prog_proof 'Hlookup_fun 0.
+  assert_eval_app_by 'reg2s 'reg2s_prog_proof 'Hlookup_fun 0.
   assert_eval_app_by 'lab 'lab_prog_proof 'Hlookup_fun 1.
   assert_eval_app_by 'clean 'clean_prog_proof 'Hlookup_fun 2.
-  assert_eval_app_by 'inst2str_const 'inst2str_const_prog_proof 'Hlookup_fun 3.
-  assert_eval_app_by 'inst2str_mov 'inst2str_mov_prog_proof 'Hlookup_fun 4.
-  assert_eval_app_by 'inst2str_add 'inst2str_add_prog_proof 'Hlookup_fun 5.
-  assert_eval_app_by 'inst2str_sub 'inst2str_sub_prog_proof 'Hlookup_fun 6.
-  assert_eval_app_by 'inst2str_div 'inst2str_div_prog_proof 'Hlookup_fun 7.
-  assert_eval_app_by 'inst2str_jump 'inst2str_jump_prog_proof 'Hlookup_fun 8.
-  assert_eval_app_by 'inst2str_call 'inst2str_call_prog_proof 'Hlookup_fun 9.
-  assert_eval_app_by 'inst2str_ret 'inst2str_ret_prog_proof 'Hlookup_fun 10.
-  assert_eval_app_by 'inst2str_pop 'inst2str_pop_prog_proof 'Hlookup_fun 11.
-  assert_eval_app_by 'inst2str_push 'inst2str_push_prog_proof 'Hlookup_fun 12.
-  assert_eval_app_by 'inst2str_load_rsp 'inst2str_load_rsp_prog_proof 'Hlookup_fun 13.
-  assert_eval_app_by 'inst2str_store_rsp 'inst2str_store_rsp_prog_proof 'Hlookup_fun 14.
-  assert_eval_app_by 'inst2str_add_rsp 'inst2str_add_rsp_prog_proof 'Hlookup_fun 15.
-  assert_eval_app_by 'inst2str_sub_rsp 'inst2str_sub_rsp_prog_proof 'Hlookup_fun 16.
-  assert_eval_app_by 'inst2str_store 'inst2str_store_prog_proof 'Hlookup_fun 17.
-  assert_eval_app_by 'inst2str_load 'inst2str_load_prog_proof 'Hlookup_fun 18.
-  assert_eval_app_by 'inst2str_getchar1 'inst2str_getchar1_prog_proof 'Hlookup_fun 19.
-  assert_eval_app_by 'inst2str_putchar 'inst2str_putchar_prog_proof 'Hlookup_fun 20.
-  assert_eval_app_by 'inst2str_exit 'inst2str_exit_prog_proof 'Hlookup_fun 21.
-  assert_eval_app_by 'inst2str_comment 'inst2str_comment_prog_proof 'Hlookup_fun 22.
+  assert_eval_app_by 'i2s_con 'i2s_con_prog_proof 'Hlookup_fun 3.
+  assert_eval_app_by 'i2s_mov 'i2s_mov_prog_proof 'Hlookup_fun 4.
+  assert_eval_app_by 'i2s_add 'i2s_add_prog_proof 'Hlookup_fun 5.
+  assert_eval_app_by 'i2s_sub 'i2s_sub_prog_proof 'Hlookup_fun 6.
+  assert_eval_app_by 'i2s_div 'i2s_div_prog_proof 'Hlookup_fun 7.
+  assert_eval_app_by 'i2s_jump 'i2s_jump_prog_proof 'Hlookup_fun 8.
+  assert_eval_app_by 'i2s_call 'i2s_call_prog_proof 'Hlookup_fun 9.
+  assert_eval_app_by 'i2s_ret 'i2s_ret_prog_proof 'Hlookup_fun 10.
+  assert_eval_app_by 'i2s_pop 'i2s_pop_prog_proof 'Hlookup_fun 11.
+  assert_eval_app_by 'i2s_push 'i2s_push_prog_proof 'Hlookup_fun 12.
+  assert_eval_app_by 'i2s_lrsp 'i2s_lrsp_prog_proof 'Hlookup_fun 13.
+  assert_eval_app_by 'i2s_srsp 'i2s_srsp_prog_proof 'Hlookup_fun 14.
+  assert_eval_app_by 'i2s_arsp 'i2s_arsp_prog_proof 'Hlookup_fun 15.
+  assert_eval_app_by 'i2s_surs 'i2s_surs_prog_proof 'Hlookup_fun 16.
+  assert_eval_app_by 'i2s_stor 'i2s_stor_prog_proof 'Hlookup_fun 17.
+  assert_eval_app_by 'i2s_load 'i2s_load_prog_proof 'Hlookup_fun 18.
+  assert_eval_app_by 'i2s_gch 'i2s_gch_prog_proof 'Hlookup_fun 19.
+  assert_eval_app_by 'i2s_pch 'i2s_pch_prog_proof 'Hlookup_fun 20.
+  assert_eval_app_by 'i2s_exit 'i2s_exit_prog_proof 'Hlookup_fun 21.
+  assert_eval_app_by 'i2s_comm 'i2s_comm_prog_proof 'Hlookup_fun 22.
   assert_eval_app_by 'inst2str 'inst2str_prog_proof 'Hlookup_fun 23.
-  assert_eval_app_by 'instrs2str 'instrs2str_prog_proof 'Hlookup_fun 24.
-  assert_eval_app_by 'concat_strings 'concat_strings_prog_proof 'Hlookup_fun 25.
+  assert_eval_app_by 'is2str 'is2str_prog_proof 'Hlookup_fun 24.
+  assert_eval_app_by 'ccat_str 'ccat_str_prog_proof 'Hlookup_fun 25.
   assert_eval_app_by 'asm2str1 'asm2str1_prog_proof 'Hlookup_fun 26.
   assert_eval_app_by 'asm2str2 'asm2str2_prog_proof 'Hlookup_fun 27.
   assert_eval_app_by 'asm2str3 'asm2str3_prog_proof 'Hlookup_fun 28.
@@ -459,9 +459,9 @@ Proof.
   assert_eval_app_by 'asm2str7 'asm2str7_prog_proof 'Hlookup_fun 32.
   assert_eval_app_by 'asm2str8 'asm2str8_prog_proof 'Hlookup_fun 33.
   assert_eval_app_by 'asm2str9 'asm2str9_prog_proof 'Hlookup_fun 34.
-  assert_eval_app_by 'asm2str10 'asm2str10_prog_proof 'Hlookup_fun 35.
-  assert_eval_app_by 'asm2str11 'asm2str11_prog_proof 'Hlookup_fun 36.
-  assert_eval_app_by 'asm2str12 'asm2str12_prog_proof 'Hlookup_fun 37.
+  assert_eval_app_by 'asm2str0 'asm2str0_prog_proof 'Hlookup_fun 35.
+  assert_eval_app_by 'asm2stra 'asm2stra_prog_proof 'Hlookup_fun 36.
+  assert_eval_app_by 'asm2strb 'asm2strb_prog_proof 'Hlookup_fun 37.
   assert_eval_app_by 'asm2str 'asm2str_prog_proof 'Hlookup_fun 38.
   eauto.
 Qed.

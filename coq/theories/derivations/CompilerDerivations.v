@@ -92,26 +92,26 @@ Proof.
   repeat econstructor.
 Qed.
 
-Definition print_string_prog: FunSyntax.defun :=
-  FunSyntax.Defun (name_enc "print_string") [name_enc "str"] (
+Definition printstr_prog: FunSyntax.defun :=
+  FunSyntax.Defun (name_enc "printstr") [name_enc "str"] (
     FunSyntax.If FunSyntax.Equal [FunSyntax.Var (name_enc "str"); FunSyntax.Const 0]
       (FunSyntax.Const 0) (
         FunSyntax.Let (name_enc "head") (FunSyntax.Op FunSyntax.Head [FunSyntax.Var (name_enc "str")]) (
           FunSyntax.Let (name_enc "tail") (FunSyntax.Op FunSyntax.Tail [FunSyntax.Var (name_enc "str")]) (
-            FunSyntax.Let (name_enc "write_res") (FunSyntax.Op FunSyntax.Write [FunSyntax.Var (name_enc "head")]) (
-              FunSyntax.Call (name_enc "print_string") [FunSyntax.Var (name_enc "tail")]
+            FunSyntax.Let (name_enc "wrres") (FunSyntax.Op FunSyntax.Write [FunSyntax.Var (name_enc "head")]) (
+              FunSyntax.Call (name_enc "printstr") [FunSyntax.Var (name_enc "tail")]
             )
           )
         )
       )
   ).
 
-Theorem print_string_thm:
+Theorem printstr_thm:
   ∀ body : FunSyntax.exp,
-    print_string_prog = FunSyntax.Defun (name_enc "print_string") [name_enc "str"] body →
+    printstr_prog = FunSyntax.Defun (name_enc "printstr") [name_enc "str"] body →
   ∀ (str: string) (s: state),
-    lookup_fun (name_enc "print_string") (funs s) = Some ([name_enc "str"], body) →
-    eval_app (name_enc "print_string") [encode str] s (Num 0, set_output s (s.(output) ++ str)).
+    lookup_fun (name_enc "printstr") (funs s) = Some ([name_enc "str"], body) →
+    eval_app (name_enc "printstr") [encode str] s (Num 0, set_output s (s.(output) ++ str)).
 Proof.
   intros * Hfneq.
   induction str.
@@ -197,7 +197,7 @@ Qed.
 Definition compiler_main: FunSyntax.exp := (
   FunSyntax.Let (name_enc "inp") (FunSyntax.Call (name_enc "read_inp") ([] : list FunSyntax.exp)) (
     FunSyntax.Let (name_enc "out_str") (FunSyntax.Call (name_enc "compiler") [FunSyntax.Var (name_enc "inp")]) (
-      FunSyntax.Call (name_enc "print_string") [FunSyntax.Var (name_enc "out_str")]
+      FunSyntax.Call (name_enc "printstr") [FunSyntax.Var (name_enc "out_str")]
     )
   )
 ).
@@ -206,7 +206,7 @@ Definition compiler_funs: list FunSyntax.defun :=
   [compiler_prog] ++ ImpToASMCodegen_funs ++ ASMToString_funs ++ ParserDerivations_funs ++ CompilerUtils_funs.
 
 Definition compiler_program_prog: FunSyntax.prog :=
-  FunSyntax.Program (read_inp_prog :: print_string_prog :: compiler_funs) compiler_main.
+  FunSyntax.Program (read_inp_prog :: printstr_prog :: compiler_funs) compiler_main.
 
 Lemma In_IMP_lookup_fun:
   forall fname args fn fns,
@@ -229,7 +229,7 @@ Qed.
 Lemma noDup_all_funs:
   NoDup (List.map (λ d : FunSyntax.defun, match d with
     | FunSyntax.Defun name _ _ => name
-    end) (read_inp_prog :: print_string_prog :: compiler_funs)).
+    end) (read_inp_prog :: printstr_prog :: compiler_funs)).
 Proof.
 Admitted.
 
@@ -264,7 +264,7 @@ Proof.
   }
   eapply trans_Call.
   1: repeat econstructor.
-  eapply print_string_thm; eauto; try reflexivity.
+  eapply printstr_thm; eauto; try reflexivity.
   Unshelve.
   simpl; reflexivity.
 Qed.

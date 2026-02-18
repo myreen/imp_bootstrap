@@ -147,33 +147,25 @@ Definition vel3 v :=
   res.
 
 (* checks whether string (represented as num) starts with uppercase letter *)
-Fixpoint vis_upper_f (n: N) (fuel: nat): option bool :=
+Fixpoint vupper_f (n: N) (fuel: nat): option bool :=
   if (n <? 256)%N then
     if n <? 65 (* ord A = 65 *) then
-      let/d f := false in
-      let/d res := Some f in
-      res
+      Some false
     else if n <? 91 (* ord Z = 90 *) then
-      let/d t := true in
-      let/d res := Some t in
-      res
+      Some true
     else
-      let/d f := false in
-      let/d res := Some f in
-      res
+      Some false
   else
     match fuel with
     | O =>
       let/d none := None in
       none
     | S fuel' =>
-      let/d n1 := (n / 256) in
-      let/d res := vis_upper_f n1 fuel' in
-      res
+      vupper_f (n / 256) fuel'
     end.
 
-Theorem vis_upper_f_terminates: forall (fuel: nat) (n: N),
-  (n <= (N.of_nat fuel))%N -> vis_upper_f n fuel <> None.
+Theorem vupper_f_terminates: forall (fuel: nat) (n: N),
+  (n <= (N.of_nat fuel))%N -> vupper_f n fuel <> None.
 Proof.
   Opaque N.div.
   induction fuel; intros; simpl; unfold dlet; simpl.
@@ -187,11 +179,9 @@ Proof.
   assert (n / 256 < N.of_nat fuel)%N; lia.
 Qed.
 
-Definition vis_upper (n: N): bool :=
-  let/d r := vis_upper_f n (N.to_nat n) in
+Definition vupper (n: N): bool :=
+  let/d r := vupper_f n (N.to_nat n) in
   match r return bool with
   | Some b => b
-  | None =>
-    let/d res := false in
-    res
+  | None => false
   end.

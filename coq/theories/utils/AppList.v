@@ -12,8 +12,8 @@ Fixpoint flatten {A: Type} (xs: app_list A): list A :=
   | Append l1 l2 => flatten l1 ++ flatten l2
   end.
 
-Fixpoint app_list_length {A: Type} (xs: app_list A): nat :=
+Fixpoint appl_len {A: Type} (xs: app_list A): nat :=
   match xs with
   | List l => length l
-  | Append l1 l2 => app_list_length l1 + app_list_length l2
+  | Append l1 l2 => appl_len l1 + appl_len l2
   end.

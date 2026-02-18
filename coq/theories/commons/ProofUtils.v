@@ -55,7 +55,7 @@ Proof.
       * discriminate H1.
 Qed.
 
-Lemma substring_append: forall (s s1: string),
+Lemma substr_app: forall (s s1: string),
   substring 0 (length s) (s ++ s1) = s.
 Proof.
   induction s; simpl; intros.

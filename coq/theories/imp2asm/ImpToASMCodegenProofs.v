@@ -290,7 +290,7 @@ Definition goal_test (tst: test): Prop :=
          (curr rest : list word_or_ret)
          (pmap: nat -> option (word64 * nat)),
     eval_test tst s = (Cont b, s1) ->
-    c_test_jump tst ltrue lfalse t.(pc) vs = (asmc, l1) ->
+    c_test tst ltrue lfalse t.(pc) vs = (asmc, l1) ->
     state_rel fs s t ->
     env_ok s.(vars) vs curr pmap ->
     has_stack t (curr ++ rest) ->
@@ -668,7 +668,7 @@ Proof.
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
-  | _ => progress rewrite list_append_spec
+  | _ => progress rewrite list_app_spec
   | _ => lia
   end.
 Qed.
@@ -688,41 +688,41 @@ Proof.
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
-  | _ => progress rewrite list_append_spec
+  | _ => progress rewrite list_app_spec
   | _ => lia
   end.
 Qed.
 
 Theorem c_test_length: forall tst lt lf l vs c l1,
-  c_test_jump tst lt lf l vs = (c, l1) -> l1 = l + List.length (flatten c).
+  c_test tst lt lf l vs = (c, l1) -> l1 = l + List.length (flatten c).
 Proof.
   induction tst.
   all: intros.
-  all: simpl c_test_jump in *.
+  all: simpl c_test in *.
   all: repeat match goal with
   | [ H : context[(if ?x then _ else _)] |- _ ] => destruct x eqn:?
   | [ H : context [(match ?x with | _ => _ end)] |- _ ] => destruct x eqn:?
   | [ H : (_, _) = (_, _) |- _ ] => inversion H; subst; clear H
   | [ |- context[ fst ?x ] ] => destruct x eqn:?; simpl in *
-  | [ H : c_test_jump _ _ _ _ _ = (_, _) |- _ ] => eapply IHtst2 in H; subst
-  | [ H : c_test_jump _ _ _ _ _ = (_, _) |- _ ] => eapply IHtst1 in H; subst
-  | [ H : c_test_jump _ _ _ _ _ = (_, _) |- _ ] => eapply IHtst in H; subst
+  | [ H : c_test _ _ _ _ _ = (_, _) |- _ ] => eapply IHtst2 in H; subst
+  | [ H : c_test _ _ _ _ _ = (_, _) |- _ ] => eapply IHtst1 in H; subst
+  | [ H : c_test _ _ _ _ _ = (_, _) |- _ ] => eapply IHtst in H; subst
   | [ H: c_exp _ _ _ = (_, _) |- _ ] =>
     eapply c_exp_length in H; subst
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
-  | _ => progress rewrite list_append_spec
+  | _ => progress rewrite list_app_spec
   | _ => lia
   end.
 Qed.
 
-Theorem app_list_length_spec: forall {A} (l: app_list A),
-  app_list_length l = List.length (flatten l).
+Theorem appl_len_spec: forall {A} (l: app_list A),
+  appl_len l = List.length (flatten l).
 Proof.
-  induction l; simpl; unfold dlet; [rewrite list_length_spec|]; eauto.
+  induction l; simpl; unfold dlet; [rewrite list_len_spec|]; eauto.
   rewrite IHl1; rewrite IHl2.
-  rewrite list_append_spec.
+  rewrite list_app_spec.
   rewrite length_app.
   reflexivity.
 Qed.
@@ -747,13 +747,13 @@ Proof.
     eapply c_exp_length in H; subst
   | [ H: c_exps _ _ _ = (_, _) |- _ ] =>
     eapply c_exps_length in H; subst
-  | [ H: c_test_jump _ _ _ _ _ = (_, _) |- _ ] =>
+  | [ H: c_test _ _ _ _ _ = (_, _) |- _ ] =>
     eapply c_test_length in H; subst
   | _ => progress unfold dlet, c_alloc, c_assign, c_var in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
-  | _ => progress rewrite app_list_length_spec
-  | _ => progress rewrite list_append_spec
+  | _ => progress rewrite appl_len_spec
+  | _ => progress rewrite list_app_spec
   | _ => rewrite Nat.add_assoc
   | _ => lia
   end.
@@ -992,114 +992,6 @@ Proof.
     pat `S _ = S _` at eapply eq_add_S in pat.
     eapply IHvs; eauto.
     lia.
-Qed.
-
-(* Lemma index_of_opt_spec: forall name vs k,
-  index_of_opt name k vs = Some  k + index_of name 0 vs. *)
-
-Lemma index_of_opt_in_bounds_str: forall nm vs k i,
-  index_of_opt vs nm k = Some i -> i < List.length vs + k.
-Proof.
-  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
-  1: pat `None = Some _` at inversion pat.
-  destruct a; cleanup.
-  - destruct (_ =? _)%N eqn:?; cleanup.
-    + lia.
-    + spat `index_of_opt` at eapply IHvs in spat.
-      lia.
-  - spat `index_of_opt` at eapply IHvs in spat.
-    lia.
-Qed.
-
-Lemma index_of_opt_in_gt_k_str: forall nm vs k i,
-  index_of_opt vs nm k = Some i -> i >= k.
-Proof.
-  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
-  1: pat `None = Some _` at inversion pat.
-  destruct a; cleanup.
-  - destruct (_ =? _)%N eqn:?; cleanup.
-    + lia.
-    + spat `index_of_opt` at eapply IHvs in spat.
-      lia.
-  - spat `index_of_opt` at eapply IHvs in spat.
-    lia.
-Qed.
-
-Lemma index_of_opt_in_bounds: forall nm vs i,
-  index_of_opt vs nm 0 = Some i -> i < List.length vs.
-Proof.
-  intros.
-  spat `index_of_opt` at specialize (index_of_opt_in_bounds_str _ _ _ _ spat) as ?.
-  lia.
-Qed.
-
-Lemma index_of_opt_Some_non_empty: forall nm vs k i,
-  index_of_opt vs nm k = Some i -> List.length vs > 0.
-Proof.
-  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
-  1: pat `None = Some _` at inversion pat.
-  destruct a; cleanup.
-  - destruct (_ =? _)%N eqn:?; cleanup.
-    + lia.
-    + spat `index_of_opt` at eapply IHvs in spat.
-      lia.
-  - spat `index_of_opt` at eapply IHvs in spat.
-    lia.
-Qed.
-
-Lemma index_of_opt_Some_index_of: forall nm vs k i,
-  index_of_opt vs nm k = Some i -> index_of vs nm k = i.
-Proof.
-  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
-  1: pat `None = Some _` at inversion pat.
-  destruct a; cleanup.
-  - destruct (_ =? _)%N eqn:?; cleanup.
-    + lia.
-    + spat `index_of_opt` at eapply IHvs in spat.
-      lia.
-  - spat `index_of_opt` at eapply IHvs in spat.
-    lia.
-Qed.
-
-Lemma index_of_opt_Some_any_k: forall nm vs k k1 i,
-  index_of_opt vs nm k = Some i -> index_of_opt vs nm (k + k1) = Some (i + k1).
-Proof.
-  induction vs; intros; simpl in *; unfold dlet in *; simpl in *.
-  1: pat `None = Some _` at inversion pat.
-  destruct a; cleanup.
-  - destruct (_ =? _)%N eqn:?; cleanup.
-    + reflexivity.
-    + spat `index_of_opt` at eapply IHvs in spat.
-      spat `index_of_opt` at rewrite <- spat.
-      f_equal.
-      lia.
-  - spat `index_of_opt` at eapply IHvs in spat.
-    spat `index_of_opt` at rewrite <- spat.
-    f_equal.
-    lia.
-Qed.
-
-Lemma index_of_opt_Some_0_k: forall nm vs k i,
-  index_of_opt vs nm 0 = Some i -> index_of_opt vs nm k = Some (i + k).
-Proof.
-  intros * H.
-  eapply index_of_opt_Some_any_k in H.
-  eauto.
-Qed.
-
-Lemma index_of_opt_Some_inj: forall vs nm1 nm2 k i,
-  index_of_opt vs nm1 k = Some i /\ index_of_opt vs nm2 k = Some i ->
-    nm1 = nm2.
-Proof.
-  induction vs; intros; cleanup.
-  - simpl in *; unfold dlet in *; simpl in *; cleanup.
-  - simpl in *; unfold dlet in *; simpl in *.
-    destruct a.
-    2: specialize (IHvs _ _ _ _ (conj H H0)); assumption.
-    destruct (n =? nm1)%N eqn:?; destruct (n =? nm2)%N eqn:?.
-    all: rewrite ?N.eqb_eq in *; eauto; try congruence; cleanup.
-    all: spat `index_of_opt` at eapply index_of_opt_in_gt_k_str in spat.
-    all: lia.
 Qed.
 
 Ltac crunch_give_up_even :=
@@ -1397,7 +1289,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   unfold goal_exp in H; eapply H in Heqp; clear H; eauto.
-  all: repeat rewrite list_append_spec in *.
+  all: repeat rewrite list_app_spec in *.
   all: simpl flatten in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
@@ -1472,7 +1364,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   unfold goal_exp in H; eapply H with (fuel := fuel) in Heqp; clear H; eauto.
-  all: repeat rewrite list_append_spec in *.
+  all: repeat rewrite list_app_spec in *.
   all: simpl flatten in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
@@ -1557,7 +1449,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   unfold goal_exp in H; eapply H with (fuel := fuel) in Heqp; clear H; eauto.
-  all: repeat rewrite list_append_spec in *.
+  all: repeat rewrite list_app_spec in *.
   all: simpl flatten in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
@@ -1656,7 +1548,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   unfold goal_exp in H; eapply H with (fuel := fuel) in Heqp; clear H; eauto.
-  all: repeat rewrite list_append_spec in *.
+  all: repeat rewrite list_app_spec in *.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -1768,7 +1660,7 @@ Proof.
   2: eval_exp_contr_stop_tac.
   pat `match ?o with _ => _ end = _` at destruct o; cleanup.
   2: eval_exps_contr_stop_tac.
-  rewrite list_append_spec in *; rewrite code_in_append in *.
+  rewrite list_app_spec in *; rewrite code_in_append in *.
   spat `eval_exp` at specialize eval_exp_pure with (1 := spat) as Htmp; rewrite Htmp in *; clear Htmp.
   spat `c_exp` at specialize c_exp_length with (1 := spat) as Htmp; rewrite Htmp in *; clear Htmp.
   spat `eval_exp` at specialize c_exp_correct as Htmp; unfold goal_exp in Htmp; eapply Htmp with (fuel := fuel) in spat; clear Htmp; cleanup; eauto; try congruence.
@@ -1867,7 +1759,7 @@ Proof.
   unfold goal_test; intros.
   spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
-  simpl c_exp in *; unfold c_test_jump in *; unfold dlet in *.
+  simpl c_exp in *; unfold c_test in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *.
   destruct o eqn:?; subst.
@@ -1883,7 +1775,7 @@ Proof.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   eval_exp_correct_tac.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -1976,7 +1868,7 @@ Proof.
   unfold goal_test; intros.
   spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
-  simpl c_exp in *; unfold c_test_jump in *; unfold dlet in *.
+  simpl c_exp in *; unfold c_test in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_exp e1 s) eqn:?; simpl in *.
   destruct o eqn:?; subst.
@@ -1992,7 +1884,7 @@ Proof.
   specialize (eval_exp_pure e1 _ _ _ Heqp).
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   eval_exp_correct_tac.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -2142,19 +2034,19 @@ Proof.
   unfold goal_test; intros.
   spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
-  simpl c_test_jump in *; unfold dlet in *.
+  simpl c_test in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_test tst1 s) eqn:?; simpl in *.
   destruct o eqn:?; subst; cleanup.
   destruct (eval_test tst2 s0) eqn:?; simpl in *.
   destruct o eqn:?; subst; cleanup.
   unfold_outcome; cleanup.
-  destruct (c_test_jump tst1) eqn:?; simpl in *; unfold dlet in *; simpl in *.
-  destruct (c_test_jump tst2) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_test tst1) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_test tst2) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_test_pure tst1 _ _ _ Heqp).
   specialize (eval_test_pure tst2 _ _ _ Heqp0).
   intros; subst.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   assert (pc t + 1 + 1 = pc t + 2) as Htmp; [lia|]; rewrite Htmp in *; clear Htmp.
   rwr ltac:(specialize (c_test_length tst1 _ _ _ _ _ _ Heqp1)).
@@ -2238,19 +2130,19 @@ Proof.
   unfold goal_test; intros.
   spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
-  simpl c_test_jump in *; unfold dlet in *.
+  simpl c_test in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_test tst1 s) eqn:?; simpl in *.
   destruct o eqn:?; subst; cleanup.
   destruct (eval_test tst2 s0) eqn:?; simpl in *.
   destruct o eqn:?; subst; cleanup.
   unfold_outcome; cleanup.
-  destruct (c_test_jump tst1) eqn:?; simpl in *.
-  destruct (c_test_jump tst2) eqn:?; simpl in *; unfold dlet in *; simpl in *.
+  destruct (c_test tst1) eqn:?; simpl in *.
+  destruct (c_test tst2) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   specialize (eval_test_pure tst1 _ _ _ Heqp).
   specialize (eval_test_pure tst2 _ _ _ Heqp0).
   intros; subst.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   assert (pc t + 1 + 1 = pc t + 2) as Htmp; [lia|]; rewrite Htmp in *; clear Htmp.
   rwr ltac:(specialize (c_test_length tst1 _ _ _ _ _ _ Heqp1)).
@@ -2332,12 +2224,12 @@ Proof.
   unfold goal_test; intros.
   spat `exists _, pmap_in_bounds _ _` at destruct spat as (r14, ?).
   simpl eval_test in *.
-  simpl c_test_jump in *; unfold dlet in *.
+  simpl c_test in *; unfold dlet in *.
   unfold bind in *.
   destruct (eval_test tst s) eqn:?; simpl in *.
   destruct o eqn:?; subst; cleanup.
   unfold_outcome; cleanup.
-  destruct (c_test_jump tst) eqn:?; simpl in *.
+  destruct (c_test tst) eqn:?; simpl in *.
   specialize (eval_test_pure tst _ _ _ Heqp).
   intros; subst.
   repeat rewrite code_in_append in *; cleanup.
@@ -2422,9 +2314,9 @@ Proof.
   destruct c_exp eqn:?; cleanup.
   unfold_outcome; cleanup.
   simpl flatten in *; unfold dlet in *; simpl in *; cleanup.
-  repeat rewrite list_length_spec in *.
+  repeat rewrite list_len_spec in *.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?; cleanup; subst.
-  simpl flatten in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append in *; cleanup.
   simpl code_in in *; cleanup.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `eval_exp e _ = (?r, _)` at
@@ -2675,7 +2567,7 @@ Proof.
   simpl c_cmd in *; unfold dlet, ImpSemantics.assign in *.
   destruct c_exp eqn:?; cleanup.
   simpl flatten in *; unfold dlet in *; simpl in *; cleanup.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   destruct o; unfold_outcome; cleanup.
   2: eval_exp_contr_stop_tac.
@@ -2717,7 +2609,7 @@ Proof.
   intros; eapply prefix_correct; eapply substring_noop.
 Qed.
 
-Lemma substring_append: forall (s s1: string),
+Lemma substr_app: forall (s s1: string),
   substring 0 (length s) (s ++ s1) = s.
 Proof.
   induction s; simpl; intros.
@@ -2743,7 +2635,7 @@ Proof.
     with_strategy transparent [EVAL_CMD] unfold EVAL_CMD in H;
     specialize IH with (1 := H)
   | |- prefix _ (_ ++ _) = true =>
-    eapply prefix_correct; eapply substring_append
+    eapply prefix_correct; eapply substr_app
   | H: (_, _) = (_, _) |- _ => inversion H; clear H; subst
   | _ => (unfold assign, alloc, update, get_vars, get_body_and_set_vars, set_varsM,
     catch_return, set_vars, set_memory, dest_word, get_char, put_char, set_output in * )
@@ -2780,7 +2672,7 @@ Proof.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
   destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ pat)).
   pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ pat) as ?; subst.
@@ -2841,17 +2733,17 @@ Proof.
   spat `c_cmd` at simpl c_cmd in spat; unfold dlet in spat.
   Opaque c_cmd.
   simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
-  destruct (c_test_jump _ _ _ _ _) eqn:?; simpl in *; subst; cleanup.
+  destruct (c_test _ _ _ _ _) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c _ _ _) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
-  spat `c_test_jump` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
+  spat `c_test` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
   spat `c_cmd c` at specialize (c_cmd_length c _ _ _ _ _ spat) as ?; subst.
   destruct eval_test eqn:?; cleanup.
   destruct o eqn:?; subst; cleanup.
   2: exfalso; destruct v eqn:?; spat `eval_test` at eapply eval_test_not_stop in spat; eauto; try congruence.
   unfold_outcome; cleanup.
-  spat `c_test_jump` at
+  spat `c_test` at
     assert (pc t0 + 3 = pc (set_pc (pc t0 + 3) t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
   spat `c_cmd` at
     assert (pc t0 + 3 + Datatypes.length (flatten a) = pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
@@ -3027,7 +2919,7 @@ Proof.
   all: simpl; eauto.
   2: eapply env_ok_IMP_odd_curr1 with (curr := curr); eauto.
   2: {
-    simpl; unfold dlet in *; simpl in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append; cleanup; repeat split.
+    simpl; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append; cleanup; repeat split.
     all: pat `steps (_, _) (State s2, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: pat `steps (_, _) (State s3, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: repeat rewrite Nat.add_1_r; eauto; pat `pc s3 = _` at try rewrite <- pat; eauto.
@@ -3120,19 +3012,19 @@ Proof.
   unfold goal_cmd; intros.
   spat `c_cmd` at simpl c_cmd in spat; unfold dlet in spat.
   with_strategy transparent [eval_cmd] simpl eval_cmd in *; unfold bind in *; simpl in *; subst.
-  destruct c_test_jump eqn:?; simpl in *; subst; cleanup.
+  destruct c_test eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c1) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c2) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
-  spat `c_test_jump` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
+  spat `c_test` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
   spat `c_cmd c1` at specialize c_cmd_length with (1 := spat) as ?; subst.
   spat `c_cmd c2` at specialize c_cmd_length with (1 := spat) as ?; subst.
   destruct eval_test eqn:?; cleanup.
   addition_cleanup.
   pat `match ?o with _ => _ end = _` at destruct o eqn:?; subst; cleanup.
   2: exfalso; destruct v eqn:?; spat `eval_test` at eapply eval_test_not_stop in spat; eauto; try congruence.
-  spat `c_test_jump _ _ _ ?p` at
+  spat `c_test _ _ _ ?p` at
     assert (p = pc (set_pc p t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
   spat `eval_test` at specialize (eval_test_pure t _ _ _ spat) as ?; subst.
   spat `eval_test` at specialize c_test_correct as Htmp; unfold goal_test in Htmp; eapply Htmp with (fuel := s1.(steps_done) - s0.(steps_done)) in spat; clear Htmp; eauto; cleanup.
@@ -3476,7 +3368,7 @@ Proof.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   pat `eval_exp e' _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_exp a _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `c_exp e' _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
@@ -3586,7 +3478,7 @@ Proof.
   destruct c_assign eqn:?; simpl in *; cleanup.
   unfold c_assign, dlet, c_read, dlet in *.
   simpl in *; unfold dlet in *; simpl in *; cleanup.
-  simpl flatten in *; rewrite list_append_spec in *.
+  simpl flatten in *; rewrite list_app_spec in *.
   repeat rewrite code_in_append in *; cleanup.
   spat `env_ok` at pose proof spat as Henv_ok; unfold env_ok in spat; cleanup.
   unfold has_stack in *|-; cleanup.
@@ -3777,7 +3669,7 @@ Proof.
   destruct (_ <? _) eqn:?; cleanup; [|congruence].
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `eval_exp e _ = (?r, _)` at
     assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
@@ -4127,7 +4019,7 @@ Proof.
   unfold assign in *; unfold_outcome; cleanup.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_append_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append in *; cleanup.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `eval_exp e _ = (?r, _)` at
     assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
@@ -4502,32 +4394,32 @@ Proof.
   all: eapply in_or_app; eauto.
 Qed.
 
-Lemma make_vs_from_binders_length: forall l,
-  List.length (make_vs_from_binders l) = List.length l.
+Lemma bdrs_vs_length: forall l,
+  List.length (bdrs_vs l) = List.length l.
 Proof.
   induction l; simpl in *; eauto.
 Qed.
 
-Lemma make_vs_from_binders_spec: forall ns,
-  make_vs_from_binders ns = List.map Some ns.
+Lemma bdrs_vs_spec: forall ns,
+  bdrs_vs ns = List.map Some ns.
 Proof.
   induction ns; eauto.
 Qed.
 
-Lemma binders_ok_all_binders: forall c,
-  binders_ok c (make_vs_from_binders (all_binders c)).
+Lemma binders_ok_all_bdrs: forall c,
+  binders_ok c (bdrs_vs (all_bdrs c)).
 Proof.
   induction c; simpl in *; unfold dlet in *; simpl in *; eauto.
   all: split.
-  all: repeat rewrite list_append_spec in *.
-  all: rewrite make_vs_from_binders_spec.
+  all: repeat rewrite list_app_spec in *.
+  all: rewrite bdrs_vs_spec.
   all: rewrite map_app.
   1,3: eapply binders_ok_append; eauto.
   all: eapply binders_ok_append2; eauto.
 Qed.
 
-Theorem names_contain_spec: forall x ns,
-  names_contain ns x = true <-> In x ns.
+Theorem names_in_spec: forall x ns,
+  names_in ns x = true <-> In x ns.
 Proof.
   induction ns; simpl in *; eauto.
   - split; intros; [congruence|eauto].
@@ -4538,14 +4430,14 @@ Proof.
       pat `_ \/ _` at destruct H; congruence.
 Qed.
 
-Lemma names_unique_In: forall ns x acc,
-  (In x ns \/ In x acc) -> In x (names_unique ns acc).
+Lemma nms_uniq_In: forall ns x acc,
+  (In x ns \/ In x acc) -> In x (nms_uniq ns acc).
 Proof.
   induction ns; intros; simpl in *; eauto.
   1: pat `_ \/ _` at destruct pat; eauto.
   1: pat `False` at inversion pat.
-  destruct (names_contain acc a) eqn:?.
-  - rewrite names_contain_spec in *; cleanup.
+  destruct (names_in acc a) eqn:?.
+  - rewrite names_in_spec in *; cleanup.
     pat `_ \/ _` at destruct pat; eauto.
     pat `_ \/ _` at destruct pat; eauto.
     eapply IHns; subst; eauto.
@@ -4555,30 +4447,30 @@ Proof.
     pat `_ \/ _` at destruct pat; eauto.
 Qed.
 
-Lemma binders_ok_names_unique: forall c ns,
-  binders_ok c (make_vs_from_binders ns) ->
-    binders_ok c (make_vs_from_binders (names_unique ns [])).
+Lemma binders_ok_nms_uniq: forall c ns,
+  binders_ok c (bdrs_vs ns) ->
+    binders_ok c (bdrs_vs (nms_uniq ns [])).
 Proof.
   induction c; intros; simpl in *; cleanup; eauto.
-  all: rewrite make_vs_from_binders_spec in *.
+  all: rewrite bdrs_vs_spec in *.
   all: rewrite in_map_iff in *; cleanup; eexists; split; eauto.
-  all: eapply names_unique_In; eauto.
+  all: eapply nms_uniq_In; eauto.
 Qed.
 
-Theorem binders_ok_unique_binders: forall c,
-  binders_ok c (make_vs_from_binders (unique_binders c)).
+Theorem binders_ok_bdrs_unq: forall c,
+  binders_ok c (bdrs_vs (bdrs_unq c)).
 Proof.
   induction c; simpl in *; eauto.
   all: try split.
-  all: unfold unique_binders, dlet in *; simpl.
-  all: eapply binders_ok_names_unique.
+  all: unfold bdrs_unq, dlet in *; simpl.
+  all: eapply binders_ok_nms_uniq.
   all: unfold dlet in *; simpl in *.
-  all: repeat rewrite list_append_spec in *.
-  all: rewrite make_vs_from_binders_spec; rewrite map_app.
+  all: repeat rewrite list_app_spec in *.
+  all: rewrite bdrs_vs_spec; rewrite map_app.
   1,3: eapply binders_ok_append.
   3,4: eapply binders_ok_append2.
-  all: rewrite <- make_vs_from_binders_spec.
-  all: eapply binders_ok_all_binders.
+  all: rewrite <- bdrs_vs_spec.
+  all: eapply binders_ok_all_bdrs.
 Qed.
 
 Lemma binders_ok_In_both: forall c vs vs1,
@@ -4590,42 +4482,42 @@ Proof.
   induction c; simpl in *; cleanup; eauto.
 Qed.
 
-Lemma filter_name_spec: forall n l,
-  filter_name n l = filter (fun x => negb (N.eqb n x)) l.
+Lemma fltr_nms_spec: forall n l,
+  fltr_nms n l = filter (fun x => negb (N.eqb n x)) l.
 Proof.
   induction l; eauto; simpl; rewrite IHl.
   destruct (N.eqb n a) eqn:?; simpl; eauto.
 Qed.
 
-Lemma remove_names_not_In: forall l vs n,
+Lemma rm_nms_not_In: forall l vs n,
   In n vs ->
   ~ In n l ->
-    In n (remove_names l vs).
+    In n (rm_nms l vs).
 Proof.
   induction l; eauto; intros; rewrite not_in_cons in *; cleanup.
-  simpl; rewrite filter_name_spec.
+  simpl; rewrite fltr_nms_spec.
   eapply IHl; eauto.
   rewrite filter_In, negb_true_iff, N.eqb_neq in *.
   split; eauto.
 Qed.
 
 Lemma all_In_add_remove: forall l vs n,
-  In (Some n) (make_vs_from_binders vs) ->
-    In (Some n) (map Some l ++ make_vs_from_binders (remove_names l vs)).
+  In (Some n) (bdrs_vs vs) ->
+    In (Some n) (map Some l ++ bdrs_vs (rm_nms l vs)).
 Proof.
   intros.
-  rewrite make_vs_from_binders_spec in *.
-  rewrite make_vs_from_binders_spec with (ns := remove_names _ _).
+  rewrite bdrs_vs_spec in *.
+  rewrite bdrs_vs_spec with (ns := rm_nms _ _).
   rewrite <- map_app.
   eapply in_map; rewrite in_map_iff in *; cleanup.
   destruct in_dec with (a := n) (l := l); [eapply N.eq_dec|..].
-  2: rewrite in_app_iff; right; eapply remove_names_not_In; eauto.
+  2: rewrite in_app_iff; right; eapply rm_nms_not_In; eauto.
   rewrite in_app_iff; left; eauto.
 Qed.
 
 Lemma binders_ok_add_remove: forall c vs l,
-  binders_ok c (make_vs_from_binders vs) ->
-    binders_ok c (map Some l ++ (make_vs_from_binders (remove_names l vs))).
+  binders_ok c (bdrs_vs vs) ->
+    binders_ok c (map Some l ++ (bdrs_vs (rm_nms l vs))).
 Proof.
   intros.
   eapply binders_ok_In_both; eauto.
@@ -4682,7 +4574,7 @@ Lemma pops_thm: forall t fs ds ws rest r15 (xs: list exp) (vs: v_stack) fuel,
 Proof.
   intros.
   unfold c_pops, dlet, pops_regs in *.
-  repeat (rewrite list_length_spec in * ).
+  repeat (rewrite list_len_spec in * ).
   unfold has_stack in *; cleanup.
   unfold ARGS_REGS, set_stack, set_pc.
   destruct xs eqn:?; simpl in *; subst; cleanup.
@@ -4904,12 +4796,12 @@ Lemma pushes_thm: forall t fs s fuel params args ws rest pos c vs1 l1 w rgs pmap
     t5.(instructions) = t.(instructions) ∧
     r14_mono (regs t R14) (regs t5 R14)  ∧
     t5.(memory) = t.(memory) ∧
-    vs1 = c_pushes_vs params.
+    vs1 = push_vs params.
 Proof.
   Transparent nth_error.
   intros.
   unfold c_pushes, dlet, pops_regs in *.
-  repeat (rewrite list_length_spec in * ).
+  repeat (rewrite list_len_spec in * ).
   destruct params eqn:?; simpl in *; subst; cleanup.
   1: {
     repeat (spat `List.length ?l` at destruct l; simpl in *; try congruence).
@@ -5138,8 +5030,8 @@ Proof.
   destruct s; simpl; reflexivity.
 Qed.
 
-Lemma call_v_stack_spec: forall vs acc,
-  call_v_stack vs acc = rev (map Some vs) ++ acc.
+Lemma call_vs_spec: forall vs acc,
+  call_vs vs acc = rev (map Some vs) ++ acc.
 Proof.
   induction vs; intros; simpl in *; eauto.
   rewrite <- app_assoc; eauto.
@@ -5193,7 +5085,7 @@ Proof.
   unfold catch_return in *; unfold_outcome.
   destruct EVAL_CMD eqn:?.
   unfold set_varsM in *; unfold_outcome; cleanup.
-  repeat (rewrite ?list_append_spec, ?app_list_length_spec in * ).
+  repeat (rewrite ?list_app_spec, ?appl_len_spec in * ).
   pat `eval_exps _ _ = _` at specialize eval_exps_pure with (1 := pat) as ?; subst.
   repeat (rewrite code_in_append in * ); cleanup.
   spat `eval_exps` at specialize eval_exps_length with (1 := spat) as ?.
@@ -5240,10 +5132,10 @@ Proof.
   simpl c_fundef in *; unfold dlet in *; cleanup.
   destruct c_pushes eqn:?.
   pat `c_pushes _ _ = (?p, _)` at destruct p.
-  unfold c_declare_binders in *|-; unfold dlet in *; simpl in *; cleanup.
-  remember (get_vs_binders _ _) as vs_body.
+  unfold c_bdrs in *|-; unfold dlet in *; simpl in *; cleanup.
+  remember (vs_bdrs _ _) as vs_body.
   simpl in *; unfold dlet in *; simpl in *.
-  repeat (rewrite ?list_append_spec, ?app_list_length_spec, ?list_length_spec, ?length_app in * ).
+  repeat (rewrite ?list_app_spec, ?appl_len_spec, ?list_len_spec, ?length_app in * ).
   destruct c_cmd eqn:?.
   repeat (rewrite code_in_append in * ); cleanup; simpl in *; cleanup.
   unfold has_stack in *; cleanup.
@@ -5318,16 +5210,16 @@ Proof.
   7: pat `steps _ (State x9, _)` at simpl; specialize steps_instructions with (1 := pat) as Htmp; simpl in Htmp; rewrite <- Htmp in *; subst; solve [eauto].
   3: { (* binders_ok *)
     pat `l0 = _` at rewrite pat in *.
-    Opaque call_v_stack remove_names.
-    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec.
-    destruct l; unfold c_pushes_vs; destruct even_len; simpl in *; unfold dlet in *; simpl in *.
+    Opaque call_vs rm_nms.
+    unfold vs_bdrs in *; unfold dlet in *; simpl in *; rewrite ?list_app_spec.
+    destruct l; unfold push_vs; destruct even_len; simpl in *; unfold dlet in *; simpl in *.
     all: try eapply binders_ok_append2 with (b1 := [None]).
     all: try eapply binders_ok_append with (b2 := [None]).
     all: try (rewrite app_assoc; eapply binders_ok_append with (b2 := [None])).
-    all: rewrite ?call_v_stack_spec, ?app_nil_r.
+    all: rewrite ?call_vs_spec, ?app_nil_r.
     all: try eapply binders_ok_rev_append.
     all: try eapply binders_ok_add_remove.
-    all: try eapply binders_ok_unique_binders.
+    all: try eapply binders_ok_bdrs_unq.
   }
   (* env_ok*)
   2: eapply env_ok_append_r; eauto; rewrite ?length_map; simpl; subst; solve [eauto].
@@ -5347,8 +5239,8 @@ Proof.
   2: {
     subst vs_body l0.
     unfold env_ok in *; cleanup.
-    rewrite length_app, length_map, make_vs_from_binders_spec in *; simpl.
-    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec, ?even_len_spec in *.
+    rewrite length_app, length_map, bdrs_vs_spec in *; simpl.
+    unfold vs_bdrs in *; unfold dlet in *; simpl in *; rewrite ?list_app_spec, ?even_len_spec in *.
     destruct even eqn:?; rewrite ?length_map, ?length_app, ?length_map in *; simpl.
     all: pat `_ = List.length x8` at rewrite <- pat; simpl in *.
     all: rewrite ?length_map, ?length_app, ?length_map in *; simpl in *.
@@ -5536,7 +5428,7 @@ Proof.
   spat `c_pushes` at eapply c_pushes_length in spat.
   simpl in *; cleanup.
   simpl; unfold dlet in *; simpl in *.
-  all: repeat rewrite list_append_spec in *.
+  all: repeat rewrite list_app_spec in *.
   repeat (rewrite length_app; simpl).
   lia.
 Qed.
@@ -5565,7 +5457,7 @@ Proof.
     eapply IHc1 in Heqp0; eauto; subst.
     eapply IHc2; eauto.
   - destruct c_cmd eqn:?.
-    destruct (c_test_jump) eqn:?.
+    destruct (c_test) eqn:?.
     destruct (c_cmd _ _ f_lookup0) eqn:?.
     simpl in *.
     f_equal.
@@ -5588,18 +5480,18 @@ Proof.
   eapply c_cmd_l_same; eauto.
 Qed.
 
-Lemma c_fundefs_l_same: forall funs lstart f_lookup f_lookup0 a1 a2 fs1 fs2 l1 l2,
-  c_fundefs funs lstart f_lookup = (a1, fs1, l1) ->
-  c_fundefs funs lstart f_lookup0 = (a2, fs2, l2) ->
+Lemma c_fndefs_l_same: forall funs lstart f_lookup f_lookup0 a1 a2 fs1 fs2 l1 l2,
+  c_fndefs funs lstart f_lookup = (a1, fs1, l1) ->
+  c_fndefs funs lstart f_lookup0 = (a2, fs2, l2) ->
   l1 = l2.
 Proof.
   induction funs; intros; simpl in *; unfold dlet in *; simpl in *; cleanup; eauto.
   destruct c_fundef eqn:?.
   destruct (c_fundef _ _ f_lookup0) eqn:?.
-  destruct c_fundefs eqn:?.
-  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
-  destruct (c_fundefs _ _ f_lookup0) eqn:?.
-  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  destruct c_fndefs eqn:?.
+  pat `c_fndefs _ _ _ = (?p, _)` at destruct p.
+  destruct (c_fndefs _ _ f_lookup0) eqn:?.
+  pat `c_fndefs _ _ _ = (?p, _)` at destruct p.
   simpl in *; cleanup; subst.
   eapply c_fundef_l_same in Heqp; eauto; subst.
   eapply IHfuns; eauto.
@@ -5651,9 +5543,9 @@ Proof.
     + eauto.
 Qed.
 
-Lemma c_fundefs_lookup_same: forall funcs fs0 fs1 fs2 fs3 asm1 asm2 l1 l2 n params body l,
-  c_fundefs funcs l fs0 = (asm1, fs1, l1) ->
-  c_fundefs funcs l fs2 = (asm2, fs3, l2) ->
+Lemma c_fndefs_lookup_same: forall funcs fs0 fs1 fs2 fs3 asm1 asm2 l1 l2 n params body l,
+  c_fndefs funcs l fs0 = (asm1, fs1, l1) ->
+  c_fndefs funcs l fs2 = (asm2, fs3, l2) ->
   find_fun n funcs = Some (params, body) ->
   lookup fs1 n = lookup fs3 n.
 Proof.
@@ -5661,12 +5553,12 @@ Proof.
   induction funcs; intros; simpl in *; eauto; cleanup.
   unfold dlet in *; cleanup.
   destruct (c_fundef _ _ _) eqn:?.
-  destruct (c_fundefs _ _ _) eqn:?.
-  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  destruct (c_fndefs _ _ _) eqn:?.
+  pat `c_fndefs _ _ _ = (?p, _)` at destruct p.
   simpl in *; cleanup.
   destruct (c_fundef _ _ fs2) eqn:?.
-  destruct (c_fundefs _ _ fs2) eqn:?.
-  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  destruct (c_fndefs _ _ fs2) eqn:?.
+  pat `c_fndefs _ _ _ = (?p, _)` at destruct p.
   (* set asm1 as Sasm1. *)
   (* set fs as Sfs. *)
   (* set l1 as Sl1. *)
@@ -5677,11 +5569,11 @@ Proof.
   - reflexivity.
   - eapply IHfuncs; eauto.
     spat `c_fundef` at eapply c_fundef_l_same in spat; [|exact Heqp]; subst.
-    pat `c_fundefs _ _ _ = (_, l0, _)` at eapply c_fundefs_l_same in pat; eauto.
+    pat `c_fndefs _ _ _ = (_, l0, _)` at eapply c_fndefs_l_same in pat; eauto.
 Qed.
 
-Lemma c_fundefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
-  c_fundefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
+Lemma c_fndefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
+  c_fndefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
   find_fun n funcs = Some (params, body) ->
   exists pos,
     lookup fs n = pos ∧ (* No fail case here... (<> 0) ? *)
@@ -5692,8 +5584,8 @@ Proof.
   induction funcs; intros; simpl in *|-; cleanup.
   unfold dlet in *.
   destruct (c_fundef _ _ _) eqn:?.
-  destruct (c_fundefs _ _ _) eqn:?.
-  pat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  destruct (c_fndefs _ _ _) eqn:?.
+  pat `c_fndefs _ _ _ = (?p, _)` at destruct p.
   set asm1 as Sasm1.
   set fs as Sfs.
   set l1 as Sl1.
@@ -5706,8 +5598,8 @@ Proof.
     rewrite N.eqb_refl.
     split; [reflexivity|].
     spat `c_fundef` at rewrite spat; simpl; unfold dlet; simpl.
-    repeat rewrite list_append_spec in *.
-    assert (xs ++ Comment (N2ascii_default n1) :: flatten a0 ++ Ret :: flatten a1 = (xs ++ [Comment (N2ascii_default n1)]) ++ flatten a0 ++ Ret :: flatten a1) as ->.
+    repeat rewrite list_app_spec in *.
+    assert (xs ++ Comment (N2asciid n1) :: flatten a0 ++ Ret :: flatten a1 = (xs ++ [Comment (N2asciid n1)]) ++ flatten a0 ++ Ret :: flatten a1) as ->.
     1: induction xs; simpl; try rewrite <- app_assoc; eauto.
     eapply code_in_append_left2.
     rewrite length_app; simpl.
@@ -5715,11 +5607,11 @@ Proof.
   }
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2ascii_default n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
+  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2asciid n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
   (* assert (Datatypes.length (flatten a0) + (Datatypes.length xs) = List.length (xs ++ flatten a0)) as Hrwlength. *)
-  1: simpl; rewrite list_append_spec; repeat rewrite length_app; simpl; repeat rewrite length_app; simpl; lia.
+  1: simpl; rewrite list_app_spec; repeat rewrite length_app; simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.
-  spat `c_fundefs` at eapply IHfuncs in spat; eauto; cleanup; simpl; unfold dlet in *; simpl in *.
+  spat `c_fndefs` at eapply IHfuncs in spat; eauto; cleanup; simpl; unfold dlet in *; simpl in *.
   eexists; split; simpl.
   1: {
     destruct (n1 =? n)%N eqn:?; rewrite ?N.eqb_neq in *; rewrite ?N.eqb_eq in *.
@@ -5727,7 +5619,7 @@ Proof.
     - eauto.
   }
   simpl in *; unfold dlet in *; simpl in *.
-  repeat rewrite list_append_spec in *.
+  repeat rewrite list_app_spec in *.
   rewrite app_comm_cons.
   rewrite app_assoc.
   assert (Ret :: flatten a1 = [Ret] ++ flatten a1) as -> by (simpl; reflexivity).
@@ -5773,27 +5665,27 @@ Proof.
   Transparent nth_error.
   unfold codegen, dlet in *.
   Opaque name_of_string.
-  Transparent remove_names.
-  repeat rewrite app_list_length_spec in *.
-  repeat rewrite list_append_spec in *.
-  repeat rewrite list_length_spec in *.
+  Transparent rm_nms.
+  repeat rewrite appl_len_spec in *.
+  repeat rewrite list_app_spec in *.
+  repeat rewrite list_len_spec in *.
   simpl in *.
   unfold catch_return in *.
   spat `let (_, _) := ?x in _` at destruct x eqn:?; unfold_outcome.
-  destruct (c_fundefs funcs _ _) eqn:Heqcfuns0.
-  spat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  destruct (c_fndefs funcs _ _) eqn:Heqcfuns0.
+  spat `c_fndefs _ _ _ = (?p, _)` at destruct p.
   simpl in *.
-  destruct (c_fundefs funcs _ l) eqn:Heqcfuns.
-  spat `c_fundefs _ _ _ = (?p, _)` at destruct p.
+  destruct (c_fndefs funcs _ l) eqn:Heqcfuns.
+  spat `c_fndefs _ _ _ = (?p, _)` at destruct p.
   simpl in *.
   spat `eval_cmd` at rename spat into Heval_cmd.
-  specialize c_fundefs_l_same with (1 := Heqcfuns) (2 := Heqcfuns0) as ?; subst.
+  specialize c_fndefs_l_same with (1 := Heqcfuns) (2 := Heqcfuns0) as ?; subst.
   remember (lookup l _) as lookup_main_l.
-  spat `c_fundefs` at rewrite init_length_same with (l2 := lookup_main_l) in spat.
+  spat `c_fndefs` at rewrite init_length_same with (l2 := lookup_main_l) in spat.
   pat `find_fun _ _ = _` at rename pat into Hfind_fun.
-  pat `c_fundefs _ _ _ = (_, _, _)` at specialize c_fundefs_code_in with (1 := pat) (2 := Hfind_fun) as ?; cleanup.
+  pat `c_fndefs _ _ _ = (_, _, _)` at specialize c_fndefs_code_in with (1 := pat) (2 := Hfind_fun) as ?; cleanup.
   Transparent c_fundef.
-  rewrite c_fundefs_lookup_same with (fs1 := l0) (fs3 := l) (n := name_of_string "main") (1 := Heqcfuns) (2 := Heqcfuns0) (3 := Hfind_fun) in *.
+  rewrite c_fndefs_lookup_same with (fs1 := l0) (fs3 := l) (n := name_of_string "main") (1 := Heqcfuns) (2 := Heqcfuns0) (3 := Hfind_fun) in *.
   unfold c_fundef, dlet in *.
   destruct (c_pushes _ _) eqn:?.
   destruct (c_cmd _ _) eqn:?.
@@ -5804,13 +5696,13 @@ Proof.
   unfold c_pushes, dlet in *; simpl in *; unfold dlet in *; simpl in *.
   pat ` (_, _, _) = (_, _, _)` at inversion pat; subst; clear pat.
   remember (lookup l _) as lookup_main_l.
-  repeat rewrite list_append_spec in *.
-  repeat rewrite list_length_spec in *.
+  repeat rewrite list_app_spec in *.
+  repeat rewrite list_len_spec in *.
   simpl in *|-.
-  pat `c_cmd _ _ _ (None :: ?vs) = _` at remember vs as vs_binders.
+  pat `c_cmd _ _ _ (None :: ?vs) = _` at remember vs as vs_bdrs.
   repeat (rewrite code_in_append in *; simpl in * ); cleanup.
   pose proof c_cmd_correct as Hccorrect; unfold goal_cmd in Hccorrect.
-  eapply Hccorrect with (curr := (Word (word.of_Z 0)) :: (List.map (fun _ => Uninit) vs_binders)) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
+  eapply Hccorrect with (curr := (Word (word.of_Z 0)) :: (List.map (fun _ => Uninit) vs_bdrs)) (rest := [RetAddr 4]) in Heval_cmd as Hmain; clear Hccorrect; cleanup.
   all: simpl in *.
   1: { (* main goal *)
     destruct_pair.
@@ -5917,7 +5809,7 @@ Proof.
       1: unfold fetch; simpl; rewrite Htinstrfolded; simpl; eauto.
       1: simpl in *; reflexivity.
       simpl in *.
-      pat `vs_binders = _` at rewrite <- pat in *.
+      pat `vs_bdrs = _` at rewrite <- pat in *.
       pat `lookup_main_l = _` at rewrite <- pat in *.
       eauto.
     }
@@ -5938,7 +5830,7 @@ Proof.
     pat `stack t = _` at rewrite pat.
     pat `pc t = _` at rewrite pat.
     simpl.
-    pat `vs_binders = _` at rewrite pat.
+    pat `vs_bdrs = _` at rewrite pat.
     reflexivity.
   }
   1: { (* c_cmd main_c *)
@@ -5956,11 +5848,11 @@ Proof.
       Transparent init.
       simpl; repeat (split; eauto).
     - intros.
-      spat `find_fun` at pose proof spat as Hfind_fun_n0; eapply c_fundefs_code_in in spat; eauto.
+      spat `find_fun` at pose proof spat as Hfind_fun_n0; eapply c_fndefs_code_in in spat; eauto.
       pat `instructions t = _` at rewrite pat.
       cleanup; eexists.
       split; eauto.
-      rewrite c_fundefs_lookup_same with (1 := Heqcfuns) (2 := Heqcfuns0) (3 := Hfind_fun_n0) in *; subst.
+      rewrite c_fndefs_lookup_same with (1 := Heqcfuns) (2 := Heqcfuns0) (3 := Hfind_fun_n0) in *; subst.
       eauto.
     - spat `memory_writable` at pose proof memory_writable as ?.
       spat `memory_writable` at unfold memory_writable in spat; cleanup.
@@ -5968,21 +5860,21 @@ Proof.
       repeat split; eauto.
   }
   2: { (* binders_ok *)
-    assert (None :: vs_binders = [None] ++ vs_binders) as -> by (simpl; congruence).
+    assert (None :: vs_bdrs = [None] ++ vs_bdrs) as -> by (simpl; congruence).
     eapply binders_ok_append2.
-    pat `vs_binders = _` at rewrite pat.
-    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec.
-    destruct (make_vs_from_binders) eqn:?.
-    all: pat `make_vs_from_binders _ = _` at rewrite <- pat.
+    pat `vs_bdrs = _` at rewrite pat.
+    unfold ImpToASMCodegen.vs_bdrs in *; unfold dlet in *; simpl in *; rewrite ?list_app_spec.
+    destruct (bdrs_vs) eqn:?.
+    all: pat `bdrs_vs _ = _` at rewrite <- pat.
     2: destruct even_len.
     2: eapply binders_ok_append.
-    all: eapply binders_ok_unique_binders.
+    all: eapply binders_ok_bdrs_unq.
   }
   6: unfold odd, even; reflexivity.
   6: {
-    pat `vs_binders = _` at rewrite pat.
-    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec.
-    destruct (make_vs_from_binders) eqn:?.
+    pat `vs_bdrs = _` at rewrite pat.
+    unfold ImpToASMCodegen.vs_bdrs in *; unfold dlet in *; simpl in *; rewrite ?list_app_spec.
+    destruct (bdrs_vs) eqn:?.
     all: rewrite length_map; simpl; eauto.
     rewrite app_comm_cons.
     destruct even_len eqn:?.
@@ -5992,7 +5884,7 @@ Proof.
     all: pat `even _ = _` at rewrite pat; reflexivity.
   }
   6: { (* code_in *)
-    unfold get_vs_binders in *; unfold dlet in *; simpl in *; rewrite ?list_append_spec.
+    unfold ImpToASMCodegen.vs_bdrs in *; unfold dlet in *; simpl in *; rewrite ?list_app_spec.
     pat `lookup_main_l = _` at rewrite <- pat.
     pat `instructions t = _` at rewrite pat.
     eauto.
@@ -6007,7 +5899,7 @@ Proof.
     unfold env_ok; simpl.
     Opaque init.
     repeat split.
-    1: pat `vs_binders = _` at rewrite pat.
+    1: pat `vs_bdrs = _` at rewrite pat.
     1: simpl in *; rewrite length_map; lia.
     all: rewrite IEnv.lookup_empty in *; cleanup.
   }

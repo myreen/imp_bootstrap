@@ -436,6 +436,8 @@ Ltac2 rec compile () : unit :=
       (* num *)
       | (N.to_nat ?n) =>
         app_lemma "auto_N_to_nat" [("env", exactk fenv); ("n", exactk n)] [compile]
+      | (N.of_nat ?n) =>
+        app_lemma "auto_N_of_nat" [("env", exactk fenv); ("n", exactk n)] [compile]
       | (?n1 + ?n2)%nat =>
         app_lemma "auto_nat_add"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
@@ -1406,7 +1408,7 @@ Opaque encode.
   a + b + c + d + e + f + g + h + i + j + k + l + m + o + p + q + r + s + t + u.
 
 Derive has_many_definitions_prog
-  in ltac2:(relcompile_tpe 'has_many_definitions_prog 'has_many_definitions ['mul_nat])
+  in ltac2:(relcompile_tpe 'has_many_definitions_prog 'has_many_definitions ['mulnat])
   as has_many_definitions_prog_proof.
 Proof.
   time relcompile.
@@ -1420,21 +1422,21 @@ Set Ltac Profiling.
 Reset Ltac Profile.
 
 Derive uses_long_strings_prog
-  in ltac2:(relcompile_tpe 'uses_long_strings_prog 'uses_long_strings ['string_append])
+  in ltac2:(relcompile_tpe 'uses_long_strings_prog 'uses_long_strings ['str_app])
   as uses_long_strings_prog_proof.
 Proof.
   time relcompile.
 Qed.
 Show Ltac Profile. *)
 
-Definition nat_modulo1 (n1 n2: nat): nat :=
+Definition nat_mod1 (n1 n2: nat): nat :=
   match n2 with
   | 0%nat => 0
   | S _ => n1 - n2 * (n1 / n2)
   end.
 
 Remark gcd_oblig:
-  forall (a b: nat) (NE: b <> 0), nat_modulo1 a b < b.
+  forall (a b: nat) (NE: b <> 0), nat_mod1 a b < b.
 Proof.
 Admitted.
 
@@ -1442,11 +1444,11 @@ Function gcd_rec (a b: nat) (ACC: Acc lt b) {struct ACC}: nat :=
   match Nat.eq_dec b 0 with
   | left EQ => a
   | right NE =>
-    gcd_rec b (nat_modulo1 a b) (Acc_inv ACC (gcd_oblig a b NE))
+    gcd_rec b (nat_mod1 a b) (Acc_inv ACC (gcd_oblig a b NE))
   end.
 
 (* Derive gcd_rec_prog
-  in ltac2:(relcompile_tpe 'gcd_rec_prog 'gcd_rec ['nat_modulo1])
+  in ltac2:(relcompile_tpe 'gcd_rec_prog 'gcd_rec ['nat_mod1])
   as gcd_rec_prog_proof.
 Proof.
   time relcompile.
@@ -1542,7 +1544,7 @@ Definition has_cases (n : nat) : nat :=
     end
   end.
 
-Derive has_cases_prog in ltac2:(relcompile_tpe 'has_cases_prog 'has_cases ['string_append; '@list_length]) as has_cases_proof.
+Derive has_cases_prog in ltac2:(relcompile_tpe 'has_cases_prog 'has_cases ['str_app; '@list_len]) as has_cases_proof.
 Proof.
   relcompile.
 Qed.

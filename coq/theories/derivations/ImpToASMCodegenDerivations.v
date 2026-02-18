@@ -37,7 +37,7 @@ Opaque encode.
 Opaque name_enc.
 
 Derive init_prog
-  in ltac2:(relcompile_tpe 'init_prog 'init ['@list_append; 'string_append]) 
+  in ltac2:(relcompile_tpe 'init_prog 'init ['@list_app; 'str_app]) 
   as init_prog_proof.
 Proof.
   time relcompile.
@@ -100,14 +100,6 @@ Proof.
 Qed.
 Time Compute to_funs [index_of_prog].
 
-Derive index_of_opt_prog 
-  in ltac2:(relcompile_tpe 'index_of_opt_prog 'index_of_opt []) 
-  as index_of_opt_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-Time Compute to_funs [index_of_opt_prog].
-
 Derive c_var_prog 
   in ltac2:(relcompile_tpe 'c_var_prog 'c_var ['index_of]) 
   as c_var_prog_proof.
@@ -116,94 +108,94 @@ Proof.
 Qed.
 Time Compute to_funs [c_var_prog].
 
-Derive all_binders_prog 
-  in ltac2:(relcompile_tpe 'all_binders_prog 'all_binders ['@list_append]) 
-  as all_binders_prog_proof.
+Derive all_bdrs_prog 
+  in ltac2:(relcompile_tpe 'all_bdrs_prog 'all_bdrs ['@list_app]) 
+  as all_bdrs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [all_binders_prog].
+Time Compute to_funs [all_bdrs_prog].
 
-Derive names_contain_prog 
-  in ltac2:(relcompile_tpe 'names_contain_prog 'names_contain []) 
-  as names_contain_prog_proof.
+Derive names_in_prog 
+  in ltac2:(relcompile_tpe 'names_in_prog 'names_in []) 
+  as names_in_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [names_contain_prog].
+Time Compute to_funs [names_in_prog].
 
-Derive names_unique_prog 
-  in ltac2:(relcompile_tpe 'names_unique_prog 'names_unique ['names_contain]) 
-  as names_unique_prog_proof.
+Derive nms_uniq_prog 
+  in ltac2:(relcompile_tpe 'nms_uniq_prog 'nms_uniq ['names_in]) 
+  as nms_uniq_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [names_unique_prog].
+Time Compute to_funs [nms_uniq_prog].
 
-Derive unique_binders_prog 
-  in ltac2:(relcompile_tpe 'unique_binders_prog 'unique_binders ['all_binders; 'names_unique]) 
-  as unique_binders_prog_proof.
+Derive bdrs_unq_prog 
+  in ltac2:(relcompile_tpe 'bdrs_unq_prog 'bdrs_unq ['all_bdrs; 'nms_uniq]) 
+  as bdrs_unq_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [unique_binders_prog].
+Time Compute to_funs [bdrs_unq_prog].
 
-Derive make_vs_from_binders_prog 
-  in ltac2:(relcompile_tpe 'make_vs_from_binders_prog 'make_vs_from_binders []) 
-  as make_vs_from_binders_prog_proof.
+Derive bdrs_vs_prog 
+  in ltac2:(relcompile_tpe 'bdrs_vs_prog 'bdrs_vs []) 
+  as bdrs_vs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [make_vs_from_binders_prog].
+Time Compute to_funs [bdrs_vs_prog].
 
-Derive filter_name_prog 
-  in ltac2:(relcompile_tpe 'filter_name_prog 'filter_name []) 
-  as filter_name_prog_proof.
+Derive fltr_nms_prog 
+  in ltac2:(relcompile_tpe 'fltr_nms_prog 'fltr_nms []) 
+  as fltr_nms_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [filter_name_prog].
+Time Compute to_funs [fltr_nms_prog].
 
-Derive remove_names_prog 
-  in ltac2:(relcompile_tpe 'remove_names_prog 'remove_names ['filter_name]) 
-  as remove_names_prog_proof.
+Derive rm_nms_prog 
+  in ltac2:(relcompile_tpe 'rm_nms_prog 'rm_nms ['fltr_nms]) 
+  as rm_nms_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [remove_names_prog].
+Time Compute to_funs [rm_nms_prog].
 
-Derive call_v_stack_prog 
-  in ltac2:(relcompile_tpe 'call_v_stack_prog 'call_v_stack []) 
-  as call_v_stack_prog_proof.
+Derive call_vs_prog 
+  in ltac2:(relcompile_tpe 'call_vs_prog 'call_vs []) 
+  as call_vs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [call_v_stack_prog].
+Time Compute to_funs [call_vs_prog].
 
-Derive c_pushes_vs_prog 
-  in ltac2:(relcompile_tpe 'c_pushes_vs_prog 'c_pushes_vs ['@list_length; 'call_v_stack]) 
-  as c_pushes_vs_prog_proof.
+Derive push_vs_prog 
+  in ltac2:(relcompile_tpe 'push_vs_prog 'push_vs ['@list_len; 'call_vs]) 
+  as push_vs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_pushes_vs_prog].
+Time Compute to_funs [push_vs_prog].
 
-Derive get_vs_binders_prog
-  in ltac2:(relcompile_tpe 'get_vs_binders_prog 'get_vs_binders ['@even_len; '@list_append])
-  as get_vs_binders_prog_proof.
+Derive vs_bdrs_prog
+  in ltac2:(relcompile_tpe 'vs_bdrs_prog 'vs_bdrs ['@even_len; '@list_app])
+  as vs_bdrs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [get_vs_binders_prog].
+Time Compute to_funs [vs_bdrs_prog].
 
-Derive c_declare_binders_prog 
-  in ltac2:(relcompile_tpe 'c_declare_binders_prog 'c_declare_binders
-    ['unique_binders; 'remove_names; 'make_vs_from_binders; '@list_append; 'c_pushes_vs; '@even_len; '@list_length; 'get_vs_binders]) 
-  as c_declare_binders_prog_proof.
+Derive c_bdrs_prog 
+  in ltac2:(relcompile_tpe 'c_bdrs_prog 'c_bdrs
+    ['bdrs_unq; 'rm_nms; 'bdrs_vs; '@list_app; 'push_vs; '@even_len; '@list_len; 'vs_bdrs]) 
+  as c_bdrs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_declare_binders_prog].
+Time Compute to_funs [c_bdrs_prog].
 
 Derive c_add_prog 
   in ltac2:(relcompile_tpe 'c_add_prog 'c_add []) 
@@ -238,7 +230,7 @@ Qed.
 Time Compute to_funs [c_alloc_prog].
 
 Derive c_read_prog
-  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['@even_len; '@app_list_length]) 
+  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['@even_len; '@appl_len]) 
   as c_read_prog_proof.
 Proof.
   time relcompile.
@@ -246,7 +238,7 @@ Qed.
 Time Compute to_funs [c_read_prog].
 
 Derive c_write_prog 
-  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['@even_len; '@app_list_length]) 
+  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['@even_len; '@appl_len]) 
   as c_write_prog_proof.
 Proof.
   time relcompile.
@@ -262,7 +254,7 @@ Qed.
 Time Compute to_funs [c_load_prog].
 
 Derive c_store_prog 
-  in ltac2:(relcompile_tpe 'c_store_prog 'c_store ['@list_append])
+  in ltac2:(relcompile_tpe 'c_store_prog 'c_store ['@list_app])
   as c_store_prog_proof.
 Proof.
   time relcompile.
@@ -270,7 +262,7 @@ Qed.
 Time Compute to_funs [c_store_prog].
 
 Derive c_exp_prog 
-  in ltac2:(relcompile_tpe 'c_exp_prog 'c_exp ['c_var; 'c_const; 'c_add; 'c_sub; 'c_div; 'c_load; '@app_list_length]) 
+  in ltac2:(relcompile_tpe 'c_exp_prog 'c_exp ['c_var; 'c_const; 'c_add; 'c_sub; 'c_div; 'c_load; '@appl_len]) 
   as c_exp_prog_proof.
 Proof.
   time relcompile.
@@ -293,13 +285,13 @@ Proof.
 Qed.
 Time Compute to_funs [c_cmp_prog].
 
-Derive c_test_jump_prog 
-  in ltac2:(relcompile_tpe 'c_test_jump_prog 'c_test_jump ['c_exp; 'c_cmp; '@app_list_length; '@list_append]) 
-  as c_test_jump_prog_proof.
+Derive c_test_prog 
+  in ltac2:(relcompile_tpe 'c_test_prog 'c_test ['c_exp; 'c_cmp; '@appl_len; '@list_app]) 
+  as c_test_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_test_jump_prog].
+Time Compute to_funs [c_test_prog].
 
 Derive lookup_prog 
   in ltac2:(relcompile_tpe 'lookup_prog 'lookup []) 
@@ -310,7 +302,7 @@ Qed.
 Time Compute to_funs [lookup_prog].
 
 Derive make_ret_prog 
-  in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret ['@list_length]) 
+  in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret ['@list_len]) 
   as make_ret_prog_proof.
 Proof.
   time relcompile.
@@ -318,7 +310,7 @@ Qed.
 Time Compute to_funs [make_ret_prog].
 
 Derive c_pops_prog 
-  in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; '@even_len; '@list_length]) 
+  in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; '@even_len; '@list_len]) 
   as c_pops_prog_proof.
 Proof.
   time relcompile.
@@ -326,7 +318,7 @@ Qed.
 Time Compute to_funs [c_pops_prog].
 
 Derive c_pushes_prog 
-  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_v_stack; '@list_length; 'c_pushes_vs]) 
+  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_vs; '@list_len; 'push_vs]) 
   as c_pushes_prog_proof.
 Proof.
   time relcompile.
@@ -334,7 +326,7 @@ Qed.
 Time Compute to_funs [c_pushes_prog].
 
 Derive c_call_prog 
-  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; '@even_len; '@app_list_length]) 
+  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; '@even_len; '@appl_len]) 
   as c_call_prog_proof.
 Proof.
   time relcompile.
@@ -343,9 +335,9 @@ Time Compute to_funs [c_call_prog].
 
 Derive c_cmd_prog 
   in ltac2:(relcompile_tpe 'c_cmd_prog 'c_cmd 
-    ['c_exp; 'c_assign; 'c_store; 'c_test_jump; 'c_exps; 'c_call; 
+    ['c_exp; 'c_assign; 'c_store; 'c_test; 'c_exps; 'c_call; 
      'c_var; 'make_ret; 'c_alloc; 'c_read; 'c_write; 'abortLoc; 'lookup;
-     '@odd_len; '@app_list_length])
+     '@odd_len; '@appl_len])
   as c_cmd_prog_proof.
 Proof.
   time relcompile.
@@ -354,39 +346,39 @@ Time Compute to_funs [c_cmd_prog].
 
 Derive c_fundef_prog 
   in ltac2:(relcompile_tpe 'c_fundef_prog 'c_fundef 
-    ['c_pushes; 'unique_binders; 'make_vs_from_binders; 'c_cmd; '@list_length; '@list_append; '@even_len; 'c_declare_binders; '@app_list_length]) 
+    ['c_pushes; 'bdrs_unq; 'bdrs_vs; 'c_cmd; '@list_len; '@list_app; '@even_len; 'c_bdrs; '@appl_len]) 
   as c_fundef_prog_proof.
 Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [c_fundef_prog].
 
-Derive get_funcs_prog 
-  in ltac2:(relcompile_tpe 'get_funcs_prog 'get_funcs []) 
-  as get_funcs_prog_proof.
+Derive get_funs_prog 
+  in ltac2:(relcompile_tpe 'get_funs_prog 'get_funs []) 
+  as get_funs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [get_funcs_prog].
+Time Compute to_funs [get_funs_prog].
 
-Derive name_of_func_prog 
-  in ltac2:(relcompile_tpe 'name_of_func_prog 'name_of_func []) 
-  as name_of_func_prog_proof.
+Derive func_nm_prog 
+  in ltac2:(relcompile_tpe 'func_nm_prog 'func_nm []) 
+  as func_nm_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [name_of_func_prog].
+Time Compute to_funs [func_nm_prog].
 
-Derive c_fundefs_prog 
-  in ltac2:(relcompile_tpe 'c_fundefs_prog 'c_fundefs ['c_fundef; 'name_of_func; 'N2ascii_default])
-  as c_fundefs_prog_proof.
+Derive c_fndefs_prog 
+  in ltac2:(relcompile_tpe 'c_fndefs_prog 'c_fndefs ['c_fundef; 'func_nm; 'N2asciid])
+  as c_fndefs_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_fundefs_prog].
+Time Compute to_funs [c_fndefs_prog].
 
 Derive codegen_prog 
-  in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fundefs; 'lookup; 'init; 'get_funcs; '@app_list_length; '@flatten]) 
+  in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fndefs; 'lookup; 'init; 'get_funs; '@appl_len; '@flatten]) 
   as codegen_prog_proof.
 Proof.
   time relcompile.
@@ -394,50 +386,49 @@ Qed.
 Time Compute to_funs [codegen_prog].
 
 Definition ImpToASMCodegen_funs := [
-  give_up_prog;                
-  abortLoc_prog;               
-  c_const_prog;                
-  even_len_prog;               
-  odd_len_prog;                
-  index_of_prog;               
-  index_of_opt_prog;           
-  c_var_prog;                  
-  c_assign_prog;               
-  all_binders_prog;            
-  names_contain_prog;          
-  names_unique_prog;           
-  unique_binders_prog;         
-  make_vs_from_binders_prog;   
-  filter_name_prog;            
-  remove_names_prog;           
-  call_v_stack_prog;           
-  c_pushes_vs_prog;            
-  get_vs_binders_prog;
-  c_declare_binders_prog;      
-  c_add_prog;                  
-  c_sub_prog;                  
-  c_div_prog;                  
-  c_load_prog;                 
-  c_exp_prog;                  
-  c_exps_prog;                 
-  c_cmp_prog;                  
-  c_test_jump_prog;            
-  c_alloc_prog;                
-  c_read_prog;                 
-  c_write_prog;                
-  c_store_prog;                
-  lookup_prog;                 
-  make_ret_prog;               
-  c_pops_prog;                 
-  c_pushes_prog;               
-  c_call_prog;                 
-  c_cmd_prog;                  
-  c_fundef_prog;               
-  get_funcs_prog;              
-  name_of_func_prog;           
-  c_fundefs_prog;              
-  init_prog;                   
-  codegen_prog                 
+  give_up_prog;
+  abortLoc_prog;
+  c_const_prog;
+  even_len_prog;
+  odd_len_prog;
+  index_of_prog;
+  c_var_prog;
+  c_assign_prog;
+  all_bdrs_prog;
+  names_in_prog;
+  nms_uniq_prog;
+  bdrs_unq_prog;
+  bdrs_vs_prog;
+  fltr_nms_prog;
+  rm_nms_prog;
+  call_vs_prog;
+  push_vs_prog;
+  vs_bdrs_prog;
+  c_bdrs_prog;
+  c_add_prog;
+  c_sub_prog;
+  c_div_prog;
+  c_load_prog;
+  c_exp_prog;
+  c_exps_prog;
+  c_cmp_prog;
+  c_test_prog;
+  c_alloc_prog;
+  c_read_prog;
+  c_write_prog;
+  c_store_prog;
+  lookup_prog;
+  make_ret_prog;
+  c_pops_prog;
+  c_pushes_prog;
+  c_call_prog;
+  c_cmd_prog;
+  c_fundef_prog;
+  get_funs_prog;
+  func_nm_prog;
+  c_fndefs_prog;
+  init_prog;
+  codegen_prog
 ].
 
 From impboot Require Import automation.ltac2.Messages.
@@ -520,43 +511,42 @@ Proof.
   assert_eval_app_by '@even_len 'even_len_prog_proof 'Hlookup_fun 3.
   assert_eval_app_by '@odd_len 'odd_len_prog_proof 'Hlookup_fun 4.
   assert_eval_app_by 'index_of 'index_of_prog_proof 'Hlookup_fun 5.
-  assert_eval_app_by 'index_of_opt 'index_of_opt_prog_proof 'Hlookup_fun 6.
-  assert_eval_app_by 'c_var 'c_var_prog_proof 'Hlookup_fun 7.
-  assert_eval_app_by 'c_assign 'c_assign_prog_proof 'Hlookup_fun 8.
-  assert_eval_app_by 'all_binders 'all_binders_prog_proof 'Hlookup_fun 9.
-  assert_eval_app_by 'names_contain 'names_contain_prog_proof 'Hlookup_fun 10.
-  assert_eval_app_by 'names_unique 'names_unique_prog_proof 'Hlookup_fun 11.
-  assert_eval_app_by 'unique_binders 'unique_binders_prog_proof 'Hlookup_fun 12.
-  assert_eval_app_by 'make_vs_from_binders 'make_vs_from_binders_prog_proof 'Hlookup_fun 13.
-  assert_eval_app_by 'filter_name 'filter_name_prog_proof 'Hlookup_fun 14.
-  assert_eval_app_by 'remove_names 'remove_names_prog_proof 'Hlookup_fun 15.
-  assert_eval_app_by 'call_v_stack 'call_v_stack_prog_proof 'Hlookup_fun 16.
-  assert_eval_app_by 'c_pushes_vs 'c_pushes_vs_prog_proof 'Hlookup_fun 17.
-  assert_eval_app_by 'get_vs_binders 'get_vs_binders_prog_proof 'Hlookup_fun 18.
-  assert_eval_app_by 'c_declare_binders 'c_declare_binders_prog_proof 'Hlookup_fun 19.
-  assert_eval_app_by 'c_add 'c_add_prog_proof 'Hlookup_fun 20.
-  assert_eval_app_by 'c_sub 'c_sub_prog_proof 'Hlookup_fun 21.
-  assert_eval_app_by 'c_div 'c_div_prog_proof 'Hlookup_fun 22.
-  assert_eval_app_by 'c_load 'c_load_prog_proof 'Hlookup_fun 23.
-  assert_eval_app_by 'c_exp 'c_exp_prog_proof 'Hlookup_fun 24.
-  assert_eval_app_by 'c_exps 'c_exps_prog_proof 'Hlookup_fun 25.
-  assert_eval_app_by 'c_cmp 'c_cmp_prog_proof 'Hlookup_fun 26.
-  assert_eval_app_by 'c_test_jump 'c_test_jump_prog_proof 'Hlookup_fun 27.
-  assert_eval_app_by 'c_alloc 'c_alloc_prog_proof 'Hlookup_fun 28.
-  assert_eval_app_by 'c_read 'c_read_prog_proof 'Hlookup_fun 29.
-  assert_eval_app_by 'c_write 'c_write_prog_proof 'Hlookup_fun 30.
-  assert_eval_app_by 'c_store 'c_store_prog_proof 'Hlookup_fun 31.
-  assert_eval_app_by 'lookup 'lookup_prog_proof 'Hlookup_fun 32.
-  assert_eval_app_by 'make_ret 'make_ret_prog_proof 'Hlookup_fun 33.
-  assert_eval_app_by 'c_pops 'c_pops_prog_proof 'Hlookup_fun 34.
-  assert_eval_app_by 'c_pushes 'c_pushes_prog_proof 'Hlookup_fun 35.
-  assert_eval_app_by 'c_call 'c_call_prog_proof 'Hlookup_fun 36.
-  assert_eval_app_by 'c_cmd 'c_cmd_prog_proof 'Hlookup_fun 37.
-  assert_eval_app_by 'c_fundef 'c_fundef_prog_proof 'Hlookup_fun 38.
-  assert_eval_app_by 'get_funcs 'get_funcs_prog_proof 'Hlookup_fun 39.
-  assert_eval_app_by 'name_of_func 'name_of_func_prog_proof 'Hlookup_fun 40.
-  assert_eval_app_by 'c_fundefs 'c_fundefs_prog_proof 'Hlookup_fun 41.
-  assert_eval_app_by 'init 'init_prog_proof 'Hlookup_fun 42.
-  assert_eval_app_by 'codegen 'codegen_prog_proof 'Hlookup_fun 43.
+  assert_eval_app_by 'c_var 'c_var_prog_proof 'Hlookup_fun 6.
+  assert_eval_app_by 'c_assign 'c_assign_prog_proof 'Hlookup_fun 7.
+  assert_eval_app_by 'all_bdrs 'all_bdrs_prog_proof 'Hlookup_fun 8.
+  assert_eval_app_by 'names_in 'names_in_prog_proof 'Hlookup_fun 9.
+  assert_eval_app_by 'nms_uniq 'nms_uniq_prog_proof 'Hlookup_fun 10.
+  assert_eval_app_by 'bdrs_unq 'bdrs_unq_prog_proof 'Hlookup_fun 11.
+  assert_eval_app_by 'bdrs_vs 'bdrs_vs_prog_proof 'Hlookup_fun 12.
+  assert_eval_app_by 'fltr_nms 'fltr_nms_prog_proof 'Hlookup_fun 13.
+  assert_eval_app_by 'rm_nms 'rm_nms_prog_proof 'Hlookup_fun 14.
+  assert_eval_app_by 'call_vs 'call_vs_prog_proof 'Hlookup_fun 15.
+  assert_eval_app_by 'push_vs 'push_vs_prog_proof 'Hlookup_fun 16.
+  assert_eval_app_by 'vs_bdrs 'vs_bdrs_prog_proof 'Hlookup_fun 17.
+  assert_eval_app_by 'c_bdrs 'c_bdrs_prog_proof 'Hlookup_fun 18.
+  assert_eval_app_by 'c_add 'c_add_prog_proof 'Hlookup_fun 19.
+  assert_eval_app_by 'c_sub 'c_sub_prog_proof 'Hlookup_fun 20.
+  assert_eval_app_by 'c_div 'c_div_prog_proof 'Hlookup_fun 21.
+  assert_eval_app_by 'c_load 'c_load_prog_proof 'Hlookup_fun 22.
+  assert_eval_app_by 'c_exp 'c_exp_prog_proof 'Hlookup_fun 23.
+  assert_eval_app_by 'c_exps 'c_exps_prog_proof 'Hlookup_fun 24.
+  assert_eval_app_by 'c_cmp 'c_cmp_prog_proof 'Hlookup_fun 25.
+  assert_eval_app_by 'c_test 'c_test_prog_proof 'Hlookup_fun 26.
+  assert_eval_app_by 'c_alloc 'c_alloc_prog_proof 'Hlookup_fun 27.
+  assert_eval_app_by 'c_read 'c_read_prog_proof 'Hlookup_fun 28.
+  assert_eval_app_by 'c_write 'c_write_prog_proof 'Hlookup_fun 29.
+  assert_eval_app_by 'c_store 'c_store_prog_proof 'Hlookup_fun 30.
+  assert_eval_app_by 'lookup 'lookup_prog_proof 'Hlookup_fun 31.
+  assert_eval_app_by 'make_ret 'make_ret_prog_proof 'Hlookup_fun 32.
+  assert_eval_app_by 'c_pops 'c_pops_prog_proof 'Hlookup_fun 33.
+  assert_eval_app_by 'c_pushes 'c_pushes_prog_proof 'Hlookup_fun 34.
+  assert_eval_app_by 'c_call 'c_call_prog_proof 'Hlookup_fun 35.
+  assert_eval_app_by 'c_cmd 'c_cmd_prog_proof 'Hlookup_fun 36.
+  assert_eval_app_by 'c_fundef 'c_fundef_prog_proof 'Hlookup_fun 37.
+  assert_eval_app_by 'get_funs 'get_funs_prog_proof 'Hlookup_fun 38.
+  assert_eval_app_by 'func_nm 'func_nm_prog_proof 'Hlookup_fun 39.
+  assert_eval_app_by 'c_fndefs 'c_fndefs_prog_proof 'Hlookup_fun 40.
+  assert_eval_app_by 'init 'init_prog_proof 'Hlookup_fun 41.
+  assert_eval_app_by 'codegen 'codegen_prog_proof 'Hlookup_fun 42.
   eauto.
 Qed.

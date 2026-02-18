@@ -18,40 +18,40 @@ Qed.
 Ltac2 rewrite_lowerable (): unit :=
   repeat (match! goal with
   (* | [ |- context [ N.mul _ _ ] ] =>
-    rewrite <- mul_N_spec
+    rewrite <- mulN_spec
   | [ |- context [ Nat.mul _ _ ] ] =>
-    rewrite <- mul_nat_spec *)
+    rewrite <- mulnat_spec *)
   | [ |- context [ Nat.mul 8%nat _ ] ] =>
-    rewrite <- mul_nat_8_spec_l
+    rewrite <- mulnat_8_spec_l
   | [ |- context [ Nat.mul _ 8%nat ] ] =>
-    rewrite <- mul_nat_8_spec_r
+    rewrite <- mulnat_8_spec_r
   | [ |- context [ Nat.mul 10%nat _ ] ] =>
-    rewrite <- mul_nat_10_spec_l
+    rewrite <- mulnat10_spec_l
   | [ |- context [ Nat.mul _ 10%nat ] ] =>
-    rewrite <- mul_nat_10_spec_r
+    rewrite <- mulnat10_spec_r
   | [ |- context [ N.mul 10%N _ ] ] =>
-    rewrite <- mul_N_10_spec_l
+    rewrite <- mulN_10_spec_l
   | [ |- context [ N.mul _ 10%N ] ] =>
-    rewrite <- mul_N_10_spec_r
+    rewrite <- mulN_10_spec_r
   | [ |- context [ N.mul 256%N _ ] ] =>
-    rewrite <- mul_N_256_spec_l
+    rewrite <- mulN_256_spec_l
   | [ |- context [ N.mul _ 256%N ] ] =>
-    rewrite <- mul_N_256_spec_r
+    rewrite <- mulN_256_spec_r
   | [ |- context ctx [ N_modulo ?e 10%N ] ] =>
-    let inst := Pattern.instantiate ctx constr:(nat_modulo_10 $e) in
+    let inst := Pattern.instantiate ctx constr:(natmod10 $e) in
     change $inst
   | [ |- context ctx [ N_modulo ?e 256%N ] ] =>
-    let inst := Pattern.instantiate ctx constr:(N_modulo_256 $e) in
+    let inst := Pattern.instantiate ctx constr:(Nmod_256 $e) in
     change $inst
-  | [ |- context ctx [ nat_modulo ?e 10%nat ] ] =>
-    let inst := Pattern.instantiate ctx constr:(nat_modulo_10 $e) in
+  | [ |- context ctx [ nat_mod ?e 10%nat ] ] =>
+    let inst := Pattern.instantiate ctx constr:(natmod10 $e) in
     change $inst
   | [ |- context [ (_ ++ _)%string ] ] =>
-    rewrite <- string_append_spec
+    rewrite <- str_app_spec
   | [ |- context [ (_ ++ _)%list ] ] =>
-    rewrite <- list_append_spec
+    rewrite <- list_app_spec
   | [ |- context [ List.length _ ] ] =>
-    rewrite <- list_length_spec
+    rewrite <- list_len_spec
   | [ |- context c [ dlet (String ?c1 (String ?c2 (String ?c3 (String ?c4 (String ?c5 ?str))))) ?f ] ] =>
     let new_constr := constr:(
       let/d sfx := String $c5 $str in
@@ -99,10 +99,10 @@ Goal forall (s1 s2: string), test_split_string s1 s2 = test_split_string s1 s2.
   reflexivity ().
 Qed.
 
-Goal forall (reg2str1: string -> string -> string) r n str, (let/d anf_tmp := "movq "%string
+Goal forall (reg2s: string -> string -> string) r n str, (let/d anf_tmp := "movq "%string
 in let/d anf_tmp0 := (8 * n)%nat
 in let/d anf_tmp1 := "(%rsp), "%string
-in let/d anf_tmp2 := reg2str1 r str
+in let/d anf_tmp2 := reg2s r str
 in let/d anf_tmp3 := (anf_tmp1 ++ anf_tmp2)%string
 in let/d anf_tmp4 := num2str anf_tmp0 anf_tmp3 in let/d anf_tmp5 := (anf_tmp ++ anf_tmp4)%string in anf_tmp5) = ""%string.
   intros.
@@ -130,7 +130,7 @@ Goal forall (a: nat), (10 * a) = 0.
   rewrite_lowerable ().
 Abort.
 
-Goal forall (a: nat), (nat_modulo a 10) = 0.
+Goal forall (a: nat), (nat_mod a 10) = 0.
   intros.
   rewrite_lowerable ().
 Abort.

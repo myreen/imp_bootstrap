@@ -166,5 +166,5 @@ Proof.
   1: unfold write_mem in *; spat `match ?c with _ => _ end` at destruct c eqn:?; cleanup; simpl.
   1: eapply prefix_refl.
   eapply prefix_correct.
-  rewrite substring_append; reflexivity.
+  rewrite substr_app; reflexivity.
 Qed.

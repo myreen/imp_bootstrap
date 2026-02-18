@@ -1343,13 +1343,13 @@ Proof.
   all: simpl; reflexivity.
 Qed.
 
-Definition name_of_func (f: ImpSyntax.func) : N :=
+Definition func_nm (f: ImpSyntax.func) : N :=
   match f with
   | Func n _ _ => n
   end.
 
 (* Lemma find_fun_app_no_conflicts: forall fname funs1 funs2 v,
-  (forall x, In x funs2 -> ¬ In (name_of_func x) (map name_of_func funs1)) ->
+  (forall x, In x funs2 -> ¬ In (func_nm x) (map func_nm funs1)) ->
   find_fun fname funs2 = Some v ->
   find_fun fname (funs1 ++ funs2) = Some v.
 Proof.
@@ -1373,7 +1373,7 @@ Proof.
 Qed.
 
 Lemma find_fun_app_no_conflicts: forall fname funs1 funs2 v,
-  (forall x, In x funs2 -> ¬ In (name_of_func x) (map name_of_func funs1)) ->
+  (forall x, In x funs2 -> ¬ In (func_nm x) (map func_nm funs1)) ->
   find_fun fname funs2 = Some v ->
   find_fun fname (funs1 ++ funs2) = Some v.
 Proof.
@@ -1427,7 +1427,7 @@ Qed.
 Lemma not_has_conflicting_names_IMP_no_conflicts: forall nms c,
   has_conflicting_names nms = false ->
   let funs1 := map (fun x => match x with (n, vs, b) => Func n vs b end) builtin ++ [Func "main" [] c] in
-  (forall x, In x nms -> ¬ In x (map name_of_func funs1)).
+  (forall x, In x nms -> ¬ In x (map func_nm funs1)).
 Proof.
   intros * Hno_conflicts * HIn.
   unfold has_conflicting_names in Hno_conflicts.
@@ -1444,7 +1444,7 @@ Qed.
 Lemma to_funs_same_names: forall defs funs x,
   to_funs defs = Some funs ->
   In x funs ->
-  In (name_of_func x) (map get_func_name defs).
+  In (func_nm x) (map get_func_name defs).
 Proof.
   induction defs; intros * Hto_funs HIn; simpl in *.
   1: inversion Hto_funs; subst; inversion HIn.

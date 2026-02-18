@@ -12,15 +12,22 @@ From impboot Require Import
 
 Definition compiler_program_imp := to_imp compiler_program_prog.
 
-Time Eval lazy in compiler_program_imp.
+Theorem compiler_program_imp_exists: exists p,
+  compiler_program_imp = Some p.
+Proof.
+  eexists; unfold compiler_program_imp.
+  lazy; reflexivity.
+Qed.
+
+(* Time Eval lazy in compiler_program_imp. *)
 
 Definition compiler_program_asm := match compiler_program_imp with
 | None => []
 | Some p => codegen p
 end.
 
-Time Eval lazy in compiler_program_asm.
+(* Time Eval lazy in compiler_program_asm. *)
 
 Definition compiler_asm_str := asm2str compiler_program_asm.
 
-Time Eval lazy in compiler_asm_str.
+(* Time Eval lazy in compiler_asm_str. *)

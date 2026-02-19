@@ -12,6 +12,7 @@ From impboot Require Import functional.FunValues.
 From impboot Require Import functional.FunSemantics.
 From impboot.automation Require Import RelCompiler RelCompilerCommons AutomationLemmas ToANF.
 From impboot.automation.ltac2 Require Import UnfoldFix.
+From impboot.automation.ltac2 Require Import Stdlib2.
 From impboot Require Import fp2imp.FpToImpCodegen.
 Require Import coqutil.Word.Interface.
 Require Import ZArith.
@@ -28,6 +29,7 @@ Proof.
   ltac1:(lia).
 Qed.
 Time Compute to_funs [natmod10_prog].
+Ltac2 Eval assert_Some constr:(to_funs [natmod10_prog]).
 
 Derive Nmod_10_prog
   in ltac2:(relcompile_tpe 'Nmod_10_prog 'Nmod_10 ['mulN_10])
@@ -37,6 +39,7 @@ Proof.
   ltac1:(lia).
 Qed.
 Time Compute to_funs [Nmod_10_prog].
+Ltac2 Eval assert_Some constr:(to_funs [Nmod_10_prog]).
 
 Derive Nmod_256_prog
   in ltac2:(relcompile_tpe 'Nmod_256_prog 'Nmod_256 ['mulN_256])
@@ -46,6 +49,7 @@ Proof.
   ltac1:(lia).
 Qed.
 Time Compute to_funs [Nmod_256_prog].
+Ltac2 Eval assert_Some constr:(to_funs [Nmod_256_prog]).
 
 Theorem str_app_equation: ltac2:(unfold_fix_type '@str_app).
 Proof. unfold_fix_proof '@str_app. Qed.
@@ -56,6 +60,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [str_app_prog].
+Ltac2 Eval assert_Some constr:(to_funs [str_app_prog]).
 
 Theorem num2strf_equation: ltac2:(unfold_fix_type '@num2strf).
 Proof. unfold_fix_proof '@num2strf. Qed.
@@ -69,6 +74,7 @@ Proof.
   all: subst; rewrite natmod10_spec in *; specialize nat_mod_le with (n := n) (m := 10); ltac1:(lia).
 Qed.
 Time Compute to_funs [num2strf_prog].
+Ltac2 Eval assert_Some constr:(to_funs [num2strf_prog]).
 
 Derive num2str_prog
   in ltac2:(relcompile_tpe 'num2str_prog 'num2str ['num2strf])
@@ -77,6 +83,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [num2str_prog].
+Ltac2 Eval assert_Some constr:(to_funs [num2str_prog]).
 
 Theorem N2str_f_equation: ltac2:(unfold_fix_type '@N2str_f).
 Proof. unfold_fix_proof '@N2str_f. Qed.
@@ -91,6 +98,7 @@ Proof.
   all: subst; rewrite Nmod_10_spec in *; specialize N_modulo_le with (n := n) (m := 10%N) as ?; ltac1:(try lia).
 Qed.
 Time Compute to_funs [N2str_f_prog].
+Ltac2 Eval assert_Some constr:(to_funs [N2str_f_prog]).
 
 Derive N2str_prog
   in ltac2:(relcompile_tpe 'N2str_prog 'N2str ['N2str_f])
@@ -100,6 +108,7 @@ Proof.
   ltac1:(try lia).
 Qed.
 Time Compute to_funs [N2str_prog].
+Ltac2 Eval assert_Some constr:(to_funs [N2str_prog]).
 
 Theorem list_len_equation: ltac2:(unfold_fix_type '@list_len).
 Proof. unfold_fix_proof '@list_len. Qed.
@@ -111,6 +120,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [list_len_prog].
+Ltac2 Eval assert_Some constr:(to_funs [list_len_prog]).
 
 Theorem list_app_equation: ltac2:(unfold_fix_type '@list_app).
 Proof. unfold_fix_proof '@list_app. Qed.
@@ -122,6 +132,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [list_app_prog].
+Ltac2 Eval assert_Some constr:(to_funs [list_app_prog]).
 
 Theorem flatten_equation: ltac2:(unfold_fix_type '@flatten).
 Proof. unfold_fix_proof '@flatten. Qed.
@@ -133,6 +144,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [flatten_prog].
+Ltac2 Eval assert_Some constr:(to_funs [flatten_prog]).
 
 Theorem appl_len_equation: ltac2:(unfold_fix_type '@appl_len).
 Proof. unfold_fix_proof '@appl_len. Qed.
@@ -144,6 +156,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [appl_len_prog].
+Ltac2 Eval assert_Some constr:(to_funs [appl_len_prog]).
 
 Derive mulN_10_prog
   in ltac2:(relcompile_tpe 'mulN_10_prog 'mulN_10 [])
@@ -152,6 +165,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [mulN_10_prog].
+Ltac2 Eval assert_Some constr:(to_funs [mulN_10_prog]).
 
 Derive mulN_256_prog
   in ltac2:(relcompile_tpe 'mulN_256_prog 'mulN_256 [])
@@ -160,6 +174,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [mulN_256_prog].
+Ltac2 Eval assert_Some constr:(to_funs [mulN_256_prog]).
 
 Derive mulnat_8_prog
   in ltac2:(relcompile_tpe 'mulnat_8_prog 'mulnat_8 [])
@@ -168,6 +183,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [mulnat_8_prog].
+Ltac2 Eval assert_Some constr:(to_funs [mulnat_8_prog]).
 
 Derive mulnat10_prog
   in ltac2:(relcompile_tpe 'mulnat10_prog 'mulnat10 [])
@@ -176,6 +192,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [mulnat10_prog].
+Ltac2 Eval assert_Some constr:(to_funs [mulnat10_prog]).
 
 Theorem N2asciif_equation: ltac2:(unfold_fix_type '@N2asciif).
 Proof. unfold_fix_proof '@N2asciif. Qed.
@@ -188,6 +205,7 @@ Proof.
   all: subst; rewrite Nmod_256_spec in *; specialize N_modulo_lt with (n := n) (m := 256%N) as ?; ltac1:(try lia).
 Qed.
 Time Compute to_funs [N2asciif_prog].
+Ltac2 Eval assert_Some constr:(to_funs [N2asciif_prog]).
 
 Derive N2ascii_prog
   in ltac2:(relcompile_tpe 'N2ascii_prog 'N2ascii ['N2asciif])
@@ -197,6 +215,7 @@ Proof.
   ltac1:(try lia).
 Qed.
 Time Compute to_funs [N2ascii_prog].
+Ltac2 Eval assert_Some constr:(to_funs [N2ascii_prog]).
 
 Derive N2asciid_prog
   in ltac2:(relcompile_tpe 'N2asciid_prog 'N2asciid ['N2ascii])
@@ -205,6 +224,7 @@ Proof.
   time relcompile.
 Qed.
 Time Compute to_funs [N2asciid_prog].
+Ltac2 Eval assert_Some constr:(to_funs [N2asciid_prog]).
 
 Definition CompilerUtils_funs := [
   mulnat_8_prog;

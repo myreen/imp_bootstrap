@@ -19,15 +19,15 @@ Proof.
   lazy; reflexivity.
 Qed.
 
-(* Time Eval lazy in compiler_program_imp. *)
+Time Eval lazy in compiler_program_imp.
 
 Definition compiler_program_asm := match compiler_program_imp with
 | None => []
 | Some p => codegen p
 end.
 
-(* Time Eval lazy in compiler_program_asm. *)
+Time Eval lazy in compiler_program_asm.
 
 Definition compiler_asm_str := asm2str compiler_program_asm.
 
-(* Time Eval lazy in compiler_asm_str. *)
+Time Eval lazy in compiler_asm_str.

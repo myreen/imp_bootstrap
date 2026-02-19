@@ -43,29 +43,19 @@ Inductive sexpr :=
 (* Helper constructors for common s-expression patterns *)
 
 Definition unary_sexpr (op: string) (v: sexpr): sexpr :=
-  let op_s := SStr op in
-  let res := SPair op_s v in
+  let res := SPair (SStr op) v in
   SBlock res.
 
 Definition binary_sexpr (op: string) (v1 v2: sexpr): sexpr :=
-  let op_s := SStr op in
-  let args := SPair v1 v2 in
-  let res := SPair op_s args in
+  let res := SPair (SStr op) (SPair v1 v2) in
   SBlock res.
 
 Definition ternary_sexpr (op: string) (v1 v2 v3: sexpr): sexpr :=
-  let op_s := SStr op in
-  let args1 := SPair v1 v2 in
-  let args := SPair args1 v3 in
-  let res := SPair op_s args in
+  let res := SPair (SStr op) (SPair (SPair v1 v2) v3) in
   SBlock res.
 
 Definition quaternary_sexpr (op: string) (v1 v2 v3 v4: sexpr): sexpr :=
-  let op_s := SStr op in
-  let args1 := SPair v1 v2 in
-  let args2 := SPair args1 v3 in
-  let args := SPair args2 v4 in
-  let res := SPair op_s args in
+  let res := SPair (SStr op) (SPair (SPair (SPair v1 v2) v3) v4) in
   SBlock res.
 
 Definition name_sexpr (n: N): sexpr := SStr (name2str n).
@@ -151,11 +141,12 @@ Definition names2s (ns: list name): sexpr :=
 Fixpoint cmd2s_imp (c: cmd): sexpr :=
   match c with
   | Skip =>
-    SEmpty
+    SStr "skip"
   | Seq c1 c2 =>
     let v1 := cmd2s_imp c1 in
     let v2 := cmd2s_imp c2 in
-    SPair v1 v2
+    let r := SPair v1 v2 in
+    SBlock r
   | Assign n e =>
     let name_v := name_sexpr n in
     let exp_v := exp2s e in
@@ -254,3 +245,30 @@ Fixpoint flatten_str_app_list (sal: str_app_list): string :=
 Definition imp2str (p: prog): string :=
   let v := prog2s_imp p in
   flatten_str_app_list (sexpr2str v).
+
+(* examples *)
+
+Example ex1 := Program
+[Func 8243101776696929904 []
+  (Seq (GetChar 1668641394)
+    (If (Test Equal (Var 1668641394) (Const (word.of_Z 4294967295)))
+      (Return (Const {| Naive.unsigned := 0; Naive._unsigned_in_range := eq_refl |}))
+      (Seq (Call 1919251316 8243101776696929904 [])
+        (Seq (Call 125780054338676 1668247155 [Var 1668641394; Var 1919251316]) (Return (Var 125780054338676)))
+      )
+    )
+  )
+].
+
+Eval lazy in imp2str ex1.
+
+Example ex2 := Program
+[Func 8243101776696929904 []
+(Seq (GetChar 1668641394)
+(If (Test Equal (Var 1668641394) (Const (word.of_Z 4294967295)))
+(Return (Const {| Naive.unsigned := 0; Naive._unsigned_in_range := eq_refl |}))
+(Seq (Call 1919251316 8243101776696929904 [])
+(Seq (Call 125780054338676 1668247155 [Var 1668641394; Var 1919251316]) (Return (Var 125780054338676))))))].
+
+Goal ex1 = ex2.
+Proof. reflexivity. Qed.

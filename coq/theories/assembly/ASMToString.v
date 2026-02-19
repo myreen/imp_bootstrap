@@ -197,7 +197,7 @@ Definition asm2str3 :=
   "heapS:
   ".
 Definition asm2str4 :=
-  "	.space 8*1024*1024  /* bytes of heap space */
+  "	.space 32*1024*1024  /* bytes of heap space */
   ".
 Definition asm2str5 :=
   "	.p2align 3          /* 8-byte align        */

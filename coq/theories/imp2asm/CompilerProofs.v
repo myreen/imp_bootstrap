@@ -51,46 +51,7 @@ Proof.
   eapply codegen_terminates with (output2 := compiler input).
 Admitted.
 
-Set Printing Width 200.
-
-(* Time Eval lazy in match compiler_program_imp with
-  | None => ""
-  | Some compiler_imp =>
-    (imp2str compiler_imp)
-  end. *)
-
-Time Eval lazy in match compiler_program_imp with
-  | None => Program []
-  | Some compiler_imp =>
-    compiler_imp
-  end.
-
-Time Eval lazy in match compiler_program_imp with
-  | None => Program []
-  | Some compiler_imp =>
-    str2imp (list_ascii_of_string (imp2str compiler_imp))
-  end.
-
-Definition option_to_list {A} (o : option A) : list A :=
-  match o with
-  | None => []
-  | Some x => [x]
-  end.
-
 Theorem print_parser_compiler_correct:
-  match compiler_program_imp with
-  | None => False
-  | Some (ImpSyntax.Program fs) =>
-    let compiler_imp := ImpSyntax.Program (option_to_list (nth_error fs 0)) in
-    compiler_imp = str2imp (list_ascii_of_string (imp2str compiler_imp))
-    (* imp2str compiler_imp = "" *)
-  end.
-Proof.
-  lazy.
-  reflexivity.
-Qed.
-
-(* Theorem print_parser_compiler_correct:
   match compiler_program_imp with
   | None => False
   | Some compiler_imp =>
@@ -98,4 +59,11 @@ Qed.
   end.
 Proof.
   lazy; reflexivity.
-Qed. *)
+Qed.
+
+(* TODO: move to Bootstrapping.v? *)
+Eval lazy in (match compiler_program_imp with
+  | None => ""
+  | Some compiler_imp =>
+    imp2str compiler_imp
+  end).

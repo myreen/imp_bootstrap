@@ -236,19 +236,3 @@ Definition to_imp (p: FunSyntax.prog): option ImpSyntax.prog :=
     | None => None
     end
   end.
-
-(* examples *)
-
-(* Example fp_prog1 :=
-  FunSyntax.Program (@nil FunSyntax.defun) (
-    FunSyntax.Op FunSyntax.Add [FunSyntax.Const 1; FunSyntax.Const 2]
-  ).
-Compute (to_imp fp_prog1).
-
-Example fp_prog2 :=
-  FunSyntax.Program (@nil FunSyntax.defun) (
-    FunSyntax.Let 1
-      (FunSyntax.Op FunSyntax.Add [FunSyntax.Const 1; FunSyntax.Const 2])
-      (FunSyntax.Var 1)
-  ).
-Compute (to_imp fp_prog2). *)

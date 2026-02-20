@@ -504,22 +504,3 @@ Definition str2imp (str: list ascii): ImpSyntax.prog :=
   let/d toks := lexer str in
   let/d prog := parser toks in
   prog.
-
-(* examples *)
-
-(* (defun read_inp ()
-  (
-    (getchar curr)
-    (if (= (var curr) '4294967295)
-      (return '0)
-      ((call rest read_inp ())
-      ((call result cons ((var curr) (var rest) ))
-      (return (var result))))
-    )
-  )
-) *)
-
-Example ex1 := 
-  "(defun read_inp () (((getchar curr) (if (= (var curr) '4294967295) (return '0) ((call rest read_inp ()) ((call result cons ((var curr) (var rest) )) (return (var result)))))))) ".
-
-Eval lazy in str2imp (list_ascii_of_string ex1).

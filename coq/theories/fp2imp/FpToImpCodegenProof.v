@@ -1464,7 +1464,7 @@ Lemma to_funs_lookup_thm1: forall defs funs c,
   ∀ (fname : N) (params : list N) (body : FunSyntax.exp),
     lookup_fun fname defs = Some (params, body) →
     ∃ (cs: cmd),
-      find_fun fname ((map (fun x =>match x with (n, vs, b) => Func n vs b end) builtin ++ [Func "main" [] c]) ++ funs) = Some (params, cs) ∧
+      find_fun fname ((map (fun x => match x with (n, vs, b) => Func n vs b end) builtin ++ [Func "main" [] c]) ++ funs) = Some (params, cs) ∧
       to_cmd body = Some cs ∧ NoDup params.
 Proof.
   intros * Hno_conflicts Hto_funs * Hlookup_fun.
@@ -1510,14 +1510,13 @@ Proof.
     do 3 eexists.
     rewrite Hfind_main; unfold catch_return.
     rewrite H0; unfold_monadic.
-    split; eauto.
-    intros; contradiction.
+    split; eauto; split; congruence.
   }
   (* Stop (Return v) *)
   do 3 eexists.
   rewrite Hfind_main; unfold catch_return.
   rewrite H0; unfold_monadic.
   split; eauto.
-  intros; eexists; split; eauto.
-  unfold state_rel in *; cleanup; eauto.
+  unfold state_rel in *; cleanup.
+  split; try congruence; intros; split; eauto.
 Qed.

@@ -304,7 +304,7 @@ Definition init_state_ok (t : state) (inp : llist ascii) (asm : asm) : Prop :=
 Definition asm_terminates (input: llist ascii) (asm: asm) (output: string): Prop :=
   exists t,
     init_state_ok t input asm /\
-    clos_refl_trans s_or_h step (State t) (Halt (word.of_Z 0) output).
+    clos_refl_trans_1n s_or_h step (State t) (Halt (word.of_Z 0) output).
 
 (* Definition asm_diverges_def:
   (input, asm) asm_diverges output =
@@ -333,4 +333,4 @@ Definition asm_diverges (input: llist ascii) (asm: asm) (output: llist ascii) : 
     init_state_ok t input asm /\
     (forall k, exists t1, NRC step k (State t) (State t1)) /\
     output_ok_asm t output.
-    (* output = build_lprefix_lub (fun t' => exists t'', clos_refl_trans step (State t) (State t') /\ t'.(output) = t''.(output)). *)
+    (* output = build_lprefix_lub (fun t' => exists t'', clos_refl_trans_1n step (State t) (State t') /\ t'.(output) = t''.(output)). *)

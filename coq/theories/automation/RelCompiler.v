@@ -1438,7 +1438,13 @@ Definition nat_mod1 (n1 n2: nat): nat :=
 Remark gcd_oblig:
   forall (a b: nat) (NE: b <> 0), nat_mod1 a b < b.
 Proof.
-Admitted.
+  intros a b NE.
+  unfold nat_mod1.
+  destruct b.
+  1: ltac1:(congruence).
+  rewrite <- Nat.Div0.mod_eq.
+  now apply Nat.mod_upper_bound.
+Qed.
 
 Function gcd_rec (a b: nat) (ACC: Acc lt b) {struct ACC}: nat :=
   match Nat.eq_dec b 0 with

@@ -251,4 +251,46 @@ Theorem eval_cmd_add_clock: ∀ fuel c s res s1,
   eval_cmd c (EVAL_CMD fuel) s = (res, s1) -> res ≠ Stop TimeOut ->
     ∀ fuel1, eval_cmd c (EVAL_CMD (fuel + fuel1)) s = (res, s1).
 Proof.
-Admitted.
+  Transparent eval_cmd.
+  Opaque EVAL_CMD.
+  induction fuel; induction c; simpl; intros; unfold_outcome; unfold_monadic; cleanup; simpl in *; try congruence.
+  Opaque eval_cmd.
+  all: assert (@Stop Value TimeOut <> Stop Crash) as HTimeOutneqCrash by congruence.
+  all: assert (@Stop (list Value) TimeOut <> Stop Crash) as HTimeOutneqCrash1 by congruence.
+  all: assert (@Stop bool TimeOut <> Stop Crash) as HTimeOutneqCrash2 by congruence.
+  all: repeat match goal with
+  | IH: forall s0 s1 o, eval_cmd ?c _ _ = _ -> _, H: context [ let (o, _) := eval_cmd ?c ?f ?s2 in _ ] |- _ =>
+      let Hd := fresh "Hd" in
+      let Htmp := fresh "Htmp" in
+      destruct (eval_cmd c f s2) eqn:Hd; subst; cleanup;
+      assert (o <> Stop TimeOut) as Htmp by (destruct o; try congruence);
+      specialize (IH _ _ _ Hd Htmp);
+      destruct o;
+      specialize IH with (fuel1 := fuel1); rewrite IH in *; cleanup; subst
+  | |- context [ match ?o with _ => _ end ] => destruct o eqn:?; subst; cleanup
+  | H: context [ match ?o with _ => _ end ] |- _ => destruct o eqn:?; subst; cleanup
+  | H: eval_exp _ _ = _ |- _ =>
+    specialize eval_exp_pure with (1 := H) as ?; subst; eapply eval_exp_not_stop with (v := TimeOut) (2 := HTimeOutneqCrash) in H; eauto
+  | H: eval_exp _ _ = (_, _) |- _ =>
+    specialize eval_exp_pure with (1 := H) as ?; subst; clear H
+  | H: eval_exps _ _ = _ |- _ =>
+    specialize eval_exps_pure with (1 := H) as ?; subst; eapply eval_exps_not_stop with (v := TimeOut) (2 := HTimeOutneqCrash1) in H; eauto
+  | H: eval_test _ _ = _ |- _ =>
+    specialize eval_test_pure with (1 := H) as ?; subst; eapply eval_test_not_stop with (v := TimeOut) (2 := HTimeOutneqCrash2) in H; eauto
+  | H: EVAL_CMD 0 _ _ = _ |- _ => with_strategy transparent [EVAL_CMD] unfold EVAL_CMD in H
+  | H: EVAL_CMD (S _) _ _ = _ |- _ => with_strategy transparent [EVAL_CMD] (unfold EVAL_CMD in H; fold EVAL_CMD in H)
+  | |- (?o, ?s) = (?o, ?s) => congruence
+  | H: (_, _) = (_, _) |- _ => inversion H; clear H; subst
+  | H: Stop TimeOut <> Stop TimeOut |- _ => congruence
+  | _ => (unfold assign, alloc, update, get_vars, get_body_and_set_vars, set_varsM,
+    catch_return, set_vars, set_memory, dest_word, get_char, put_char, set_output, inc_steps_done, add_steps_done, set_steps_done in *)
+        || unfold_outcome || unfold_monadic || (simpl in * )
+  end.
+  all: try (eapply IHc2); eauto.
+  1: shelve.
+  all: try eapply IHfuel in Heqp4; eauto; try congruence; rewrite Heqp4 in *; cleanup; subst; reflexivity.
+  Unshelve.
+  with_strategy transparent [EVAL_CMD] (unfold EVAL_CMD; fold EVAL_CMD).
+  unfold inc_steps_done, add_steps_done, set_steps_done, bind in *; simpl in *.
+  eapply IHfuel; try congruence.
+Qed.

@@ -231,7 +231,9 @@ Lemma noDup_all_funs:
     | FunSyntax.Defun name _ _ => name
     end) (read_inp_prog :: printstr_prog :: compiler_funs)).
 Proof.
-Admitted.
+  simpl; repeat econstructor.
+  all: now rewrite count_occ_not_In with (eq_dec := N.eq_dec).
+Qed.
 
 Theorem compiler_program_thm:
   ∀ inp,

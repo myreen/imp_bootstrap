@@ -5382,7 +5382,7 @@ Proof.
   end.
 Qed.
 
-Definition init_state_ok_def (t: ASMSemantics.state) (input: llist ascii) (asm: asm) :=
+(* Definition init_state_ok_def (t: ASMSemantics.state) (input: llist ascii) (asm: asm) :=
   ∃r14 r15,
     t.(pc) = 0 ∧ t.(instructions) = asm ∧
     t.(ASMSemantics.input) = input ∧ t.(output) = EmptyString ∧
@@ -5394,7 +5394,7 @@ Definition init_state_ok_def (t: ASMSemantics.state) (input: llist ascii) (asm: 
 Definition asm_terminates (input: llist ascii) (asm: asm) (fuel: nat) (output: string) :=
   exists t fuel_left,
     init_state_ok t input asm /\
-      steps (State t, fuel) (Halt (word.of_Z 0) output, fuel_left).
+      steps (State t, fuel) (Halt (word.of_Z 0) output, fuel_left). *)
 
 Ltac destruct_pair :=
   pat `let (_, _) := ?x in _` at destruct x.
@@ -5915,10 +5915,10 @@ Proof.
   rewrite nth_error_nil in *; cleanup.
 Qed.
 
-Theorem codegen_terminates: forall fuel sd,
+Theorem codegen_terminates: forall fuel,
   forall input prog output1 output2,
-    prog_terminates input prog fuel output1 sd /\
-    asm_terminates input (codegen prog) sd output2 ->
+    prog_terminates input prog fuel output1 /\
+    asm_terminates input (codegen prog) output2 ->
       output1 = output2.
 Proof.
   intros.
@@ -5936,11 +5936,72 @@ Proof.
   all: cleanup; subst.
   all: unfold init_state in *; simpl in *.
   all: rewrite Nat.sub_0_r in *.
+  all: spat `Relation_Operators.clos_refl_trans_1n` at eapply RTC_IMP_steps in spat; cleanup.
   all: spat `steps` at eapply steps_determ_Halt in spat; cleanup.
-  2,4: pat`steps _ (Halt (word.of_Z 0) _, _)` at exact pat.
+  2,4: exact H.
   all: subst.
   2: spat `word.eqb` at eapply Properties.word.eqb_false in spat; congruence.
   reflexivity.
+Qed.
+
+(* Theorem codegen_terminates_weak:
+  forall input prog output1 output2,
+    prog_avoids_crash input prog ->
+    imp_weak_termination input prog output1 /\
+    asm_terminates input (codegen prog) output2 ->
+      output1 = output2.
+Proof.
+  intros.
+  destruct prog; cleanup.
+  simpl in *; unfold imp_weak_termination, prog_avoids_crash, eval_from, asm_terminates, init_state_ok  in *; cleanup; subst.
+  pat `match ?s with _ => _ end = _` at destruct s eqn:?; unfold_outcome; cleanup; try congruence.
+  pat ` (let (_, _) := ?x in _) = _` at destruct x.
+  pat `match ?s with _ => _ end = _` at destruct s; unfold_outcome; cleanup.
+  spat `eval_cmd` at eapply codegen_thm in spat; simpl; eauto; cleanup; [|congruence].
+  pat `let (_, _) := ?x in _` at destruct x.
+  pat `match ?s with _ => _ end` at destruct s.
+  all: cleanup; subst.
+  1: congruence.
+  pat `if ?cond then _ else _` at destruct cond eqn:?.
+  all: cleanup; subst.
+  all: unfold init_state in *; simpl in *.
+  all: rewrite Nat.sub_0_r in *.
+  all: spat `Relation_Operators.clos_refl_trans_1n` at eapply RTC_IMP_steps in spat; cleanup.
+  all: spat `steps` at eapply steps_determ_Halt in spat; cleanup.
+  2,4: exact H.
+  all: subst.
+  2: spat `word.eqb` at eapply Properties.word.eqb_false in spat; congruence.
+  reflexivity.
+Qed. *)
+
+Theorem codegen_no_abort: forall fuel,
+  forall input prog output outcome s1,
+    asm_terminates input (codegen prog) output ->
+    eval_from fuel input prog = (outcome, s1) ->
+    outcome <> Stop Crash ->
+    outcome <> Stop Abort.
+Proof.
+  intros.
+  destruct prog; cleanup.
+  simpl in *; unfold prog_avoids_crash, eval_from, asm_terminates, init_state_ok in *; cleanup; subst.
+  pat `match ?s with _ => _ end = _` at destruct s eqn:?; unfold_outcome; cleanup; try congruence.
+  pat ` (let (_, _) := ?x in _) = _` at destruct x.
+  pat `match ?s with _ => _ end = _` at destruct s; unfold_outcome; cleanup; try congruence.
+  spat `eval_cmd` at eapply codegen_thm in spat; simpl; eauto; cleanup.
+  pat `let (_, _) := ?x in _` at destruct x.
+  pat `match ?s with _ => _ end` at destruct s.
+  all: cleanup; subst.
+  1: congruence.
+  pat `if ?cond then _ else _` at destruct cond eqn:?.
+  all: cleanup; subst.
+  all: unfold init_state in *; simpl in *.
+  all: rewrite Nat.sub_0_r in *.
+  all: spat `Relation_Operators.clos_refl_trans_1n` at eapply RTC_IMP_steps in spat; cleanup.
+  all: spat `steps` at eapply steps_determ_Halt in spat; cleanup.
+  2,4: exact H0.
+  all: subst.
+  2: spat `word.eqb` at eapply Properties.word.eqb_false in spat; congruence.
+  congruence.
 Qed.
 
 Lemma NRC_from_is_State: forall n x s1,

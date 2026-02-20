@@ -157,7 +157,6 @@ Qed.
 
 (* TODO: share the following with ImpToAsmCodegenProof  *)
 
-
 Theorem step_mono: forall s0 s1,
   step (State s0) (State s1) -> prefix s0.(output) s1.(output) = true.
 Proof.
@@ -168,3 +167,16 @@ Proof.
   eapply prefix_correct.
   rewrite substr_app; reflexivity.
 Qed.
+
+Theorem RTC_IMP_steps: forall s e o n1,
+  clos_refl_trans_1n s_or_h step s (Halt e o) ->
+  exists n2, steps (s, n1) (Halt e o, n2).
+Proof.
+  intros * Hrtc.
+  induction Hrtc; intros; eauto.
+  1: eexists; eapply steps_refl.
+  destruct IHHrtc as [n2 Hsteps]; eauto.
+  eexists; eapply steps_trans.
+  1: eapply steps_step_same; eauto.
+  eauto.
+Qed.  

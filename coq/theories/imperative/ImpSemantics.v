@@ -443,12 +443,11 @@ Definition eval_from (fuel: nat) (input: llist ascii) (p: prog): (outcome Value 
     end
   end.
 
-Definition prog_terminates (input: llist ascii) (p: prog) (fuel: nat) (output: string) (steps_done: nat) :=
+Definition prog_terminates (input: llist ascii) (p: prog) (fuel: nat) (output: string) :=
   exists s r,
     eval_from fuel input p = (r, s) /\
-      r = Stop (ImpSemantics.Return (ImpSyntax.Word (word.of_Z 0))) /\
-      s.(ImpSemantics.output) = output /\
-      s.(ImpSemantics.steps_done) = steps_done.
+      (exists v, r = Cont v) /\
+      s.(ImpSemantics.output) = output.
 
 Definition imp_avoids_crash (input: llist ascii) (p: prog) :=
   forall fuel res s, eval_from fuel input p = (res, s) -> res <> Stop Crash.
@@ -485,4 +484,5 @@ Definition prog_diverges (input: llist ascii) (p: prog) (output: llist ascii) :=
 Definition imp_weak_termination (input: llist ascii) (p: prog) (out: string) :=
   exists fuel outcome s,
     eval_from fuel input p = (outcome, s) /\
-    (outcome <> Stop Abort -> exists v, outcome = Cont v /\ s.(output) = out).
+    outcome <> (Stop Crash) /\
+    (outcome <> Stop Abort -> (exists v, outcome = Cont v) /\ s.(output) = out).

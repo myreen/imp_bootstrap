@@ -245,30 +245,3 @@ Fixpoint flatten_str_app_list (sal: str_app_list): string :=
 Definition imp2str (p: prog): string :=
   let v := prog2s_imp p in
   flatten_str_app_list (sexpr2str v).
-
-(* examples *)
-
-Example ex1 := Program
-[Func 8243101776696929904 []
-  (Seq (GetChar 1668641394)
-    (If (Test Equal (Var 1668641394) (Const (word.of_Z 4294967295)))
-      (Return (Const {| Naive.unsigned := 0; Naive._unsigned_in_range := eq_refl |}))
-      (Seq (Call 1919251316 8243101776696929904 [])
-        (Seq (Call 125780054338676 1668247155 [Var 1668641394; Var 1919251316]) (Return (Var 125780054338676)))
-      )
-    )
-  )
-].
-
-Eval lazy in imp2str ex1.
-
-Example ex2 := Program
-[Func 8243101776696929904 []
-(Seq (GetChar 1668641394)
-(If (Test Equal (Var 1668641394) (Const (word.of_Z 4294967295)))
-(Return (Const {| Naive.unsigned := 0; Naive._unsigned_in_range := eq_refl |}))
-(Seq (Call 1919251316 8243101776696929904 [])
-(Seq (Call 125780054338676 1668247155 [Var 1668641394; Var 1919251316]) (Return (Var 125780054338676))))))].
-
-Goal ex1 = ex2.
-Proof. reflexivity. Qed.

@@ -8,7 +8,8 @@ From impboot Require Import
   fp2imp.FpToImpCodegen
   imp2asm.ImpToASMCodegen
   assembly.ASMToString
-  commons.CompilerUtils.
+  commons.CompilerUtils
+  imperative.Printing.
 
 Definition compiler_program_imp := to_imp compiler_program_prog.
 
@@ -20,6 +21,13 @@ Proof.
 Qed.
 
 Time Eval lazy in compiler_program_imp.
+
+Definition compiler_imp_str := match compiler_program_imp with
+| None => ""
+| Some p => imp2str p
+end.
+
+Eval lazy in compiler_imp_str.
 
 Definition compiler_program_asm := match compiler_program_imp with
 | None => []

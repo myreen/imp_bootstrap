@@ -63,9 +63,14 @@ nia.cache
 nlia.cache
 nra.cache
 native_compute_profile_*.data
+Makefile.conf
 
 # OCaml
 _build/
+
+# MCP
+mcp.json
+.claude/
 
 # generated timing files
 *.timing.diff

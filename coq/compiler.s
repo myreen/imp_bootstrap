@@ -374,7 +374,7 @@ L333:
   	/* compiler */
 L334:	subq $32, %rsp
 L335:	pushq %rax
-L336:	call L23039
+L336:	call L23042
 L337:	movq %rax, 24(%rsp) 
 L338:	popq %rax
 L339:	pushq %rax
@@ -384,7 +384,7 @@ L342:	movq %rax, 16(%rsp)
 L343:	popq %rax
 L344:	pushq %rax
 L345:	movq 16(%rsp), %rax
-L346:	call L17522
+L346:	call L17525
 L347:	movq %rax, 8(%rsp) 
 L348:	popq %rax
 L349:	pushq %rax
@@ -1216,7 +1216,7 @@ L1156:	movq 80(%rsp), %rax
 L1157:	pushq %rax
 L1158:	movq 80(%rsp), %rax
 L1159:	popq %rdi
-L1160:	call L23763
+L1160:	call L23766
 L1161:	movq %rax, 64(%rsp) 
 L1162:	popq %rax
 L1163:	pushq %rax
@@ -1448,7 +1448,7 @@ L1388:	movq 80(%rsp), %rax
 L1389:	pushq %rax
 L1390:	movq 80(%rsp), %rax
 L1391:	popq %rdi
-L1392:	call L23763
+L1392:	call L23766
 L1393:	movq %rax, 64(%rsp) 
 L1394:	popq %rax
 L1395:	pushq %rax
@@ -2285,7 +2285,7 @@ L2210:
   	/* push_vs */
 L2211:	subq $32, %rsp
 L2212:	pushq %rax
-L2213:	call L23711
+L2213:	call L23714
 L2214:	movq %rax, 24(%rsp) 
 L2215:	popq %rax
 L2216:	jmp L2219
@@ -2371,7 +2371,7 @@ L2293:	pushq %rax
 L2294:	pushq %rax
 L2295:	movq 32(%rsp), %rax
 L2296:	popq %rdi
-L2297:	call L23763
+L2297:	call L23766
 L2298:	movq %rax, 16(%rsp) 
 L2299:	popq %rax
 L2300:	pushq %rax
@@ -2415,7 +2415,7 @@ L2335:	movq 80(%rsp), %rax
 L2336:	pushq %rax
 L2337:	movq 96(%rsp), %rax
 L2338:	popq %rdi
-L2339:	call L23763
+L2339:	call L23766
 L2340:	movq %rax, 72(%rsp) 
 L2341:	popq %rax
 L2342:	pushq %rax
@@ -2433,7 +2433,7 @@ L2353:	movq %rax, 56(%rsp)
 L2354:	popq %rax
 L2355:	pushq %rax
 L2356:	movq 56(%rsp), %rax
-L2357:	call L23711
+L2357:	call L23714
 L2358:	movq %rax, 48(%rsp) 
 L2359:	popq %rax
 L2360:	pushq %rax
@@ -3090,7 +3090,7 @@ L3000:	movq %rax, 112(%rsp)
 L3001:	popq %rax
 L3002:	pushq %rax
 L3003:	movq 112(%rsp), %rax
-L3004:	call L23932
+L3004:	call L23935
 L3005:	movq %rax, 104(%rsp) 
 L3006:	popq %rax
 L3007:	pushq %rax
@@ -3272,7 +3272,7 @@ L3182:	movq %rax, 64(%rsp)
 L3183:	popq %rax
 L3184:	pushq %rax
 L3185:	movq 64(%rsp), %rax
-L3186:	call L23932
+L3186:	call L23935
 L3187:	movq %rax, 56(%rsp) 
 L3188:	popq %rax
 L3189:	pushq %rax
@@ -3454,7 +3454,7 @@ L3364:	movq %rax, 48(%rsp)
 L3365:	popq %rax
 L3366:	pushq %rax
 L3367:	movq 48(%rsp), %rax
-L3368:	call L23932
+L3368:	call L23935
 L3369:	movq %rax, 40(%rsp) 
 L3370:	popq %rax
 L3371:	pushq %rax
@@ -3636,7 +3636,7 @@ L3546:	movq %rax, 32(%rsp)
 L3547:	popq %rax
 L3548:	pushq %rax
 L3549:	movq 32(%rsp), %rax
-L3550:	call L23932
+L3550:	call L23935
 L3551:	movq %rax, 24(%rsp) 
 L3552:	popq %rax
 L3553:	pushq %rax
@@ -4242,7 +4242,7 @@ L4146:	movq %rax, 128(%rsp)
 L4147:	popq %rax
 L4148:	pushq %rax
 L4149:	movq 128(%rsp), %rax
-L4150:	call L23932
+L4150:	call L23935
 L4151:	movq %rax, 120(%rsp) 
 L4152:	popq %rax
 L4153:	pushq %rax
@@ -5323,7 +5323,7 @@ L5215:	subq $72, %rsp
 L5216:	pushq %rdi
 L5217:	pushq %rax
 L5218:	movq 8(%rsp), %rax
-L5219:	call L23711
+L5219:	call L23714
 L5220:	movq %rax, 72(%rsp) 
 L5221:	popq %rax
 L5222:	pushq %rax
@@ -5398,7 +5398,7 @@ L5288:	subq $120, %rsp
 L5289:	pushq %rdi
 L5290:	pushq %rax
 L5291:	movq 8(%rsp), %rax
-L5292:	call L23711
+L5292:	call L23714
 L5293:	movq %rax, 128(%rsp) 
 L5294:	popq %rax
 L5295:	jmp L5298
@@ -5883,7 +5883,7 @@ L5771:	subq $152, %rsp
 L5772:	pushq %rdi
 L5773:	pushq %rax
 L5774:	movq 8(%rsp), %rax
-L5775:	call L23711
+L5775:	call L23714
 L5776:	movq %rax, 152(%rsp) 
 L5777:	popq %rax
 L5778:	pushq %rax
@@ -6464,7 +6464,7 @@ L6350:	movq %rax, 64(%rsp)
 L6351:	popq %rax
 L6352:	pushq %rax
 L6353:	movq 96(%rsp), %rax
-L6354:	call L23932
+L6354:	call L23935
 L6355:	movq %rax, 56(%rsp) 
 L6356:	popq %rax
 L6357:	pushq %rax
@@ -7021,7 +7021,7 @@ L6905:	movq %rax, 248(%rsp)
 L6906:	popq %rax
 L6907:	pushq %rax
 L6908:	movq 248(%rsp), %rax
-L6909:	call L23932
+L6909:	call L23935
 L6910:	movq %rax, 240(%rsp) 
 L6911:	popq %rax
 L6912:	pushq %rax
@@ -8294,7 +8294,7 @@ L8178:	movq %rax, 408(%rsp)
 L8179:	popq %rax
 L8180:	pushq %rax
 L8181:	movq 408(%rsp), %rax
-L8182:	call L23932
+L8182:	call L23935
 L8183:	movq %rax, 32(%rsp) 
 L8184:	popq %rax
 L8185:	pushq %rax
@@ -8786,7 +8786,7 @@ L8668:	movq %rax, 136(%rsp)
 L8669:	popq %rax
 L8670:	pushq %rax
 L8671:	movq 144(%rsp), %rax
-L8672:	call L23932
+L8672:	call L23935
 L8673:	movq %rax, 128(%rsp) 
 L8674:	popq %rax
 L8675:	pushq %rax
@@ -8846,7 +8846,7 @@ L8728:	movq 88(%rsp), %rax
 L8729:	pushq %rax
 L8730:	movq 144(%rsp), %rax
 L8731:	popq %rdi
-L8732:	call L23763
+L8732:	call L23766
 L8733:	movq %rax, 72(%rsp) 
 L8734:	popq %rax
 L8735:	pushq %rax
@@ -9178,7 +9178,7 @@ L9054:	movq %rax, 128(%rsp)
 L9055:	popq %rax
 L9056:	pushq %rax
 L9057:	movq 192(%rsp), %rax
-L9058:	call L24536
+L9058:	call L24539
 L9059:	movq %rax, 224(%rsp) 
 L9060:	popq %rax
 L9061:	pushq %rax
@@ -9984,7 +9984,7 @@ L9856:	movq %rax, 144(%rsp)
 L9857:	popq %rax
 L9858:	pushq %rax
 L9859:	movq 144(%rsp), %rax
-L9860:	call L23932
+L9860:	call L23935
 L9861:	movq %rax, 136(%rsp) 
 L9862:	popq %rax
 L9863:	pushq %rax
@@ -10125,7 +10125,7 @@ L9997:	movq %rax, 16(%rsp)
 L9998:	popq %rax
 L9999:	pushq %rax
 L10000:	movq 16(%rsp), %rax
-L10001:	call L23821
+L10001:	call L23824
 L10002:	movq %rax, 8(%rsp) 
 L10003:	popq %rax
 L10004:	pushq %rax
@@ -10172,7 +10172,7 @@ L10042:	movq 24(%rsp), %rax
 L10043:	pushq %rax
 L10044:	movq 8(%rsp), %rax
 L10045:	popq %rdi
-L10046:	call L24048
+L10046:	call L24051
 L10047:	movq %rax, 16(%rsp) 
 L10048:	popq %rax
 L10049:	pushq %rax
@@ -10214,7 +10214,7 @@ L10084:	movq 24(%rsp), %rax
 L10085:	pushq %rax
 L10086:	movq 8(%rsp), %rax
 L10087:	popq %rdi
-L10088:	call L24048
+L10088:	call L24051
 L10089:	movq %rax, 16(%rsp) 
 L10090:	popq %rax
 L10091:	pushq %rax
@@ -10256,7 +10256,7 @@ L10126:	movq 24(%rsp), %rax
 L10127:	pushq %rax
 L10128:	movq 8(%rsp), %rax
 L10129:	popq %rdi
-L10130:	call L24048
+L10130:	call L24051
 L10131:	movq %rax, 16(%rsp) 
 L10132:	popq %rax
 L10133:	pushq %rax
@@ -10298,7 +10298,7 @@ L10168:	movq 24(%rsp), %rax
 L10169:	pushq %rax
 L10170:	movq 8(%rsp), %rax
 L10171:	popq %rdi
-L10172:	call L24048
+L10172:	call L24051
 L10173:	movq %rax, 16(%rsp) 
 L10174:	popq %rax
 L10175:	pushq %rax
@@ -10340,7 +10340,7 @@ L10210:	movq 24(%rsp), %rax
 L10211:	pushq %rax
 L10212:	movq 8(%rsp), %rax
 L10213:	popq %rdi
-L10214:	call L24048
+L10214:	call L24051
 L10215:	movq %rax, 16(%rsp) 
 L10216:	popq %rax
 L10217:	pushq %rax
@@ -10382,7 +10382,7 @@ L10252:	movq 24(%rsp), %rax
 L10253:	pushq %rax
 L10254:	movq 8(%rsp), %rax
 L10255:	popq %rdi
-L10256:	call L24048
+L10256:	call L24051
 L10257:	movq %rax, 16(%rsp) 
 L10258:	popq %rax
 L10259:	pushq %rax
@@ -10424,7 +10424,7 @@ L10294:	movq 24(%rsp), %rax
 L10295:	pushq %rax
 L10296:	movq 8(%rsp), %rax
 L10297:	popq %rdi
-L10298:	call L24048
+L10298:	call L24051
 L10299:	movq %rax, 16(%rsp) 
 L10300:	popq %rax
 L10301:	pushq %rax
@@ -10466,7 +10466,7 @@ L10336:	movq 24(%rsp), %rax
 L10337:	pushq %rax
 L10338:	movq 8(%rsp), %rax
 L10339:	popq %rdi
-L10340:	call L24048
+L10340:	call L24051
 L10341:	movq %rax, 16(%rsp) 
 L10342:	popq %rax
 L10343:	pushq %rax
@@ -10508,7 +10508,7 @@ L10378:	movq 24(%rsp), %rax
 L10379:	pushq %rax
 L10380:	movq 8(%rsp), %rax
 L10381:	popq %rdi
-L10382:	call L24048
+L10382:	call L24051
 L10383:	movq %rax, 16(%rsp) 
 L10384:	popq %rax
 L10385:	pushq %rax
@@ -10531,7 +10531,7 @@ L10399:	movq 8(%rsp), %rax
 L10400:	pushq %rax
 L10401:	movq 8(%rsp), %rax
 L10402:	popq %rdi
-L10403:	call L23483
+L10403:	call L23486
 L10404:	movq %rax, 24(%rsp) 
 L10405:	popq %rax
 L10406:	pushq %rax
@@ -10713,7 +10713,7 @@ L10577:	movq 56(%rsp), %rax
 L10578:	pushq %rax
 L10579:	movq 56(%rsp), %rax
 L10580:	popq %rdi
-L10581:	call L24048
+L10581:	call L24051
 L10582:	movq %rax, 40(%rsp) 
 L10583:	popq %rax
 L10584:	pushq %rax
@@ -10721,7 +10721,7 @@ L10585:	movq 8(%rsp), %rax
 L10586:	pushq %rax
 L10587:	movq 48(%rsp), %rax
 L10588:	popq %rdi
-L10589:	call L23670
+L10589:	call L23673
 L10590:	movq %rax, 32(%rsp) 
 L10591:	popq %rax
 L10592:	pushq %rax
@@ -10729,7 +10729,7 @@ L10593:	movq 72(%rsp), %rax
 L10594:	pushq %rax
 L10595:	movq 40(%rsp), %rax
 L10596:	popq %rdi
-L10597:	call L24048
+L10597:	call L24051
 L10598:	movq %rax, 24(%rsp) 
 L10599:	popq %rax
 L10600:	pushq %rax
@@ -10811,7 +10811,7 @@ L10673:	movq 56(%rsp), %rax
 L10674:	pushq %rax
 L10675:	movq 56(%rsp), %rax
 L10676:	popq %rdi
-L10677:	call L24048
+L10677:	call L24051
 L10678:	movq %rax, 40(%rsp) 
 L10679:	popq %rax
 L10680:	pushq %rax
@@ -10827,7 +10827,7 @@ L10689:	movq 72(%rsp), %rax
 L10690:	pushq %rax
 L10691:	movq 40(%rsp), %rax
 L10692:	popq %rdi
-L10693:	call L24048
+L10693:	call L24051
 L10694:	movq %rax, 24(%rsp) 
 L10695:	popq %rax
 L10696:	pushq %rax
@@ -10909,7 +10909,7 @@ L10769:	movq 56(%rsp), %rax
 L10770:	pushq %rax
 L10771:	movq 56(%rsp), %rax
 L10772:	popq %rdi
-L10773:	call L24048
+L10773:	call L24051
 L10774:	movq %rax, 40(%rsp) 
 L10775:	popq %rax
 L10776:	pushq %rax
@@ -10925,7 +10925,7 @@ L10785:	movq 72(%rsp), %rax
 L10786:	pushq %rax
 L10787:	movq 40(%rsp), %rax
 L10788:	popq %rdi
-L10789:	call L24048
+L10789:	call L24051
 L10790:	movq %rax, 24(%rsp) 
 L10791:	popq %rax
 L10792:	pushq %rax
@@ -11007,7 +11007,7 @@ L10865:	movq 56(%rsp), %rax
 L10866:	pushq %rax
 L10867:	movq 56(%rsp), %rax
 L10868:	popq %rdi
-L10869:	call L24048
+L10869:	call L24051
 L10870:	movq %rax, 40(%rsp) 
 L10871:	popq %rax
 L10872:	pushq %rax
@@ -11023,7 +11023,7 @@ L10881:	movq 72(%rsp), %rax
 L10882:	pushq %rax
 L10883:	movq 40(%rsp), %rax
 L10884:	popq %rdi
-L10885:	call L24048
+L10885:	call L24051
 L10886:	movq %rax, 24(%rsp) 
 L10887:	popq %rax
 L10888:	pushq %rax
@@ -11089,7 +11089,7 @@ L10945:	movq 32(%rsp), %rax
 L10946:	pushq %rax
 L10947:	movq 32(%rsp), %rax
 L10948:	popq %rdi
-L10949:	call L24048
+L10949:	call L24051
 L10950:	movq %rax, 16(%rsp) 
 L10951:	popq %rax
 L10952:	pushq %rax
@@ -11150,7 +11150,7 @@ L11004:	movq 184(%rsp), %rax
 L11005:	pushq %rax
 L11006:	movq 184(%rsp), %rax
 L11007:	popq %rdi
-L11008:	call L24048
+L11008:	call L24051
 L11009:	movq %rax, 168(%rsp) 
 L11010:	popq %rax
 L11011:	pushq %rax
@@ -11323,7 +11323,7 @@ L11177:	movq 72(%rsp), %rax
 L11178:	pushq %rax
 L11179:	movq 72(%rsp), %rax
 L11180:	popq %rdi
-L11181:	call L24048
+L11181:	call L24051
 L11182:	movq %rax, 56(%rsp) 
 L11183:	popq %rax
 L11184:	pushq %rax
@@ -11339,7 +11339,7 @@ L11193:	movq 120(%rsp), %rax
 L11194:	pushq %rax
 L11195:	movq 56(%rsp), %rax
 L11196:	popq %rdi
-L11197:	call L24048
+L11197:	call L24051
 L11198:	movq %rax, 40(%rsp) 
 L11199:	popq %rax
 L11200:	pushq %rax
@@ -11355,7 +11355,7 @@ L11209:	movq 136(%rsp), %rax
 L11210:	pushq %rax
 L11211:	movq 40(%rsp), %rax
 L11212:	popq %rdi
-L11213:	call L24048
+L11213:	call L24051
 L11214:	movq %rax, 24(%rsp) 
 L11215:	popq %rax
 L11216:	pushq %rax
@@ -11528,7 +11528,7 @@ L11382:	movq 72(%rsp), %rax
 L11383:	pushq %rax
 L11384:	movq 72(%rsp), %rax
 L11385:	popq %rdi
-L11386:	call L24048
+L11386:	call L24051
 L11387:	movq %rax, 56(%rsp) 
 L11388:	popq %rax
 L11389:	pushq %rax
@@ -11544,7 +11544,7 @@ L11398:	movq 120(%rsp), %rax
 L11399:	pushq %rax
 L11400:	movq 56(%rsp), %rax
 L11401:	popq %rdi
-L11402:	call L24048
+L11402:	call L24051
 L11403:	movq %rax, 40(%rsp) 
 L11404:	popq %rax
 L11405:	pushq %rax
@@ -11560,7 +11560,7 @@ L11414:	movq 136(%rsp), %rax
 L11415:	pushq %rax
 L11416:	movq 40(%rsp), %rax
 L11417:	popq %rdi
-L11418:	call L24048
+L11418:	call L24051
 L11419:	movq %rax, 24(%rsp) 
 L11420:	popq %rax
 L11421:	pushq %rax
@@ -11631,7 +11631,7 @@ L11483:	movq 32(%rsp), %rax
 L11484:	pushq %rax
 L11485:	movq 32(%rsp), %rax
 L11486:	popq %rdi
-L11487:	call L24048
+L11487:	call L24051
 L11488:	movq %rax, 16(%rsp) 
 L11489:	popq %rax
 L11490:	pushq %rax
@@ -11662,7 +11662,7 @@ L11512:	movq 16(%rsp), %rax
 L11513:	pushq %rax
 L11514:	movq 8(%rsp), %rax
 L11515:	popq %rdi
-L11516:	call L24048
+L11516:	call L24051
 L11517:	movq %rax, 8(%rsp) 
 L11518:	popq %rax
 L11519:	pushq %rax
@@ -11728,7 +11728,7 @@ L11576:	movq 32(%rsp), %rax
 L11577:	pushq %rax
 L11578:	movq 32(%rsp), %rax
 L11579:	popq %rdi
-L11580:	call L24048
+L11580:	call L24051
 L11581:	movq %rax, 16(%rsp) 
 L11582:	popq %rax
 L11583:	pushq %rax
@@ -11797,7 +11797,7 @@ L11643:	movq 32(%rsp), %rax
 L11644:	pushq %rax
 L11645:	movq 32(%rsp), %rax
 L11646:	popq %rdi
-L11647:	call L24048
+L11647:	call L24051
 L11648:	movq %rax, 16(%rsp) 
 L11649:	popq %rax
 L11650:	pushq %rax
@@ -11853,7 +11853,7 @@ L11697:	movq %rax, 112(%rsp)
 L11698:	popq %rax
 L11699:	pushq %rax
 L11700:	movq 8(%rsp), %rax
-L11701:	call L23055
+L11701:	call L23058
 L11702:	movq %rax, 104(%rsp) 
 L11703:	popq %rax
 L11704:	pushq %rax
@@ -11922,7 +11922,7 @@ L11766:	movq 56(%rsp), %rax
 L11767:	pushq %rax
 L11768:	movq 56(%rsp), %rax
 L11769:	popq %rdi
-L11770:	call L24048
+L11770:	call L24051
 L11771:	movq %rax, 40(%rsp) 
 L11772:	popq %rax
 L11773:	pushq %rax
@@ -11930,7 +11930,7 @@ L11774:	movq 104(%rsp), %rax
 L11775:	pushq %rax
 L11776:	movq 48(%rsp), %rax
 L11777:	popq %rdi
-L11778:	call L23483
+L11778:	call L23486
 L11779:	movq %rax, 32(%rsp) 
 L11780:	popq %rax
 L11781:	pushq %rax
@@ -11938,7 +11938,7 @@ L11782:	movq 112(%rsp), %rax
 L11783:	pushq %rax
 L11784:	movq 40(%rsp), %rax
 L11785:	popq %rdi
-L11786:	call L24048
+L11786:	call L24051
 L11787:	movq %rax, 24(%rsp) 
 L11788:	popq %rax
 L11789:	pushq %rax
@@ -12009,7 +12009,7 @@ L11851:	movq %rax, 120(%rsp)
 L11852:	popq %rax
 L11853:	pushq %rax
 L11854:	movq 8(%rsp), %rax
-L11855:	call L23055
+L11855:	call L23058
 L11856:	movq %rax, 112(%rsp) 
 L11857:	popq %rax
 L11858:	pushq %rax
@@ -12067,7 +12067,7 @@ L11909:	movq 64(%rsp), %rax
 L11910:	pushq %rax
 L11911:	movq 8(%rsp), %rax
 L11912:	popq %rdi
-L11913:	call L24048
+L11913:	call L24051
 L11914:	movq %rax, 56(%rsp) 
 L11915:	popq %rax
 L11916:	pushq %rax
@@ -12075,7 +12075,7 @@ L11917:	movq 112(%rsp), %rax
 L11918:	pushq %rax
 L11919:	movq 64(%rsp), %rax
 L11920:	popq %rdi
-L11921:	call L23483
+L11921:	call L23486
 L11922:	movq %rax, 48(%rsp) 
 L11923:	popq %rax
 L11924:	pushq %rax
@@ -12083,7 +12083,7 @@ L11925:	movq 120(%rsp), %rax
 L11926:	pushq %rax
 L11927:	movq 56(%rsp), %rax
 L11928:	popq %rdi
-L11929:	call L24048
+L11929:	call L24051
 L11930:	movq %rax, 40(%rsp) 
 L11931:	popq %rax
 L11932:	pushq %rax
@@ -12099,7 +12099,7 @@ L11941:	movq 136(%rsp), %rax
 L11942:	pushq %rax
 L11943:	movq 40(%rsp), %rax
 L11944:	popq %rdi
-L11945:	call L24048
+L11945:	call L24051
 L11946:	movq %rax, 24(%rsp) 
 L11947:	popq %rax
 L11948:	pushq %rax
@@ -12157,7 +12157,7 @@ L11997:	movq %rax, 96(%rsp)
 L11998:	popq %rax
 L11999:	pushq %rax
 L12000:	movq 8(%rsp), %rax
-L12001:	call L23055
+L12001:	call L23058
 L12002:	movq %rax, 88(%rsp) 
 L12003:	popq %rax
 L12004:	pushq %rax
@@ -12212,7 +12212,7 @@ L12052:	movq 40(%rsp), %rax
 L12053:	pushq %rax
 L12054:	movq 8(%rsp), %rax
 L12055:	popq %rdi
-L12056:	call L24048
+L12056:	call L24051
 L12057:	movq %rax, 32(%rsp) 
 L12058:	popq %rax
 L12059:	pushq %rax
@@ -12220,7 +12220,7 @@ L12060:	movq 88(%rsp), %rax
 L12061:	pushq %rax
 L12062:	movq 40(%rsp), %rax
 L12063:	popq %rdi
-L12064:	call L23483
+L12064:	call L23486
 L12065:	movq %rax, 24(%rsp) 
 L12066:	popq %rax
 L12067:	pushq %rax
@@ -12228,7 +12228,7 @@ L12068:	movq 96(%rsp), %rax
 L12069:	pushq %rax
 L12070:	movq 32(%rsp), %rax
 L12071:	popq %rdi
-L12072:	call L24048
+L12072:	call L24051
 L12073:	movq %rax, 16(%rsp) 
 L12074:	popq %rax
 L12075:	pushq %rax
@@ -12286,7 +12286,7 @@ L12124:	movq %rax, 96(%rsp)
 L12125:	popq %rax
 L12126:	pushq %rax
 L12127:	movq 8(%rsp), %rax
-L12128:	call L23055
+L12128:	call L23058
 L12129:	movq %rax, 88(%rsp) 
 L12130:	popq %rax
 L12131:	pushq %rax
@@ -12341,7 +12341,7 @@ L12179:	movq 40(%rsp), %rax
 L12180:	pushq %rax
 L12181:	movq 8(%rsp), %rax
 L12182:	popq %rdi
-L12183:	call L24048
+L12183:	call L24051
 L12184:	movq %rax, 32(%rsp) 
 L12185:	popq %rax
 L12186:	pushq %rax
@@ -12349,7 +12349,7 @@ L12187:	movq 88(%rsp), %rax
 L12188:	pushq %rax
 L12189:	movq 40(%rsp), %rax
 L12190:	popq %rdi
-L12191:	call L23483
+L12191:	call L23486
 L12192:	movq %rax, 24(%rsp) 
 L12193:	popq %rax
 L12194:	pushq %rax
@@ -12357,7 +12357,7 @@ L12195:	movq 96(%rsp), %rax
 L12196:	pushq %rax
 L12197:	movq 32(%rsp), %rax
 L12198:	popq %rdi
-L12199:	call L24048
+L12199:	call L24051
 L12200:	movq %rax, 16(%rsp) 
 L12201:	popq %rax
 L12202:	pushq %rax
@@ -12456,7 +12456,7 @@ L12292:	movq 88(%rsp), %rax
 L12293:	pushq %rax
 L12294:	movq 8(%rsp), %rax
 L12295:	popq %rdi
-L12296:	call L24048
+L12296:	call L24051
 L12297:	movq %rax, 80(%rsp) 
 L12298:	popq %rax
 L12299:	pushq %rax
@@ -12472,7 +12472,7 @@ L12308:	movq 104(%rsp), %rax
 L12309:	pushq %rax
 L12310:	movq 80(%rsp), %rax
 L12311:	popq %rdi
-L12312:	call L24048
+L12312:	call L24051
 L12313:	movq %rax, 64(%rsp) 
 L12314:	popq %rax
 L12315:	pushq %rax
@@ -12480,7 +12480,7 @@ L12316:	movq 8(%rsp), %rax
 L12317:	pushq %rax
 L12318:	movq 72(%rsp), %rax
 L12319:	popq %rdi
-L12320:	call L23670
+L12320:	call L23673
 L12321:	movq %rax, 56(%rsp) 
 L12322:	popq %rax
 L12323:	pushq %rax
@@ -12488,7 +12488,7 @@ L12324:	movq 120(%rsp), %rax
 L12325:	pushq %rax
 L12326:	movq 64(%rsp), %rax
 L12327:	popq %rdi
-L12328:	call L24048
+L12328:	call L24051
 L12329:	movq %rax, 48(%rsp) 
 L12330:	popq %rax
 L12331:	pushq %rax
@@ -12504,7 +12504,7 @@ L12340:	movq 136(%rsp), %rax
 L12341:	pushq %rax
 L12342:	movq 48(%rsp), %rax
 L12343:	popq %rdi
-L12344:	call L24048
+L12344:	call L24051
 L12345:	movq %rax, 32(%rsp) 
 L12346:	popq %rax
 L12347:	pushq %rax
@@ -12602,7 +12602,7 @@ L12436:	movq 80(%rsp), %rax
 L12437:	pushq %rax
 L12438:	movq 80(%rsp), %rax
 L12439:	popq %rdi
-L12440:	call L24048
+L12440:	call L24051
 L12441:	movq %rax, 64(%rsp) 
 L12442:	popq %rax
 L12443:	pushq %rax
@@ -12618,7 +12618,7 @@ L12452:	movq 96(%rsp), %rax
 L12453:	pushq %rax
 L12454:	movq 64(%rsp), %rax
 L12455:	popq %rdi
-L12456:	call L24048
+L12456:	call L24051
 L12457:	movq %rax, 48(%rsp) 
 L12458:	popq %rax
 L12459:	pushq %rax
@@ -12626,7 +12626,7 @@ L12460:	movq 8(%rsp), %rax
 L12461:	pushq %rax
 L12462:	movq 56(%rsp), %rax
 L12463:	popq %rdi
-L12464:	call L23670
+L12464:	call L23673
 L12465:	movq %rax, 40(%rsp) 
 L12466:	popq %rax
 L12467:	pushq %rax
@@ -12634,7 +12634,7 @@ L12468:	movq 112(%rsp), %rax
 L12469:	pushq %rax
 L12470:	movq 48(%rsp), %rax
 L12471:	popq %rdi
-L12472:	call L24048
+L12472:	call L24051
 L12473:	movq %rax, 32(%rsp) 
 L12474:	popq %rax
 L12475:	pushq %rax
@@ -12982,7 +12982,7 @@ L12814:	movq 16(%rsp), %rax
 L12815:	pushq %rax
 L12816:	movq 8(%rsp), %rax
 L12817:	popq %rdi
-L12818:	call L24048
+L12818:	call L24051
 L12819:	movq %rax, 8(%rsp) 
 L12820:	popq %rax
 L12821:	pushq %rax
@@ -13333,7 +13333,7 @@ L13163:	movq 16(%rsp), %rax
 L13164:	pushq %rax
 L13165:	movq 8(%rsp), %rax
 L13166:	popq %rdi
-L13167:	call L24048
+L13167:	call L24051
 L13168:	movq %rax, 8(%rsp) 
 L13169:	popq %rax
 L13170:	pushq %rax
@@ -13454,7 +13454,7 @@ L13282:	movq 16(%rsp), %rax
 L13283:	pushq %rax
 L13284:	movq 8(%rsp), %rax
 L13285:	popq %rdi
-L13286:	call L24048
+L13286:	call L24051
 L13287:	movq %rax, 8(%rsp) 
 L13288:	popq %rax
 L13289:	pushq %rax
@@ -13565,7 +13565,7 @@ L13391:	movq 40(%rsp), %rax
 L13392:	pushq %rax
 L13393:	movq 8(%rsp), %rax
 L13394:	popq %rdi
-L13395:	call L24048
+L13395:	call L24051
 L13396:	movq %rax, 32(%rsp) 
 L13397:	popq %rax
 L13398:	pushq %rax
@@ -13581,7 +13581,7 @@ L13407:	movq 56(%rsp), %rax
 L13408:	pushq %rax
 L13409:	movq 32(%rsp), %rax
 L13410:	popq %rdi
-L13411:	call L24048
+L13411:	call L24051
 L13412:	movq %rax, 16(%rsp) 
 L13413:	popq %rax
 L13414:	pushq %rax
@@ -14811,7 +14811,7 @@ L14631:	movq 24(%rsp), %rax
 L14632:	pushq %rax
 L14633:	movq 40(%rsp), %rax
 L14634:	popq %rdi
-L14635:	call L24048
+L14635:	call L24051
 L14636:	movq %rax, 8(%rsp) 
 L14637:	popq %rax
 L14638:	pushq %rax
@@ -15366,9523 +15366,9526 @@ L15178:	subq $400, %rsp
 L15179:	pushq %rax
 L15180:	movq $32, %rax
 L15181:	pushq %rax
-L15182:	movq $0, %rax
-L15183:	popq %rdi
-L15184:	call L97
-L15185:	movq %rax, 392(%rsp) 
-L15186:	popq %rax
-L15187:	pushq %rax
-L15188:	movq $32, %rax
-L15189:	pushq %rax
-L15190:	movq 400(%rsp), %rax
-L15191:	popq %rdi
-L15192:	call L97
-L15193:	movq %rax, 384(%rsp) 
-L15194:	popq %rax
-L15195:	pushq %rax
-L15196:	movq $10, %rax
-L15197:	pushq %rax
-L15198:	movq 392(%rsp), %rax
-L15199:	popq %rdi
-L15200:	call L97
-L15201:	movq %rax, 376(%rsp) 
-L15202:	popq %rax
-L15203:	pushq %rax
-L15204:	movq $47, %rax
-L15205:	pushq %rax
-L15206:	movq 384(%rsp), %rax
-L15207:	popq %rdi
-L15208:	call L97
-L15209:	movq %rax, 368(%rsp) 
-L15210:	popq %rax
-L15211:	pushq %rax
-L15212:	movq $42, %rax
-L15213:	pushq %rax
-L15214:	movq 376(%rsp), %rax
-L15215:	popq %rdi
-L15216:	call L97
-L15217:	movq %rax, 360(%rsp) 
-L15218:	popq %rax
-L15219:	pushq %rax
-L15220:	movq $32, %rax
-L15221:	pushq %rax
-L15222:	movq 368(%rsp), %rax
-L15223:	popq %rdi
-L15224:	call L97
-L15225:	movq %rax, 352(%rsp) 
-L15226:	popq %rax
-L15227:	pushq %rax
-L15228:	movq $101, %rax
-L15229:	pushq %rax
-L15230:	movq 360(%rsp), %rax
-L15231:	popq %rdi
-L15232:	call L97
-L15233:	movq %rax, 344(%rsp) 
-L15234:	popq %rax
-L15235:	pushq %rax
-L15236:	movq $99, %rax
-L15237:	pushq %rax
-L15238:	movq 352(%rsp), %rax
-L15239:	popq %rdi
-L15240:	call L97
-L15241:	movq %rax, 336(%rsp) 
-L15242:	popq %rax
-L15243:	pushq %rax
-L15244:	movq $97, %rax
-L15245:	pushq %rax
-L15246:	movq 344(%rsp), %rax
-L15247:	popq %rdi
-L15248:	call L97
-L15249:	movq %rax, 328(%rsp) 
-L15250:	popq %rax
-L15251:	pushq %rax
-L15252:	movq $112, %rax
-L15253:	pushq %rax
-L15254:	movq 336(%rsp), %rax
-L15255:	popq %rdi
-L15256:	call L97
-L15257:	movq %rax, 320(%rsp) 
-L15258:	popq %rax
-L15259:	pushq %rax
-L15260:	movq $115, %rax
-L15261:	pushq %rax
-L15262:	movq 328(%rsp), %rax
-L15263:	popq %rdi
-L15264:	call L97
-L15265:	movq %rax, 312(%rsp) 
-L15266:	popq %rax
-L15267:	pushq %rax
-L15268:	movq $32, %rax
-L15269:	pushq %rax
-L15270:	movq 320(%rsp), %rax
-L15271:	popq %rdi
-L15272:	call L97
-L15273:	movq %rax, 304(%rsp) 
-L15274:	popq %rax
-L15275:	pushq %rax
-L15276:	movq $112, %rax
-L15277:	pushq %rax
-L15278:	movq 312(%rsp), %rax
-L15279:	popq %rdi
-L15280:	call L97
-L15281:	movq %rax, 296(%rsp) 
-L15282:	popq %rax
-L15283:	pushq %rax
-L15284:	movq $97, %rax
-L15285:	pushq %rax
-L15286:	movq 304(%rsp), %rax
-L15287:	popq %rdi
-L15288:	call L97
-L15289:	movq %rax, 288(%rsp) 
-L15290:	popq %rax
-L15291:	pushq %rax
-L15292:	movq $101, %rax
-L15293:	pushq %rax
-L15294:	movq 296(%rsp), %rax
-L15295:	popq %rdi
-L15296:	call L97
-L15297:	movq %rax, 280(%rsp) 
-L15298:	popq %rax
-L15299:	pushq %rax
-L15300:	movq $104, %rax
-L15301:	pushq %rax
-L15302:	movq 288(%rsp), %rax
-L15303:	popq %rdi
-L15304:	call L97
-L15305:	movq %rax, 272(%rsp) 
-L15306:	popq %rax
-L15307:	pushq %rax
-L15308:	movq $32, %rax
-L15309:	pushq %rax
-L15310:	movq 280(%rsp), %rax
-L15311:	popq %rdi
-L15312:	call L97
-L15313:	movq %rax, 264(%rsp) 
-L15314:	popq %rax
-L15315:	pushq %rax
-L15316:	movq $102, %rax
-L15317:	pushq %rax
-L15318:	movq 272(%rsp), %rax
-L15319:	popq %rdi
-L15320:	call L97
-L15321:	movq %rax, 256(%rsp) 
-L15322:	popq %rax
-L15323:	pushq %rax
-L15324:	movq $111, %rax
-L15325:	pushq %rax
-L15326:	movq 264(%rsp), %rax
-L15327:	popq %rdi
-L15328:	call L97
-L15329:	movq %rax, 248(%rsp) 
-L15330:	popq %rax
-L15331:	pushq %rax
-L15332:	movq $32, %rax
-L15333:	pushq %rax
-L15334:	movq 256(%rsp), %rax
-L15335:	popq %rdi
-L15336:	call L97
-L15337:	movq %rax, 240(%rsp) 
-L15338:	popq %rax
-L15339:	pushq %rax
-L15340:	movq $115, %rax
-L15341:	pushq %rax
-L15342:	movq 248(%rsp), %rax
-L15343:	popq %rdi
-L15344:	call L97
-L15345:	movq %rax, 232(%rsp) 
-L15346:	popq %rax
-L15347:	pushq %rax
-L15348:	movq $101, %rax
-L15349:	pushq %rax
-L15350:	movq 240(%rsp), %rax
-L15351:	popq %rdi
-L15352:	call L97
-L15353:	movq %rax, 224(%rsp) 
-L15354:	popq %rax
-L15355:	pushq %rax
-L15356:	movq $116, %rax
-L15357:	pushq %rax
-L15358:	movq 232(%rsp), %rax
-L15359:	popq %rdi
-L15360:	call L97
-L15361:	movq %rax, 216(%rsp) 
-L15362:	popq %rax
-L15363:	pushq %rax
-L15364:	movq $121, %rax
-L15365:	pushq %rax
-L15366:	movq 224(%rsp), %rax
-L15367:	popq %rdi
-L15368:	call L97
-L15369:	movq %rax, 208(%rsp) 
-L15370:	popq %rax
-L15371:	pushq %rax
-L15372:	movq $98, %rax
-L15373:	pushq %rax
-L15374:	movq 216(%rsp), %rax
-L15375:	popq %rdi
-L15376:	call L97
-L15377:	movq %rax, 200(%rsp) 
-L15378:	popq %rax
-L15379:	pushq %rax
-L15380:	movq $32, %rax
-L15381:	pushq %rax
-L15382:	movq 208(%rsp), %rax
-L15383:	popq %rdi
-L15384:	call L97
-L15385:	movq %rax, 192(%rsp) 
-L15386:	popq %rax
-L15387:	pushq %rax
-L15388:	movq $42, %rax
-L15389:	pushq %rax
-L15390:	movq 200(%rsp), %rax
-L15391:	popq %rdi
-L15392:	call L97
-L15393:	movq %rax, 184(%rsp) 
-L15394:	popq %rax
-L15395:	pushq %rax
-L15396:	movq $47, %rax
-L15397:	pushq %rax
-L15398:	movq 192(%rsp), %rax
-L15399:	popq %rdi
-L15400:	call L97
-L15401:	movq %rax, 176(%rsp) 
-L15402:	popq %rax
-L15403:	pushq %rax
-L15404:	movq $32, %rax
-L15405:	pushq %rax
-L15406:	movq 184(%rsp), %rax
-L15407:	popq %rdi
-L15408:	call L97
-L15409:	movq %rax, 168(%rsp) 
-L15410:	popq %rax
-L15411:	pushq %rax
-L15412:	movq $32, %rax
-L15413:	pushq %rax
-L15414:	movq 176(%rsp), %rax
-L15415:	popq %rdi
-L15416:	call L97
-L15417:	movq %rax, 160(%rsp) 
-L15418:	popq %rax
-L15419:	pushq %rax
-L15420:	movq $52, %rax
-L15421:	pushq %rax
-L15422:	movq 168(%rsp), %rax
-L15423:	popq %rdi
-L15424:	call L97
-L15425:	movq %rax, 152(%rsp) 
-L15426:	popq %rax
-L15427:	pushq %rax
-L15428:	movq $50, %rax
-L15429:	pushq %rax
-L15430:	movq 160(%rsp), %rax
-L15431:	popq %rdi
-L15432:	call L97
-L15433:	movq %rax, 144(%rsp) 
-L15434:	popq %rax
-L15435:	pushq %rax
-L15436:	movq $48, %rax
-L15437:	pushq %rax
-L15438:	movq 152(%rsp), %rax
-L15439:	popq %rdi
-L15440:	call L97
-L15441:	movq %rax, 136(%rsp) 
-L15442:	popq %rax
-L15443:	pushq %rax
-L15444:	movq $49, %rax
-L15445:	pushq %rax
-L15446:	movq 144(%rsp), %rax
-L15447:	popq %rdi
-L15448:	call L97
-L15449:	movq %rax, 128(%rsp) 
-L15450:	popq %rax
-L15451:	pushq %rax
-L15452:	movq $42, %rax
-L15453:	pushq %rax
-L15454:	movq 136(%rsp), %rax
-L15455:	popq %rdi
-L15456:	call L97
-L15457:	movq %rax, 120(%rsp) 
-L15458:	popq %rax
-L15459:	pushq %rax
-L15460:	movq $52, %rax
-L15461:	pushq %rax
-L15462:	movq 128(%rsp), %rax
-L15463:	popq %rdi
-L15464:	call L97
-L15465:	movq %rax, 112(%rsp) 
-L15466:	popq %rax
-L15467:	pushq %rax
-L15468:	movq $50, %rax
-L15469:	pushq %rax
-L15470:	movq 120(%rsp), %rax
-L15471:	popq %rdi
-L15472:	call L97
-L15473:	movq %rax, 104(%rsp) 
-L15474:	popq %rax
-L15475:	pushq %rax
-L15476:	movq $48, %rax
-L15477:	pushq %rax
-L15478:	movq 112(%rsp), %rax
-L15479:	popq %rdi
-L15480:	call L97
-L15481:	movq %rax, 96(%rsp) 
-L15482:	popq %rax
-L15483:	pushq %rax
-L15484:	movq $49, %rax
-L15485:	pushq %rax
-L15486:	movq 104(%rsp), %rax
-L15487:	popq %rdi
-L15488:	call L97
-L15489:	movq %rax, 88(%rsp) 
-L15490:	popq %rax
-L15491:	pushq %rax
-L15492:	movq $42, %rax
-L15493:	pushq %rax
-L15494:	movq 96(%rsp), %rax
-L15495:	popq %rdi
-L15496:	call L97
-L15497:	movq %rax, 80(%rsp) 
-L15498:	popq %rax
-L15499:	pushq %rax
-L15500:	movq $56, %rax
-L15501:	pushq %rax
-L15502:	movq 88(%rsp), %rax
-L15503:	popq %rdi
-L15504:	call L97
-L15505:	movq %rax, 72(%rsp) 
-L15506:	popq %rax
-L15507:	pushq %rax
-L15508:	movq $32, %rax
-L15509:	pushq %rax
-L15510:	movq 80(%rsp), %rax
-L15511:	popq %rdi
-L15512:	call L97
-L15513:	movq %rax, 64(%rsp) 
-L15514:	popq %rax
-L15515:	pushq %rax
-L15516:	movq $101, %rax
-L15517:	pushq %rax
-L15518:	movq 72(%rsp), %rax
-L15519:	popq %rdi
-L15520:	call L97
-L15521:	movq %rax, 56(%rsp) 
-L15522:	popq %rax
-L15523:	pushq %rax
-L15524:	movq $99, %rax
-L15525:	pushq %rax
-L15526:	movq 64(%rsp), %rax
-L15527:	popq %rdi
-L15528:	call L97
-L15529:	movq %rax, 48(%rsp) 
-L15530:	popq %rax
-L15531:	pushq %rax
-L15532:	movq $97, %rax
-L15533:	pushq %rax
-L15534:	movq 56(%rsp), %rax
-L15535:	popq %rdi
-L15536:	call L97
-L15537:	movq %rax, 40(%rsp) 
-L15538:	popq %rax
-L15539:	pushq %rax
-L15540:	movq $112, %rax
-L15541:	pushq %rax
-L15542:	movq 48(%rsp), %rax
-L15543:	popq %rdi
-L15544:	call L97
-L15545:	movq %rax, 32(%rsp) 
-L15546:	popq %rax
-L15547:	pushq %rax
-L15548:	movq $115, %rax
-L15549:	pushq %rax
-L15550:	movq 40(%rsp), %rax
-L15551:	popq %rdi
-L15552:	call L97
-L15553:	movq %rax, 24(%rsp) 
-L15554:	popq %rax
-L15555:	pushq %rax
-L15556:	movq $46, %rax
-L15557:	pushq %rax
-L15558:	movq 32(%rsp), %rax
-L15559:	popq %rdi
-L15560:	call L97
-L15561:	movq %rax, 16(%rsp) 
-L15562:	popq %rax
-L15563:	pushq %rax
-L15564:	movq $9, %rax
-L15565:	pushq %rax
-L15566:	movq 24(%rsp), %rax
-L15567:	popq %rdi
-L15568:	call L97
-L15569:	movq %rax, 8(%rsp) 
-L15570:	popq %rax
-L15571:	pushq %rax
-L15572:	movq 8(%rsp), %rax
-L15573:	addq $408, %rsp
-L15574:	ret
-L15575:	ret
-L15576:	
+L15182:	movq $32, %rax
+L15183:	pushq %rax
+L15184:	movq $0, %rax
+L15185:	popq %rdi
+L15186:	popq %rdx
+L15187:	call L133
+L15188:	movq %rax, 392(%rsp) 
+L15189:	popq %rax
+L15190:	pushq %rax
+L15191:	movq $10, %rax
+L15192:	pushq %rax
+L15193:	movq 400(%rsp), %rax
+L15194:	popq %rdi
+L15195:	call L97
+L15196:	movq %rax, 384(%rsp) 
+L15197:	popq %rax
+L15198:	pushq %rax
+L15199:	movq $47, %rax
+L15200:	pushq %rax
+L15201:	movq 392(%rsp), %rax
+L15202:	popq %rdi
+L15203:	call L97
+L15204:	movq %rax, 376(%rsp) 
+L15205:	popq %rax
+L15206:	pushq %rax
+L15207:	movq $42, %rax
+L15208:	pushq %rax
+L15209:	movq 384(%rsp), %rax
+L15210:	popq %rdi
+L15211:	call L97
+L15212:	movq %rax, 368(%rsp) 
+L15213:	popq %rax
+L15214:	pushq %rax
+L15215:	movq $32, %rax
+L15216:	pushq %rax
+L15217:	movq 376(%rsp), %rax
+L15218:	popq %rdi
+L15219:	call L97
+L15220:	movq %rax, 360(%rsp) 
+L15221:	popq %rax
+L15222:	pushq %rax
+L15223:	movq $101, %rax
+L15224:	pushq %rax
+L15225:	movq 368(%rsp), %rax
+L15226:	popq %rdi
+L15227:	call L97
+L15228:	movq %rax, 352(%rsp) 
+L15229:	popq %rax
+L15230:	pushq %rax
+L15231:	movq $99, %rax
+L15232:	pushq %rax
+L15233:	movq 360(%rsp), %rax
+L15234:	popq %rdi
+L15235:	call L97
+L15236:	movq %rax, 344(%rsp) 
+L15237:	popq %rax
+L15238:	pushq %rax
+L15239:	movq $97, %rax
+L15240:	pushq %rax
+L15241:	movq 352(%rsp), %rax
+L15242:	popq %rdi
+L15243:	call L97
+L15244:	movq %rax, 336(%rsp) 
+L15245:	popq %rax
+L15246:	pushq %rax
+L15247:	movq $112, %rax
+L15248:	pushq %rax
+L15249:	movq 344(%rsp), %rax
+L15250:	popq %rdi
+L15251:	call L97
+L15252:	movq %rax, 328(%rsp) 
+L15253:	popq %rax
+L15254:	pushq %rax
+L15255:	movq $115, %rax
+L15256:	pushq %rax
+L15257:	movq 336(%rsp), %rax
+L15258:	popq %rdi
+L15259:	call L97
+L15260:	movq %rax, 320(%rsp) 
+L15261:	popq %rax
+L15262:	pushq %rax
+L15263:	movq $32, %rax
+L15264:	pushq %rax
+L15265:	movq 328(%rsp), %rax
+L15266:	popq %rdi
+L15267:	call L97
+L15268:	movq %rax, 312(%rsp) 
+L15269:	popq %rax
+L15270:	pushq %rax
+L15271:	movq $112, %rax
+L15272:	pushq %rax
+L15273:	movq 320(%rsp), %rax
+L15274:	popq %rdi
+L15275:	call L97
+L15276:	movq %rax, 304(%rsp) 
+L15277:	popq %rax
+L15278:	pushq %rax
+L15279:	movq $97, %rax
+L15280:	pushq %rax
+L15281:	movq 312(%rsp), %rax
+L15282:	popq %rdi
+L15283:	call L97
+L15284:	movq %rax, 296(%rsp) 
+L15285:	popq %rax
+L15286:	pushq %rax
+L15287:	movq $101, %rax
+L15288:	pushq %rax
+L15289:	movq 304(%rsp), %rax
+L15290:	popq %rdi
+L15291:	call L97
+L15292:	movq %rax, 288(%rsp) 
+L15293:	popq %rax
+L15294:	pushq %rax
+L15295:	movq $104, %rax
+L15296:	pushq %rax
+L15297:	movq 296(%rsp), %rax
+L15298:	popq %rdi
+L15299:	call L97
+L15300:	movq %rax, 280(%rsp) 
+L15301:	popq %rax
+L15302:	pushq %rax
+L15303:	movq $32, %rax
+L15304:	pushq %rax
+L15305:	movq 288(%rsp), %rax
+L15306:	popq %rdi
+L15307:	call L97
+L15308:	movq %rax, 272(%rsp) 
+L15309:	popq %rax
+L15310:	pushq %rax
+L15311:	movq $102, %rax
+L15312:	pushq %rax
+L15313:	movq 280(%rsp), %rax
+L15314:	popq %rdi
+L15315:	call L97
+L15316:	movq %rax, 264(%rsp) 
+L15317:	popq %rax
+L15318:	pushq %rax
+L15319:	movq $111, %rax
+L15320:	pushq %rax
+L15321:	movq 272(%rsp), %rax
+L15322:	popq %rdi
+L15323:	call L97
+L15324:	movq %rax, 256(%rsp) 
+L15325:	popq %rax
+L15326:	pushq %rax
+L15327:	movq $32, %rax
+L15328:	pushq %rax
+L15329:	movq 264(%rsp), %rax
+L15330:	popq %rdi
+L15331:	call L97
+L15332:	movq %rax, 248(%rsp) 
+L15333:	popq %rax
+L15334:	pushq %rax
+L15335:	movq $115, %rax
+L15336:	pushq %rax
+L15337:	movq 256(%rsp), %rax
+L15338:	popq %rdi
+L15339:	call L97
+L15340:	movq %rax, 240(%rsp) 
+L15341:	popq %rax
+L15342:	pushq %rax
+L15343:	movq $101, %rax
+L15344:	pushq %rax
+L15345:	movq 248(%rsp), %rax
+L15346:	popq %rdi
+L15347:	call L97
+L15348:	movq %rax, 232(%rsp) 
+L15349:	popq %rax
+L15350:	pushq %rax
+L15351:	movq $116, %rax
+L15352:	pushq %rax
+L15353:	movq 240(%rsp), %rax
+L15354:	popq %rdi
+L15355:	call L97
+L15356:	movq %rax, 224(%rsp) 
+L15357:	popq %rax
+L15358:	pushq %rax
+L15359:	movq $121, %rax
+L15360:	pushq %rax
+L15361:	movq 232(%rsp), %rax
+L15362:	popq %rdi
+L15363:	call L97
+L15364:	movq %rax, 216(%rsp) 
+L15365:	popq %rax
+L15366:	pushq %rax
+L15367:	movq $98, %rax
+L15368:	pushq %rax
+L15369:	movq 224(%rsp), %rax
+L15370:	popq %rdi
+L15371:	call L97
+L15372:	movq %rax, 208(%rsp) 
+L15373:	popq %rax
+L15374:	pushq %rax
+L15375:	movq $32, %rax
+L15376:	pushq %rax
+L15377:	movq 216(%rsp), %rax
+L15378:	popq %rdi
+L15379:	call L97
+L15380:	movq %rax, 200(%rsp) 
+L15381:	popq %rax
+L15382:	pushq %rax
+L15383:	movq $42, %rax
+L15384:	pushq %rax
+L15385:	movq 208(%rsp), %rax
+L15386:	popq %rdi
+L15387:	call L97
+L15388:	movq %rax, 192(%rsp) 
+L15389:	popq %rax
+L15390:	pushq %rax
+L15391:	movq $47, %rax
+L15392:	pushq %rax
+L15393:	movq 200(%rsp), %rax
+L15394:	popq %rdi
+L15395:	call L97
+L15396:	movq %rax, 184(%rsp) 
+L15397:	popq %rax
+L15398:	pushq %rax
+L15399:	movq $32, %rax
+L15400:	pushq %rax
+L15401:	movq 192(%rsp), %rax
+L15402:	popq %rdi
+L15403:	call L97
+L15404:	movq %rax, 176(%rsp) 
+L15405:	popq %rax
+L15406:	pushq %rax
+L15407:	movq $32, %rax
+L15408:	pushq %rax
+L15409:	movq 184(%rsp), %rax
+L15410:	popq %rdi
+L15411:	call L97
+L15412:	movq %rax, 168(%rsp) 
+L15413:	popq %rax
+L15414:	pushq %rax
+L15415:	movq $52, %rax
+L15416:	pushq %rax
+L15417:	movq 176(%rsp), %rax
+L15418:	popq %rdi
+L15419:	call L97
+L15420:	movq %rax, 160(%rsp) 
+L15421:	popq %rax
+L15422:	pushq %rax
+L15423:	movq $50, %rax
+L15424:	pushq %rax
+L15425:	movq 168(%rsp), %rax
+L15426:	popq %rdi
+L15427:	call L97
+L15428:	movq %rax, 152(%rsp) 
+L15429:	popq %rax
+L15430:	pushq %rax
+L15431:	movq $48, %rax
+L15432:	pushq %rax
+L15433:	movq 160(%rsp), %rax
+L15434:	popq %rdi
+L15435:	call L97
+L15436:	movq %rax, 144(%rsp) 
+L15437:	popq %rax
+L15438:	pushq %rax
+L15439:	movq $49, %rax
+L15440:	pushq %rax
+L15441:	movq 152(%rsp), %rax
+L15442:	popq %rdi
+L15443:	call L97
+L15444:	movq %rax, 136(%rsp) 
+L15445:	popq %rax
+L15446:	pushq %rax
+L15447:	movq $42, %rax
+L15448:	pushq %rax
+L15449:	movq 144(%rsp), %rax
+L15450:	popq %rdi
+L15451:	call L97
+L15452:	movq %rax, 128(%rsp) 
+L15453:	popq %rax
+L15454:	pushq %rax
+L15455:	movq $52, %rax
+L15456:	pushq %rax
+L15457:	movq 136(%rsp), %rax
+L15458:	popq %rdi
+L15459:	call L97
+L15460:	movq %rax, 120(%rsp) 
+L15461:	popq %rax
+L15462:	pushq %rax
+L15463:	movq $50, %rax
+L15464:	pushq %rax
+L15465:	movq 128(%rsp), %rax
+L15466:	popq %rdi
+L15467:	call L97
+L15468:	movq %rax, 112(%rsp) 
+L15469:	popq %rax
+L15470:	pushq %rax
+L15471:	movq $48, %rax
+L15472:	pushq %rax
+L15473:	movq 120(%rsp), %rax
+L15474:	popq %rdi
+L15475:	call L97
+L15476:	movq %rax, 104(%rsp) 
+L15477:	popq %rax
+L15478:	pushq %rax
+L15479:	movq $49, %rax
+L15480:	pushq %rax
+L15481:	movq 112(%rsp), %rax
+L15482:	popq %rdi
+L15483:	call L97
+L15484:	movq %rax, 96(%rsp) 
+L15485:	popq %rax
+L15486:	pushq %rax
+L15487:	movq $42, %rax
+L15488:	pushq %rax
+L15489:	movq 104(%rsp), %rax
+L15490:	popq %rdi
+L15491:	call L97
+L15492:	movq %rax, 88(%rsp) 
+L15493:	popq %rax
+L15494:	pushq %rax
+L15495:	movq $50, %rax
+L15496:	pushq %rax
+L15497:	movq 96(%rsp), %rax
+L15498:	popq %rdi
+L15499:	call L97
+L15500:	movq %rax, 80(%rsp) 
+L15501:	popq %rax
+L15502:	pushq %rax
+L15503:	movq $51, %rax
+L15504:	pushq %rax
+L15505:	movq 88(%rsp), %rax
+L15506:	popq %rdi
+L15507:	call L97
+L15508:	movq %rax, 72(%rsp) 
+L15509:	popq %rax
+L15510:	pushq %rax
+L15511:	movq $32, %rax
+L15512:	pushq %rax
+L15513:	movq 80(%rsp), %rax
+L15514:	popq %rdi
+L15515:	call L97
+L15516:	movq %rax, 64(%rsp) 
+L15517:	popq %rax
+L15518:	pushq %rax
+L15519:	movq $101, %rax
+L15520:	pushq %rax
+L15521:	movq 72(%rsp), %rax
+L15522:	popq %rdi
+L15523:	call L97
+L15524:	movq %rax, 56(%rsp) 
+L15525:	popq %rax
+L15526:	pushq %rax
+L15527:	movq $99, %rax
+L15528:	pushq %rax
+L15529:	movq 64(%rsp), %rax
+L15530:	popq %rdi
+L15531:	call L97
+L15532:	movq %rax, 48(%rsp) 
+L15533:	popq %rax
+L15534:	pushq %rax
+L15535:	movq $97, %rax
+L15536:	pushq %rax
+L15537:	movq 56(%rsp), %rax
+L15538:	popq %rdi
+L15539:	call L97
+L15540:	movq %rax, 40(%rsp) 
+L15541:	popq %rax
+L15542:	pushq %rax
+L15543:	movq $112, %rax
+L15544:	pushq %rax
+L15545:	movq 48(%rsp), %rax
+L15546:	popq %rdi
+L15547:	call L97
+L15548:	movq %rax, 32(%rsp) 
+L15549:	popq %rax
+L15550:	pushq %rax
+L15551:	movq $115, %rax
+L15552:	pushq %rax
+L15553:	movq 40(%rsp), %rax
+L15554:	popq %rdi
+L15555:	call L97
+L15556:	movq %rax, 24(%rsp) 
+L15557:	popq %rax
+L15558:	pushq %rax
+L15559:	movq $46, %rax
+L15560:	pushq %rax
+L15561:	movq 32(%rsp), %rax
+L15562:	popq %rdi
+L15563:	call L97
+L15564:	movq %rax, 16(%rsp) 
+L15565:	popq %rax
+L15566:	pushq %rax
+L15567:	movq $9, %rax
+L15568:	pushq %rax
+L15569:	movq 24(%rsp), %rax
+L15570:	popq %rdi
+L15571:	call L97
+L15572:	movq %rax, 8(%rsp) 
+L15573:	popq %rax
+L15574:	pushq %rax
+L15575:	movq 8(%rsp), %rax
+L15576:	addq $408, %rsp
+L15577:	ret
+L15578:	ret
+L15579:	
   
   	/* asm2str5 */
-L15577:	subq $400, %rsp
-L15578:	pushq %rax
-L15579:	movq $32, %rax
-L15580:	pushq %rax
-L15581:	movq $0, %rax
-L15582:	popq %rdi
-L15583:	call L97
-L15584:	movq %rax, 392(%rsp) 
-L15585:	popq %rax
-L15586:	pushq %rax
-L15587:	movq $32, %rax
-L15588:	pushq %rax
-L15589:	movq 400(%rsp), %rax
-L15590:	popq %rdi
-L15591:	call L97
-L15592:	movq %rax, 384(%rsp) 
-L15593:	popq %rax
-L15594:	pushq %rax
-L15595:	movq $10, %rax
-L15596:	pushq %rax
-L15597:	movq 392(%rsp), %rax
-L15598:	popq %rdi
-L15599:	call L97
-L15600:	movq %rax, 376(%rsp) 
-L15601:	popq %rax
-L15602:	pushq %rax
-L15603:	movq $47, %rax
-L15604:	pushq %rax
-L15605:	movq 384(%rsp), %rax
-L15606:	popq %rdi
-L15607:	call L97
-L15608:	movq %rax, 368(%rsp) 
-L15609:	popq %rax
-L15610:	pushq %rax
-L15611:	movq $42, %rax
-L15612:	pushq %rax
-L15613:	movq 376(%rsp), %rax
-L15614:	popq %rdi
-L15615:	call L97
-L15616:	movq %rax, 360(%rsp) 
-L15617:	popq %rax
-L15618:	pushq %rax
-L15619:	movq $32, %rax
-L15620:	pushq %rax
-L15621:	movq 368(%rsp), %rax
-L15622:	popq %rdi
-L15623:	call L97
-L15624:	movq %rax, 352(%rsp) 
-L15625:	popq %rax
-L15626:	pushq %rax
-L15627:	movq $32, %rax
-L15628:	pushq %rax
-L15629:	movq 360(%rsp), %rax
-L15630:	popq %rdi
-L15631:	call L97
-L15632:	movq %rax, 344(%rsp) 
-L15633:	popq %rax
-L15634:	pushq %rax
-L15635:	movq $32, %rax
-L15636:	pushq %rax
-L15637:	movq 352(%rsp), %rax
-L15638:	popq %rdi
-L15639:	call L97
-L15640:	movq %rax, 336(%rsp) 
-L15641:	popq %rax
-L15642:	pushq %rax
-L15643:	movq $32, %rax
-L15644:	pushq %rax
-L15645:	movq 344(%rsp), %rax
-L15646:	popq %rdi
-L15647:	call L97
-L15648:	movq %rax, 328(%rsp) 
-L15649:	popq %rax
-L15650:	pushq %rax
-L15651:	movq $32, %rax
-L15652:	pushq %rax
-L15653:	movq 336(%rsp), %rax
-L15654:	popq %rdi
-L15655:	call L97
-L15656:	movq %rax, 320(%rsp) 
-L15657:	popq %rax
-L15658:	pushq %rax
-L15659:	movq $32, %rax
-L15660:	pushq %rax
-L15661:	movq 328(%rsp), %rax
-L15662:	popq %rdi
-L15663:	call L97
-L15664:	movq %rax, 312(%rsp) 
-L15665:	popq %rax
-L15666:	pushq %rax
-L15667:	movq $32, %rax
-L15668:	pushq %rax
-L15669:	movq 320(%rsp), %rax
-L15670:	popq %rdi
-L15671:	call L97
-L15672:	movq %rax, 304(%rsp) 
-L15673:	popq %rax
-L15674:	pushq %rax
-L15675:	movq $32, %rax
-L15676:	pushq %rax
-L15677:	movq 312(%rsp), %rax
-L15678:	popq %rdi
-L15679:	call L97
-L15680:	movq %rax, 296(%rsp) 
-L15681:	popq %rax
-L15682:	pushq %rax
-L15683:	movq $110, %rax
-L15684:	pushq %rax
-L15685:	movq 304(%rsp), %rax
-L15686:	popq %rdi
-L15687:	call L97
-L15688:	movq %rax, 288(%rsp) 
-L15689:	popq %rax
-L15690:	pushq %rax
-L15691:	movq $103, %rax
-L15692:	pushq %rax
-L15693:	movq 296(%rsp), %rax
-L15694:	popq %rdi
-L15695:	call L97
-L15696:	movq %rax, 280(%rsp) 
-L15697:	popq %rax
-L15698:	pushq %rax
-L15699:	movq $105, %rax
-L15700:	pushq %rax
-L15701:	movq 288(%rsp), %rax
-L15702:	popq %rdi
-L15703:	call L97
-L15704:	movq %rax, 272(%rsp) 
-L15705:	popq %rax
-L15706:	pushq %rax
-L15707:	movq $108, %rax
-L15708:	pushq %rax
-L15709:	movq 280(%rsp), %rax
-L15710:	popq %rdi
-L15711:	call L97
-L15712:	movq %rax, 264(%rsp) 
-L15713:	popq %rax
-L15714:	pushq %rax
-L15715:	movq $97, %rax
-L15716:	pushq %rax
-L15717:	movq 272(%rsp), %rax
-L15718:	popq %rdi
-L15719:	call L97
-L15720:	movq %rax, 256(%rsp) 
-L15721:	popq %rax
-L15722:	pushq %rax
-L15723:	movq $32, %rax
-L15724:	pushq %rax
-L15725:	movq 264(%rsp), %rax
-L15726:	popq %rdi
-L15727:	call L97
-L15728:	movq %rax, 248(%rsp) 
-L15729:	popq %rax
-L15730:	pushq %rax
-L15731:	movq $101, %rax
-L15732:	pushq %rax
-L15733:	movq 256(%rsp), %rax
-L15734:	popq %rdi
-L15735:	call L97
-L15736:	movq %rax, 240(%rsp) 
-L15737:	popq %rax
-L15738:	pushq %rax
-L15739:	movq $116, %rax
-L15740:	pushq %rax
-L15741:	movq 248(%rsp), %rax
-L15742:	popq %rdi
-L15743:	call L97
-L15744:	movq %rax, 232(%rsp) 
-L15745:	popq %rax
-L15746:	pushq %rax
-L15747:	movq $121, %rax
-L15748:	pushq %rax
-L15749:	movq 240(%rsp), %rax
-L15750:	popq %rdi
-L15751:	call L97
-L15752:	movq %rax, 224(%rsp) 
-L15753:	popq %rax
-L15754:	pushq %rax
-L15755:	movq $98, %rax
-L15756:	pushq %rax
-L15757:	movq 232(%rsp), %rax
-L15758:	popq %rdi
-L15759:	call L97
-L15760:	movq %rax, 216(%rsp) 
-L15761:	popq %rax
-L15762:	pushq %rax
-L15763:	movq $45, %rax
-L15764:	pushq %rax
-L15765:	movq 224(%rsp), %rax
-L15766:	popq %rdi
-L15767:	call L97
-L15768:	movq %rax, 208(%rsp) 
-L15769:	popq %rax
-L15770:	pushq %rax
-L15771:	movq $56, %rax
-L15772:	pushq %rax
-L15773:	movq 216(%rsp), %rax
-L15774:	popq %rdi
-L15775:	call L97
-L15776:	movq %rax, 200(%rsp) 
-L15777:	popq %rax
-L15778:	pushq %rax
-L15779:	movq $32, %rax
-L15780:	pushq %rax
-L15781:	movq 208(%rsp), %rax
-L15782:	popq %rdi
-L15783:	call L97
-L15784:	movq %rax, 192(%rsp) 
-L15785:	popq %rax
-L15786:	pushq %rax
-L15787:	movq $42, %rax
-L15788:	pushq %rax
-L15789:	movq 200(%rsp), %rax
-L15790:	popq %rdi
-L15791:	call L97
-L15792:	movq %rax, 184(%rsp) 
-L15793:	popq %rax
-L15794:	pushq %rax
-L15795:	movq $47, %rax
-L15796:	pushq %rax
-L15797:	movq 192(%rsp), %rax
-L15798:	popq %rdi
-L15799:	call L97
-L15800:	movq %rax, 176(%rsp) 
-L15801:	popq %rax
-L15802:	pushq %rax
-L15803:	movq $32, %rax
-L15804:	pushq %rax
-L15805:	movq 184(%rsp), %rax
-L15806:	popq %rdi
-L15807:	call L97
-L15808:	movq %rax, 168(%rsp) 
-L15809:	popq %rax
-L15810:	pushq %rax
-L15811:	movq $32, %rax
-L15812:	pushq %rax
-L15813:	movq 176(%rsp), %rax
-L15814:	popq %rdi
-L15815:	call L97
-L15816:	movq %rax, 160(%rsp) 
-L15817:	popq %rax
-L15818:	pushq %rax
-L15819:	movq $32, %rax
-L15820:	pushq %rax
-L15821:	movq 168(%rsp), %rax
-L15822:	popq %rdi
-L15823:	call L97
-L15824:	movq %rax, 152(%rsp) 
-L15825:	popq %rax
-L15826:	pushq %rax
-L15827:	movq $32, %rax
-L15828:	pushq %rax
-L15829:	movq 160(%rsp), %rax
-L15830:	popq %rdi
-L15831:	call L97
-L15832:	movq %rax, 144(%rsp) 
-L15833:	popq %rax
-L15834:	pushq %rax
-L15835:	movq $32, %rax
-L15836:	pushq %rax
-L15837:	movq 152(%rsp), %rax
-L15838:	popq %rdi
-L15839:	call L97
-L15840:	movq %rax, 136(%rsp) 
-L15841:	popq %rax
-L15842:	pushq %rax
-L15843:	movq $32, %rax
-L15844:	pushq %rax
-L15845:	movq 144(%rsp), %rax
-L15846:	popq %rdi
-L15847:	call L97
-L15848:	movq %rax, 128(%rsp) 
-L15849:	popq %rax
-L15850:	pushq %rax
-L15851:	movq $32, %rax
-L15852:	pushq %rax
-L15853:	movq 136(%rsp), %rax
-L15854:	popq %rdi
-L15855:	call L97
-L15856:	movq %rax, 120(%rsp) 
-L15857:	popq %rax
-L15858:	pushq %rax
-L15859:	movq $32, %rax
-L15860:	pushq %rax
-L15861:	movq 128(%rsp), %rax
-L15862:	popq %rdi
-L15863:	call L97
-L15864:	movq %rax, 112(%rsp) 
-L15865:	popq %rax
-L15866:	pushq %rax
-L15867:	movq $32, %rax
-L15868:	pushq %rax
-L15869:	movq 120(%rsp), %rax
-L15870:	popq %rdi
-L15871:	call L97
-L15872:	movq %rax, 104(%rsp) 
-L15873:	popq %rax
-L15874:	pushq %rax
-L15875:	movq $32, %rax
-L15876:	pushq %rax
-L15877:	movq 112(%rsp), %rax
-L15878:	popq %rdi
-L15879:	call L97
-L15880:	movq %rax, 96(%rsp) 
-L15881:	popq %rax
-L15882:	pushq %rax
-L15883:	movq $51, %rax
-L15884:	pushq %rax
-L15885:	movq 104(%rsp), %rax
-L15886:	popq %rdi
-L15887:	call L97
-L15888:	movq %rax, 88(%rsp) 
-L15889:	popq %rax
-L15890:	pushq %rax
-L15891:	movq $32, %rax
-L15892:	pushq %rax
-L15893:	movq 96(%rsp), %rax
-L15894:	popq %rdi
-L15895:	call L97
-L15896:	movq %rax, 80(%rsp) 
-L15897:	popq %rax
-L15898:	pushq %rax
-L15899:	movq $110, %rax
-L15900:	pushq %rax
-L15901:	movq 88(%rsp), %rax
-L15902:	popq %rdi
-L15903:	call L97
-L15904:	movq %rax, 72(%rsp) 
-L15905:	popq %rax
-L15906:	pushq %rax
-L15907:	movq $103, %rax
-L15908:	pushq %rax
-L15909:	movq 80(%rsp), %rax
-L15910:	popq %rdi
-L15911:	call L97
-L15912:	movq %rax, 64(%rsp) 
-L15913:	popq %rax
-L15914:	pushq %rax
-L15915:	movq $105, %rax
-L15916:	pushq %rax
-L15917:	movq 72(%rsp), %rax
-L15918:	popq %rdi
-L15919:	call L97
-L15920:	movq %rax, 56(%rsp) 
-L15921:	popq %rax
-L15922:	pushq %rax
-L15923:	movq $108, %rax
-L15924:	pushq %rax
-L15925:	movq 64(%rsp), %rax
-L15926:	popq %rdi
-L15927:	call L97
-L15928:	movq %rax, 48(%rsp) 
-L15929:	popq %rax
-L15930:	pushq %rax
-L15931:	movq $97, %rax
-L15932:	pushq %rax
-L15933:	movq 56(%rsp), %rax
-L15934:	popq %rdi
-L15935:	call L97
-L15936:	movq %rax, 40(%rsp) 
-L15937:	popq %rax
-L15938:	pushq %rax
-L15939:	movq $50, %rax
-L15940:	pushq %rax
-L15941:	movq 48(%rsp), %rax
-L15942:	popq %rdi
-L15943:	call L97
-L15944:	movq %rax, 32(%rsp) 
-L15945:	popq %rax
-L15946:	pushq %rax
-L15947:	movq $112, %rax
-L15948:	pushq %rax
-L15949:	movq 40(%rsp), %rax
-L15950:	popq %rdi
-L15951:	call L97
-L15952:	movq %rax, 24(%rsp) 
-L15953:	popq %rax
-L15954:	pushq %rax
-L15955:	movq $46, %rax
-L15956:	pushq %rax
-L15957:	movq 32(%rsp), %rax
-L15958:	popq %rdi
-L15959:	call L97
-L15960:	movq %rax, 16(%rsp) 
-L15961:	popq %rax
-L15962:	pushq %rax
-L15963:	movq $9, %rax
-L15964:	pushq %rax
-L15965:	movq 24(%rsp), %rax
-L15966:	popq %rdi
-L15967:	call L97
-L15968:	movq %rax, 8(%rsp) 
-L15969:	popq %rax
-L15970:	pushq %rax
-L15971:	movq 8(%rsp), %rax
-L15972:	addq $408, %rsp
-L15973:	ret
-L15974:	ret
-L15975:	
+L15580:	subq $400, %rsp
+L15581:	pushq %rax
+L15582:	movq $32, %rax
+L15583:	pushq %rax
+L15584:	movq $0, %rax
+L15585:	popq %rdi
+L15586:	call L97
+L15587:	movq %rax, 392(%rsp) 
+L15588:	popq %rax
+L15589:	pushq %rax
+L15590:	movq $32, %rax
+L15591:	pushq %rax
+L15592:	movq 400(%rsp), %rax
+L15593:	popq %rdi
+L15594:	call L97
+L15595:	movq %rax, 384(%rsp) 
+L15596:	popq %rax
+L15597:	pushq %rax
+L15598:	movq $10, %rax
+L15599:	pushq %rax
+L15600:	movq 392(%rsp), %rax
+L15601:	popq %rdi
+L15602:	call L97
+L15603:	movq %rax, 376(%rsp) 
+L15604:	popq %rax
+L15605:	pushq %rax
+L15606:	movq $47, %rax
+L15607:	pushq %rax
+L15608:	movq 384(%rsp), %rax
+L15609:	popq %rdi
+L15610:	call L97
+L15611:	movq %rax, 368(%rsp) 
+L15612:	popq %rax
+L15613:	pushq %rax
+L15614:	movq $42, %rax
+L15615:	pushq %rax
+L15616:	movq 376(%rsp), %rax
+L15617:	popq %rdi
+L15618:	call L97
+L15619:	movq %rax, 360(%rsp) 
+L15620:	popq %rax
+L15621:	pushq %rax
+L15622:	movq $32, %rax
+L15623:	pushq %rax
+L15624:	movq 368(%rsp), %rax
+L15625:	popq %rdi
+L15626:	call L97
+L15627:	movq %rax, 352(%rsp) 
+L15628:	popq %rax
+L15629:	pushq %rax
+L15630:	movq $32, %rax
+L15631:	pushq %rax
+L15632:	movq 360(%rsp), %rax
+L15633:	popq %rdi
+L15634:	call L97
+L15635:	movq %rax, 344(%rsp) 
+L15636:	popq %rax
+L15637:	pushq %rax
+L15638:	movq $32, %rax
+L15639:	pushq %rax
+L15640:	movq 352(%rsp), %rax
+L15641:	popq %rdi
+L15642:	call L97
+L15643:	movq %rax, 336(%rsp) 
+L15644:	popq %rax
+L15645:	pushq %rax
+L15646:	movq $32, %rax
+L15647:	pushq %rax
+L15648:	movq 344(%rsp), %rax
+L15649:	popq %rdi
+L15650:	call L97
+L15651:	movq %rax, 328(%rsp) 
+L15652:	popq %rax
+L15653:	pushq %rax
+L15654:	movq $32, %rax
+L15655:	pushq %rax
+L15656:	movq 336(%rsp), %rax
+L15657:	popq %rdi
+L15658:	call L97
+L15659:	movq %rax, 320(%rsp) 
+L15660:	popq %rax
+L15661:	pushq %rax
+L15662:	movq $32, %rax
+L15663:	pushq %rax
+L15664:	movq 328(%rsp), %rax
+L15665:	popq %rdi
+L15666:	call L97
+L15667:	movq %rax, 312(%rsp) 
+L15668:	popq %rax
+L15669:	pushq %rax
+L15670:	movq $32, %rax
+L15671:	pushq %rax
+L15672:	movq 320(%rsp), %rax
+L15673:	popq %rdi
+L15674:	call L97
+L15675:	movq %rax, 304(%rsp) 
+L15676:	popq %rax
+L15677:	pushq %rax
+L15678:	movq $32, %rax
+L15679:	pushq %rax
+L15680:	movq 312(%rsp), %rax
+L15681:	popq %rdi
+L15682:	call L97
+L15683:	movq %rax, 296(%rsp) 
+L15684:	popq %rax
+L15685:	pushq %rax
+L15686:	movq $110, %rax
+L15687:	pushq %rax
+L15688:	movq 304(%rsp), %rax
+L15689:	popq %rdi
+L15690:	call L97
+L15691:	movq %rax, 288(%rsp) 
+L15692:	popq %rax
+L15693:	pushq %rax
+L15694:	movq $103, %rax
+L15695:	pushq %rax
+L15696:	movq 296(%rsp), %rax
+L15697:	popq %rdi
+L15698:	call L97
+L15699:	movq %rax, 280(%rsp) 
+L15700:	popq %rax
+L15701:	pushq %rax
+L15702:	movq $105, %rax
+L15703:	pushq %rax
+L15704:	movq 288(%rsp), %rax
+L15705:	popq %rdi
+L15706:	call L97
+L15707:	movq %rax, 272(%rsp) 
+L15708:	popq %rax
+L15709:	pushq %rax
+L15710:	movq $108, %rax
+L15711:	pushq %rax
+L15712:	movq 280(%rsp), %rax
+L15713:	popq %rdi
+L15714:	call L97
+L15715:	movq %rax, 264(%rsp) 
+L15716:	popq %rax
+L15717:	pushq %rax
+L15718:	movq $97, %rax
+L15719:	pushq %rax
+L15720:	movq 272(%rsp), %rax
+L15721:	popq %rdi
+L15722:	call L97
+L15723:	movq %rax, 256(%rsp) 
+L15724:	popq %rax
+L15725:	pushq %rax
+L15726:	movq $32, %rax
+L15727:	pushq %rax
+L15728:	movq 264(%rsp), %rax
+L15729:	popq %rdi
+L15730:	call L97
+L15731:	movq %rax, 248(%rsp) 
+L15732:	popq %rax
+L15733:	pushq %rax
+L15734:	movq $101, %rax
+L15735:	pushq %rax
+L15736:	movq 256(%rsp), %rax
+L15737:	popq %rdi
+L15738:	call L97
+L15739:	movq %rax, 240(%rsp) 
+L15740:	popq %rax
+L15741:	pushq %rax
+L15742:	movq $116, %rax
+L15743:	pushq %rax
+L15744:	movq 248(%rsp), %rax
+L15745:	popq %rdi
+L15746:	call L97
+L15747:	movq %rax, 232(%rsp) 
+L15748:	popq %rax
+L15749:	pushq %rax
+L15750:	movq $121, %rax
+L15751:	pushq %rax
+L15752:	movq 240(%rsp), %rax
+L15753:	popq %rdi
+L15754:	call L97
+L15755:	movq %rax, 224(%rsp) 
+L15756:	popq %rax
+L15757:	pushq %rax
+L15758:	movq $98, %rax
+L15759:	pushq %rax
+L15760:	movq 232(%rsp), %rax
+L15761:	popq %rdi
+L15762:	call L97
+L15763:	movq %rax, 216(%rsp) 
+L15764:	popq %rax
+L15765:	pushq %rax
+L15766:	movq $45, %rax
+L15767:	pushq %rax
+L15768:	movq 224(%rsp), %rax
+L15769:	popq %rdi
+L15770:	call L97
+L15771:	movq %rax, 208(%rsp) 
+L15772:	popq %rax
+L15773:	pushq %rax
+L15774:	movq $56, %rax
+L15775:	pushq %rax
+L15776:	movq 216(%rsp), %rax
+L15777:	popq %rdi
+L15778:	call L97
+L15779:	movq %rax, 200(%rsp) 
+L15780:	popq %rax
+L15781:	pushq %rax
+L15782:	movq $32, %rax
+L15783:	pushq %rax
+L15784:	movq 208(%rsp), %rax
+L15785:	popq %rdi
+L15786:	call L97
+L15787:	movq %rax, 192(%rsp) 
+L15788:	popq %rax
+L15789:	pushq %rax
+L15790:	movq $42, %rax
+L15791:	pushq %rax
+L15792:	movq 200(%rsp), %rax
+L15793:	popq %rdi
+L15794:	call L97
+L15795:	movq %rax, 184(%rsp) 
+L15796:	popq %rax
+L15797:	pushq %rax
+L15798:	movq $47, %rax
+L15799:	pushq %rax
+L15800:	movq 192(%rsp), %rax
+L15801:	popq %rdi
+L15802:	call L97
+L15803:	movq %rax, 176(%rsp) 
+L15804:	popq %rax
+L15805:	pushq %rax
+L15806:	movq $32, %rax
+L15807:	pushq %rax
+L15808:	movq 184(%rsp), %rax
+L15809:	popq %rdi
+L15810:	call L97
+L15811:	movq %rax, 168(%rsp) 
+L15812:	popq %rax
+L15813:	pushq %rax
+L15814:	movq $32, %rax
+L15815:	pushq %rax
+L15816:	movq 176(%rsp), %rax
+L15817:	popq %rdi
+L15818:	call L97
+L15819:	movq %rax, 160(%rsp) 
+L15820:	popq %rax
+L15821:	pushq %rax
+L15822:	movq $32, %rax
+L15823:	pushq %rax
+L15824:	movq 168(%rsp), %rax
+L15825:	popq %rdi
+L15826:	call L97
+L15827:	movq %rax, 152(%rsp) 
+L15828:	popq %rax
+L15829:	pushq %rax
+L15830:	movq $32, %rax
+L15831:	pushq %rax
+L15832:	movq 160(%rsp), %rax
+L15833:	popq %rdi
+L15834:	call L97
+L15835:	movq %rax, 144(%rsp) 
+L15836:	popq %rax
+L15837:	pushq %rax
+L15838:	movq $32, %rax
+L15839:	pushq %rax
+L15840:	movq 152(%rsp), %rax
+L15841:	popq %rdi
+L15842:	call L97
+L15843:	movq %rax, 136(%rsp) 
+L15844:	popq %rax
+L15845:	pushq %rax
+L15846:	movq $32, %rax
+L15847:	pushq %rax
+L15848:	movq 144(%rsp), %rax
+L15849:	popq %rdi
+L15850:	call L97
+L15851:	movq %rax, 128(%rsp) 
+L15852:	popq %rax
+L15853:	pushq %rax
+L15854:	movq $32, %rax
+L15855:	pushq %rax
+L15856:	movq 136(%rsp), %rax
+L15857:	popq %rdi
+L15858:	call L97
+L15859:	movq %rax, 120(%rsp) 
+L15860:	popq %rax
+L15861:	pushq %rax
+L15862:	movq $32, %rax
+L15863:	pushq %rax
+L15864:	movq 128(%rsp), %rax
+L15865:	popq %rdi
+L15866:	call L97
+L15867:	movq %rax, 112(%rsp) 
+L15868:	popq %rax
+L15869:	pushq %rax
+L15870:	movq $32, %rax
+L15871:	pushq %rax
+L15872:	movq 120(%rsp), %rax
+L15873:	popq %rdi
+L15874:	call L97
+L15875:	movq %rax, 104(%rsp) 
+L15876:	popq %rax
+L15877:	pushq %rax
+L15878:	movq $32, %rax
+L15879:	pushq %rax
+L15880:	movq 112(%rsp), %rax
+L15881:	popq %rdi
+L15882:	call L97
+L15883:	movq %rax, 96(%rsp) 
+L15884:	popq %rax
+L15885:	pushq %rax
+L15886:	movq $51, %rax
+L15887:	pushq %rax
+L15888:	movq 104(%rsp), %rax
+L15889:	popq %rdi
+L15890:	call L97
+L15891:	movq %rax, 88(%rsp) 
+L15892:	popq %rax
+L15893:	pushq %rax
+L15894:	movq $32, %rax
+L15895:	pushq %rax
+L15896:	movq 96(%rsp), %rax
+L15897:	popq %rdi
+L15898:	call L97
+L15899:	movq %rax, 80(%rsp) 
+L15900:	popq %rax
+L15901:	pushq %rax
+L15902:	movq $110, %rax
+L15903:	pushq %rax
+L15904:	movq 88(%rsp), %rax
+L15905:	popq %rdi
+L15906:	call L97
+L15907:	movq %rax, 72(%rsp) 
+L15908:	popq %rax
+L15909:	pushq %rax
+L15910:	movq $103, %rax
+L15911:	pushq %rax
+L15912:	movq 80(%rsp), %rax
+L15913:	popq %rdi
+L15914:	call L97
+L15915:	movq %rax, 64(%rsp) 
+L15916:	popq %rax
+L15917:	pushq %rax
+L15918:	movq $105, %rax
+L15919:	pushq %rax
+L15920:	movq 72(%rsp), %rax
+L15921:	popq %rdi
+L15922:	call L97
+L15923:	movq %rax, 56(%rsp) 
+L15924:	popq %rax
+L15925:	pushq %rax
+L15926:	movq $108, %rax
+L15927:	pushq %rax
+L15928:	movq 64(%rsp), %rax
+L15929:	popq %rdi
+L15930:	call L97
+L15931:	movq %rax, 48(%rsp) 
+L15932:	popq %rax
+L15933:	pushq %rax
+L15934:	movq $97, %rax
+L15935:	pushq %rax
+L15936:	movq 56(%rsp), %rax
+L15937:	popq %rdi
+L15938:	call L97
+L15939:	movq %rax, 40(%rsp) 
+L15940:	popq %rax
+L15941:	pushq %rax
+L15942:	movq $50, %rax
+L15943:	pushq %rax
+L15944:	movq 48(%rsp), %rax
+L15945:	popq %rdi
+L15946:	call L97
+L15947:	movq %rax, 32(%rsp) 
+L15948:	popq %rax
+L15949:	pushq %rax
+L15950:	movq $112, %rax
+L15951:	pushq %rax
+L15952:	movq 40(%rsp), %rax
+L15953:	popq %rdi
+L15954:	call L97
+L15955:	movq %rax, 24(%rsp) 
+L15956:	popq %rax
+L15957:	pushq %rax
+L15958:	movq $46, %rax
+L15959:	pushq %rax
+L15960:	movq 32(%rsp), %rax
+L15961:	popq %rdi
+L15962:	call L97
+L15963:	movq %rax, 16(%rsp) 
+L15964:	popq %rax
+L15965:	pushq %rax
+L15966:	movq $9, %rax
+L15967:	pushq %rax
+L15968:	movq 24(%rsp), %rax
+L15969:	popq %rdi
+L15970:	call L97
+L15971:	movq %rax, 8(%rsp) 
+L15972:	popq %rax
+L15973:	pushq %rax
+L15974:	movq 8(%rsp), %rax
+L15975:	addq $408, %rsp
+L15976:	ret
+L15977:	ret
+L15978:	
   
   	/* asm2str6 */
-L15976:	subq $80, %rsp
-L15977:	pushq %rax
-L15978:	movq $32, %rax
-L15979:	pushq %rax
-L15980:	movq $10, %rax
-L15981:	pushq %rax
-L15982:	movq $32, %rax
-L15983:	pushq %rax
-L15984:	movq $32, %rax
-L15985:	pushq %rax
-L15986:	movq $0, %rax
-L15987:	popq %rdi
-L15988:	popq %rdx
-L15989:	popq %rbx
-L15990:	popq %rbp
-L15991:	call L187
-L15992:	movq %rax, 72(%rsp) 
-L15993:	popq %rax
-L15994:	pushq %rax
-L15995:	movq $32, %rax
-L15996:	pushq %rax
-L15997:	movq 80(%rsp), %rax
-L15998:	popq %rdi
-L15999:	call L97
-L16000:	movq %rax, 64(%rsp) 
-L16001:	popq %rax
-L16002:	pushq %rax
-L16003:	movq $10, %rax
-L16004:	pushq %rax
-L16005:	movq 72(%rsp), %rax
-L16006:	popq %rdi
-L16007:	call L97
-L16008:	movq %rax, 56(%rsp) 
-L16009:	popq %rax
-L16010:	pushq %rax
-L16011:	movq $58, %rax
-L16012:	pushq %rax
-L16013:	movq 64(%rsp), %rax
-L16014:	popq %rdi
-L16015:	call L97
-L16016:	movq %rax, 48(%rsp) 
-L16017:	popq %rax
-L16018:	pushq %rax
-L16019:	movq $69, %rax
-L16020:	pushq %rax
-L16021:	movq 56(%rsp), %rax
-L16022:	popq %rdi
-L16023:	call L97
-L16024:	movq %rax, 40(%rsp) 
-L16025:	popq %rax
-L16026:	pushq %rax
-L16027:	movq $112, %rax
-L16028:	pushq %rax
-L16029:	movq 48(%rsp), %rax
-L16030:	popq %rdi
-L16031:	call L97
-L16032:	movq %rax, 32(%rsp) 
-L16033:	popq %rax
-L16034:	pushq %rax
-L16035:	movq $97, %rax
-L16036:	pushq %rax
-L16037:	movq 40(%rsp), %rax
-L16038:	popq %rdi
-L16039:	call L97
-L16040:	movq %rax, 24(%rsp) 
-L16041:	popq %rax
-L16042:	pushq %rax
-L16043:	movq $101, %rax
-L16044:	pushq %rax
-L16045:	movq 32(%rsp), %rax
-L16046:	popq %rdi
-L16047:	call L97
-L16048:	movq %rax, 16(%rsp) 
-L16049:	popq %rax
-L16050:	pushq %rax
-L16051:	movq $104, %rax
-L16052:	pushq %rax
-L16053:	movq 24(%rsp), %rax
-L16054:	popq %rdi
-L16055:	call L97
-L16056:	movq %rax, 8(%rsp) 
-L16057:	popq %rax
-L16058:	pushq %rax
-L16059:	movq 8(%rsp), %rax
-L16060:	addq $88, %rsp
-L16061:	ret
-L16062:	ret
-L16063:	
+L15979:	subq $80, %rsp
+L15980:	pushq %rax
+L15981:	movq $32, %rax
+L15982:	pushq %rax
+L15983:	movq $10, %rax
+L15984:	pushq %rax
+L15985:	movq $32, %rax
+L15986:	pushq %rax
+L15987:	movq $32, %rax
+L15988:	pushq %rax
+L15989:	movq $0, %rax
+L15990:	popq %rdi
+L15991:	popq %rdx
+L15992:	popq %rbx
+L15993:	popq %rbp
+L15994:	call L187
+L15995:	movq %rax, 72(%rsp) 
+L15996:	popq %rax
+L15997:	pushq %rax
+L15998:	movq $32, %rax
+L15999:	pushq %rax
+L16000:	movq 80(%rsp), %rax
+L16001:	popq %rdi
+L16002:	call L97
+L16003:	movq %rax, 64(%rsp) 
+L16004:	popq %rax
+L16005:	pushq %rax
+L16006:	movq $10, %rax
+L16007:	pushq %rax
+L16008:	movq 72(%rsp), %rax
+L16009:	popq %rdi
+L16010:	call L97
+L16011:	movq %rax, 56(%rsp) 
+L16012:	popq %rax
+L16013:	pushq %rax
+L16014:	movq $58, %rax
+L16015:	pushq %rax
+L16016:	movq 64(%rsp), %rax
+L16017:	popq %rdi
+L16018:	call L97
+L16019:	movq %rax, 48(%rsp) 
+L16020:	popq %rax
+L16021:	pushq %rax
+L16022:	movq $69, %rax
+L16023:	pushq %rax
+L16024:	movq 56(%rsp), %rax
+L16025:	popq %rdi
+L16026:	call L97
+L16027:	movq %rax, 40(%rsp) 
+L16028:	popq %rax
+L16029:	pushq %rax
+L16030:	movq $112, %rax
+L16031:	pushq %rax
+L16032:	movq 48(%rsp), %rax
+L16033:	popq %rdi
+L16034:	call L97
+L16035:	movq %rax, 32(%rsp) 
+L16036:	popq %rax
+L16037:	pushq %rax
+L16038:	movq $97, %rax
+L16039:	pushq %rax
+L16040:	movq 40(%rsp), %rax
+L16041:	popq %rdi
+L16042:	call L97
+L16043:	movq %rax, 24(%rsp) 
+L16044:	popq %rax
+L16045:	pushq %rax
+L16046:	movq $101, %rax
+L16047:	pushq %rax
+L16048:	movq 32(%rsp), %rax
+L16049:	popq %rdi
+L16050:	call L97
+L16051:	movq %rax, 16(%rsp) 
+L16052:	popq %rax
+L16053:	pushq %rax
+L16054:	movq $104, %rax
+L16055:	pushq %rax
+L16056:	movq 24(%rsp), %rax
+L16057:	popq %rdi
+L16058:	call L97
+L16059:	movq %rax, 8(%rsp) 
+L16060:	popq %rax
+L16061:	pushq %rax
+L16062:	movq 8(%rsp), %rax
+L16063:	addq $88, %rsp
+L16064:	ret
+L16065:	ret
+L16066:	
   
   	/* asm2str7 */
-L16064:	subq $80, %rsp
-L16065:	pushq %rax
-L16066:	movq $32, %rax
-L16067:	pushq %rax
-L16068:	movq $0, %rax
-L16069:	popq %rdi
-L16070:	call L97
-L16071:	movq %rax, 72(%rsp) 
-L16072:	popq %rax
-L16073:	pushq %rax
-L16074:	movq $32, %rax
-L16075:	pushq %rax
-L16076:	movq 80(%rsp), %rax
-L16077:	popq %rdi
-L16078:	call L97
-L16079:	movq %rax, 64(%rsp) 
-L16080:	popq %rax
-L16081:	pushq %rax
-L16082:	movq $10, %rax
-L16083:	pushq %rax
-L16084:	movq 72(%rsp), %rax
-L16085:	popq %rdi
-L16086:	call L97
-L16087:	movq %rax, 56(%rsp) 
-L16088:	popq %rax
-L16089:	pushq %rax
-L16090:	movq $116, %rax
-L16091:	pushq %rax
-L16092:	movq 64(%rsp), %rax
-L16093:	popq %rdi
-L16094:	call L97
-L16095:	movq %rax, 48(%rsp) 
-L16096:	popq %rax
-L16097:	pushq %rax
-L16098:	movq $120, %rax
-L16099:	pushq %rax
-L16100:	movq 56(%rsp), %rax
-L16101:	popq %rdi
-L16102:	call L97
-L16103:	movq %rax, 40(%rsp) 
-L16104:	popq %rax
-L16105:	pushq %rax
-L16106:	movq $101, %rax
-L16107:	pushq %rax
-L16108:	movq 48(%rsp), %rax
-L16109:	popq %rdi
-L16110:	call L97
-L16111:	movq %rax, 32(%rsp) 
-L16112:	popq %rax
-L16113:	pushq %rax
-L16114:	movq $116, %rax
-L16115:	pushq %rax
-L16116:	movq 40(%rsp), %rax
-L16117:	popq %rdi
-L16118:	call L97
-L16119:	movq %rax, 24(%rsp) 
-L16120:	popq %rax
-L16121:	pushq %rax
-L16122:	movq $46, %rax
-L16123:	pushq %rax
-L16124:	movq 32(%rsp), %rax
-L16125:	popq %rdi
-L16126:	call L97
-L16127:	movq %rax, 16(%rsp) 
-L16128:	popq %rax
-L16129:	pushq %rax
-L16130:	movq $9, %rax
-L16131:	pushq %rax
-L16132:	movq 24(%rsp), %rax
-L16133:	popq %rdi
-L16134:	call L97
-L16135:	movq %rax, 8(%rsp) 
-L16136:	popq %rax
-L16137:	pushq %rax
-L16138:	movq 8(%rsp), %rax
-L16139:	addq $88, %rsp
-L16140:	ret
-L16141:	ret
-L16142:	
+L16067:	subq $80, %rsp
+L16068:	pushq %rax
+L16069:	movq $32, %rax
+L16070:	pushq %rax
+L16071:	movq $0, %rax
+L16072:	popq %rdi
+L16073:	call L97
+L16074:	movq %rax, 72(%rsp) 
+L16075:	popq %rax
+L16076:	pushq %rax
+L16077:	movq $32, %rax
+L16078:	pushq %rax
+L16079:	movq 80(%rsp), %rax
+L16080:	popq %rdi
+L16081:	call L97
+L16082:	movq %rax, 64(%rsp) 
+L16083:	popq %rax
+L16084:	pushq %rax
+L16085:	movq $10, %rax
+L16086:	pushq %rax
+L16087:	movq 72(%rsp), %rax
+L16088:	popq %rdi
+L16089:	call L97
+L16090:	movq %rax, 56(%rsp) 
+L16091:	popq %rax
+L16092:	pushq %rax
+L16093:	movq $116, %rax
+L16094:	pushq %rax
+L16095:	movq 64(%rsp), %rax
+L16096:	popq %rdi
+L16097:	call L97
+L16098:	movq %rax, 48(%rsp) 
+L16099:	popq %rax
+L16100:	pushq %rax
+L16101:	movq $120, %rax
+L16102:	pushq %rax
+L16103:	movq 56(%rsp), %rax
+L16104:	popq %rdi
+L16105:	call L97
+L16106:	movq %rax, 40(%rsp) 
+L16107:	popq %rax
+L16108:	pushq %rax
+L16109:	movq $101, %rax
+L16110:	pushq %rax
+L16111:	movq 48(%rsp), %rax
+L16112:	popq %rdi
+L16113:	call L97
+L16114:	movq %rax, 32(%rsp) 
+L16115:	popq %rax
+L16116:	pushq %rax
+L16117:	movq $116, %rax
+L16118:	pushq %rax
+L16119:	movq 40(%rsp), %rax
+L16120:	popq %rdi
+L16121:	call L97
+L16122:	movq %rax, 24(%rsp) 
+L16123:	popq %rax
+L16124:	pushq %rax
+L16125:	movq $46, %rax
+L16126:	pushq %rax
+L16127:	movq 32(%rsp), %rax
+L16128:	popq %rdi
+L16129:	call L97
+L16130:	movq %rax, 16(%rsp) 
+L16131:	popq %rax
+L16132:	pushq %rax
+L16133:	movq $9, %rax
+L16134:	pushq %rax
+L16135:	movq 24(%rsp), %rax
+L16136:	popq %rdi
+L16137:	call L97
+L16138:	movq %rax, 8(%rsp) 
+L16139:	popq %rax
+L16140:	pushq %rax
+L16141:	movq 8(%rsp), %rax
+L16142:	addq $88, %rsp
+L16143:	ret
+L16144:	ret
+L16145:	
   
   	/* asm2str8 */
-L16143:	subq $112, %rsp
-L16144:	pushq %rax
-L16145:	movq $10, %rax
-L16146:	pushq %rax
-L16147:	movq $32, %rax
-L16148:	pushq %rax
-L16149:	movq $32, %rax
-L16150:	pushq %rax
-L16151:	movq $0, %rax
-L16152:	popq %rdi
-L16153:	popq %rdx
-L16154:	popq %rbx
-L16155:	call L158
-L16156:	movq %rax, 104(%rsp) 
-L16157:	popq %rax
-L16158:	pushq %rax
-L16159:	movq $110, %rax
-L16160:	pushq %rax
-L16161:	movq 112(%rsp), %rax
-L16162:	popq %rdi
-L16163:	call L97
-L16164:	movq %rax, 96(%rsp) 
-L16165:	popq %rax
-L16166:	pushq %rax
-L16167:	movq $105, %rax
-L16168:	pushq %rax
-L16169:	movq 104(%rsp), %rax
-L16170:	popq %rdi
-L16171:	call L97
-L16172:	movq %rax, 88(%rsp) 
-L16173:	popq %rax
-L16174:	pushq %rax
-L16175:	movq $97, %rax
-L16176:	pushq %rax
-L16177:	movq 96(%rsp), %rax
-L16178:	popq %rdi
-L16179:	call L97
-L16180:	movq %rax, 80(%rsp) 
-L16181:	popq %rax
-L16182:	pushq %rax
-L16183:	movq $109, %rax
-L16184:	pushq %rax
-L16185:	movq 88(%rsp), %rax
-L16186:	popq %rdi
-L16187:	call L97
-L16188:	movq %rax, 72(%rsp) 
-L16189:	popq %rax
-L16190:	pushq %rax
-L16191:	movq $32, %rax
-L16192:	pushq %rax
-L16193:	movq 80(%rsp), %rax
-L16194:	popq %rdi
-L16195:	call L97
-L16196:	movq %rax, 64(%rsp) 
-L16197:	popq %rax
-L16198:	pushq %rax
-L16199:	movq $108, %rax
-L16200:	pushq %rax
-L16201:	movq 72(%rsp), %rax
-L16202:	popq %rdi
-L16203:	call L97
-L16204:	movq %rax, 56(%rsp) 
-L16205:	popq %rax
-L16206:	pushq %rax
-L16207:	movq $98, %rax
-L16208:	pushq %rax
-L16209:	movq 64(%rsp), %rax
-L16210:	popq %rdi
-L16211:	call L97
-L16212:	movq %rax, 48(%rsp) 
-L16213:	popq %rax
-L16214:	pushq %rax
-L16215:	movq $111, %rax
-L16216:	pushq %rax
-L16217:	movq 56(%rsp), %rax
-L16218:	popq %rdi
-L16219:	call L97
-L16220:	movq %rax, 40(%rsp) 
-L16221:	popq %rax
-L16222:	pushq %rax
-L16223:	movq $108, %rax
-L16224:	pushq %rax
-L16225:	movq 48(%rsp), %rax
-L16226:	popq %rdi
-L16227:	call L97
-L16228:	movq %rax, 32(%rsp) 
-L16229:	popq %rax
-L16230:	pushq %rax
-L16231:	movq $103, %rax
-L16232:	pushq %rax
-L16233:	movq 40(%rsp), %rax
-L16234:	popq %rdi
-L16235:	call L97
-L16236:	movq %rax, 24(%rsp) 
-L16237:	popq %rax
-L16238:	pushq %rax
-L16239:	movq $46, %rax
-L16240:	pushq %rax
-L16241:	movq 32(%rsp), %rax
-L16242:	popq %rdi
-L16243:	call L97
-L16244:	movq %rax, 16(%rsp) 
-L16245:	popq %rax
-L16246:	pushq %rax
-L16247:	movq $9, %rax
-L16248:	pushq %rax
-L16249:	movq 24(%rsp), %rax
-L16250:	popq %rdi
-L16251:	call L97
-L16252:	movq %rax, 8(%rsp) 
-L16253:	popq %rax
-L16254:	pushq %rax
-L16255:	movq 8(%rsp), %rax
-L16256:	addq $120, %rsp
-L16257:	ret
-L16258:	ret
-L16259:	
+L16146:	subq $112, %rsp
+L16147:	pushq %rax
+L16148:	movq $10, %rax
+L16149:	pushq %rax
+L16150:	movq $32, %rax
+L16151:	pushq %rax
+L16152:	movq $32, %rax
+L16153:	pushq %rax
+L16154:	movq $0, %rax
+L16155:	popq %rdi
+L16156:	popq %rdx
+L16157:	popq %rbx
+L16158:	call L158
+L16159:	movq %rax, 104(%rsp) 
+L16160:	popq %rax
+L16161:	pushq %rax
+L16162:	movq $110, %rax
+L16163:	pushq %rax
+L16164:	movq 112(%rsp), %rax
+L16165:	popq %rdi
+L16166:	call L97
+L16167:	movq %rax, 96(%rsp) 
+L16168:	popq %rax
+L16169:	pushq %rax
+L16170:	movq $105, %rax
+L16171:	pushq %rax
+L16172:	movq 104(%rsp), %rax
+L16173:	popq %rdi
+L16174:	call L97
+L16175:	movq %rax, 88(%rsp) 
+L16176:	popq %rax
+L16177:	pushq %rax
+L16178:	movq $97, %rax
+L16179:	pushq %rax
+L16180:	movq 96(%rsp), %rax
+L16181:	popq %rdi
+L16182:	call L97
+L16183:	movq %rax, 80(%rsp) 
+L16184:	popq %rax
+L16185:	pushq %rax
+L16186:	movq $109, %rax
+L16187:	pushq %rax
+L16188:	movq 88(%rsp), %rax
+L16189:	popq %rdi
+L16190:	call L97
+L16191:	movq %rax, 72(%rsp) 
+L16192:	popq %rax
+L16193:	pushq %rax
+L16194:	movq $32, %rax
+L16195:	pushq %rax
+L16196:	movq 80(%rsp), %rax
+L16197:	popq %rdi
+L16198:	call L97
+L16199:	movq %rax, 64(%rsp) 
+L16200:	popq %rax
+L16201:	pushq %rax
+L16202:	movq $108, %rax
+L16203:	pushq %rax
+L16204:	movq 72(%rsp), %rax
+L16205:	popq %rdi
+L16206:	call L97
+L16207:	movq %rax, 56(%rsp) 
+L16208:	popq %rax
+L16209:	pushq %rax
+L16210:	movq $98, %rax
+L16211:	pushq %rax
+L16212:	movq 64(%rsp), %rax
+L16213:	popq %rdi
+L16214:	call L97
+L16215:	movq %rax, 48(%rsp) 
+L16216:	popq %rax
+L16217:	pushq %rax
+L16218:	movq $111, %rax
+L16219:	pushq %rax
+L16220:	movq 56(%rsp), %rax
+L16221:	popq %rdi
+L16222:	call L97
+L16223:	movq %rax, 40(%rsp) 
+L16224:	popq %rax
+L16225:	pushq %rax
+L16226:	movq $108, %rax
+L16227:	pushq %rax
+L16228:	movq 48(%rsp), %rax
+L16229:	popq %rdi
+L16230:	call L97
+L16231:	movq %rax, 32(%rsp) 
+L16232:	popq %rax
+L16233:	pushq %rax
+L16234:	movq $103, %rax
+L16235:	pushq %rax
+L16236:	movq 40(%rsp), %rax
+L16237:	popq %rdi
+L16238:	call L97
+L16239:	movq %rax, 24(%rsp) 
+L16240:	popq %rax
+L16241:	pushq %rax
+L16242:	movq $46, %rax
+L16243:	pushq %rax
+L16244:	movq 32(%rsp), %rax
+L16245:	popq %rdi
+L16246:	call L97
+L16247:	movq %rax, 16(%rsp) 
+L16248:	popq %rax
+L16249:	pushq %rax
+L16250:	movq $9, %rax
+L16251:	pushq %rax
+L16252:	movq 24(%rsp), %rax
+L16253:	popq %rdi
+L16254:	call L97
+L16255:	movq %rax, 8(%rsp) 
+L16256:	popq %rax
+L16257:	pushq %rax
+L16258:	movq 8(%rsp), %rax
+L16259:	addq $120, %rsp
+L16260:	ret
+L16261:	ret
+L16262:	
   
   	/* asm2str9 */
-L16260:	subq $48, %rsp
-L16261:	pushq %rax
-L16262:	movq $58, %rax
-L16263:	pushq %rax
-L16264:	movq $10, %rax
-L16265:	pushq %rax
-L16266:	movq $32, %rax
-L16267:	pushq %rax
-L16268:	movq $32, %rax
-L16269:	pushq %rax
-L16270:	movq $0, %rax
-L16271:	popq %rdi
-L16272:	popq %rdx
-L16273:	popq %rbx
-L16274:	popq %rbp
-L16275:	call L187
-L16276:	movq %rax, 40(%rsp) 
-L16277:	popq %rax
-L16278:	pushq %rax
-L16279:	movq $110, %rax
-L16280:	pushq %rax
-L16281:	movq 48(%rsp), %rax
-L16282:	popq %rdi
-L16283:	call L97
-L16284:	movq %rax, 32(%rsp) 
-L16285:	popq %rax
-L16286:	pushq %rax
-L16287:	movq $105, %rax
-L16288:	pushq %rax
-L16289:	movq 40(%rsp), %rax
-L16290:	popq %rdi
-L16291:	call L97
-L16292:	movq %rax, 24(%rsp) 
-L16293:	popq %rax
-L16294:	pushq %rax
-L16295:	movq $97, %rax
-L16296:	pushq %rax
-L16297:	movq 32(%rsp), %rax
-L16298:	popq %rdi
-L16299:	call L97
-L16300:	movq %rax, 16(%rsp) 
-L16301:	popq %rax
-L16302:	pushq %rax
-L16303:	movq $109, %rax
-L16304:	pushq %rax
-L16305:	movq 24(%rsp), %rax
-L16306:	popq %rdi
-L16307:	call L97
-L16308:	movq %rax, 8(%rsp) 
-L16309:	popq %rax
-L16310:	pushq %rax
-L16311:	movq 8(%rsp), %rax
-L16312:	addq $56, %rsp
-L16313:	ret
-L16314:	ret
-L16315:	
+L16263:	subq $48, %rsp
+L16264:	pushq %rax
+L16265:	movq $58, %rax
+L16266:	pushq %rax
+L16267:	movq $10, %rax
+L16268:	pushq %rax
+L16269:	movq $32, %rax
+L16270:	pushq %rax
+L16271:	movq $32, %rax
+L16272:	pushq %rax
+L16273:	movq $0, %rax
+L16274:	popq %rdi
+L16275:	popq %rdx
+L16276:	popq %rbx
+L16277:	popq %rbp
+L16278:	call L187
+L16279:	movq %rax, 40(%rsp) 
+L16280:	popq %rax
+L16281:	pushq %rax
+L16282:	movq $110, %rax
+L16283:	pushq %rax
+L16284:	movq 48(%rsp), %rax
+L16285:	popq %rdi
+L16286:	call L97
+L16287:	movq %rax, 32(%rsp) 
+L16288:	popq %rax
+L16289:	pushq %rax
+L16290:	movq $105, %rax
+L16291:	pushq %rax
+L16292:	movq 40(%rsp), %rax
+L16293:	popq %rdi
+L16294:	call L97
+L16295:	movq %rax, 24(%rsp) 
+L16296:	popq %rax
+L16297:	pushq %rax
+L16298:	movq $97, %rax
+L16299:	pushq %rax
+L16300:	movq 32(%rsp), %rax
+L16301:	popq %rdi
+L16302:	call L97
+L16303:	movq %rax, 16(%rsp) 
+L16304:	popq %rax
+L16305:	pushq %rax
+L16306:	movq $109, %rax
+L16307:	pushq %rax
+L16308:	movq 24(%rsp), %rax
+L16309:	popq %rdi
+L16310:	call L97
+L16311:	movq %rax, 8(%rsp) 
+L16312:	popq %rax
+L16313:	pushq %rax
+L16314:	movq 8(%rsp), %rax
+L16315:	addq $56, %rsp
+L16316:	ret
+L16317:	ret
+L16318:	
   
   	/* asm2str0 */
-L16316:	subq $400, %rsp
-L16317:	pushq %rax
-L16318:	movq $32, %rax
-L16319:	pushq %rax
-L16320:	movq $0, %rax
-L16321:	popq %rdi
-L16322:	call L97
-L16323:	movq %rax, 392(%rsp) 
-L16324:	popq %rax
-L16325:	pushq %rax
-L16326:	movq $32, %rax
-L16327:	pushq %rax
-L16328:	movq 400(%rsp), %rax
-L16329:	popq %rdi
-L16330:	call L97
-L16331:	movq %rax, 384(%rsp) 
-L16332:	popq %rax
-L16333:	pushq %rax
-L16334:	movq $10, %rax
-L16335:	pushq %rax
-L16336:	movq 392(%rsp), %rax
-L16337:	popq %rdi
-L16338:	call L97
-L16339:	movq %rax, 376(%rsp) 
-L16340:	popq %rax
-L16341:	pushq %rax
-L16342:	movq $47, %rax
-L16343:	pushq %rax
-L16344:	movq 384(%rsp), %rax
-L16345:	popq %rdi
-L16346:	call L97
-L16347:	movq %rax, 368(%rsp) 
-L16348:	popq %rax
-L16349:	pushq %rax
-L16350:	movq $42, %rax
-L16351:	pushq %rax
-L16352:	movq 376(%rsp), %rax
-L16353:	popq %rdi
-L16354:	call L97
-L16355:	movq %rax, 360(%rsp) 
-L16356:	popq %rax
-L16357:	pushq %rax
-L16358:	movq $32, %rax
-L16359:	pushq %rax
-L16360:	movq 368(%rsp), %rax
-L16361:	popq %rdi
-L16362:	call L97
-L16363:	movq %rax, 352(%rsp) 
-L16364:	popq %rax
-L16365:	pushq %rax
-L16366:	movq $112, %rax
-L16367:	pushq %rax
-L16368:	movq 360(%rsp), %rax
-L16369:	popq %rdi
-L16370:	call L97
-L16371:	movq %rax, 344(%rsp) 
-L16372:	popq %rax
-L16373:	pushq %rax
-L16374:	movq $115, %rax
-L16375:	pushq %rax
-L16376:	movq 352(%rsp), %rax
-L16377:	popq %rdi
-L16378:	call L97
-L16379:	movq %rax, 336(%rsp) 
-L16380:	popq %rax
-L16381:	pushq %rax
-L16382:	movq $114, %rax
-L16383:	pushq %rax
-L16384:	movq 344(%rsp), %rax
-L16385:	popq %rdi
-L16386:	call L97
-L16387:	movq %rax, 328(%rsp) 
-L16388:	popq %rax
-L16389:	pushq %rax
-L16390:	movq $37, %rax
-L16391:	pushq %rax
-L16392:	movq 336(%rsp), %rax
-L16393:	popq %rdi
-L16394:	call L97
-L16395:	movq %rax, 320(%rsp) 
-L16396:	popq %rax
-L16397:	pushq %rax
-L16398:	movq $32, %rax
-L16399:	pushq %rax
-L16400:	movq 328(%rsp), %rax
-L16401:	popq %rdi
-L16402:	call L97
-L16403:	movq %rax, 312(%rsp) 
-L16404:	popq %rax
-L16405:	pushq %rax
-L16406:	movq $110, %rax
-L16407:	pushq %rax
-L16408:	movq 320(%rsp), %rax
-L16409:	popq %rdi
-L16410:	call L97
-L16411:	movq %rax, 304(%rsp) 
-L16412:	popq %rax
-L16413:	pushq %rax
-L16414:	movq $103, %rax
-L16415:	pushq %rax
-L16416:	movq 312(%rsp), %rax
-L16417:	popq %rdi
-L16418:	call L97
-L16419:	movq %rax, 296(%rsp) 
-L16420:	popq %rax
-L16421:	pushq %rax
-L16422:	movq $105, %rax
-L16423:	pushq %rax
-L16424:	movq 304(%rsp), %rax
-L16425:	popq %rdi
-L16426:	call L97
-L16427:	movq %rax, 288(%rsp) 
-L16428:	popq %rax
-L16429:	pushq %rax
-L16430:	movq $108, %rax
-L16431:	pushq %rax
-L16432:	movq 296(%rsp), %rax
-L16433:	popq %rdi
-L16434:	call L97
-L16435:	movq %rax, 280(%rsp) 
-L16436:	popq %rax
-L16437:	pushq %rax
-L16438:	movq $97, %rax
-L16439:	pushq %rax
-L16440:	movq 288(%rsp), %rax
-L16441:	popq %rdi
-L16442:	call L97
-L16443:	movq %rax, 272(%rsp) 
-L16444:	popq %rax
-L16445:	pushq %rax
-L16446:	movq $32, %rax
-L16447:	pushq %rax
-L16448:	movq 280(%rsp), %rax
-L16449:	popq %rdi
-L16450:	call L97
-L16451:	movq %rax, 264(%rsp) 
-L16452:	popq %rax
-L16453:	pushq %rax
-L16454:	movq $101, %rax
-L16455:	pushq %rax
-L16456:	movq 272(%rsp), %rax
-L16457:	popq %rdi
-L16458:	call L97
-L16459:	movq %rax, 256(%rsp) 
-L16460:	popq %rax
-L16461:	pushq %rax
-L16462:	movq $116, %rax
-L16463:	pushq %rax
-L16464:	movq 264(%rsp), %rax
-L16465:	popq %rdi
-L16466:	call L97
-L16467:	movq %rax, 248(%rsp) 
-L16468:	popq %rax
-L16469:	pushq %rax
-L16470:	movq $121, %rax
-L16471:	pushq %rax
-L16472:	movq 256(%rsp), %rax
-L16473:	popq %rdi
-L16474:	call L97
-L16475:	movq %rax, 240(%rsp) 
-L16476:	popq %rax
-L16477:	pushq %rax
-L16478:	movq $98, %rax
-L16479:	pushq %rax
-L16480:	movq 248(%rsp), %rax
-L16481:	popq %rdi
-L16482:	call L97
-L16483:	movq %rax, 232(%rsp) 
-L16484:	popq %rax
-L16485:	pushq %rax
-L16486:	movq $45, %rax
-L16487:	pushq %rax
-L16488:	movq 240(%rsp), %rax
-L16489:	popq %rdi
-L16490:	call L97
-L16491:	movq %rax, 224(%rsp) 
-L16492:	popq %rax
-L16493:	pushq %rax
-L16494:	movq $54, %rax
-L16495:	pushq %rax
-L16496:	movq 232(%rsp), %rax
-L16497:	popq %rdi
-L16498:	call L97
-L16499:	movq %rax, 216(%rsp) 
-L16500:	popq %rax
-L16501:	pushq %rax
-L16502:	movq $49, %rax
-L16503:	pushq %rax
-L16504:	movq 224(%rsp), %rax
-L16505:	popq %rdi
-L16506:	call L97
-L16507:	movq %rax, 208(%rsp) 
-L16508:	popq %rax
-L16509:	pushq %rax
-L16510:	movq $32, %rax
-L16511:	pushq %rax
-L16512:	movq 216(%rsp), %rax
-L16513:	popq %rdi
-L16514:	call L97
-L16515:	movq %rax, 200(%rsp) 
-L16516:	popq %rax
-L16517:	pushq %rax
-L16518:	movq $42, %rax
-L16519:	pushq %rax
-L16520:	movq 208(%rsp), %rax
-L16521:	popq %rdi
-L16522:	call L97
-L16523:	movq %rax, 192(%rsp) 
-L16524:	popq %rax
-L16525:	pushq %rax
-L16526:	movq $47, %rax
-L16527:	pushq %rax
-L16528:	movq 200(%rsp), %rax
-L16529:	popq %rdi
-L16530:	call L97
-L16531:	movq %rax, 184(%rsp) 
-L16532:	popq %rax
-L16533:	pushq %rax
-L16534:	movq $32, %rax
-L16535:	pushq %rax
-L16536:	movq 192(%rsp), %rax
-L16537:	popq %rdi
-L16538:	call L97
-L16539:	movq %rax, 176(%rsp) 
-L16540:	popq %rax
-L16541:	pushq %rax
-L16542:	movq $32, %rax
-L16543:	pushq %rax
-L16544:	movq 184(%rsp), %rax
-L16545:	popq %rdi
-L16546:	call L97
-L16547:	movq %rax, 168(%rsp) 
-L16548:	popq %rax
-L16549:	pushq %rax
-L16550:	movq $32, %rax
-L16551:	pushq %rax
-L16552:	movq 176(%rsp), %rax
-L16553:	popq %rdi
-L16554:	call L97
-L16555:	movq %rax, 160(%rsp) 
-L16556:	popq %rax
-L16557:	pushq %rax
-L16558:	movq $32, %rax
-L16559:	pushq %rax
-L16560:	movq 168(%rsp), %rax
-L16561:	popq %rdi
-L16562:	call L97
-L16563:	movq %rax, 152(%rsp) 
-L16564:	popq %rax
-L16565:	pushq %rax
-L16566:	movq $32, %rax
-L16567:	pushq %rax
-L16568:	movq 160(%rsp), %rax
-L16569:	popq %rdi
-L16570:	call L97
-L16571:	movq %rax, 144(%rsp) 
-L16572:	popq %rax
-L16573:	pushq %rax
-L16574:	movq $32, %rax
-L16575:	pushq %rax
-L16576:	movq 152(%rsp), %rax
-L16577:	popq %rdi
-L16578:	call L97
-L16579:	movq %rax, 136(%rsp) 
-L16580:	popq %rax
-L16581:	pushq %rax
-L16582:	movq $32, %rax
-L16583:	pushq %rax
-L16584:	movq 144(%rsp), %rax
-L16585:	popq %rdi
-L16586:	call L97
-L16587:	movq %rax, 128(%rsp) 
-L16588:	popq %rax
-L16589:	pushq %rax
-L16590:	movq $32, %rax
-L16591:	pushq %rax
-L16592:	movq 136(%rsp), %rax
-L16593:	popq %rdi
-L16594:	call L97
-L16595:	movq %rax, 120(%rsp) 
-L16596:	popq %rax
-L16597:	pushq %rax
-L16598:	movq $112, %rax
-L16599:	pushq %rax
-L16600:	movq 128(%rsp), %rax
-L16601:	popq %rdi
-L16602:	call L97
-L16603:	movq %rax, 112(%rsp) 
-L16604:	popq %rax
-L16605:	pushq %rax
-L16606:	movq $115, %rax
-L16607:	pushq %rax
-L16608:	movq 120(%rsp), %rax
-L16609:	popq %rdi
-L16610:	call L97
-L16611:	movq %rax, 104(%rsp) 
-L16612:	popq %rax
-L16613:	pushq %rax
-L16614:	movq $114, %rax
-L16615:	pushq %rax
-L16616:	movq 112(%rsp), %rax
-L16617:	popq %rdi
-L16618:	call L97
-L16619:	movq %rax, 96(%rsp) 
-L16620:	popq %rax
-L16621:	pushq %rax
-L16622:	movq $37, %rax
-L16623:	pushq %rax
-L16624:	movq 104(%rsp), %rax
-L16625:	popq %rdi
-L16626:	call L97
-L16627:	movq %rax, 88(%rsp) 
-L16628:	popq %rax
-L16629:	pushq %rax
-L16630:	movq $32, %rax
-L16631:	pushq %rax
-L16632:	movq 96(%rsp), %rax
-L16633:	popq %rdi
-L16634:	call L97
-L16635:	movq %rax, 80(%rsp) 
-L16636:	popq %rax
-L16637:	pushq %rax
-L16638:	movq $44, %rax
-L16639:	pushq %rax
-L16640:	movq 88(%rsp), %rax
-L16641:	popq %rdi
-L16642:	call L97
-L16643:	movq %rax, 72(%rsp) 
-L16644:	popq %rax
-L16645:	pushq %rax
-L16646:	movq $56, %rax
-L16647:	pushq %rax
-L16648:	movq 80(%rsp), %rax
-L16649:	popq %rdi
-L16650:	call L97
-L16651:	movq %rax, 64(%rsp) 
-L16652:	popq %rax
-L16653:	pushq %rax
-L16654:	movq $36, %rax
-L16655:	pushq %rax
-L16656:	movq 72(%rsp), %rax
-L16657:	popq %rdi
-L16658:	call L97
-L16659:	movq %rax, 56(%rsp) 
-L16660:	popq %rax
-L16661:	pushq %rax
-L16662:	movq $32, %rax
-L16663:	pushq %rax
-L16664:	movq 64(%rsp), %rax
-L16665:	popq %rdi
-L16666:	call L97
-L16667:	movq %rax, 48(%rsp) 
-L16668:	popq %rax
-L16669:	pushq %rax
-L16670:	movq $113, %rax
-L16671:	pushq %rax
-L16672:	movq 56(%rsp), %rax
-L16673:	popq %rdi
-L16674:	call L97
-L16675:	movq %rax, 40(%rsp) 
-L16676:	popq %rax
-L16677:	pushq %rax
-L16678:	movq $98, %rax
-L16679:	pushq %rax
-L16680:	movq 48(%rsp), %rax
-L16681:	popq %rdi
-L16682:	call L97
-L16683:	movq %rax, 32(%rsp) 
-L16684:	popq %rax
-L16685:	pushq %rax
-L16686:	movq $117, %rax
-L16687:	pushq %rax
-L16688:	movq 40(%rsp), %rax
-L16689:	popq %rdi
-L16690:	call L97
-L16691:	movq %rax, 24(%rsp) 
-L16692:	popq %rax
-L16693:	pushq %rax
-L16694:	movq $115, %rax
-L16695:	pushq %rax
-L16696:	movq 32(%rsp), %rax
-L16697:	popq %rdi
-L16698:	call L97
-L16699:	movq %rax, 16(%rsp) 
-L16700:	popq %rax
-L16701:	pushq %rax
-L16702:	movq $9, %rax
-L16703:	pushq %rax
-L16704:	movq 24(%rsp), %rax
-L16705:	popq %rdi
-L16706:	call L97
-L16707:	movq %rax, 8(%rsp) 
-L16708:	popq %rax
-L16709:	pushq %rax
-L16710:	movq 8(%rsp), %rax
-L16711:	addq $408, %rsp
-L16712:	ret
-L16713:	ret
-L16714:	
+L16319:	subq $400, %rsp
+L16320:	pushq %rax
+L16321:	movq $32, %rax
+L16322:	pushq %rax
+L16323:	movq $0, %rax
+L16324:	popq %rdi
+L16325:	call L97
+L16326:	movq %rax, 392(%rsp) 
+L16327:	popq %rax
+L16328:	pushq %rax
+L16329:	movq $32, %rax
+L16330:	pushq %rax
+L16331:	movq 400(%rsp), %rax
+L16332:	popq %rdi
+L16333:	call L97
+L16334:	movq %rax, 384(%rsp) 
+L16335:	popq %rax
+L16336:	pushq %rax
+L16337:	movq $10, %rax
+L16338:	pushq %rax
+L16339:	movq 392(%rsp), %rax
+L16340:	popq %rdi
+L16341:	call L97
+L16342:	movq %rax, 376(%rsp) 
+L16343:	popq %rax
+L16344:	pushq %rax
+L16345:	movq $47, %rax
+L16346:	pushq %rax
+L16347:	movq 384(%rsp), %rax
+L16348:	popq %rdi
+L16349:	call L97
+L16350:	movq %rax, 368(%rsp) 
+L16351:	popq %rax
+L16352:	pushq %rax
+L16353:	movq $42, %rax
+L16354:	pushq %rax
+L16355:	movq 376(%rsp), %rax
+L16356:	popq %rdi
+L16357:	call L97
+L16358:	movq %rax, 360(%rsp) 
+L16359:	popq %rax
+L16360:	pushq %rax
+L16361:	movq $32, %rax
+L16362:	pushq %rax
+L16363:	movq 368(%rsp), %rax
+L16364:	popq %rdi
+L16365:	call L97
+L16366:	movq %rax, 352(%rsp) 
+L16367:	popq %rax
+L16368:	pushq %rax
+L16369:	movq $112, %rax
+L16370:	pushq %rax
+L16371:	movq 360(%rsp), %rax
+L16372:	popq %rdi
+L16373:	call L97
+L16374:	movq %rax, 344(%rsp) 
+L16375:	popq %rax
+L16376:	pushq %rax
+L16377:	movq $115, %rax
+L16378:	pushq %rax
+L16379:	movq 352(%rsp), %rax
+L16380:	popq %rdi
+L16381:	call L97
+L16382:	movq %rax, 336(%rsp) 
+L16383:	popq %rax
+L16384:	pushq %rax
+L16385:	movq $114, %rax
+L16386:	pushq %rax
+L16387:	movq 344(%rsp), %rax
+L16388:	popq %rdi
+L16389:	call L97
+L16390:	movq %rax, 328(%rsp) 
+L16391:	popq %rax
+L16392:	pushq %rax
+L16393:	movq $37, %rax
+L16394:	pushq %rax
+L16395:	movq 336(%rsp), %rax
+L16396:	popq %rdi
+L16397:	call L97
+L16398:	movq %rax, 320(%rsp) 
+L16399:	popq %rax
+L16400:	pushq %rax
+L16401:	movq $32, %rax
+L16402:	pushq %rax
+L16403:	movq 328(%rsp), %rax
+L16404:	popq %rdi
+L16405:	call L97
+L16406:	movq %rax, 312(%rsp) 
+L16407:	popq %rax
+L16408:	pushq %rax
+L16409:	movq $110, %rax
+L16410:	pushq %rax
+L16411:	movq 320(%rsp), %rax
+L16412:	popq %rdi
+L16413:	call L97
+L16414:	movq %rax, 304(%rsp) 
+L16415:	popq %rax
+L16416:	pushq %rax
+L16417:	movq $103, %rax
+L16418:	pushq %rax
+L16419:	movq 312(%rsp), %rax
+L16420:	popq %rdi
+L16421:	call L97
+L16422:	movq %rax, 296(%rsp) 
+L16423:	popq %rax
+L16424:	pushq %rax
+L16425:	movq $105, %rax
+L16426:	pushq %rax
+L16427:	movq 304(%rsp), %rax
+L16428:	popq %rdi
+L16429:	call L97
+L16430:	movq %rax, 288(%rsp) 
+L16431:	popq %rax
+L16432:	pushq %rax
+L16433:	movq $108, %rax
+L16434:	pushq %rax
+L16435:	movq 296(%rsp), %rax
+L16436:	popq %rdi
+L16437:	call L97
+L16438:	movq %rax, 280(%rsp) 
+L16439:	popq %rax
+L16440:	pushq %rax
+L16441:	movq $97, %rax
+L16442:	pushq %rax
+L16443:	movq 288(%rsp), %rax
+L16444:	popq %rdi
+L16445:	call L97
+L16446:	movq %rax, 272(%rsp) 
+L16447:	popq %rax
+L16448:	pushq %rax
+L16449:	movq $32, %rax
+L16450:	pushq %rax
+L16451:	movq 280(%rsp), %rax
+L16452:	popq %rdi
+L16453:	call L97
+L16454:	movq %rax, 264(%rsp) 
+L16455:	popq %rax
+L16456:	pushq %rax
+L16457:	movq $101, %rax
+L16458:	pushq %rax
+L16459:	movq 272(%rsp), %rax
+L16460:	popq %rdi
+L16461:	call L97
+L16462:	movq %rax, 256(%rsp) 
+L16463:	popq %rax
+L16464:	pushq %rax
+L16465:	movq $116, %rax
+L16466:	pushq %rax
+L16467:	movq 264(%rsp), %rax
+L16468:	popq %rdi
+L16469:	call L97
+L16470:	movq %rax, 248(%rsp) 
+L16471:	popq %rax
+L16472:	pushq %rax
+L16473:	movq $121, %rax
+L16474:	pushq %rax
+L16475:	movq 256(%rsp), %rax
+L16476:	popq %rdi
+L16477:	call L97
+L16478:	movq %rax, 240(%rsp) 
+L16479:	popq %rax
+L16480:	pushq %rax
+L16481:	movq $98, %rax
+L16482:	pushq %rax
+L16483:	movq 248(%rsp), %rax
+L16484:	popq %rdi
+L16485:	call L97
+L16486:	movq %rax, 232(%rsp) 
+L16487:	popq %rax
+L16488:	pushq %rax
+L16489:	movq $45, %rax
+L16490:	pushq %rax
+L16491:	movq 240(%rsp), %rax
+L16492:	popq %rdi
+L16493:	call L97
+L16494:	movq %rax, 224(%rsp) 
+L16495:	popq %rax
+L16496:	pushq %rax
+L16497:	movq $54, %rax
+L16498:	pushq %rax
+L16499:	movq 232(%rsp), %rax
+L16500:	popq %rdi
+L16501:	call L97
+L16502:	movq %rax, 216(%rsp) 
+L16503:	popq %rax
+L16504:	pushq %rax
+L16505:	movq $49, %rax
+L16506:	pushq %rax
+L16507:	movq 224(%rsp), %rax
+L16508:	popq %rdi
+L16509:	call L97
+L16510:	movq %rax, 208(%rsp) 
+L16511:	popq %rax
+L16512:	pushq %rax
+L16513:	movq $32, %rax
+L16514:	pushq %rax
+L16515:	movq 216(%rsp), %rax
+L16516:	popq %rdi
+L16517:	call L97
+L16518:	movq %rax, 200(%rsp) 
+L16519:	popq %rax
+L16520:	pushq %rax
+L16521:	movq $42, %rax
+L16522:	pushq %rax
+L16523:	movq 208(%rsp), %rax
+L16524:	popq %rdi
+L16525:	call L97
+L16526:	movq %rax, 192(%rsp) 
+L16527:	popq %rax
+L16528:	pushq %rax
+L16529:	movq $47, %rax
+L16530:	pushq %rax
+L16531:	movq 200(%rsp), %rax
+L16532:	popq %rdi
+L16533:	call L97
+L16534:	movq %rax, 184(%rsp) 
+L16535:	popq %rax
+L16536:	pushq %rax
+L16537:	movq $32, %rax
+L16538:	pushq %rax
+L16539:	movq 192(%rsp), %rax
+L16540:	popq %rdi
+L16541:	call L97
+L16542:	movq %rax, 176(%rsp) 
+L16543:	popq %rax
+L16544:	pushq %rax
+L16545:	movq $32, %rax
+L16546:	pushq %rax
+L16547:	movq 184(%rsp), %rax
+L16548:	popq %rdi
+L16549:	call L97
+L16550:	movq %rax, 168(%rsp) 
+L16551:	popq %rax
+L16552:	pushq %rax
+L16553:	movq $32, %rax
+L16554:	pushq %rax
+L16555:	movq 176(%rsp), %rax
+L16556:	popq %rdi
+L16557:	call L97
+L16558:	movq %rax, 160(%rsp) 
+L16559:	popq %rax
+L16560:	pushq %rax
+L16561:	movq $32, %rax
+L16562:	pushq %rax
+L16563:	movq 168(%rsp), %rax
+L16564:	popq %rdi
+L16565:	call L97
+L16566:	movq %rax, 152(%rsp) 
+L16567:	popq %rax
+L16568:	pushq %rax
+L16569:	movq $32, %rax
+L16570:	pushq %rax
+L16571:	movq 160(%rsp), %rax
+L16572:	popq %rdi
+L16573:	call L97
+L16574:	movq %rax, 144(%rsp) 
+L16575:	popq %rax
+L16576:	pushq %rax
+L16577:	movq $32, %rax
+L16578:	pushq %rax
+L16579:	movq 152(%rsp), %rax
+L16580:	popq %rdi
+L16581:	call L97
+L16582:	movq %rax, 136(%rsp) 
+L16583:	popq %rax
+L16584:	pushq %rax
+L16585:	movq $32, %rax
+L16586:	pushq %rax
+L16587:	movq 144(%rsp), %rax
+L16588:	popq %rdi
+L16589:	call L97
+L16590:	movq %rax, 128(%rsp) 
+L16591:	popq %rax
+L16592:	pushq %rax
+L16593:	movq $32, %rax
+L16594:	pushq %rax
+L16595:	movq 136(%rsp), %rax
+L16596:	popq %rdi
+L16597:	call L97
+L16598:	movq %rax, 120(%rsp) 
+L16599:	popq %rax
+L16600:	pushq %rax
+L16601:	movq $112, %rax
+L16602:	pushq %rax
+L16603:	movq 128(%rsp), %rax
+L16604:	popq %rdi
+L16605:	call L97
+L16606:	movq %rax, 112(%rsp) 
+L16607:	popq %rax
+L16608:	pushq %rax
+L16609:	movq $115, %rax
+L16610:	pushq %rax
+L16611:	movq 120(%rsp), %rax
+L16612:	popq %rdi
+L16613:	call L97
+L16614:	movq %rax, 104(%rsp) 
+L16615:	popq %rax
+L16616:	pushq %rax
+L16617:	movq $114, %rax
+L16618:	pushq %rax
+L16619:	movq 112(%rsp), %rax
+L16620:	popq %rdi
+L16621:	call L97
+L16622:	movq %rax, 96(%rsp) 
+L16623:	popq %rax
+L16624:	pushq %rax
+L16625:	movq $37, %rax
+L16626:	pushq %rax
+L16627:	movq 104(%rsp), %rax
+L16628:	popq %rdi
+L16629:	call L97
+L16630:	movq %rax, 88(%rsp) 
+L16631:	popq %rax
+L16632:	pushq %rax
+L16633:	movq $32, %rax
+L16634:	pushq %rax
+L16635:	movq 96(%rsp), %rax
+L16636:	popq %rdi
+L16637:	call L97
+L16638:	movq %rax, 80(%rsp) 
+L16639:	popq %rax
+L16640:	pushq %rax
+L16641:	movq $44, %rax
+L16642:	pushq %rax
+L16643:	movq 88(%rsp), %rax
+L16644:	popq %rdi
+L16645:	call L97
+L16646:	movq %rax, 72(%rsp) 
+L16647:	popq %rax
+L16648:	pushq %rax
+L16649:	movq $56, %rax
+L16650:	pushq %rax
+L16651:	movq 80(%rsp), %rax
+L16652:	popq %rdi
+L16653:	call L97
+L16654:	movq %rax, 64(%rsp) 
+L16655:	popq %rax
+L16656:	pushq %rax
+L16657:	movq $36, %rax
+L16658:	pushq %rax
+L16659:	movq 72(%rsp), %rax
+L16660:	popq %rdi
+L16661:	call L97
+L16662:	movq %rax, 56(%rsp) 
+L16663:	popq %rax
+L16664:	pushq %rax
+L16665:	movq $32, %rax
+L16666:	pushq %rax
+L16667:	movq 64(%rsp), %rax
+L16668:	popq %rdi
+L16669:	call L97
+L16670:	movq %rax, 48(%rsp) 
+L16671:	popq %rax
+L16672:	pushq %rax
+L16673:	movq $113, %rax
+L16674:	pushq %rax
+L16675:	movq 56(%rsp), %rax
+L16676:	popq %rdi
+L16677:	call L97
+L16678:	movq %rax, 40(%rsp) 
+L16679:	popq %rax
+L16680:	pushq %rax
+L16681:	movq $98, %rax
+L16682:	pushq %rax
+L16683:	movq 48(%rsp), %rax
+L16684:	popq %rdi
+L16685:	call L97
+L16686:	movq %rax, 32(%rsp) 
+L16687:	popq %rax
+L16688:	pushq %rax
+L16689:	movq $117, %rax
+L16690:	pushq %rax
+L16691:	movq 40(%rsp), %rax
+L16692:	popq %rdi
+L16693:	call L97
+L16694:	movq %rax, 24(%rsp) 
+L16695:	popq %rax
+L16696:	pushq %rax
+L16697:	movq $115, %rax
+L16698:	pushq %rax
+L16699:	movq 32(%rsp), %rax
+L16700:	popq %rdi
+L16701:	call L97
+L16702:	movq %rax, 16(%rsp) 
+L16703:	popq %rax
+L16704:	pushq %rax
+L16705:	movq $9, %rax
+L16706:	pushq %rax
+L16707:	movq 24(%rsp), %rax
+L16708:	popq %rdi
+L16709:	call L97
+L16710:	movq %rax, 8(%rsp) 
+L16711:	popq %rax
+L16712:	pushq %rax
+L16713:	movq 8(%rsp), %rax
+L16714:	addq $408, %rsp
+L16715:	ret
+L16716:	ret
+L16717:	
   
   	/* asm2stra */
-L16715:	subq $400, %rsp
-L16716:	pushq %rax
-L16717:	movq $32, %rax
-L16718:	pushq %rax
-L16719:	movq $0, %rax
-L16720:	popq %rdi
-L16721:	call L97
-L16722:	movq %rax, 392(%rsp) 
-L16723:	popq %rax
-L16724:	pushq %rax
-L16725:	movq $32, %rax
-L16726:	pushq %rax
-L16727:	movq 400(%rsp), %rax
-L16728:	popq %rdi
-L16729:	call L97
-L16730:	movq %rax, 384(%rsp) 
-L16731:	popq %rax
-L16732:	pushq %rax
-L16733:	movq $10, %rax
-L16734:	pushq %rax
-L16735:	movq 392(%rsp), %rax
-L16736:	popq %rdi
-L16737:	call L97
-L16738:	movq %rax, 376(%rsp) 
-L16739:	popq %rax
-L16740:	pushq %rax
-L16741:	movq $47, %rax
-L16742:	pushq %rax
-L16743:	movq 384(%rsp), %rax
-L16744:	popq %rdi
-L16745:	call L97
-L16746:	movq %rax, 368(%rsp) 
-L16747:	popq %rax
-L16748:	pushq %rax
-L16749:	movq $42, %rax
-L16750:	pushq %rax
-L16751:	movq 376(%rsp), %rax
-L16752:	popq %rdi
-L16753:	call L97
-L16754:	movq %rax, 360(%rsp) 
-L16755:	popq %rax
-L16756:	pushq %rax
-L16757:	movq $32, %rax
-L16758:	pushq %rax
-L16759:	movq 368(%rsp), %rax
-L16760:	popq %rdi
-L16761:	call L97
-L16762:	movq %rax, 352(%rsp) 
-L16763:	popq %rax
-L16764:	pushq %rax
-L16765:	movq $32, %rax
-L16766:	pushq %rax
-L16767:	movq 360(%rsp), %rax
-L16768:	popq %rdi
-L16769:	call L97
-L16770:	movq %rax, 344(%rsp) 
-L16771:	popq %rax
-L16772:	pushq %rax
-L16773:	movq $116, %rax
-L16774:	pushq %rax
-L16775:	movq 352(%rsp), %rax
-L16776:	popq %rdi
-L16777:	call L97
-L16778:	movq %rax, 336(%rsp) 
-L16779:	popq %rax
-L16780:	pushq %rax
-L16781:	movq $114, %rax
-L16782:	pushq %rax
-L16783:	movq 344(%rsp), %rax
-L16784:	popq %rdi
-L16785:	call L97
-L16786:	movq %rax, 328(%rsp) 
-L16787:	popq %rax
-L16788:	pushq %rax
-L16789:	movq $97, %rax
-L16790:	pushq %rax
-L16791:	movq 336(%rsp), %rax
-L16792:	popq %rdi
-L16793:	call L97
-L16794:	movq %rax, 320(%rsp) 
-L16795:	popq %rax
-L16796:	pushq %rax
-L16797:	movq $116, %rax
-L16798:	pushq %rax
-L16799:	movq 328(%rsp), %rax
-L16800:	popq %rdi
-L16801:	call L97
-L16802:	movq %rax, 312(%rsp) 
-L16803:	popq %rax
-L16804:	pushq %rax
-L16805:	movq $115, %rax
-L16806:	pushq %rax
-L16807:	movq 320(%rsp), %rax
-L16808:	popq %rdi
-L16809:	call L97
-L16810:	movq %rax, 304(%rsp) 
-L16811:	popq %rax
-L16812:	pushq %rax
-L16813:	movq $32, %rax
-L16814:	pushq %rax
-L16815:	movq 312(%rsp), %rax
-L16816:	popq %rdi
-L16817:	call L97
-L16818:	movq %rax, 296(%rsp) 
-L16819:	popq %rax
-L16820:	pushq %rax
-L16821:	movq $112, %rax
-L16822:	pushq %rax
-L16823:	movq 304(%rsp), %rax
-L16824:	popq %rdi
-L16825:	call L97
-L16826:	movq %rax, 288(%rsp) 
-L16827:	popq %rax
-L16828:	pushq %rax
-L16829:	movq $97, %rax
-L16830:	pushq %rax
-L16831:	movq 296(%rsp), %rax
-L16832:	popq %rdi
-L16833:	call L97
-L16834:	movq %rax, 280(%rsp) 
-L16835:	popq %rax
-L16836:	pushq %rax
-L16837:	movq $101, %rax
-L16838:	pushq %rax
-L16839:	movq 288(%rsp), %rax
-L16840:	popq %rdi
-L16841:	call L97
-L16842:	movq %rax, 272(%rsp) 
-L16843:	popq %rax
-L16844:	pushq %rax
-L16845:	movq $104, %rax
-L16846:	pushq %rax
-L16847:	movq 280(%rsp), %rax
-L16848:	popq %rdi
-L16849:	call L97
-L16850:	movq %rax, 264(%rsp) 
-L16851:	popq %rax
-L16852:	pushq %rax
-L16853:	movq $32, %rax
-L16854:	pushq %rax
-L16855:	movq 272(%rsp), %rax
-L16856:	popq %rdi
-L16857:	call L97
-L16858:	movq %rax, 256(%rsp) 
-L16859:	popq %rax
-L16860:	pushq %rax
-L16861:	movq $61, %rax
-L16862:	pushq %rax
-L16863:	movq 264(%rsp), %rax
-L16864:	popq %rdi
-L16865:	call L97
-L16866:	movq %rax, 248(%rsp) 
-L16867:	popq %rax
-L16868:	pushq %rax
-L16869:	movq $58, %rax
-L16870:	pushq %rax
-L16871:	movq 256(%rsp), %rax
-L16872:	popq %rdi
-L16873:	call L97
-L16874:	movq %rax, 240(%rsp) 
-L16875:	popq %rax
-L16876:	pushq %rax
-L16877:	movq $32, %rax
-L16878:	pushq %rax
-L16879:	movq 248(%rsp), %rax
-L16880:	popq %rdi
-L16881:	call L97
-L16882:	movq %rax, 232(%rsp) 
-L16883:	popq %rax
-L16884:	pushq %rax
-L16885:	movq $52, %rax
-L16886:	pushq %rax
-L16887:	movq 240(%rsp), %rax
-L16888:	popq %rdi
-L16889:	call L97
-L16890:	movq %rax, 224(%rsp) 
-L16891:	popq %rax
-L16892:	pushq %rax
-L16893:	movq $49, %rax
-L16894:	pushq %rax
-L16895:	movq 232(%rsp), %rax
-L16896:	popq %rdi
-L16897:	call L97
-L16898:	movq %rax, 216(%rsp) 
-L16899:	popq %rax
-L16900:	pushq %rax
-L16901:	movq $114, %rax
-L16902:	pushq %rax
-L16903:	movq 224(%rsp), %rax
-L16904:	popq %rdi
-L16905:	call L97
-L16906:	movq %rax, 208(%rsp) 
-L16907:	popq %rax
-L16908:	pushq %rax
-L16909:	movq $32, %rax
-L16910:	pushq %rax
-L16911:	movq 216(%rsp), %rax
-L16912:	popq %rdi
-L16913:	call L97
-L16914:	movq %rax, 200(%rsp) 
-L16915:	popq %rax
-L16916:	pushq %rax
-L16917:	movq $42, %rax
-L16918:	pushq %rax
-L16919:	movq 208(%rsp), %rax
-L16920:	popq %rdi
-L16921:	call L97
-L16922:	movq %rax, 192(%rsp) 
-L16923:	popq %rax
-L16924:	pushq %rax
-L16925:	movq $47, %rax
-L16926:	pushq %rax
-L16927:	movq 200(%rsp), %rax
-L16928:	popq %rdi
-L16929:	call L97
-L16930:	movq %rax, 184(%rsp) 
-L16931:	popq %rax
-L16932:	pushq %rax
-L16933:	movq $32, %rax
-L16934:	pushq %rax
-L16935:	movq 192(%rsp), %rax
-L16936:	popq %rdi
-L16937:	call L97
-L16938:	movq %rax, 176(%rsp) 
-L16939:	popq %rax
-L16940:	pushq %rax
-L16941:	movq $32, %rax
-L16942:	pushq %rax
-L16943:	movq 184(%rsp), %rax
-L16944:	popq %rdi
-L16945:	call L97
-L16946:	movq %rax, 168(%rsp) 
-L16947:	popq %rax
-L16948:	pushq %rax
-L16949:	movq $52, %rax
-L16950:	pushq %rax
-L16951:	movq 176(%rsp), %rax
-L16952:	popq %rdi
-L16953:	call L97
-L16954:	movq %rax, 160(%rsp) 
-L16955:	popq %rax
-L16956:	pushq %rax
-L16957:	movq $49, %rax
-L16958:	pushq %rax
-L16959:	movq 168(%rsp), %rax
-L16960:	popq %rdi
-L16961:	call L97
-L16962:	movq %rax, 152(%rsp) 
-L16963:	popq %rax
-L16964:	pushq %rax
-L16965:	movq $114, %rax
-L16966:	pushq %rax
-L16967:	movq 160(%rsp), %rax
-L16968:	popq %rdi
-L16969:	call L97
-L16970:	movq %rax, 144(%rsp) 
-L16971:	popq %rax
-L16972:	pushq %rax
-L16973:	movq $37, %rax
-L16974:	pushq %rax
-L16975:	movq 152(%rsp), %rax
-L16976:	popq %rdi
-L16977:	call L97
-L16978:	movq %rax, 136(%rsp) 
-L16979:	popq %rax
-L16980:	pushq %rax
-L16981:	movq $32, %rax
-L16982:	pushq %rax
-L16983:	movq 144(%rsp), %rax
-L16984:	popq %rdi
-L16985:	call L97
-L16986:	movq %rax, 128(%rsp) 
-L16987:	popq %rax
-L16988:	pushq %rax
-L16989:	movq $44, %rax
-L16990:	pushq %rax
-L16991:	movq 136(%rsp), %rax
-L16992:	popq %rdi
-L16993:	call L97
-L16994:	movq %rax, 120(%rsp) 
-L16995:	popq %rax
-L16996:	pushq %rax
-L16997:	movq $83, %rax
-L16998:	pushq %rax
-L16999:	movq 128(%rsp), %rax
-L17000:	popq %rdi
-L17001:	call L97
-L17002:	movq %rax, 112(%rsp) 
-L17003:	popq %rax
-L17004:	pushq %rax
-L17005:	movq $112, %rax
-L17006:	pushq %rax
-L17007:	movq 120(%rsp), %rax
-L17008:	popq %rdi
-L17009:	call L97
-L17010:	movq %rax, 104(%rsp) 
-L17011:	popq %rax
-L17012:	pushq %rax
-L17013:	movq $97, %rax
-L17014:	pushq %rax
-L17015:	movq 112(%rsp), %rax
-L17016:	popq %rdi
-L17017:	call L97
-L17018:	movq %rax, 96(%rsp) 
-L17019:	popq %rax
-L17020:	pushq %rax
-L17021:	movq $101, %rax
-L17022:	pushq %rax
-L17023:	movq 104(%rsp), %rax
-L17024:	popq %rdi
-L17025:	call L97
-L17026:	movq %rax, 88(%rsp) 
-L17027:	popq %rax
-L17028:	pushq %rax
-L17029:	movq $104, %rax
-L17030:	pushq %rax
-L17031:	movq 96(%rsp), %rax
-L17032:	popq %rdi
-L17033:	call L97
-L17034:	movq %rax, 80(%rsp) 
-L17035:	popq %rax
-L17036:	pushq %rax
-L17037:	movq $36, %rax
-L17038:	pushq %rax
-L17039:	movq 88(%rsp), %rax
-L17040:	popq %rdi
-L17041:	call L97
-L17042:	movq %rax, 72(%rsp) 
-L17043:	popq %rax
-L17044:	pushq %rax
-L17045:	movq $32, %rax
-L17046:	pushq %rax
-L17047:	movq 80(%rsp), %rax
-L17048:	popq %rdi
-L17049:	call L97
-L17050:	movq %rax, 64(%rsp) 
-L17051:	popq %rax
-L17052:	pushq %rax
-L17053:	movq $115, %rax
-L17054:	pushq %rax
-L17055:	movq 72(%rsp), %rax
-L17056:	popq %rdi
-L17057:	call L97
-L17058:	movq %rax, 56(%rsp) 
-L17059:	popq %rax
-L17060:	pushq %rax
-L17061:	movq $98, %rax
-L17062:	pushq %rax
-L17063:	movq 64(%rsp), %rax
-L17064:	popq %rdi
-L17065:	call L97
-L17066:	movq %rax, 48(%rsp) 
-L17067:	popq %rax
-L17068:	pushq %rax
-L17069:	movq $97, %rax
-L17070:	pushq %rax
-L17071:	movq 56(%rsp), %rax
-L17072:	popq %rdi
-L17073:	call L97
-L17074:	movq %rax, 40(%rsp) 
-L17075:	popq %rax
-L17076:	pushq %rax
-L17077:	movq $118, %rax
-L17078:	pushq %rax
-L17079:	movq 48(%rsp), %rax
-L17080:	popq %rdi
-L17081:	call L97
-L17082:	movq %rax, 32(%rsp) 
-L17083:	popq %rax
-L17084:	pushq %rax
-L17085:	movq $111, %rax
-L17086:	pushq %rax
-L17087:	movq 40(%rsp), %rax
-L17088:	popq %rdi
-L17089:	call L97
-L17090:	movq %rax, 24(%rsp) 
-L17091:	popq %rax
-L17092:	pushq %rax
-L17093:	movq $109, %rax
-L17094:	pushq %rax
-L17095:	movq 32(%rsp), %rax
-L17096:	popq %rdi
-L17097:	call L97
-L17098:	movq %rax, 16(%rsp) 
-L17099:	popq %rax
-L17100:	pushq %rax
-L17101:	movq $9, %rax
-L17102:	pushq %rax
-L17103:	movq 24(%rsp), %rax
-L17104:	popq %rdi
-L17105:	call L97
-L17106:	movq %rax, 8(%rsp) 
-L17107:	popq %rax
-L17108:	pushq %rax
-L17109:	movq 8(%rsp), %rax
-L17110:	addq $408, %rsp
-L17111:	ret
-L17112:	ret
-L17113:	
+L16718:	subq $400, %rsp
+L16719:	pushq %rax
+L16720:	movq $32, %rax
+L16721:	pushq %rax
+L16722:	movq $0, %rax
+L16723:	popq %rdi
+L16724:	call L97
+L16725:	movq %rax, 392(%rsp) 
+L16726:	popq %rax
+L16727:	pushq %rax
+L16728:	movq $32, %rax
+L16729:	pushq %rax
+L16730:	movq 400(%rsp), %rax
+L16731:	popq %rdi
+L16732:	call L97
+L16733:	movq %rax, 384(%rsp) 
+L16734:	popq %rax
+L16735:	pushq %rax
+L16736:	movq $10, %rax
+L16737:	pushq %rax
+L16738:	movq 392(%rsp), %rax
+L16739:	popq %rdi
+L16740:	call L97
+L16741:	movq %rax, 376(%rsp) 
+L16742:	popq %rax
+L16743:	pushq %rax
+L16744:	movq $47, %rax
+L16745:	pushq %rax
+L16746:	movq 384(%rsp), %rax
+L16747:	popq %rdi
+L16748:	call L97
+L16749:	movq %rax, 368(%rsp) 
+L16750:	popq %rax
+L16751:	pushq %rax
+L16752:	movq $42, %rax
+L16753:	pushq %rax
+L16754:	movq 376(%rsp), %rax
+L16755:	popq %rdi
+L16756:	call L97
+L16757:	movq %rax, 360(%rsp) 
+L16758:	popq %rax
+L16759:	pushq %rax
+L16760:	movq $32, %rax
+L16761:	pushq %rax
+L16762:	movq 368(%rsp), %rax
+L16763:	popq %rdi
+L16764:	call L97
+L16765:	movq %rax, 352(%rsp) 
+L16766:	popq %rax
+L16767:	pushq %rax
+L16768:	movq $32, %rax
+L16769:	pushq %rax
+L16770:	movq 360(%rsp), %rax
+L16771:	popq %rdi
+L16772:	call L97
+L16773:	movq %rax, 344(%rsp) 
+L16774:	popq %rax
+L16775:	pushq %rax
+L16776:	movq $116, %rax
+L16777:	pushq %rax
+L16778:	movq 352(%rsp), %rax
+L16779:	popq %rdi
+L16780:	call L97
+L16781:	movq %rax, 336(%rsp) 
+L16782:	popq %rax
+L16783:	pushq %rax
+L16784:	movq $114, %rax
+L16785:	pushq %rax
+L16786:	movq 344(%rsp), %rax
+L16787:	popq %rdi
+L16788:	call L97
+L16789:	movq %rax, 328(%rsp) 
+L16790:	popq %rax
+L16791:	pushq %rax
+L16792:	movq $97, %rax
+L16793:	pushq %rax
+L16794:	movq 336(%rsp), %rax
+L16795:	popq %rdi
+L16796:	call L97
+L16797:	movq %rax, 320(%rsp) 
+L16798:	popq %rax
+L16799:	pushq %rax
+L16800:	movq $116, %rax
+L16801:	pushq %rax
+L16802:	movq 328(%rsp), %rax
+L16803:	popq %rdi
+L16804:	call L97
+L16805:	movq %rax, 312(%rsp) 
+L16806:	popq %rax
+L16807:	pushq %rax
+L16808:	movq $115, %rax
+L16809:	pushq %rax
+L16810:	movq 320(%rsp), %rax
+L16811:	popq %rdi
+L16812:	call L97
+L16813:	movq %rax, 304(%rsp) 
+L16814:	popq %rax
+L16815:	pushq %rax
+L16816:	movq $32, %rax
+L16817:	pushq %rax
+L16818:	movq 312(%rsp), %rax
+L16819:	popq %rdi
+L16820:	call L97
+L16821:	movq %rax, 296(%rsp) 
+L16822:	popq %rax
+L16823:	pushq %rax
+L16824:	movq $112, %rax
+L16825:	pushq %rax
+L16826:	movq 304(%rsp), %rax
+L16827:	popq %rdi
+L16828:	call L97
+L16829:	movq %rax, 288(%rsp) 
+L16830:	popq %rax
+L16831:	pushq %rax
+L16832:	movq $97, %rax
+L16833:	pushq %rax
+L16834:	movq 296(%rsp), %rax
+L16835:	popq %rdi
+L16836:	call L97
+L16837:	movq %rax, 280(%rsp) 
+L16838:	popq %rax
+L16839:	pushq %rax
+L16840:	movq $101, %rax
+L16841:	pushq %rax
+L16842:	movq 288(%rsp), %rax
+L16843:	popq %rdi
+L16844:	call L97
+L16845:	movq %rax, 272(%rsp) 
+L16846:	popq %rax
+L16847:	pushq %rax
+L16848:	movq $104, %rax
+L16849:	pushq %rax
+L16850:	movq 280(%rsp), %rax
+L16851:	popq %rdi
+L16852:	call L97
+L16853:	movq %rax, 264(%rsp) 
+L16854:	popq %rax
+L16855:	pushq %rax
+L16856:	movq $32, %rax
+L16857:	pushq %rax
+L16858:	movq 272(%rsp), %rax
+L16859:	popq %rdi
+L16860:	call L97
+L16861:	movq %rax, 256(%rsp) 
+L16862:	popq %rax
+L16863:	pushq %rax
+L16864:	movq $61, %rax
+L16865:	pushq %rax
+L16866:	movq 264(%rsp), %rax
+L16867:	popq %rdi
+L16868:	call L97
+L16869:	movq %rax, 248(%rsp) 
+L16870:	popq %rax
+L16871:	pushq %rax
+L16872:	movq $58, %rax
+L16873:	pushq %rax
+L16874:	movq 256(%rsp), %rax
+L16875:	popq %rdi
+L16876:	call L97
+L16877:	movq %rax, 240(%rsp) 
+L16878:	popq %rax
+L16879:	pushq %rax
+L16880:	movq $32, %rax
+L16881:	pushq %rax
+L16882:	movq 248(%rsp), %rax
+L16883:	popq %rdi
+L16884:	call L97
+L16885:	movq %rax, 232(%rsp) 
+L16886:	popq %rax
+L16887:	pushq %rax
+L16888:	movq $52, %rax
+L16889:	pushq %rax
+L16890:	movq 240(%rsp), %rax
+L16891:	popq %rdi
+L16892:	call L97
+L16893:	movq %rax, 224(%rsp) 
+L16894:	popq %rax
+L16895:	pushq %rax
+L16896:	movq $49, %rax
+L16897:	pushq %rax
+L16898:	movq 232(%rsp), %rax
+L16899:	popq %rdi
+L16900:	call L97
+L16901:	movq %rax, 216(%rsp) 
+L16902:	popq %rax
+L16903:	pushq %rax
+L16904:	movq $114, %rax
+L16905:	pushq %rax
+L16906:	movq 224(%rsp), %rax
+L16907:	popq %rdi
+L16908:	call L97
+L16909:	movq %rax, 208(%rsp) 
+L16910:	popq %rax
+L16911:	pushq %rax
+L16912:	movq $32, %rax
+L16913:	pushq %rax
+L16914:	movq 216(%rsp), %rax
+L16915:	popq %rdi
+L16916:	call L97
+L16917:	movq %rax, 200(%rsp) 
+L16918:	popq %rax
+L16919:	pushq %rax
+L16920:	movq $42, %rax
+L16921:	pushq %rax
+L16922:	movq 208(%rsp), %rax
+L16923:	popq %rdi
+L16924:	call L97
+L16925:	movq %rax, 192(%rsp) 
+L16926:	popq %rax
+L16927:	pushq %rax
+L16928:	movq $47, %rax
+L16929:	pushq %rax
+L16930:	movq 200(%rsp), %rax
+L16931:	popq %rdi
+L16932:	call L97
+L16933:	movq %rax, 184(%rsp) 
+L16934:	popq %rax
+L16935:	pushq %rax
+L16936:	movq $32, %rax
+L16937:	pushq %rax
+L16938:	movq 192(%rsp), %rax
+L16939:	popq %rdi
+L16940:	call L97
+L16941:	movq %rax, 176(%rsp) 
+L16942:	popq %rax
+L16943:	pushq %rax
+L16944:	movq $32, %rax
+L16945:	pushq %rax
+L16946:	movq 184(%rsp), %rax
+L16947:	popq %rdi
+L16948:	call L97
+L16949:	movq %rax, 168(%rsp) 
+L16950:	popq %rax
+L16951:	pushq %rax
+L16952:	movq $52, %rax
+L16953:	pushq %rax
+L16954:	movq 176(%rsp), %rax
+L16955:	popq %rdi
+L16956:	call L97
+L16957:	movq %rax, 160(%rsp) 
+L16958:	popq %rax
+L16959:	pushq %rax
+L16960:	movq $49, %rax
+L16961:	pushq %rax
+L16962:	movq 168(%rsp), %rax
+L16963:	popq %rdi
+L16964:	call L97
+L16965:	movq %rax, 152(%rsp) 
+L16966:	popq %rax
+L16967:	pushq %rax
+L16968:	movq $114, %rax
+L16969:	pushq %rax
+L16970:	movq 160(%rsp), %rax
+L16971:	popq %rdi
+L16972:	call L97
+L16973:	movq %rax, 144(%rsp) 
+L16974:	popq %rax
+L16975:	pushq %rax
+L16976:	movq $37, %rax
+L16977:	pushq %rax
+L16978:	movq 152(%rsp), %rax
+L16979:	popq %rdi
+L16980:	call L97
+L16981:	movq %rax, 136(%rsp) 
+L16982:	popq %rax
+L16983:	pushq %rax
+L16984:	movq $32, %rax
+L16985:	pushq %rax
+L16986:	movq 144(%rsp), %rax
+L16987:	popq %rdi
+L16988:	call L97
+L16989:	movq %rax, 128(%rsp) 
+L16990:	popq %rax
+L16991:	pushq %rax
+L16992:	movq $44, %rax
+L16993:	pushq %rax
+L16994:	movq 136(%rsp), %rax
+L16995:	popq %rdi
+L16996:	call L97
+L16997:	movq %rax, 120(%rsp) 
+L16998:	popq %rax
+L16999:	pushq %rax
+L17000:	movq $83, %rax
+L17001:	pushq %rax
+L17002:	movq 128(%rsp), %rax
+L17003:	popq %rdi
+L17004:	call L97
+L17005:	movq %rax, 112(%rsp) 
+L17006:	popq %rax
+L17007:	pushq %rax
+L17008:	movq $112, %rax
+L17009:	pushq %rax
+L17010:	movq 120(%rsp), %rax
+L17011:	popq %rdi
+L17012:	call L97
+L17013:	movq %rax, 104(%rsp) 
+L17014:	popq %rax
+L17015:	pushq %rax
+L17016:	movq $97, %rax
+L17017:	pushq %rax
+L17018:	movq 112(%rsp), %rax
+L17019:	popq %rdi
+L17020:	call L97
+L17021:	movq %rax, 96(%rsp) 
+L17022:	popq %rax
+L17023:	pushq %rax
+L17024:	movq $101, %rax
+L17025:	pushq %rax
+L17026:	movq 104(%rsp), %rax
+L17027:	popq %rdi
+L17028:	call L97
+L17029:	movq %rax, 88(%rsp) 
+L17030:	popq %rax
+L17031:	pushq %rax
+L17032:	movq $104, %rax
+L17033:	pushq %rax
+L17034:	movq 96(%rsp), %rax
+L17035:	popq %rdi
+L17036:	call L97
+L17037:	movq %rax, 80(%rsp) 
+L17038:	popq %rax
+L17039:	pushq %rax
+L17040:	movq $36, %rax
+L17041:	pushq %rax
+L17042:	movq 88(%rsp), %rax
+L17043:	popq %rdi
+L17044:	call L97
+L17045:	movq %rax, 72(%rsp) 
+L17046:	popq %rax
+L17047:	pushq %rax
+L17048:	movq $32, %rax
+L17049:	pushq %rax
+L17050:	movq 80(%rsp), %rax
+L17051:	popq %rdi
+L17052:	call L97
+L17053:	movq %rax, 64(%rsp) 
+L17054:	popq %rax
+L17055:	pushq %rax
+L17056:	movq $115, %rax
+L17057:	pushq %rax
+L17058:	movq 72(%rsp), %rax
+L17059:	popq %rdi
+L17060:	call L97
+L17061:	movq %rax, 56(%rsp) 
+L17062:	popq %rax
+L17063:	pushq %rax
+L17064:	movq $98, %rax
+L17065:	pushq %rax
+L17066:	movq 64(%rsp), %rax
+L17067:	popq %rdi
+L17068:	call L97
+L17069:	movq %rax, 48(%rsp) 
+L17070:	popq %rax
+L17071:	pushq %rax
+L17072:	movq $97, %rax
+L17073:	pushq %rax
+L17074:	movq 56(%rsp), %rax
+L17075:	popq %rdi
+L17076:	call L97
+L17077:	movq %rax, 40(%rsp) 
+L17078:	popq %rax
+L17079:	pushq %rax
+L17080:	movq $118, %rax
+L17081:	pushq %rax
+L17082:	movq 48(%rsp), %rax
+L17083:	popq %rdi
+L17084:	call L97
+L17085:	movq %rax, 32(%rsp) 
+L17086:	popq %rax
+L17087:	pushq %rax
+L17088:	movq $111, %rax
+L17089:	pushq %rax
+L17090:	movq 40(%rsp), %rax
+L17091:	popq %rdi
+L17092:	call L97
+L17093:	movq %rax, 24(%rsp) 
+L17094:	popq %rax
+L17095:	pushq %rax
+L17096:	movq $109, %rax
+L17097:	pushq %rax
+L17098:	movq 32(%rsp), %rax
+L17099:	popq %rdi
+L17100:	call L97
+L17101:	movq %rax, 16(%rsp) 
+L17102:	popq %rax
+L17103:	pushq %rax
+L17104:	movq $9, %rax
+L17105:	pushq %rax
+L17106:	movq 24(%rsp), %rax
+L17107:	popq %rdi
+L17108:	call L97
+L17109:	movq %rax, 8(%rsp) 
+L17110:	popq %rax
+L17111:	pushq %rax
+L17112:	movq 8(%rsp), %rax
+L17113:	addq $408, %rsp
+L17114:	ret
+L17115:	ret
+L17116:	
   
   	/* asm2strb */
-L17114:	subq $400, %rsp
-L17115:	pushq %rax
-L17116:	movq $32, %rax
-L17117:	pushq %rax
-L17118:	movq $10, %rax
-L17119:	pushq %rax
-L17120:	movq $32, %rax
-L17121:	pushq %rax
-L17122:	movq $32, %rax
-L17123:	pushq %rax
-L17124:	movq $0, %rax
-L17125:	popq %rdi
-L17126:	popq %rdx
-L17127:	popq %rbx
-L17128:	popq %rbp
-L17129:	call L187
-L17130:	movq %rax, 392(%rsp) 
-L17131:	popq %rax
-L17132:	pushq %rax
-L17133:	movq $32, %rax
-L17134:	pushq %rax
-L17135:	movq 400(%rsp), %rax
-L17136:	popq %rdi
-L17137:	call L97
-L17138:	movq %rax, 384(%rsp) 
-L17139:	popq %rax
-L17140:	pushq %rax
-L17141:	movq $10, %rax
-L17142:	pushq %rax
-L17143:	movq 392(%rsp), %rax
-L17144:	popq %rdi
-L17145:	call L97
-L17146:	movq %rax, 376(%rsp) 
-L17147:	popq %rax
-L17148:	pushq %rax
-L17149:	movq $47, %rax
-L17150:	pushq %rax
-L17151:	movq 384(%rsp), %rax
-L17152:	popq %rdi
-L17153:	call L97
-L17154:	movq %rax, 368(%rsp) 
-L17155:	popq %rax
-L17156:	pushq %rax
-L17157:	movq $42, %rax
-L17158:	pushq %rax
-L17159:	movq 376(%rsp), %rax
-L17160:	popq %rdi
-L17161:	call L97
-L17162:	movq %rax, 360(%rsp) 
-L17163:	popq %rax
-L17164:	pushq %rax
-L17165:	movq $32, %rax
-L17166:	pushq %rax
-L17167:	movq 368(%rsp), %rax
-L17168:	popq %rdi
-L17169:	call L97
-L17170:	movq %rax, 352(%rsp) 
-L17171:	popq %rax
-L17172:	pushq %rax
-L17173:	movq $32, %rax
-L17174:	pushq %rax
-L17175:	movq 360(%rsp), %rax
-L17176:	popq %rdi
-L17177:	call L97
-L17178:	movq %rax, 344(%rsp) 
-L17179:	popq %rax
-L17180:	pushq %rax
-L17181:	movq $32, %rax
-L17182:	pushq %rax
-L17183:	movq 352(%rsp), %rax
-L17184:	popq %rdi
-L17185:	call L97
-L17186:	movq %rax, 336(%rsp) 
-L17187:	popq %rax
-L17188:	pushq %rax
-L17189:	movq $32, %rax
-L17190:	pushq %rax
-L17191:	movq 344(%rsp), %rax
-L17192:	popq %rdi
-L17193:	call L97
-L17194:	movq %rax, 328(%rsp) 
-L17195:	popq %rax
-L17196:	pushq %rax
-L17197:	movq $100, %rax
-L17198:	pushq %rax
-L17199:	movq 336(%rsp), %rax
-L17200:	popq %rdi
-L17201:	call L97
-L17202:	movq %rax, 320(%rsp) 
-L17203:	popq %rax
-L17204:	pushq %rax
-L17205:	movq $110, %rax
-L17206:	pushq %rax
-L17207:	movq 328(%rsp), %rax
-L17208:	popq %rdi
-L17209:	call L97
-L17210:	movq %rax, 312(%rsp) 
-L17211:	popq %rax
-L17212:	pushq %rax
-L17213:	movq $101, %rax
-L17214:	pushq %rax
-L17215:	movq 320(%rsp), %rax
-L17216:	popq %rdi
-L17217:	call L97
-L17218:	movq %rax, 304(%rsp) 
-L17219:	popq %rax
-L17220:	pushq %rax
-L17221:	movq $32, %rax
-L17222:	pushq %rax
-L17223:	movq 312(%rsp), %rax
-L17224:	popq %rdi
-L17225:	call L97
-L17226:	movq %rax, 296(%rsp) 
-L17227:	popq %rax
-L17228:	pushq %rax
-L17229:	movq $112, %rax
-L17230:	pushq %rax
-L17231:	movq 304(%rsp), %rax
-L17232:	popq %rdi
-L17233:	call L97
-L17234:	movq %rax, 288(%rsp) 
-L17235:	popq %rax
-L17236:	pushq %rax
-L17237:	movq $97, %rax
-L17238:	pushq %rax
-L17239:	movq 296(%rsp), %rax
-L17240:	popq %rdi
-L17241:	call L97
-L17242:	movq %rax, 280(%rsp) 
-L17243:	popq %rax
-L17244:	pushq %rax
-L17245:	movq $101, %rax
-L17246:	pushq %rax
-L17247:	movq 288(%rsp), %rax
-L17248:	popq %rdi
-L17249:	call L97
-L17250:	movq %rax, 272(%rsp) 
-L17251:	popq %rax
-L17252:	pushq %rax
-L17253:	movq $104, %rax
-L17254:	pushq %rax
-L17255:	movq 280(%rsp), %rax
-L17256:	popq %rdi
-L17257:	call L97
-L17258:	movq %rax, 264(%rsp) 
-L17259:	popq %rax
-L17260:	pushq %rax
-L17261:	movq $32, %rax
-L17262:	pushq %rax
-L17263:	movq 272(%rsp), %rax
-L17264:	popq %rdi
-L17265:	call L97
-L17266:	movq %rax, 256(%rsp) 
-L17267:	popq %rax
-L17268:	pushq %rax
-L17269:	movq $61, %rax
-L17270:	pushq %rax
-L17271:	movq 264(%rsp), %rax
-L17272:	popq %rdi
-L17273:	call L97
-L17274:	movq %rax, 248(%rsp) 
-L17275:	popq %rax
-L17276:	pushq %rax
-L17277:	movq $58, %rax
-L17278:	pushq %rax
-L17279:	movq 256(%rsp), %rax
-L17280:	popq %rdi
-L17281:	call L97
-L17282:	movq %rax, 240(%rsp) 
-L17283:	popq %rax
-L17284:	pushq %rax
-L17285:	movq $32, %rax
-L17286:	pushq %rax
-L17287:	movq 248(%rsp), %rax
-L17288:	popq %rdi
-L17289:	call L97
-L17290:	movq %rax, 232(%rsp) 
-L17291:	popq %rax
-L17292:	pushq %rax
-L17293:	movq $53, %rax
-L17294:	pushq %rax
-L17295:	movq 240(%rsp), %rax
-L17296:	popq %rdi
-L17297:	call L97
-L17298:	movq %rax, 224(%rsp) 
-L17299:	popq %rax
-L17300:	pushq %rax
-L17301:	movq $49, %rax
-L17302:	pushq %rax
-L17303:	movq 232(%rsp), %rax
-L17304:	popq %rdi
-L17305:	call L97
-L17306:	movq %rax, 216(%rsp) 
-L17307:	popq %rax
-L17308:	pushq %rax
-L17309:	movq $114, %rax
-L17310:	pushq %rax
-L17311:	movq 224(%rsp), %rax
-L17312:	popq %rdi
-L17313:	call L97
-L17314:	movq %rax, 208(%rsp) 
-L17315:	popq %rax
-L17316:	pushq %rax
-L17317:	movq $32, %rax
-L17318:	pushq %rax
-L17319:	movq 216(%rsp), %rax
-L17320:	popq %rdi
-L17321:	call L97
-L17322:	movq %rax, 200(%rsp) 
-L17323:	popq %rax
-L17324:	pushq %rax
-L17325:	movq $42, %rax
-L17326:	pushq %rax
-L17327:	movq 208(%rsp), %rax
-L17328:	popq %rdi
-L17329:	call L97
-L17330:	movq %rax, 192(%rsp) 
-L17331:	popq %rax
-L17332:	pushq %rax
-L17333:	movq $47, %rax
-L17334:	pushq %rax
-L17335:	movq 200(%rsp), %rax
-L17336:	popq %rdi
-L17337:	call L97
-L17338:	movq %rax, 184(%rsp) 
-L17339:	popq %rax
-L17340:	pushq %rax
-L17341:	movq $32, %rax
-L17342:	pushq %rax
-L17343:	movq 192(%rsp), %rax
-L17344:	popq %rdi
-L17345:	call L97
-L17346:	movq %rax, 176(%rsp) 
-L17347:	popq %rax
-L17348:	pushq %rax
-L17349:	movq $32, %rax
-L17350:	pushq %rax
-L17351:	movq 184(%rsp), %rax
-L17352:	popq %rdi
-L17353:	call L97
-L17354:	movq %rax, 168(%rsp) 
-L17355:	popq %rax
-L17356:	pushq %rax
-L17357:	movq $53, %rax
-L17358:	pushq %rax
-L17359:	movq 176(%rsp), %rax
-L17360:	popq %rdi
-L17361:	call L97
-L17362:	movq %rax, 160(%rsp) 
-L17363:	popq %rax
-L17364:	pushq %rax
-L17365:	movq $49, %rax
-L17366:	pushq %rax
-L17367:	movq 168(%rsp), %rax
-L17368:	popq %rdi
-L17369:	call L97
-L17370:	movq %rax, 152(%rsp) 
-L17371:	popq %rax
-L17372:	pushq %rax
-L17373:	movq $114, %rax
-L17374:	pushq %rax
-L17375:	movq 160(%rsp), %rax
-L17376:	popq %rdi
-L17377:	call L97
-L17378:	movq %rax, 144(%rsp) 
-L17379:	popq %rax
-L17380:	pushq %rax
-L17381:	movq $37, %rax
-L17382:	pushq %rax
-L17383:	movq 152(%rsp), %rax
-L17384:	popq %rdi
-L17385:	call L97
-L17386:	movq %rax, 136(%rsp) 
-L17387:	popq %rax
-L17388:	pushq %rax
-L17389:	movq $32, %rax
-L17390:	pushq %rax
-L17391:	movq 144(%rsp), %rax
-L17392:	popq %rdi
-L17393:	call L97
-L17394:	movq %rax, 128(%rsp) 
-L17395:	popq %rax
-L17396:	pushq %rax
-L17397:	movq $44, %rax
-L17398:	pushq %rax
-L17399:	movq 136(%rsp), %rax
-L17400:	popq %rdi
-L17401:	call L97
-L17402:	movq %rax, 120(%rsp) 
-L17403:	popq %rax
-L17404:	pushq %rax
-L17405:	movq $69, %rax
-L17406:	pushq %rax
-L17407:	movq 128(%rsp), %rax
-L17408:	popq %rdi
-L17409:	call L97
-L17410:	movq %rax, 112(%rsp) 
-L17411:	popq %rax
-L17412:	pushq %rax
-L17413:	movq $112, %rax
-L17414:	pushq %rax
-L17415:	movq 120(%rsp), %rax
-L17416:	popq %rdi
-L17417:	call L97
-L17418:	movq %rax, 104(%rsp) 
-L17419:	popq %rax
-L17420:	pushq %rax
-L17421:	movq $97, %rax
-L17422:	pushq %rax
-L17423:	movq 112(%rsp), %rax
-L17424:	popq %rdi
-L17425:	call L97
-L17426:	movq %rax, 96(%rsp) 
-L17427:	popq %rax
-L17428:	pushq %rax
-L17429:	movq $101, %rax
-L17430:	pushq %rax
-L17431:	movq 104(%rsp), %rax
-L17432:	popq %rdi
-L17433:	call L97
-L17434:	movq %rax, 88(%rsp) 
-L17435:	popq %rax
-L17436:	pushq %rax
-L17437:	movq $104, %rax
-L17438:	pushq %rax
-L17439:	movq 96(%rsp), %rax
-L17440:	popq %rdi
-L17441:	call L97
-L17442:	movq %rax, 80(%rsp) 
-L17443:	popq %rax
-L17444:	pushq %rax
-L17445:	movq $36, %rax
-L17446:	pushq %rax
-L17447:	movq 88(%rsp), %rax
-L17448:	popq %rdi
-L17449:	call L97
-L17450:	movq %rax, 72(%rsp) 
-L17451:	popq %rax
-L17452:	pushq %rax
-L17453:	movq $32, %rax
-L17454:	pushq %rax
-L17455:	movq 80(%rsp), %rax
-L17456:	popq %rdi
-L17457:	call L97
-L17458:	movq %rax, 64(%rsp) 
-L17459:	popq %rax
-L17460:	pushq %rax
-L17461:	movq $115, %rax
-L17462:	pushq %rax
-L17463:	movq 72(%rsp), %rax
-L17464:	popq %rdi
-L17465:	call L97
-L17466:	movq %rax, 56(%rsp) 
-L17467:	popq %rax
-L17468:	pushq %rax
-L17469:	movq $98, %rax
-L17470:	pushq %rax
-L17471:	movq 64(%rsp), %rax
-L17472:	popq %rdi
-L17473:	call L97
-L17474:	movq %rax, 48(%rsp) 
-L17475:	popq %rax
-L17476:	pushq %rax
-L17477:	movq $97, %rax
-L17478:	pushq %rax
-L17479:	movq 56(%rsp), %rax
-L17480:	popq %rdi
-L17481:	call L97
-L17482:	movq %rax, 40(%rsp) 
-L17483:	popq %rax
-L17484:	pushq %rax
-L17485:	movq $118, %rax
-L17486:	pushq %rax
-L17487:	movq 48(%rsp), %rax
-L17488:	popq %rdi
-L17489:	call L97
-L17490:	movq %rax, 32(%rsp) 
-L17491:	popq %rax
-L17492:	pushq %rax
-L17493:	movq $111, %rax
-L17494:	pushq %rax
-L17495:	movq 40(%rsp), %rax
-L17496:	popq %rdi
-L17497:	call L97
-L17498:	movq %rax, 24(%rsp) 
-L17499:	popq %rax
-L17500:	pushq %rax
-L17501:	movq $109, %rax
-L17502:	pushq %rax
-L17503:	movq 32(%rsp), %rax
-L17504:	popq %rdi
-L17505:	call L97
-L17506:	movq %rax, 16(%rsp) 
-L17507:	popq %rax
-L17508:	pushq %rax
-L17509:	movq $9, %rax
-L17510:	pushq %rax
-L17511:	movq 24(%rsp), %rax
-L17512:	popq %rdi
-L17513:	call L97
-L17514:	movq %rax, 8(%rsp) 
-L17515:	popq %rax
-L17516:	pushq %rax
-L17517:	movq 8(%rsp), %rax
-L17518:	addq $408, %rsp
-L17519:	ret
-L17520:	ret
-L17521:	
+L17117:	subq $400, %rsp
+L17118:	pushq %rax
+L17119:	movq $32, %rax
+L17120:	pushq %rax
+L17121:	movq $10, %rax
+L17122:	pushq %rax
+L17123:	movq $32, %rax
+L17124:	pushq %rax
+L17125:	movq $32, %rax
+L17126:	pushq %rax
+L17127:	movq $0, %rax
+L17128:	popq %rdi
+L17129:	popq %rdx
+L17130:	popq %rbx
+L17131:	popq %rbp
+L17132:	call L187
+L17133:	movq %rax, 392(%rsp) 
+L17134:	popq %rax
+L17135:	pushq %rax
+L17136:	movq $32, %rax
+L17137:	pushq %rax
+L17138:	movq 400(%rsp), %rax
+L17139:	popq %rdi
+L17140:	call L97
+L17141:	movq %rax, 384(%rsp) 
+L17142:	popq %rax
+L17143:	pushq %rax
+L17144:	movq $10, %rax
+L17145:	pushq %rax
+L17146:	movq 392(%rsp), %rax
+L17147:	popq %rdi
+L17148:	call L97
+L17149:	movq %rax, 376(%rsp) 
+L17150:	popq %rax
+L17151:	pushq %rax
+L17152:	movq $47, %rax
+L17153:	pushq %rax
+L17154:	movq 384(%rsp), %rax
+L17155:	popq %rdi
+L17156:	call L97
+L17157:	movq %rax, 368(%rsp) 
+L17158:	popq %rax
+L17159:	pushq %rax
+L17160:	movq $42, %rax
+L17161:	pushq %rax
+L17162:	movq 376(%rsp), %rax
+L17163:	popq %rdi
+L17164:	call L97
+L17165:	movq %rax, 360(%rsp) 
+L17166:	popq %rax
+L17167:	pushq %rax
+L17168:	movq $32, %rax
+L17169:	pushq %rax
+L17170:	movq 368(%rsp), %rax
+L17171:	popq %rdi
+L17172:	call L97
+L17173:	movq %rax, 352(%rsp) 
+L17174:	popq %rax
+L17175:	pushq %rax
+L17176:	movq $32, %rax
+L17177:	pushq %rax
+L17178:	movq 360(%rsp), %rax
+L17179:	popq %rdi
+L17180:	call L97
+L17181:	movq %rax, 344(%rsp) 
+L17182:	popq %rax
+L17183:	pushq %rax
+L17184:	movq $32, %rax
+L17185:	pushq %rax
+L17186:	movq 352(%rsp), %rax
+L17187:	popq %rdi
+L17188:	call L97
+L17189:	movq %rax, 336(%rsp) 
+L17190:	popq %rax
+L17191:	pushq %rax
+L17192:	movq $32, %rax
+L17193:	pushq %rax
+L17194:	movq 344(%rsp), %rax
+L17195:	popq %rdi
+L17196:	call L97
+L17197:	movq %rax, 328(%rsp) 
+L17198:	popq %rax
+L17199:	pushq %rax
+L17200:	movq $100, %rax
+L17201:	pushq %rax
+L17202:	movq 336(%rsp), %rax
+L17203:	popq %rdi
+L17204:	call L97
+L17205:	movq %rax, 320(%rsp) 
+L17206:	popq %rax
+L17207:	pushq %rax
+L17208:	movq $110, %rax
+L17209:	pushq %rax
+L17210:	movq 328(%rsp), %rax
+L17211:	popq %rdi
+L17212:	call L97
+L17213:	movq %rax, 312(%rsp) 
+L17214:	popq %rax
+L17215:	pushq %rax
+L17216:	movq $101, %rax
+L17217:	pushq %rax
+L17218:	movq 320(%rsp), %rax
+L17219:	popq %rdi
+L17220:	call L97
+L17221:	movq %rax, 304(%rsp) 
+L17222:	popq %rax
+L17223:	pushq %rax
+L17224:	movq $32, %rax
+L17225:	pushq %rax
+L17226:	movq 312(%rsp), %rax
+L17227:	popq %rdi
+L17228:	call L97
+L17229:	movq %rax, 296(%rsp) 
+L17230:	popq %rax
+L17231:	pushq %rax
+L17232:	movq $112, %rax
+L17233:	pushq %rax
+L17234:	movq 304(%rsp), %rax
+L17235:	popq %rdi
+L17236:	call L97
+L17237:	movq %rax, 288(%rsp) 
+L17238:	popq %rax
+L17239:	pushq %rax
+L17240:	movq $97, %rax
+L17241:	pushq %rax
+L17242:	movq 296(%rsp), %rax
+L17243:	popq %rdi
+L17244:	call L97
+L17245:	movq %rax, 280(%rsp) 
+L17246:	popq %rax
+L17247:	pushq %rax
+L17248:	movq $101, %rax
+L17249:	pushq %rax
+L17250:	movq 288(%rsp), %rax
+L17251:	popq %rdi
+L17252:	call L97
+L17253:	movq %rax, 272(%rsp) 
+L17254:	popq %rax
+L17255:	pushq %rax
+L17256:	movq $104, %rax
+L17257:	pushq %rax
+L17258:	movq 280(%rsp), %rax
+L17259:	popq %rdi
+L17260:	call L97
+L17261:	movq %rax, 264(%rsp) 
+L17262:	popq %rax
+L17263:	pushq %rax
+L17264:	movq $32, %rax
+L17265:	pushq %rax
+L17266:	movq 272(%rsp), %rax
+L17267:	popq %rdi
+L17268:	call L97
+L17269:	movq %rax, 256(%rsp) 
+L17270:	popq %rax
+L17271:	pushq %rax
+L17272:	movq $61, %rax
+L17273:	pushq %rax
+L17274:	movq 264(%rsp), %rax
+L17275:	popq %rdi
+L17276:	call L97
+L17277:	movq %rax, 248(%rsp) 
+L17278:	popq %rax
+L17279:	pushq %rax
+L17280:	movq $58, %rax
+L17281:	pushq %rax
+L17282:	movq 256(%rsp), %rax
+L17283:	popq %rdi
+L17284:	call L97
+L17285:	movq %rax, 240(%rsp) 
+L17286:	popq %rax
+L17287:	pushq %rax
+L17288:	movq $32, %rax
+L17289:	pushq %rax
+L17290:	movq 248(%rsp), %rax
+L17291:	popq %rdi
+L17292:	call L97
+L17293:	movq %rax, 232(%rsp) 
+L17294:	popq %rax
+L17295:	pushq %rax
+L17296:	movq $53, %rax
+L17297:	pushq %rax
+L17298:	movq 240(%rsp), %rax
+L17299:	popq %rdi
+L17300:	call L97
+L17301:	movq %rax, 224(%rsp) 
+L17302:	popq %rax
+L17303:	pushq %rax
+L17304:	movq $49, %rax
+L17305:	pushq %rax
+L17306:	movq 232(%rsp), %rax
+L17307:	popq %rdi
+L17308:	call L97
+L17309:	movq %rax, 216(%rsp) 
+L17310:	popq %rax
+L17311:	pushq %rax
+L17312:	movq $114, %rax
+L17313:	pushq %rax
+L17314:	movq 224(%rsp), %rax
+L17315:	popq %rdi
+L17316:	call L97
+L17317:	movq %rax, 208(%rsp) 
+L17318:	popq %rax
+L17319:	pushq %rax
+L17320:	movq $32, %rax
+L17321:	pushq %rax
+L17322:	movq 216(%rsp), %rax
+L17323:	popq %rdi
+L17324:	call L97
+L17325:	movq %rax, 200(%rsp) 
+L17326:	popq %rax
+L17327:	pushq %rax
+L17328:	movq $42, %rax
+L17329:	pushq %rax
+L17330:	movq 208(%rsp), %rax
+L17331:	popq %rdi
+L17332:	call L97
+L17333:	movq %rax, 192(%rsp) 
+L17334:	popq %rax
+L17335:	pushq %rax
+L17336:	movq $47, %rax
+L17337:	pushq %rax
+L17338:	movq 200(%rsp), %rax
+L17339:	popq %rdi
+L17340:	call L97
+L17341:	movq %rax, 184(%rsp) 
+L17342:	popq %rax
+L17343:	pushq %rax
+L17344:	movq $32, %rax
+L17345:	pushq %rax
+L17346:	movq 192(%rsp), %rax
+L17347:	popq %rdi
+L17348:	call L97
+L17349:	movq %rax, 176(%rsp) 
+L17350:	popq %rax
+L17351:	pushq %rax
+L17352:	movq $32, %rax
+L17353:	pushq %rax
+L17354:	movq 184(%rsp), %rax
+L17355:	popq %rdi
+L17356:	call L97
+L17357:	movq %rax, 168(%rsp) 
+L17358:	popq %rax
+L17359:	pushq %rax
+L17360:	movq $53, %rax
+L17361:	pushq %rax
+L17362:	movq 176(%rsp), %rax
+L17363:	popq %rdi
+L17364:	call L97
+L17365:	movq %rax, 160(%rsp) 
+L17366:	popq %rax
+L17367:	pushq %rax
+L17368:	movq $49, %rax
+L17369:	pushq %rax
+L17370:	movq 168(%rsp), %rax
+L17371:	popq %rdi
+L17372:	call L97
+L17373:	movq %rax, 152(%rsp) 
+L17374:	popq %rax
+L17375:	pushq %rax
+L17376:	movq $114, %rax
+L17377:	pushq %rax
+L17378:	movq 160(%rsp), %rax
+L17379:	popq %rdi
+L17380:	call L97
+L17381:	movq %rax, 144(%rsp) 
+L17382:	popq %rax
+L17383:	pushq %rax
+L17384:	movq $37, %rax
+L17385:	pushq %rax
+L17386:	movq 152(%rsp), %rax
+L17387:	popq %rdi
+L17388:	call L97
+L17389:	movq %rax, 136(%rsp) 
+L17390:	popq %rax
+L17391:	pushq %rax
+L17392:	movq $32, %rax
+L17393:	pushq %rax
+L17394:	movq 144(%rsp), %rax
+L17395:	popq %rdi
+L17396:	call L97
+L17397:	movq %rax, 128(%rsp) 
+L17398:	popq %rax
+L17399:	pushq %rax
+L17400:	movq $44, %rax
+L17401:	pushq %rax
+L17402:	movq 136(%rsp), %rax
+L17403:	popq %rdi
+L17404:	call L97
+L17405:	movq %rax, 120(%rsp) 
+L17406:	popq %rax
+L17407:	pushq %rax
+L17408:	movq $69, %rax
+L17409:	pushq %rax
+L17410:	movq 128(%rsp), %rax
+L17411:	popq %rdi
+L17412:	call L97
+L17413:	movq %rax, 112(%rsp) 
+L17414:	popq %rax
+L17415:	pushq %rax
+L17416:	movq $112, %rax
+L17417:	pushq %rax
+L17418:	movq 120(%rsp), %rax
+L17419:	popq %rdi
+L17420:	call L97
+L17421:	movq %rax, 104(%rsp) 
+L17422:	popq %rax
+L17423:	pushq %rax
+L17424:	movq $97, %rax
+L17425:	pushq %rax
+L17426:	movq 112(%rsp), %rax
+L17427:	popq %rdi
+L17428:	call L97
+L17429:	movq %rax, 96(%rsp) 
+L17430:	popq %rax
+L17431:	pushq %rax
+L17432:	movq $101, %rax
+L17433:	pushq %rax
+L17434:	movq 104(%rsp), %rax
+L17435:	popq %rdi
+L17436:	call L97
+L17437:	movq %rax, 88(%rsp) 
+L17438:	popq %rax
+L17439:	pushq %rax
+L17440:	movq $104, %rax
+L17441:	pushq %rax
+L17442:	movq 96(%rsp), %rax
+L17443:	popq %rdi
+L17444:	call L97
+L17445:	movq %rax, 80(%rsp) 
+L17446:	popq %rax
+L17447:	pushq %rax
+L17448:	movq $36, %rax
+L17449:	pushq %rax
+L17450:	movq 88(%rsp), %rax
+L17451:	popq %rdi
+L17452:	call L97
+L17453:	movq %rax, 72(%rsp) 
+L17454:	popq %rax
+L17455:	pushq %rax
+L17456:	movq $32, %rax
+L17457:	pushq %rax
+L17458:	movq 80(%rsp), %rax
+L17459:	popq %rdi
+L17460:	call L97
+L17461:	movq %rax, 64(%rsp) 
+L17462:	popq %rax
+L17463:	pushq %rax
+L17464:	movq $115, %rax
+L17465:	pushq %rax
+L17466:	movq 72(%rsp), %rax
+L17467:	popq %rdi
+L17468:	call L97
+L17469:	movq %rax, 56(%rsp) 
+L17470:	popq %rax
+L17471:	pushq %rax
+L17472:	movq $98, %rax
+L17473:	pushq %rax
+L17474:	movq 64(%rsp), %rax
+L17475:	popq %rdi
+L17476:	call L97
+L17477:	movq %rax, 48(%rsp) 
+L17478:	popq %rax
+L17479:	pushq %rax
+L17480:	movq $97, %rax
+L17481:	pushq %rax
+L17482:	movq 56(%rsp), %rax
+L17483:	popq %rdi
+L17484:	call L97
+L17485:	movq %rax, 40(%rsp) 
+L17486:	popq %rax
+L17487:	pushq %rax
+L17488:	movq $118, %rax
+L17489:	pushq %rax
+L17490:	movq 48(%rsp), %rax
+L17491:	popq %rdi
+L17492:	call L97
+L17493:	movq %rax, 32(%rsp) 
+L17494:	popq %rax
+L17495:	pushq %rax
+L17496:	movq $111, %rax
+L17497:	pushq %rax
+L17498:	movq 40(%rsp), %rax
+L17499:	popq %rdi
+L17500:	call L97
+L17501:	movq %rax, 24(%rsp) 
+L17502:	popq %rax
+L17503:	pushq %rax
+L17504:	movq $109, %rax
+L17505:	pushq %rax
+L17506:	movq 32(%rsp), %rax
+L17507:	popq %rdi
+L17508:	call L97
+L17509:	movq %rax, 16(%rsp) 
+L17510:	popq %rax
+L17511:	pushq %rax
+L17512:	movq $9, %rax
+L17513:	pushq %rax
+L17514:	movq 24(%rsp), %rax
+L17515:	popq %rdi
+L17516:	call L97
+L17517:	movq %rax, 8(%rsp) 
+L17518:	popq %rax
+L17519:	pushq %rax
+L17520:	movq 8(%rsp), %rax
+L17521:	addq $408, %rsp
+L17522:	ret
+L17523:	ret
+L17524:	
   
   	/* asm2str */
-L17522:	subq $240, %rsp
-L17523:	pushq %rax
-L17524:	call L14644
-L17525:	movq %rax, 232(%rsp) 
-L17526:	popq %rax
-L17527:	pushq %rax
-L17528:	call L14700
-L17529:	movq %rax, 224(%rsp) 
-L17530:	popq %rax
-L17531:	pushq %rax
-L17532:	movq 224(%rsp), %rax
-L17533:	movq %rax, 216(%rsp) 
-L17534:	popq %rax
-L17535:	pushq %rax
-L17536:	call L15099
-L17537:	movq %rax, 208(%rsp) 
-L17538:	popq %rax
-L17539:	pushq %rax
-L17540:	movq 208(%rsp), %rax
-L17541:	movq %rax, 200(%rsp) 
-L17542:	popq %rax
-L17543:	pushq %rax
-L17544:	call L15178
-L17545:	movq %rax, 192(%rsp) 
-L17546:	popq %rax
-L17547:	pushq %rax
-L17548:	movq 192(%rsp), %rax
-L17549:	movq %rax, 184(%rsp) 
-L17550:	popq %rax
-L17551:	pushq %rax
-L17552:	call L15577
-L17553:	movq %rax, 176(%rsp) 
-L17554:	popq %rax
-L17555:	pushq %rax
-L17556:	movq 176(%rsp), %rax
-L17557:	movq %rax, 168(%rsp) 
-L17558:	popq %rax
-L17559:	pushq %rax
-L17560:	call L15976
-L17561:	movq %rax, 160(%rsp) 
-L17562:	popq %rax
-L17563:	pushq %rax
-L17564:	movq 160(%rsp), %rax
-L17565:	movq %rax, 152(%rsp) 
-L17566:	popq %rax
-L17567:	pushq %rax
-L17568:	call L16064
-L17569:	movq %rax, 144(%rsp) 
-L17570:	popq %rax
-L17571:	pushq %rax
-L17572:	movq 144(%rsp), %rax
-L17573:	movq %rax, 136(%rsp) 
-L17574:	popq %rax
-L17575:	pushq %rax
-L17576:	call L16143
-L17577:	movq %rax, 128(%rsp) 
-L17578:	popq %rax
-L17579:	pushq %rax
-L17580:	movq 128(%rsp), %rax
-L17581:	movq %rax, 120(%rsp) 
-L17582:	popq %rax
-L17583:	pushq %rax
-L17584:	call L16260
-L17585:	movq %rax, 112(%rsp) 
-L17586:	popq %rax
-L17587:	pushq %rax
-L17588:	movq 112(%rsp), %rax
-L17589:	movq %rax, 104(%rsp) 
-L17590:	popq %rax
-L17591:	pushq %rax
-L17592:	call L16316
-L17593:	movq %rax, 96(%rsp) 
-L17594:	popq %rax
-L17595:	pushq %rax
-L17596:	movq 96(%rsp), %rax
-L17597:	movq %rax, 88(%rsp) 
-L17598:	popq %rax
-L17599:	pushq %rax
-L17600:	call L16715
-L17601:	movq %rax, 80(%rsp) 
-L17602:	popq %rax
-L17603:	pushq %rax
-L17604:	movq 80(%rsp), %rax
-L17605:	movq %rax, 72(%rsp) 
-L17606:	popq %rax
-L17607:	pushq %rax
-L17608:	call L17114
-L17609:	movq %rax, 64(%rsp) 
-L17610:	popq %rax
-L17611:	pushq %rax
-L17612:	movq 64(%rsp), %rax
-L17613:	movq %rax, 56(%rsp) 
-L17614:	popq %rax
-L17615:	pushq %rax
-L17616:	movq 104(%rsp), %rax
-L17617:	pushq %rax
-L17618:	movq 96(%rsp), %rax
-L17619:	pushq %rax
-L17620:	movq 88(%rsp), %rax
-L17621:	pushq %rax
-L17622:	movq 80(%rsp), %rax
-L17623:	pushq %rax
-L17624:	movq $0, %rax
-L17625:	popq %rdi
-L17626:	popq %rdx
-L17627:	popq %rbx
-L17628:	popq %rbp
-L17629:	call L187
-L17630:	movq %rax, 48(%rsp) 
-L17631:	popq %rax
-L17632:	pushq %rax
-L17633:	movq 168(%rsp), %rax
-L17634:	pushq %rax
-L17635:	movq 160(%rsp), %rax
-L17636:	pushq %rax
-L17637:	movq 152(%rsp), %rax
-L17638:	pushq %rax
-L17639:	movq 144(%rsp), %rax
-L17640:	pushq %rax
-L17641:	movq 80(%rsp), %rax
-L17642:	popq %rdi
-L17643:	popq %rdx
-L17644:	popq %rbx
-L17645:	popq %rbp
-L17646:	call L187
-L17647:	movq %rax, 40(%rsp) 
-L17648:	popq %rax
-L17649:	pushq %rax
-L17650:	movq 232(%rsp), %rax
-L17651:	pushq %rax
-L17652:	movq 224(%rsp), %rax
-L17653:	pushq %rax
-L17654:	movq 216(%rsp), %rax
-L17655:	pushq %rax
-L17656:	movq 208(%rsp), %rax
-L17657:	pushq %rax
-L17658:	movq 72(%rsp), %rax
-L17659:	popq %rdi
-L17660:	popq %rdx
-L17661:	popq %rbx
-L17662:	popq %rbp
-L17663:	call L187
-L17664:	movq %rax, 32(%rsp) 
-L17665:	popq %rax
-L17666:	pushq %rax
-L17667:	movq 32(%rsp), %rax
-L17668:	call L14588
-L17669:	movq %rax, 24(%rsp) 
-L17670:	popq %rax
-L17671:	pushq %rax
-L17672:	movq $0, %rax
-L17673:	pushq %rax
-L17674:	movq 8(%rsp), %rax
-L17675:	popq %rdi
-L17676:	call L14488
-L17677:	movq %rax, 16(%rsp) 
-L17678:	popq %rax
-L17679:	pushq %rax
-L17680:	movq 24(%rsp), %rax
-L17681:	pushq %rax
-L17682:	movq 24(%rsp), %rax
-L17683:	popq %rdi
-L17684:	call L24048
-L17685:	movq %rax, 8(%rsp) 
-L17686:	popq %rax
-L17687:	pushq %rax
-L17688:	movq 8(%rsp), %rax
-L17689:	addq $248, %rsp
-L17690:	ret
-L17691:	ret
-L17692:	
+L17525:	subq $240, %rsp
+L17526:	pushq %rax
+L17527:	call L14644
+L17528:	movq %rax, 232(%rsp) 
+L17529:	popq %rax
+L17530:	pushq %rax
+L17531:	call L14700
+L17532:	movq %rax, 224(%rsp) 
+L17533:	popq %rax
+L17534:	pushq %rax
+L17535:	movq 224(%rsp), %rax
+L17536:	movq %rax, 216(%rsp) 
+L17537:	popq %rax
+L17538:	pushq %rax
+L17539:	call L15099
+L17540:	movq %rax, 208(%rsp) 
+L17541:	popq %rax
+L17542:	pushq %rax
+L17543:	movq 208(%rsp), %rax
+L17544:	movq %rax, 200(%rsp) 
+L17545:	popq %rax
+L17546:	pushq %rax
+L17547:	call L15178
+L17548:	movq %rax, 192(%rsp) 
+L17549:	popq %rax
+L17550:	pushq %rax
+L17551:	movq 192(%rsp), %rax
+L17552:	movq %rax, 184(%rsp) 
+L17553:	popq %rax
+L17554:	pushq %rax
+L17555:	call L15580
+L17556:	movq %rax, 176(%rsp) 
+L17557:	popq %rax
+L17558:	pushq %rax
+L17559:	movq 176(%rsp), %rax
+L17560:	movq %rax, 168(%rsp) 
+L17561:	popq %rax
+L17562:	pushq %rax
+L17563:	call L15979
+L17564:	movq %rax, 160(%rsp) 
+L17565:	popq %rax
+L17566:	pushq %rax
+L17567:	movq 160(%rsp), %rax
+L17568:	movq %rax, 152(%rsp) 
+L17569:	popq %rax
+L17570:	pushq %rax
+L17571:	call L16067
+L17572:	movq %rax, 144(%rsp) 
+L17573:	popq %rax
+L17574:	pushq %rax
+L17575:	movq 144(%rsp), %rax
+L17576:	movq %rax, 136(%rsp) 
+L17577:	popq %rax
+L17578:	pushq %rax
+L17579:	call L16146
+L17580:	movq %rax, 128(%rsp) 
+L17581:	popq %rax
+L17582:	pushq %rax
+L17583:	movq 128(%rsp), %rax
+L17584:	movq %rax, 120(%rsp) 
+L17585:	popq %rax
+L17586:	pushq %rax
+L17587:	call L16263
+L17588:	movq %rax, 112(%rsp) 
+L17589:	popq %rax
+L17590:	pushq %rax
+L17591:	movq 112(%rsp), %rax
+L17592:	movq %rax, 104(%rsp) 
+L17593:	popq %rax
+L17594:	pushq %rax
+L17595:	call L16319
+L17596:	movq %rax, 96(%rsp) 
+L17597:	popq %rax
+L17598:	pushq %rax
+L17599:	movq 96(%rsp), %rax
+L17600:	movq %rax, 88(%rsp) 
+L17601:	popq %rax
+L17602:	pushq %rax
+L17603:	call L16718
+L17604:	movq %rax, 80(%rsp) 
+L17605:	popq %rax
+L17606:	pushq %rax
+L17607:	movq 80(%rsp), %rax
+L17608:	movq %rax, 72(%rsp) 
+L17609:	popq %rax
+L17610:	pushq %rax
+L17611:	call L17117
+L17612:	movq %rax, 64(%rsp) 
+L17613:	popq %rax
+L17614:	pushq %rax
+L17615:	movq 64(%rsp), %rax
+L17616:	movq %rax, 56(%rsp) 
+L17617:	popq %rax
+L17618:	pushq %rax
+L17619:	movq 104(%rsp), %rax
+L17620:	pushq %rax
+L17621:	movq 96(%rsp), %rax
+L17622:	pushq %rax
+L17623:	movq 88(%rsp), %rax
+L17624:	pushq %rax
+L17625:	movq 80(%rsp), %rax
+L17626:	pushq %rax
+L17627:	movq $0, %rax
+L17628:	popq %rdi
+L17629:	popq %rdx
+L17630:	popq %rbx
+L17631:	popq %rbp
+L17632:	call L187
+L17633:	movq %rax, 48(%rsp) 
+L17634:	popq %rax
+L17635:	pushq %rax
+L17636:	movq 168(%rsp), %rax
+L17637:	pushq %rax
+L17638:	movq 160(%rsp), %rax
+L17639:	pushq %rax
+L17640:	movq 152(%rsp), %rax
+L17641:	pushq %rax
+L17642:	movq 144(%rsp), %rax
+L17643:	pushq %rax
+L17644:	movq 80(%rsp), %rax
+L17645:	popq %rdi
+L17646:	popq %rdx
+L17647:	popq %rbx
+L17648:	popq %rbp
+L17649:	call L187
+L17650:	movq %rax, 40(%rsp) 
+L17651:	popq %rax
+L17652:	pushq %rax
+L17653:	movq 232(%rsp), %rax
+L17654:	pushq %rax
+L17655:	movq 224(%rsp), %rax
+L17656:	pushq %rax
+L17657:	movq 216(%rsp), %rax
+L17658:	pushq %rax
+L17659:	movq 208(%rsp), %rax
+L17660:	pushq %rax
+L17661:	movq 72(%rsp), %rax
+L17662:	popq %rdi
+L17663:	popq %rdx
+L17664:	popq %rbx
+L17665:	popq %rbp
+L17666:	call L187
+L17667:	movq %rax, 32(%rsp) 
+L17668:	popq %rax
+L17669:	pushq %rax
+L17670:	movq 32(%rsp), %rax
+L17671:	call L14588
+L17672:	movq %rax, 24(%rsp) 
+L17673:	popq %rax
+L17674:	pushq %rax
+L17675:	movq $0, %rax
+L17676:	pushq %rax
+L17677:	movq 8(%rsp), %rax
+L17678:	popq %rdi
+L17679:	call L14488
+L17680:	movq %rax, 16(%rsp) 
+L17681:	popq %rax
+L17682:	pushq %rax
+L17683:	movq 24(%rsp), %rax
+L17684:	pushq %rax
+L17685:	movq 24(%rsp), %rax
+L17686:	popq %rdi
+L17687:	call L24051
+L17688:	movq %rax, 8(%rsp) 
+L17689:	popq %rax
+L17690:	pushq %rax
+L17691:	movq 8(%rsp), %rax
+L17692:	addq $248, %rsp
+L17693:	ret
+L17694:	ret
+L17695:	
   
   	/* read_nmc */
-L17693:	subq $96, %rsp
-L17694:	pushq %rdx
-L17695:	pushq %rdi
-L17696:	jmp L17699
-L17697:	jmp L17708
-L17698:	jmp L17733
-L17699:	pushq %rax
-L17700:	movq 8(%rsp), %rax
-L17701:	pushq %rax
-L17702:	movq $0, %rax
-L17703:	movq %rax, %rbx
-L17704:	popq %rdi
-L17705:	popq %rax
-L17706:	cmpq %rbx, %rdi ; je L17697
-L17707:	jmp L17698
-L17708:	pushq %rax
-L17709:	movq $0, %rax
-L17710:	movq %rax, 112(%rsp) 
-L17711:	popq %rax
-L17712:	pushq %rax
-L17713:	movq 16(%rsp), %rax
-L17714:	pushq %rax
-L17715:	movq 120(%rsp), %rax
-L17716:	popq %rdi
-L17717:	call L97
-L17718:	movq %rax, 104(%rsp) 
-L17719:	popq %rax
-L17720:	pushq %rax
-L17721:	movq 104(%rsp), %rax
-L17722:	pushq %rax
-L17723:	movq 8(%rsp), %rax
-L17724:	popq %rdi
-L17725:	call L97
-L17726:	movq %rax, 96(%rsp) 
-L17727:	popq %rax
-L17728:	pushq %rax
-L17729:	movq 96(%rsp), %rax
-L17730:	addq $120, %rsp
-L17731:	ret
-L17732:	jmp L17888
-L17733:	pushq %rax
-L17734:	movq 8(%rsp), %rax
-L17735:	pushq %rax
-L17736:	movq $0, %rax
-L17737:	popq %rdi
-L17738:	addq %rax, %rdi
-L17739:	movq 0(%rdi), %rax
-L17740:	movq %rax, 104(%rsp) 
-L17741:	popq %rax
-L17742:	pushq %rax
-L17743:	movq 8(%rsp), %rax
-L17744:	pushq %rax
-L17745:	movq $8, %rax
-L17746:	popq %rdi
-L17747:	addq %rax, %rdi
-L17748:	movq 0(%rdi), %rax
-L17749:	movq %rax, 88(%rsp) 
-L17750:	popq %rax
-L17751:	pushq %rax
-L17752:	movq $48, %rax
-L17753:	movq %rax, 80(%rsp) 
-L17754:	popq %rax
-L17755:	pushq %rax
-L17756:	movq 104(%rsp), %rax
-L17757:	movq %rax, 72(%rsp) 
-L17758:	popq %rax
-L17759:	pushq %rax
-L17760:	movq $57, %rax
-L17761:	movq %rax, 64(%rsp) 
-L17762:	popq %rax
-L17763:	jmp L17766
-L17764:	jmp L17775
-L17765:	jmp L17804
-L17766:	pushq %rax
-L17767:	movq 72(%rsp), %rax
-L17768:	pushq %rax
-L17769:	movq 88(%rsp), %rax
-L17770:	movq %rax, %rbx
-L17771:	popq %rdi
-L17772:	popq %rax
-L17773:	cmpq %rbx, %rdi ; jb L17764
-L17774:	jmp L17765
-L17775:	pushq %rax
-L17776:	movq 104(%rsp), %rax
-L17777:	pushq %rax
-L17778:	movq 96(%rsp), %rax
-L17779:	popq %rdi
-L17780:	call L97
-L17781:	movq %rax, 96(%rsp) 
-L17782:	popq %rax
-L17783:	pushq %rax
-L17784:	movq 16(%rsp), %rax
-L17785:	pushq %rax
-L17786:	movq 104(%rsp), %rax
-L17787:	popq %rdi
-L17788:	call L97
-L17789:	movq %rax, 56(%rsp) 
-L17790:	popq %rax
-L17791:	pushq %rax
-L17792:	movq 56(%rsp), %rax
-L17793:	pushq %rax
-L17794:	movq 8(%rsp), %rax
-L17795:	popq %rdi
-L17796:	call L97
-L17797:	movq %rax, 48(%rsp) 
-L17798:	popq %rax
-L17799:	pushq %rax
-L17800:	movq 48(%rsp), %rax
-L17801:	addq $120, %rsp
-L17802:	ret
-L17803:	jmp L17888
-L17804:	jmp L17807
-L17805:	jmp L17816
-L17806:	jmp L17845
-L17807:	pushq %rax
-L17808:	movq 64(%rsp), %rax
-L17809:	pushq %rax
-L17810:	movq 80(%rsp), %rax
-L17811:	movq %rax, %rbx
-L17812:	popq %rdi
-L17813:	popq %rax
-L17814:	cmpq %rbx, %rdi ; jb L17805
-L17815:	jmp L17806
-L17816:	pushq %rax
-L17817:	movq 104(%rsp), %rax
-L17818:	pushq %rax
-L17819:	movq 96(%rsp), %rax
-L17820:	popq %rdi
-L17821:	call L97
-L17822:	movq %rax, 96(%rsp) 
-L17823:	popq %rax
-L17824:	pushq %rax
-L17825:	movq 16(%rsp), %rax
-L17826:	pushq %rax
-L17827:	movq 104(%rsp), %rax
-L17828:	popq %rdi
-L17829:	call L97
-L17830:	movq %rax, 56(%rsp) 
-L17831:	popq %rax
-L17832:	pushq %rax
-L17833:	movq 56(%rsp), %rax
-L17834:	pushq %rax
-L17835:	movq 8(%rsp), %rax
-L17836:	popq %rdi
-L17837:	call L97
-L17838:	movq %rax, 48(%rsp) 
-L17839:	popq %rax
-L17840:	pushq %rax
-L17841:	movq 48(%rsp), %rax
-L17842:	addq $120, %rsp
-L17843:	ret
-L17844:	jmp L17888
-L17845:	pushq %rax
-L17846:	movq 16(%rsp), %rax
-L17847:	call L23123
-L17848:	movq %rax, 40(%rsp) 
-L17849:	popq %rax
-L17850:	pushq %rax
-L17851:	movq 72(%rsp), %rax
-L17852:	pushq %rax
-L17853:	movq $48, %rax
-L17854:	popq %rdi
-L17855:	call L67
-L17856:	movq %rax, 32(%rsp) 
-L17857:	popq %rax
-L17858:	pushq %rax
-L17859:	movq 40(%rsp), %rax
-L17860:	pushq %rax
-L17861:	movq 40(%rsp), %rax
-L17862:	popq %rdi
-L17863:	call L23
-L17864:	movq %rax, 24(%rsp) 
-L17865:	popq %rax
-L17866:	pushq %rax
-L17867:	pushq %rax
-L17868:	movq $1, %rax
-L17869:	popq %rdi
-L17870:	call L23
-L17871:	movq %rax, 96(%rsp) 
-L17872:	popq %rax
-L17873:	pushq %rax
-L17874:	movq 24(%rsp), %rax
-L17875:	pushq %rax
-L17876:	movq 96(%rsp), %rax
-L17877:	pushq %rax
-L17878:	movq 112(%rsp), %rax
-L17879:	popq %rdi
-L17880:	popq %rdx
-L17881:	call L17693
-L17882:	movq %rax, 56(%rsp) 
-L17883:	popq %rax
-L17884:	pushq %rax
-L17885:	movq 56(%rsp), %rax
-L17886:	addq $120, %rsp
-L17887:	ret
-L17888:	ret
-L17889:	
+L17696:	subq $96, %rsp
+L17697:	pushq %rdx
+L17698:	pushq %rdi
+L17699:	jmp L17702
+L17700:	jmp L17711
+L17701:	jmp L17736
+L17702:	pushq %rax
+L17703:	movq 8(%rsp), %rax
+L17704:	pushq %rax
+L17705:	movq $0, %rax
+L17706:	movq %rax, %rbx
+L17707:	popq %rdi
+L17708:	popq %rax
+L17709:	cmpq %rbx, %rdi ; je L17700
+L17710:	jmp L17701
+L17711:	pushq %rax
+L17712:	movq $0, %rax
+L17713:	movq %rax, 112(%rsp) 
+L17714:	popq %rax
+L17715:	pushq %rax
+L17716:	movq 16(%rsp), %rax
+L17717:	pushq %rax
+L17718:	movq 120(%rsp), %rax
+L17719:	popq %rdi
+L17720:	call L97
+L17721:	movq %rax, 104(%rsp) 
+L17722:	popq %rax
+L17723:	pushq %rax
+L17724:	movq 104(%rsp), %rax
+L17725:	pushq %rax
+L17726:	movq 8(%rsp), %rax
+L17727:	popq %rdi
+L17728:	call L97
+L17729:	movq %rax, 96(%rsp) 
+L17730:	popq %rax
+L17731:	pushq %rax
+L17732:	movq 96(%rsp), %rax
+L17733:	addq $120, %rsp
+L17734:	ret
+L17735:	jmp L17891
+L17736:	pushq %rax
+L17737:	movq 8(%rsp), %rax
+L17738:	pushq %rax
+L17739:	movq $0, %rax
+L17740:	popq %rdi
+L17741:	addq %rax, %rdi
+L17742:	movq 0(%rdi), %rax
+L17743:	movq %rax, 104(%rsp) 
+L17744:	popq %rax
+L17745:	pushq %rax
+L17746:	movq 8(%rsp), %rax
+L17747:	pushq %rax
+L17748:	movq $8, %rax
+L17749:	popq %rdi
+L17750:	addq %rax, %rdi
+L17751:	movq 0(%rdi), %rax
+L17752:	movq %rax, 88(%rsp) 
+L17753:	popq %rax
+L17754:	pushq %rax
+L17755:	movq $48, %rax
+L17756:	movq %rax, 80(%rsp) 
+L17757:	popq %rax
+L17758:	pushq %rax
+L17759:	movq 104(%rsp), %rax
+L17760:	movq %rax, 72(%rsp) 
+L17761:	popq %rax
+L17762:	pushq %rax
+L17763:	movq $57, %rax
+L17764:	movq %rax, 64(%rsp) 
+L17765:	popq %rax
+L17766:	jmp L17769
+L17767:	jmp L17778
+L17768:	jmp L17807
+L17769:	pushq %rax
+L17770:	movq 72(%rsp), %rax
+L17771:	pushq %rax
+L17772:	movq 88(%rsp), %rax
+L17773:	movq %rax, %rbx
+L17774:	popq %rdi
+L17775:	popq %rax
+L17776:	cmpq %rbx, %rdi ; jb L17767
+L17777:	jmp L17768
+L17778:	pushq %rax
+L17779:	movq 104(%rsp), %rax
+L17780:	pushq %rax
+L17781:	movq 96(%rsp), %rax
+L17782:	popq %rdi
+L17783:	call L97
+L17784:	movq %rax, 96(%rsp) 
+L17785:	popq %rax
+L17786:	pushq %rax
+L17787:	movq 16(%rsp), %rax
+L17788:	pushq %rax
+L17789:	movq 104(%rsp), %rax
+L17790:	popq %rdi
+L17791:	call L97
+L17792:	movq %rax, 56(%rsp) 
+L17793:	popq %rax
+L17794:	pushq %rax
+L17795:	movq 56(%rsp), %rax
+L17796:	pushq %rax
+L17797:	movq 8(%rsp), %rax
+L17798:	popq %rdi
+L17799:	call L97
+L17800:	movq %rax, 48(%rsp) 
+L17801:	popq %rax
+L17802:	pushq %rax
+L17803:	movq 48(%rsp), %rax
+L17804:	addq $120, %rsp
+L17805:	ret
+L17806:	jmp L17891
+L17807:	jmp L17810
+L17808:	jmp L17819
+L17809:	jmp L17848
+L17810:	pushq %rax
+L17811:	movq 64(%rsp), %rax
+L17812:	pushq %rax
+L17813:	movq 80(%rsp), %rax
+L17814:	movq %rax, %rbx
+L17815:	popq %rdi
+L17816:	popq %rax
+L17817:	cmpq %rbx, %rdi ; jb L17808
+L17818:	jmp L17809
+L17819:	pushq %rax
+L17820:	movq 104(%rsp), %rax
+L17821:	pushq %rax
+L17822:	movq 96(%rsp), %rax
+L17823:	popq %rdi
+L17824:	call L97
+L17825:	movq %rax, 96(%rsp) 
+L17826:	popq %rax
+L17827:	pushq %rax
+L17828:	movq 16(%rsp), %rax
+L17829:	pushq %rax
+L17830:	movq 104(%rsp), %rax
+L17831:	popq %rdi
+L17832:	call L97
+L17833:	movq %rax, 56(%rsp) 
+L17834:	popq %rax
+L17835:	pushq %rax
+L17836:	movq 56(%rsp), %rax
+L17837:	pushq %rax
+L17838:	movq 8(%rsp), %rax
+L17839:	popq %rdi
+L17840:	call L97
+L17841:	movq %rax, 48(%rsp) 
+L17842:	popq %rax
+L17843:	pushq %rax
+L17844:	movq 48(%rsp), %rax
+L17845:	addq $120, %rsp
+L17846:	ret
+L17847:	jmp L17891
+L17848:	pushq %rax
+L17849:	movq 16(%rsp), %rax
+L17850:	call L23126
+L17851:	movq %rax, 40(%rsp) 
+L17852:	popq %rax
+L17853:	pushq %rax
+L17854:	movq 72(%rsp), %rax
+L17855:	pushq %rax
+L17856:	movq $48, %rax
+L17857:	popq %rdi
+L17858:	call L67
+L17859:	movq %rax, 32(%rsp) 
+L17860:	popq %rax
+L17861:	pushq %rax
+L17862:	movq 40(%rsp), %rax
+L17863:	pushq %rax
+L17864:	movq 40(%rsp), %rax
+L17865:	popq %rdi
+L17866:	call L23
+L17867:	movq %rax, 24(%rsp) 
+L17868:	popq %rax
+L17869:	pushq %rax
+L17870:	pushq %rax
+L17871:	movq $1, %rax
+L17872:	popq %rdi
+L17873:	call L23
+L17874:	movq %rax, 96(%rsp) 
+L17875:	popq %rax
+L17876:	pushq %rax
+L17877:	movq 24(%rsp), %rax
+L17878:	pushq %rax
+L17879:	movq 96(%rsp), %rax
+L17880:	pushq %rax
+L17881:	movq 112(%rsp), %rax
+L17882:	popq %rdi
+L17883:	popq %rdx
+L17884:	call L17696
+L17885:	movq %rax, 56(%rsp) 
+L17886:	popq %rax
+L17887:	pushq %rax
+L17888:	movq 56(%rsp), %rax
+L17889:	addq $120, %rsp
+L17890:	ret
+L17891:	ret
+L17892:	
   
   	/* read_alp */
-L17890:	subq $96, %rsp
-L17891:	pushq %rdx
-L17892:	pushq %rdi
-L17893:	jmp L17896
-L17894:	jmp L17905
-L17895:	jmp L17930
-L17896:	pushq %rax
-L17897:	movq 8(%rsp), %rax
-L17898:	pushq %rax
-L17899:	movq $0, %rax
-L17900:	movq %rax, %rbx
-L17901:	popq %rdi
-L17902:	popq %rax
-L17903:	cmpq %rbx, %rdi ; je L17894
-L17904:	jmp L17895
-L17905:	pushq %rax
-L17906:	movq $0, %rax
-L17907:	movq %rax, 104(%rsp) 
-L17908:	popq %rax
-L17909:	pushq %rax
-L17910:	movq 16(%rsp), %rax
-L17911:	pushq %rax
-L17912:	movq 112(%rsp), %rax
-L17913:	popq %rdi
-L17914:	call L97
-L17915:	movq %rax, 96(%rsp) 
-L17916:	popq %rax
-L17917:	pushq %rax
-L17918:	movq 96(%rsp), %rax
-L17919:	pushq %rax
-L17920:	movq 8(%rsp), %rax
-L17921:	popq %rdi
-L17922:	call L97
-L17923:	movq %rax, 88(%rsp) 
-L17924:	popq %rax
-L17925:	pushq %rax
-L17926:	movq 88(%rsp), %rax
-L17927:	addq $120, %rsp
-L17928:	ret
-L17929:	jmp L18077
-L17930:	pushq %rax
-L17931:	movq 8(%rsp), %rax
-L17932:	pushq %rax
-L17933:	movq $0, %rax
-L17934:	popq %rdi
-L17935:	addq %rax, %rdi
-L17936:	movq 0(%rdi), %rax
-L17937:	movq %rax, 96(%rsp) 
-L17938:	popq %rax
-L17939:	pushq %rax
-L17940:	movq 8(%rsp), %rax
-L17941:	pushq %rax
-L17942:	movq $8, %rax
-L17943:	popq %rdi
-L17944:	addq %rax, %rdi
-L17945:	movq 0(%rdi), %rax
-L17946:	movq %rax, 80(%rsp) 
-L17947:	popq %rax
-L17948:	pushq %rax
-L17949:	movq $42, %rax
-L17950:	movq %rax, 72(%rsp) 
-L17951:	popq %rax
-L17952:	pushq %rax
-L17953:	movq 96(%rsp), %rax
-L17954:	movq %rax, 64(%rsp) 
-L17955:	popq %rax
-L17956:	pushq %rax
-L17957:	movq $122, %rax
-L17958:	movq %rax, 56(%rsp) 
-L17959:	popq %rax
-L17960:	jmp L17963
-L17961:	jmp L17972
-L17962:	jmp L18001
-L17963:	pushq %rax
-L17964:	movq 64(%rsp), %rax
-L17965:	pushq %rax
-L17966:	movq 80(%rsp), %rax
-L17967:	movq %rax, %rbx
-L17968:	popq %rdi
-L17969:	popq %rax
-L17970:	cmpq %rbx, %rdi ; jb L17961
-L17971:	jmp L17962
-L17972:	pushq %rax
-L17973:	movq 96(%rsp), %rax
-L17974:	pushq %rax
-L17975:	movq 88(%rsp), %rax
-L17976:	popq %rdi
-L17977:	call L97
-L17978:	movq %rax, 88(%rsp) 
-L17979:	popq %rax
-L17980:	pushq %rax
-L17981:	movq 16(%rsp), %rax
-L17982:	pushq %rax
-L17983:	movq 96(%rsp), %rax
-L17984:	popq %rdi
-L17985:	call L97
-L17986:	movq %rax, 48(%rsp) 
-L17987:	popq %rax
-L17988:	pushq %rax
-L17989:	movq 48(%rsp), %rax
-L17990:	pushq %rax
-L17991:	movq 8(%rsp), %rax
-L17992:	popq %rdi
-L17993:	call L97
-L17994:	movq %rax, 40(%rsp) 
-L17995:	popq %rax
-L17996:	pushq %rax
-L17997:	movq 40(%rsp), %rax
-L17998:	addq $120, %rsp
-L17999:	ret
-L18000:	jmp L18077
-L18001:	jmp L18004
-L18002:	jmp L18013
-L18003:	jmp L18042
-L18004:	pushq %rax
-L18005:	movq 56(%rsp), %rax
-L18006:	pushq %rax
-L18007:	movq 72(%rsp), %rax
-L18008:	movq %rax, %rbx
-L18009:	popq %rdi
-L18010:	popq %rax
-L18011:	cmpq %rbx, %rdi ; jb L18002
-L18012:	jmp L18003
-L18013:	pushq %rax
-L18014:	movq 96(%rsp), %rax
-L18015:	pushq %rax
-L18016:	movq 88(%rsp), %rax
-L18017:	popq %rdi
-L18018:	call L97
-L18019:	movq %rax, 88(%rsp) 
-L18020:	popq %rax
-L18021:	pushq %rax
-L18022:	movq 16(%rsp), %rax
-L18023:	pushq %rax
-L18024:	movq 96(%rsp), %rax
-L18025:	popq %rdi
-L18026:	call L97
-L18027:	movq %rax, 48(%rsp) 
-L18028:	popq %rax
-L18029:	pushq %rax
-L18030:	movq 48(%rsp), %rax
-L18031:	pushq %rax
-L18032:	movq 8(%rsp), %rax
-L18033:	popq %rdi
-L18034:	call L97
-L18035:	movq %rax, 40(%rsp) 
-L18036:	popq %rax
-L18037:	pushq %rax
-L18038:	movq 40(%rsp), %rax
-L18039:	addq $120, %rsp
-L18040:	ret
-L18041:	jmp L18077
-L18042:	pushq %rax
-L18043:	movq 16(%rsp), %rax
-L18044:	call L23161
-L18045:	movq %rax, 32(%rsp) 
-L18046:	popq %rax
-L18047:	pushq %rax
-L18048:	movq 32(%rsp), %rax
-L18049:	pushq %rax
-L18050:	movq 72(%rsp), %rax
-L18051:	popq %rdi
-L18052:	call L23
-L18053:	movq %rax, 24(%rsp) 
-L18054:	popq %rax
-L18055:	pushq %rax
-L18056:	pushq %rax
-L18057:	movq $1, %rax
-L18058:	popq %rdi
-L18059:	call L23
-L18060:	movq %rax, 88(%rsp) 
-L18061:	popq %rax
-L18062:	pushq %rax
-L18063:	movq 24(%rsp), %rax
-L18064:	pushq %rax
-L18065:	movq 88(%rsp), %rax
-L18066:	pushq %rax
-L18067:	movq 104(%rsp), %rax
-L18068:	popq %rdi
-L18069:	popq %rdx
-L18070:	call L17890
-L18071:	movq %rax, 48(%rsp) 
-L18072:	popq %rax
-L18073:	pushq %rax
-L18074:	movq 48(%rsp), %rax
-L18075:	addq $120, %rsp
-L18076:	ret
-L18077:	ret
-L18078:	
+L17893:	subq $96, %rsp
+L17894:	pushq %rdx
+L17895:	pushq %rdi
+L17896:	jmp L17899
+L17897:	jmp L17908
+L17898:	jmp L17933
+L17899:	pushq %rax
+L17900:	movq 8(%rsp), %rax
+L17901:	pushq %rax
+L17902:	movq $0, %rax
+L17903:	movq %rax, %rbx
+L17904:	popq %rdi
+L17905:	popq %rax
+L17906:	cmpq %rbx, %rdi ; je L17897
+L17907:	jmp L17898
+L17908:	pushq %rax
+L17909:	movq $0, %rax
+L17910:	movq %rax, 104(%rsp) 
+L17911:	popq %rax
+L17912:	pushq %rax
+L17913:	movq 16(%rsp), %rax
+L17914:	pushq %rax
+L17915:	movq 112(%rsp), %rax
+L17916:	popq %rdi
+L17917:	call L97
+L17918:	movq %rax, 96(%rsp) 
+L17919:	popq %rax
+L17920:	pushq %rax
+L17921:	movq 96(%rsp), %rax
+L17922:	pushq %rax
+L17923:	movq 8(%rsp), %rax
+L17924:	popq %rdi
+L17925:	call L97
+L17926:	movq %rax, 88(%rsp) 
+L17927:	popq %rax
+L17928:	pushq %rax
+L17929:	movq 88(%rsp), %rax
+L17930:	addq $120, %rsp
+L17931:	ret
+L17932:	jmp L18080
+L17933:	pushq %rax
+L17934:	movq 8(%rsp), %rax
+L17935:	pushq %rax
+L17936:	movq $0, %rax
+L17937:	popq %rdi
+L17938:	addq %rax, %rdi
+L17939:	movq 0(%rdi), %rax
+L17940:	movq %rax, 96(%rsp) 
+L17941:	popq %rax
+L17942:	pushq %rax
+L17943:	movq 8(%rsp), %rax
+L17944:	pushq %rax
+L17945:	movq $8, %rax
+L17946:	popq %rdi
+L17947:	addq %rax, %rdi
+L17948:	movq 0(%rdi), %rax
+L17949:	movq %rax, 80(%rsp) 
+L17950:	popq %rax
+L17951:	pushq %rax
+L17952:	movq $42, %rax
+L17953:	movq %rax, 72(%rsp) 
+L17954:	popq %rax
+L17955:	pushq %rax
+L17956:	movq 96(%rsp), %rax
+L17957:	movq %rax, 64(%rsp) 
+L17958:	popq %rax
+L17959:	pushq %rax
+L17960:	movq $122, %rax
+L17961:	movq %rax, 56(%rsp) 
+L17962:	popq %rax
+L17963:	jmp L17966
+L17964:	jmp L17975
+L17965:	jmp L18004
+L17966:	pushq %rax
+L17967:	movq 64(%rsp), %rax
+L17968:	pushq %rax
+L17969:	movq 80(%rsp), %rax
+L17970:	movq %rax, %rbx
+L17971:	popq %rdi
+L17972:	popq %rax
+L17973:	cmpq %rbx, %rdi ; jb L17964
+L17974:	jmp L17965
+L17975:	pushq %rax
+L17976:	movq 96(%rsp), %rax
+L17977:	pushq %rax
+L17978:	movq 88(%rsp), %rax
+L17979:	popq %rdi
+L17980:	call L97
+L17981:	movq %rax, 88(%rsp) 
+L17982:	popq %rax
+L17983:	pushq %rax
+L17984:	movq 16(%rsp), %rax
+L17985:	pushq %rax
+L17986:	movq 96(%rsp), %rax
+L17987:	popq %rdi
+L17988:	call L97
+L17989:	movq %rax, 48(%rsp) 
+L17990:	popq %rax
+L17991:	pushq %rax
+L17992:	movq 48(%rsp), %rax
+L17993:	pushq %rax
+L17994:	movq 8(%rsp), %rax
+L17995:	popq %rdi
+L17996:	call L97
+L17997:	movq %rax, 40(%rsp) 
+L17998:	popq %rax
+L17999:	pushq %rax
+L18000:	movq 40(%rsp), %rax
+L18001:	addq $120, %rsp
+L18002:	ret
+L18003:	jmp L18080
+L18004:	jmp L18007
+L18005:	jmp L18016
+L18006:	jmp L18045
+L18007:	pushq %rax
+L18008:	movq 56(%rsp), %rax
+L18009:	pushq %rax
+L18010:	movq 72(%rsp), %rax
+L18011:	movq %rax, %rbx
+L18012:	popq %rdi
+L18013:	popq %rax
+L18014:	cmpq %rbx, %rdi ; jb L18005
+L18015:	jmp L18006
+L18016:	pushq %rax
+L18017:	movq 96(%rsp), %rax
+L18018:	pushq %rax
+L18019:	movq 88(%rsp), %rax
+L18020:	popq %rdi
+L18021:	call L97
+L18022:	movq %rax, 88(%rsp) 
+L18023:	popq %rax
+L18024:	pushq %rax
+L18025:	movq 16(%rsp), %rax
+L18026:	pushq %rax
+L18027:	movq 96(%rsp), %rax
+L18028:	popq %rdi
+L18029:	call L97
+L18030:	movq %rax, 48(%rsp) 
+L18031:	popq %rax
+L18032:	pushq %rax
+L18033:	movq 48(%rsp), %rax
+L18034:	pushq %rax
+L18035:	movq 8(%rsp), %rax
+L18036:	popq %rdi
+L18037:	call L97
+L18038:	movq %rax, 40(%rsp) 
+L18039:	popq %rax
+L18040:	pushq %rax
+L18041:	movq 40(%rsp), %rax
+L18042:	addq $120, %rsp
+L18043:	ret
+L18044:	jmp L18080
+L18045:	pushq %rax
+L18046:	movq 16(%rsp), %rax
+L18047:	call L23164
+L18048:	movq %rax, 32(%rsp) 
+L18049:	popq %rax
+L18050:	pushq %rax
+L18051:	movq 32(%rsp), %rax
+L18052:	pushq %rax
+L18053:	movq 72(%rsp), %rax
+L18054:	popq %rdi
+L18055:	call L23
+L18056:	movq %rax, 24(%rsp) 
+L18057:	popq %rax
+L18058:	pushq %rax
+L18059:	pushq %rax
+L18060:	movq $1, %rax
+L18061:	popq %rdi
+L18062:	call L23
+L18063:	movq %rax, 88(%rsp) 
+L18064:	popq %rax
+L18065:	pushq %rax
+L18066:	movq 24(%rsp), %rax
+L18067:	pushq %rax
+L18068:	movq 88(%rsp), %rax
+L18069:	pushq %rax
+L18070:	movq 104(%rsp), %rax
+L18071:	popq %rdi
+L18072:	popq %rdx
+L18073:	call L17893
+L18074:	movq %rax, 48(%rsp) 
+L18075:	popq %rax
+L18076:	pushq %rax
+L18077:	movq 48(%rsp), %rax
+L18078:	addq $120, %rsp
+L18079:	ret
+L18080:	ret
+L18081:	
   
   	/* end_line */
-L18079:	subq $40, %rsp
-L18080:	pushq %rdi
-L18081:	jmp L18084
-L18082:	jmp L18093
-L18083:	jmp L18110
-L18084:	pushq %rax
-L18085:	movq 8(%rsp), %rax
-L18086:	pushq %rax
-L18087:	movq $0, %rax
-L18088:	movq %rax, %rbx
-L18089:	popq %rdi
-L18090:	popq %rax
-L18091:	cmpq %rbx, %rdi ; je L18082
-L18092:	jmp L18083
-L18093:	pushq %rax
-L18094:	movq $0, %rax
-L18095:	movq %rax, 48(%rsp) 
-L18096:	popq %rax
-L18097:	pushq %rax
-L18098:	movq 48(%rsp), %rax
-L18099:	pushq %rax
-L18100:	movq 8(%rsp), %rax
-L18101:	popq %rdi
-L18102:	call L97
-L18103:	movq %rax, 40(%rsp) 
-L18104:	popq %rax
-L18105:	pushq %rax
-L18106:	movq 40(%rsp), %rax
-L18107:	addq $56, %rsp
-L18108:	ret
-L18109:	jmp L18183
-L18110:	pushq %rax
-L18111:	movq 8(%rsp), %rax
-L18112:	pushq %rax
-L18113:	movq $0, %rax
-L18114:	popq %rdi
-L18115:	addq %rax, %rdi
-L18116:	movq 0(%rdi), %rax
-L18117:	movq %rax, 48(%rsp) 
-L18118:	popq %rax
-L18119:	pushq %rax
-L18120:	movq 8(%rsp), %rax
-L18121:	pushq %rax
-L18122:	movq $8, %rax
-L18123:	popq %rdi
-L18124:	addq %rax, %rdi
-L18125:	movq 0(%rdi), %rax
-L18126:	movq %rax, 32(%rsp) 
-L18127:	popq %rax
-L18128:	pushq %rax
-L18129:	movq $10, %rax
-L18130:	movq %rax, 24(%rsp) 
-L18131:	popq %rax
-L18132:	jmp L18135
-L18133:	jmp L18144
-L18134:	jmp L18164
-L18135:	pushq %rax
-L18136:	movq 48(%rsp), %rax
-L18137:	pushq %rax
-L18138:	movq 32(%rsp), %rax
-L18139:	movq %rax, %rbx
-L18140:	popq %rdi
-L18141:	popq %rax
-L18142:	cmpq %rbx, %rdi ; je L18133
-L18143:	jmp L18134
-L18144:	pushq %rax
-L18145:	pushq %rax
-L18146:	movq $1, %rax
-L18147:	popq %rdi
-L18148:	call L23
-L18149:	movq %rax, 40(%rsp) 
-L18150:	popq %rax
-L18151:	pushq %rax
-L18152:	movq 32(%rsp), %rax
-L18153:	pushq %rax
-L18154:	movq 48(%rsp), %rax
-L18155:	popq %rdi
-L18156:	call L97
-L18157:	movq %rax, 16(%rsp) 
-L18158:	popq %rax
-L18159:	pushq %rax
-L18160:	movq 16(%rsp), %rax
-L18161:	addq $56, %rsp
-L18162:	ret
-L18163:	jmp L18183
-L18164:	pushq %rax
-L18165:	pushq %rax
-L18166:	movq $1, %rax
-L18167:	popq %rdi
-L18168:	call L23
-L18169:	movq %rax, 40(%rsp) 
-L18170:	popq %rax
-L18171:	pushq %rax
-L18172:	movq 32(%rsp), %rax
-L18173:	pushq %rax
-L18174:	movq 48(%rsp), %rax
-L18175:	popq %rdi
-L18176:	call L18079
-L18177:	movq %rax, 16(%rsp) 
-L18178:	popq %rax
-L18179:	pushq %rax
-L18180:	movq 16(%rsp), %rax
-L18181:	addq $56, %rsp
-L18182:	ret
-L18183:	ret
-L18184:	
+L18082:	subq $40, %rsp
+L18083:	pushq %rdi
+L18084:	jmp L18087
+L18085:	jmp L18096
+L18086:	jmp L18113
+L18087:	pushq %rax
+L18088:	movq 8(%rsp), %rax
+L18089:	pushq %rax
+L18090:	movq $0, %rax
+L18091:	movq %rax, %rbx
+L18092:	popq %rdi
+L18093:	popq %rax
+L18094:	cmpq %rbx, %rdi ; je L18085
+L18095:	jmp L18086
+L18096:	pushq %rax
+L18097:	movq $0, %rax
+L18098:	movq %rax, 48(%rsp) 
+L18099:	popq %rax
+L18100:	pushq %rax
+L18101:	movq 48(%rsp), %rax
+L18102:	pushq %rax
+L18103:	movq 8(%rsp), %rax
+L18104:	popq %rdi
+L18105:	call L97
+L18106:	movq %rax, 40(%rsp) 
+L18107:	popq %rax
+L18108:	pushq %rax
+L18109:	movq 40(%rsp), %rax
+L18110:	addq $56, %rsp
+L18111:	ret
+L18112:	jmp L18186
+L18113:	pushq %rax
+L18114:	movq 8(%rsp), %rax
+L18115:	pushq %rax
+L18116:	movq $0, %rax
+L18117:	popq %rdi
+L18118:	addq %rax, %rdi
+L18119:	movq 0(%rdi), %rax
+L18120:	movq %rax, 48(%rsp) 
+L18121:	popq %rax
+L18122:	pushq %rax
+L18123:	movq 8(%rsp), %rax
+L18124:	pushq %rax
+L18125:	movq $8, %rax
+L18126:	popq %rdi
+L18127:	addq %rax, %rdi
+L18128:	movq 0(%rdi), %rax
+L18129:	movq %rax, 32(%rsp) 
+L18130:	popq %rax
+L18131:	pushq %rax
+L18132:	movq $10, %rax
+L18133:	movq %rax, 24(%rsp) 
+L18134:	popq %rax
+L18135:	jmp L18138
+L18136:	jmp L18147
+L18137:	jmp L18167
+L18138:	pushq %rax
+L18139:	movq 48(%rsp), %rax
+L18140:	pushq %rax
+L18141:	movq 32(%rsp), %rax
+L18142:	movq %rax, %rbx
+L18143:	popq %rdi
+L18144:	popq %rax
+L18145:	cmpq %rbx, %rdi ; je L18136
+L18146:	jmp L18137
+L18147:	pushq %rax
+L18148:	pushq %rax
+L18149:	movq $1, %rax
+L18150:	popq %rdi
+L18151:	call L23
+L18152:	movq %rax, 40(%rsp) 
+L18153:	popq %rax
+L18154:	pushq %rax
+L18155:	movq 32(%rsp), %rax
+L18156:	pushq %rax
+L18157:	movq 48(%rsp), %rax
+L18158:	popq %rdi
+L18159:	call L97
+L18160:	movq %rax, 16(%rsp) 
+L18161:	popq %rax
+L18162:	pushq %rax
+L18163:	movq 16(%rsp), %rax
+L18164:	addq $56, %rsp
+L18165:	ret
+L18166:	jmp L18186
+L18167:	pushq %rax
+L18168:	pushq %rax
+L18169:	movq $1, %rax
+L18170:	popq %rdi
+L18171:	call L23
+L18172:	movq %rax, 40(%rsp) 
+L18173:	popq %rax
+L18174:	pushq %rax
+L18175:	movq 32(%rsp), %rax
+L18176:	pushq %rax
+L18177:	movq 48(%rsp), %rax
+L18178:	popq %rdi
+L18179:	call L18082
+L18180:	movq %rax, 16(%rsp) 
+L18181:	popq %rax
+L18182:	pushq %rax
+L18183:	movq 16(%rsp), %rax
+L18184:	addq $56, %rsp
+L18185:	ret
+L18186:	ret
+L18187:	
   
   	/* q_of_nat */
-L18185:	subq $24, %rsp
-L18186:	pushq %rdi
-L18187:	jmp L18190
-L18188:	jmp L18199
-L18189:	jmp L18215
-L18190:	pushq %rax
-L18191:	movq 8(%rsp), %rax
-L18192:	pushq %rax
-L18193:	movq $0, %rax
-L18194:	movq %rax, %rbx
-L18195:	popq %rdi
-L18196:	popq %rax
-L18197:	cmpq %rbx, %rdi ; je L18188
-L18198:	jmp L18189
-L18199:	pushq %rax
-L18200:	movq $5133645, %rax
-L18201:	pushq %rax
-L18202:	movq 8(%rsp), %rax
-L18203:	pushq %rax
-L18204:	movq $0, %rax
-L18205:	popq %rdi
-L18206:	popq %rdx
-L18207:	call L133
-L18208:	movq %rax, 24(%rsp) 
-L18209:	popq %rax
-L18210:	pushq %rax
-L18211:	movq 24(%rsp), %rax
-L18212:	addq $40, %rsp
-L18213:	ret
-L18214:	jmp L18238
-L18215:	pushq %rax
-L18216:	movq 8(%rsp), %rax
-L18217:	pushq %rax
-L18218:	movq $1, %rax
-L18219:	popq %rdi
-L18220:	call L67
-L18221:	movq %rax, 16(%rsp) 
-L18222:	popq %rax
-L18223:	pushq %rax
-L18224:	movq $349323613253, %rax
-L18225:	pushq %rax
-L18226:	movq 8(%rsp), %rax
-L18227:	pushq %rax
-L18228:	movq $0, %rax
-L18229:	popq %rdi
-L18230:	popq %rdx
-L18231:	call L133
-L18232:	movq %rax, 24(%rsp) 
-L18233:	popq %rax
-L18234:	pushq %rax
-L18235:	movq 24(%rsp), %rax
-L18236:	addq $40, %rsp
-L18237:	ret
-L18238:	ret
-L18239:	
+L18188:	subq $24, %rsp
+L18189:	pushq %rdi
+L18190:	jmp L18193
+L18191:	jmp L18202
+L18192:	jmp L18218
+L18193:	pushq %rax
+L18194:	movq 8(%rsp), %rax
+L18195:	pushq %rax
+L18196:	movq $0, %rax
+L18197:	movq %rax, %rbx
+L18198:	popq %rdi
+L18199:	popq %rax
+L18200:	cmpq %rbx, %rdi ; je L18191
+L18201:	jmp L18192
+L18202:	pushq %rax
+L18203:	movq $5133645, %rax
+L18204:	pushq %rax
+L18205:	movq 8(%rsp), %rax
+L18206:	pushq %rax
+L18207:	movq $0, %rax
+L18208:	popq %rdi
+L18209:	popq %rdx
+L18210:	call L133
+L18211:	movq %rax, 24(%rsp) 
+L18212:	popq %rax
+L18213:	pushq %rax
+L18214:	movq 24(%rsp), %rax
+L18215:	addq $40, %rsp
+L18216:	ret
+L18217:	jmp L18241
+L18218:	pushq %rax
+L18219:	movq 8(%rsp), %rax
+L18220:	pushq %rax
+L18221:	movq $1, %rax
+L18222:	popq %rdi
+L18223:	call L67
+L18224:	movq %rax, 16(%rsp) 
+L18225:	popq %rax
+L18226:	pushq %rax
+L18227:	movq $349323613253, %rax
+L18228:	pushq %rax
+L18229:	movq 8(%rsp), %rax
+L18230:	pushq %rax
+L18231:	movq $0, %rax
+L18232:	popq %rdi
+L18233:	popq %rdx
+L18234:	call L133
+L18235:	movq %rax, 24(%rsp) 
+L18236:	popq %rax
+L18237:	pushq %rax
+L18238:	movq 24(%rsp), %rax
+L18239:	addq $40, %rsp
+L18240:	ret
+L18241:	ret
+L18242:	
   
   	/* lex */
-L18240:	subq $208, %rsp
-L18241:	pushq %rbp
-L18242:	pushq %rbx
-L18243:	pushq %rdx
-L18244:	pushq %rdi
-L18245:	jmp L18248
-L18246:	jmp L18256
-L18247:	jmp L18308
-L18248:	pushq %rax
-L18249:	pushq %rax
-L18250:	movq $0, %rax
-L18251:	movq %rax, %rbx
-L18252:	popq %rdi
-L18253:	popq %rax
-L18254:	cmpq %rbx, %rdi ; je L18246
-L18255:	jmp L18247
-L18256:	jmp L18259
-L18257:	jmp L18268
-L18258:	jmp L18281
-L18259:	pushq %rax
-L18260:	movq 24(%rsp), %rax
-L18261:	pushq %rax
-L18262:	movq $0, %rax
-L18263:	movq %rax, %rbx
-L18264:	popq %rdi
-L18265:	popq %rax
-L18266:	cmpq %rbx, %rdi ; je L18257
-L18267:	jmp L18258
-L18268:	pushq %rax
-L18269:	movq 8(%rsp), %rax
-L18270:	pushq %rax
-L18271:	movq $0, %rax
-L18272:	popq %rdi
-L18273:	call L97
-L18274:	movq %rax, 232(%rsp) 
-L18275:	popq %rax
-L18276:	pushq %rax
-L18277:	movq 232(%rsp), %rax
-L18278:	addq $248, %rsp
-L18279:	ret
-L18280:	jmp L18307
-L18281:	pushq %rax
-L18282:	movq 24(%rsp), %rax
-L18283:	pushq %rax
-L18284:	movq $0, %rax
-L18285:	popq %rdi
-L18286:	addq %rax, %rdi
-L18287:	movq 0(%rdi), %rax
-L18288:	movq %rax, 224(%rsp) 
-L18289:	popq %rax
-L18290:	pushq %rax
-L18291:	movq 24(%rsp), %rax
-L18292:	pushq %rax
-L18293:	movq $8, %rax
-L18294:	popq %rdi
-L18295:	addq %rax, %rdi
-L18296:	movq 0(%rdi), %rax
-L18297:	movq %rax, 216(%rsp) 
-L18298:	popq %rax
-L18299:	pushq %rax
-L18300:	movq $0, %rax
-L18301:	movq %rax, 208(%rsp) 
-L18302:	popq %rax
-L18303:	pushq %rax
-L18304:	movq 208(%rsp), %rax
-L18305:	addq $248, %rsp
-L18306:	ret
-L18307:	jmp L19015
-L18308:	pushq %rax
-L18309:	pushq %rax
-L18310:	movq $1, %rax
-L18311:	popq %rdi
-L18312:	call L67
-L18313:	movq %rax, 200(%rsp) 
-L18314:	popq %rax
-L18315:	jmp L18318
-L18316:	jmp L18327
-L18317:	jmp L18340
-L18318:	pushq %rax
-L18319:	movq 24(%rsp), %rax
-L18320:	pushq %rax
-L18321:	movq $0, %rax
-L18322:	movq %rax, %rbx
-L18323:	popq %rdi
-L18324:	popq %rax
-L18325:	cmpq %rbx, %rdi ; je L18316
-L18326:	jmp L18317
-L18327:	pushq %rax
-L18328:	movq 8(%rsp), %rax
-L18329:	pushq %rax
-L18330:	movq $0, %rax
-L18331:	popq %rdi
-L18332:	call L97
-L18333:	movq %rax, 232(%rsp) 
-L18334:	popq %rax
-L18335:	pushq %rax
-L18336:	movq 232(%rsp), %rax
-L18337:	addq $248, %rsp
-L18338:	ret
-L18339:	jmp L19015
-L18340:	pushq %rax
-L18341:	movq 24(%rsp), %rax
-L18342:	pushq %rax
-L18343:	movq $0, %rax
-L18344:	popq %rdi
-L18345:	addq %rax, %rdi
-L18346:	movq 0(%rdi), %rax
-L18347:	movq %rax, 224(%rsp) 
-L18348:	popq %rax
-L18349:	pushq %rax
-L18350:	movq 24(%rsp), %rax
-L18351:	pushq %rax
-L18352:	movq $8, %rax
-L18353:	popq %rdi
-L18354:	addq %rax, %rdi
-L18355:	movq 0(%rdi), %rax
-L18356:	movq %rax, 216(%rsp) 
-L18357:	popq %rax
-L18358:	jmp L18361
-L18359:	jmp L18370
-L18360:	jmp L18400
-L18361:	pushq %rax
-L18362:	movq 224(%rsp), %rax
-L18363:	pushq %rax
-L18364:	movq $32, %rax
-L18365:	movq %rax, %rbx
-L18366:	popq %rdi
-L18367:	popq %rax
-L18368:	cmpq %rbx, %rdi ; je L18359
-L18369:	jmp L18360
-L18370:	pushq %rax
-L18371:	movq 16(%rsp), %rax
-L18372:	pushq %rax
-L18373:	movq $1, %rax
-L18374:	popq %rdi
-L18375:	call L67
-L18376:	movq %rax, 192(%rsp) 
-L18377:	popq %rax
-L18378:	pushq %rax
-L18379:	movq $0, %rax
-L18380:	pushq %rax
-L18381:	movq 224(%rsp), %rax
-L18382:	pushq %rax
-L18383:	movq 208(%rsp), %rax
-L18384:	pushq %rax
-L18385:	movq 32(%rsp), %rax
-L18386:	pushq %rax
-L18387:	movq 232(%rsp), %rax
-L18388:	popq %rdi
-L18389:	popq %rdx
-L18390:	popq %rbx
-L18391:	popq %rbp
-L18392:	call L18240
-L18393:	movq %rax, 184(%rsp) 
-L18394:	popq %rax
-L18395:	pushq %rax
-L18396:	movq 184(%rsp), %rax
-L18397:	addq $248, %rsp
-L18398:	ret
-L18399:	jmp L19015
-L18400:	jmp L18403
-L18401:	jmp L18412
-L18402:	jmp L18442
-L18403:	pushq %rax
-L18404:	movq 224(%rsp), %rax
-L18405:	pushq %rax
-L18406:	movq $9, %rax
-L18407:	movq %rax, %rbx
-L18408:	popq %rdi
-L18409:	popq %rax
-L18410:	cmpq %rbx, %rdi ; je L18401
-L18411:	jmp L18402
-L18412:	pushq %rax
-L18413:	movq 16(%rsp), %rax
-L18414:	pushq %rax
-L18415:	movq $1, %rax
-L18416:	popq %rdi
-L18417:	call L67
-L18418:	movq %rax, 192(%rsp) 
-L18419:	popq %rax
-L18420:	pushq %rax
-L18421:	movq $0, %rax
-L18422:	pushq %rax
-L18423:	movq 224(%rsp), %rax
-L18424:	pushq %rax
-L18425:	movq 208(%rsp), %rax
-L18426:	pushq %rax
-L18427:	movq 32(%rsp), %rax
-L18428:	pushq %rax
-L18429:	movq 232(%rsp), %rax
-L18430:	popq %rdi
-L18431:	popq %rdx
-L18432:	popq %rbx
-L18433:	popq %rbp
-L18434:	call L18240
-L18435:	movq %rax, 184(%rsp) 
-L18436:	popq %rax
-L18437:	pushq %rax
-L18438:	movq 184(%rsp), %rax
-L18439:	addq $248, %rsp
-L18440:	ret
-L18441:	jmp L19015
-L18442:	jmp L18445
-L18443:	jmp L18454
-L18444:	jmp L18484
-L18445:	pushq %rax
-L18446:	movq 224(%rsp), %rax
-L18447:	pushq %rax
-L18448:	movq $10, %rax
-L18449:	movq %rax, %rbx
-L18450:	popq %rdi
-L18451:	popq %rax
-L18452:	cmpq %rbx, %rdi ; je L18443
-L18453:	jmp L18444
-L18454:	pushq %rax
-L18455:	movq 16(%rsp), %rax
-L18456:	pushq %rax
-L18457:	movq $1, %rax
-L18458:	popq %rdi
-L18459:	call L67
-L18460:	movq %rax, 192(%rsp) 
-L18461:	popq %rax
-L18462:	pushq %rax
-L18463:	movq $0, %rax
-L18464:	pushq %rax
-L18465:	movq 224(%rsp), %rax
-L18466:	pushq %rax
-L18467:	movq 208(%rsp), %rax
-L18468:	pushq %rax
-L18469:	movq 32(%rsp), %rax
-L18470:	pushq %rax
-L18471:	movq 232(%rsp), %rax
-L18472:	popq %rdi
-L18473:	popq %rdx
-L18474:	popq %rbx
-L18475:	popq %rbp
-L18476:	call L18240
-L18477:	movq %rax, 184(%rsp) 
-L18478:	popq %rax
-L18479:	pushq %rax
-L18480:	movq 184(%rsp), %rax
-L18481:	addq $248, %rsp
-L18482:	ret
-L18483:	jmp L19015
-L18484:	jmp L18487
-L18485:	jmp L18496
-L18486:	jmp L18552
-L18487:	pushq %rax
-L18488:	movq 224(%rsp), %rax
-L18489:	pushq %rax
-L18490:	movq $35, %rax
-L18491:	movq %rax, %rbx
-L18492:	popq %rdi
-L18493:	popq %rax
-L18494:	cmpq %rbx, %rdi ; je L18485
-L18495:	jmp L18486
-L18496:	pushq %rax
-L18497:	movq 216(%rsp), %rax
-L18498:	pushq %rax
-L18499:	movq $0, %rax
-L18500:	popq %rdi
-L18501:	call L18079
-L18502:	movq %rax, 176(%rsp) 
-L18503:	popq %rax
-L18504:	pushq %rax
-L18505:	movq 176(%rsp), %rax
-L18506:	pushq %rax
-L18507:	movq $0, %rax
-L18508:	popq %rdi
-L18509:	addq %rax, %rdi
-L18510:	movq 0(%rdi), %rax
-L18511:	movq %rax, 168(%rsp) 
-L18512:	popq %rax
-L18513:	pushq %rax
-L18514:	movq 176(%rsp), %rax
-L18515:	pushq %rax
-L18516:	movq $8, %rax
-L18517:	popq %rdi
-L18518:	addq %rax, %rdi
-L18519:	movq 0(%rdi), %rax
-L18520:	movq %rax, 160(%rsp) 
-L18521:	popq %rax
-L18522:	pushq %rax
-L18523:	movq 16(%rsp), %rax
-L18524:	pushq %rax
-L18525:	movq 168(%rsp), %rax
-L18526:	popq %rdi
-L18527:	call L67
-L18528:	movq %rax, 192(%rsp) 
-L18529:	popq %rax
-L18530:	pushq %rax
-L18531:	movq $0, %rax
-L18532:	pushq %rax
-L18533:	movq 176(%rsp), %rax
-L18534:	pushq %rax
-L18535:	movq 208(%rsp), %rax
-L18536:	pushq %rax
-L18537:	movq 32(%rsp), %rax
-L18538:	pushq %rax
-L18539:	movq 232(%rsp), %rax
-L18540:	popq %rdi
-L18541:	popq %rdx
-L18542:	popq %rbx
-L18543:	popq %rbp
-L18544:	call L18240
-L18545:	movq %rax, 184(%rsp) 
-L18546:	popq %rax
-L18547:	pushq %rax
-L18548:	movq 184(%rsp), %rax
-L18549:	addq $248, %rsp
-L18550:	ret
-L18551:	jmp L19015
-L18552:	jmp L18555
-L18553:	jmp L18564
-L18554:	jmp L18610
-L18555:	pushq %rax
-L18556:	movq 224(%rsp), %rax
-L18557:	pushq %rax
-L18558:	movq $46, %rax
-L18559:	movq %rax, %rbx
-L18560:	popq %rdi
-L18561:	popq %rax
-L18562:	cmpq %rbx, %rdi ; je L18553
-L18563:	jmp L18554
-L18564:	pushq %rax
-L18565:	movq $4476756, %rax
-L18566:	pushq %rax
-L18567:	movq $0, %rax
-L18568:	popq %rdi
-L18569:	call L97
-L18570:	movq %rax, 192(%rsp) 
-L18571:	popq %rax
-L18572:	pushq %rax
-L18573:	movq 192(%rsp), %rax
-L18574:	pushq %rax
-L18575:	movq 16(%rsp), %rax
-L18576:	popq %rdi
-L18577:	call L97
-L18578:	movq %rax, 152(%rsp) 
-L18579:	popq %rax
-L18580:	pushq %rax
-L18581:	movq 16(%rsp), %rax
-L18582:	pushq %rax
-L18583:	movq $1, %rax
-L18584:	popq %rdi
-L18585:	call L67
-L18586:	movq %rax, 184(%rsp) 
-L18587:	popq %rax
-L18588:	pushq %rax
-L18589:	movq $0, %rax
-L18590:	pushq %rax
-L18591:	movq 224(%rsp), %rax
-L18592:	pushq %rax
-L18593:	movq 200(%rsp), %rax
-L18594:	pushq %rax
-L18595:	movq 176(%rsp), %rax
-L18596:	pushq %rax
-L18597:	movq 232(%rsp), %rax
-L18598:	popq %rdi
-L18599:	popq %rdx
-L18600:	popq %rbx
-L18601:	popq %rbp
-L18602:	call L18240
-L18603:	movq %rax, 144(%rsp) 
-L18604:	popq %rax
-L18605:	pushq %rax
-L18606:	movq 144(%rsp), %rax
-L18607:	addq $248, %rsp
-L18608:	ret
-L18609:	jmp L19015
-L18610:	jmp L18613
-L18611:	jmp L18622
-L18612:	jmp L18668
-L18613:	pushq %rax
-L18614:	movq 224(%rsp), %rax
-L18615:	pushq %rax
-L18616:	movq $40, %rax
-L18617:	movq %rax, %rbx
-L18618:	popq %rdi
-L18619:	popq %rax
-L18620:	cmpq %rbx, %rdi ; je L18611
-L18621:	jmp L18612
-L18622:	pushq %rax
-L18623:	movq $1330660686, %rax
-L18624:	pushq %rax
-L18625:	movq $0, %rax
-L18626:	popq %rdi
-L18627:	call L97
-L18628:	movq %rax, 192(%rsp) 
-L18629:	popq %rax
-L18630:	pushq %rax
-L18631:	movq 192(%rsp), %rax
-L18632:	pushq %rax
-L18633:	movq 16(%rsp), %rax
-L18634:	popq %rdi
-L18635:	call L97
-L18636:	movq %rax, 152(%rsp) 
-L18637:	popq %rax
-L18638:	pushq %rax
-L18639:	movq 16(%rsp), %rax
-L18640:	pushq %rax
-L18641:	movq $1, %rax
-L18642:	popq %rdi
-L18643:	call L67
-L18644:	movq %rax, 184(%rsp) 
-L18645:	popq %rax
-L18646:	pushq %rax
-L18647:	movq $0, %rax
-L18648:	pushq %rax
-L18649:	movq 224(%rsp), %rax
-L18650:	pushq %rax
-L18651:	movq 200(%rsp), %rax
-L18652:	pushq %rax
-L18653:	movq 176(%rsp), %rax
-L18654:	pushq %rax
-L18655:	movq 232(%rsp), %rax
-L18656:	popq %rdi
-L18657:	popq %rdx
-L18658:	popq %rbx
-L18659:	popq %rbp
-L18660:	call L18240
-L18661:	movq %rax, 144(%rsp) 
-L18662:	popq %rax
-L18663:	pushq %rax
-L18664:	movq 144(%rsp), %rax
-L18665:	addq $248, %rsp
-L18666:	ret
-L18667:	jmp L19015
-L18668:	jmp L18671
-L18669:	jmp L18680
-L18670:	jmp L18726
-L18671:	pushq %rax
-L18672:	movq 224(%rsp), %rax
-L18673:	pushq %rax
-L18674:	movq $41, %rax
-L18675:	movq %rax, %rbx
-L18676:	popq %rdi
-L18677:	popq %rax
-L18678:	cmpq %rbx, %rdi ; je L18669
-L18679:	jmp L18670
-L18680:	pushq %rax
-L18681:	movq $289043075909, %rax
-L18682:	pushq %rax
-L18683:	movq $0, %rax
-L18684:	popq %rdi
-L18685:	call L97
-L18686:	movq %rax, 192(%rsp) 
-L18687:	popq %rax
-L18688:	pushq %rax
-L18689:	movq 192(%rsp), %rax
-L18690:	pushq %rax
-L18691:	movq 16(%rsp), %rax
-L18692:	popq %rdi
-L18693:	call L97
-L18694:	movq %rax, 152(%rsp) 
-L18695:	popq %rax
-L18696:	pushq %rax
-L18697:	movq 16(%rsp), %rax
-L18698:	pushq %rax
-L18699:	movq $1, %rax
-L18700:	popq %rdi
-L18701:	call L67
-L18702:	movq %rax, 184(%rsp) 
-L18703:	popq %rax
-L18704:	pushq %rax
-L18705:	movq $0, %rax
-L18706:	pushq %rax
-L18707:	movq 224(%rsp), %rax
-L18708:	pushq %rax
-L18709:	movq 200(%rsp), %rax
-L18710:	pushq %rax
-L18711:	movq 176(%rsp), %rax
-L18712:	pushq %rax
-L18713:	movq 232(%rsp), %rax
-L18714:	popq %rdi
-L18715:	popq %rdx
-L18716:	popq %rbx
-L18717:	popq %rbp
-L18718:	call L18240
-L18719:	movq %rax, 144(%rsp) 
-L18720:	popq %rax
-L18721:	pushq %rax
-L18722:	movq 144(%rsp), %rax
-L18723:	addq $248, %rsp
-L18724:	ret
-L18725:	jmp L19015
-L18726:	jmp L18729
-L18727:	jmp L18738
-L18728:	jmp L18768
-L18729:	pushq %rax
-L18730:	movq 224(%rsp), %rax
-L18731:	pushq %rax
-L18732:	movq $39, %rax
-L18733:	movq %rax, %rbx
-L18734:	popq %rdi
-L18735:	popq %rax
-L18736:	cmpq %rbx, %rdi ; je L18727
-L18737:	jmp L18728
-L18738:	pushq %rax
-L18739:	movq 16(%rsp), %rax
-L18740:	pushq %rax
-L18741:	movq $1, %rax
-L18742:	popq %rdi
-L18743:	call L67
-L18744:	movq %rax, 192(%rsp) 
-L18745:	popq %rax
-L18746:	pushq %rax
-L18747:	movq $1, %rax
-L18748:	pushq %rax
-L18749:	movq 224(%rsp), %rax
-L18750:	pushq %rax
-L18751:	movq 208(%rsp), %rax
-L18752:	pushq %rax
-L18753:	movq 32(%rsp), %rax
-L18754:	pushq %rax
-L18755:	movq 232(%rsp), %rax
-L18756:	popq %rdi
-L18757:	popq %rdx
-L18758:	popq %rbx
-L18759:	popq %rbp
-L18760:	call L18240
-L18761:	movq %rax, 184(%rsp) 
-L18762:	popq %rax
-L18763:	pushq %rax
-L18764:	movq 184(%rsp), %rax
-L18765:	addq $248, %rsp
-L18766:	ret
-L18767:	jmp L19015
-L18768:	pushq %rax
-L18769:	movq 224(%rsp), %rax
-L18770:	pushq %rax
-L18771:	movq 224(%rsp), %rax
-L18772:	popq %rdi
-L18773:	call L97
-L18774:	movq %rax, 136(%rsp) 
-L18775:	popq %rax
-L18776:	pushq %rax
-L18777:	movq $0, %rax
-L18778:	pushq %rax
-L18779:	movq 144(%rsp), %rax
-L18780:	pushq %rax
-L18781:	movq $0, %rax
-L18782:	popq %rdi
-L18783:	popq %rdx
-L18784:	call L17693
-L18785:	movq %rax, 128(%rsp) 
-L18786:	popq %rax
-L18787:	pushq %rax
-L18788:	movq 128(%rsp), %rax
-L18789:	pushq %rax
-L18790:	movq $0, %rax
-L18791:	popq %rdi
-L18792:	addq %rax, %rdi
-L18793:	movq 0(%rdi), %rax
-L18794:	movq %rax, 120(%rsp) 
-L18795:	popq %rax
-L18796:	pushq %rax
-L18797:	movq 128(%rsp), %rax
-L18798:	pushq %rax
-L18799:	movq $8, %rax
-L18800:	popq %rdi
-L18801:	addq %rax, %rdi
-L18802:	movq 0(%rdi), %rax
-L18803:	movq %rax, 160(%rsp) 
-L18804:	popq %rax
-L18805:	pushq %rax
-L18806:	movq 120(%rsp), %rax
-L18807:	pushq %rax
-L18808:	movq $0, %rax
-L18809:	popq %rdi
-L18810:	addq %rax, %rdi
-L18811:	movq 0(%rdi), %rax
-L18812:	movq %rax, 112(%rsp) 
-L18813:	popq %rax
-L18814:	pushq %rax
-L18815:	movq 120(%rsp), %rax
-L18816:	pushq %rax
-L18817:	movq $8, %rax
-L18818:	popq %rdi
-L18819:	addq %rax, %rdi
-L18820:	movq 0(%rdi), %rax
-L18821:	movq %rax, 104(%rsp) 
-L18822:	popq %rax
-L18823:	jmp L18826
-L18824:	jmp L18835
-L18825:	jmp L18970
-L18826:	pushq %rax
-L18827:	movq 160(%rsp), %rax
-L18828:	pushq %rax
-L18829:	movq $0, %rax
-L18830:	movq %rax, %rbx
-L18831:	popq %rdi
-L18832:	popq %rax
-L18833:	cmpq %rbx, %rdi ; je L18824
-L18834:	jmp L18825
-L18835:	pushq %rax
-L18836:	movq $0, %rax
-L18837:	pushq %rax
-L18838:	movq 144(%rsp), %rax
-L18839:	pushq %rax
-L18840:	movq $0, %rax
-L18841:	popq %rdi
-L18842:	popq %rdx
-L18843:	call L17890
-L18844:	movq %rax, 96(%rsp) 
-L18845:	popq %rax
-L18846:	pushq %rax
-L18847:	movq 96(%rsp), %rax
-L18848:	pushq %rax
-L18849:	movq $0, %rax
-L18850:	popq %rdi
-L18851:	addq %rax, %rdi
-L18852:	movq 0(%rdi), %rax
-L18853:	movq %rax, 88(%rsp) 
-L18854:	popq %rax
-L18855:	pushq %rax
-L18856:	movq 96(%rsp), %rax
-L18857:	pushq %rax
-L18858:	movq $8, %rax
-L18859:	popq %rdi
-L18860:	addq %rax, %rdi
-L18861:	movq 0(%rdi), %rax
-L18862:	movq %rax, 80(%rsp) 
-L18863:	popq %rax
-L18864:	pushq %rax
-L18865:	movq 88(%rsp), %rax
-L18866:	pushq %rax
-L18867:	movq $0, %rax
-L18868:	popq %rdi
-L18869:	addq %rax, %rdi
-L18870:	movq 0(%rdi), %rax
-L18871:	movq %rax, 72(%rsp) 
-L18872:	popq %rax
-L18873:	pushq %rax
-L18874:	movq 88(%rsp), %rax
-L18875:	pushq %rax
-L18876:	movq $8, %rax
-L18877:	popq %rdi
-L18878:	addq %rax, %rdi
-L18879:	movq 0(%rdi), %rax
-L18880:	movq %rax, 64(%rsp) 
-L18881:	popq %rax
-L18882:	jmp L18885
-L18883:	jmp L18894
-L18884:	jmp L18924
-L18885:	pushq %rax
-L18886:	movq 80(%rsp), %rax
-L18887:	pushq %rax
-L18888:	movq $0, %rax
-L18889:	movq %rax, %rbx
-L18890:	popq %rdi
-L18891:	popq %rax
-L18892:	cmpq %rbx, %rdi ; je L18883
-L18893:	jmp L18884
-L18894:	pushq %rax
-L18895:	movq 16(%rsp), %rax
-L18896:	pushq %rax
-L18897:	movq $1, %rax
-L18898:	popq %rdi
-L18899:	call L67
-L18900:	movq %rax, 192(%rsp) 
-L18901:	popq %rax
-L18902:	pushq %rax
-L18903:	movq $0, %rax
-L18904:	pushq %rax
-L18905:	movq 224(%rsp), %rax
-L18906:	pushq %rax
-L18907:	movq 208(%rsp), %rax
-L18908:	pushq %rax
-L18909:	movq 32(%rsp), %rax
-L18910:	pushq %rax
-L18911:	movq 232(%rsp), %rax
-L18912:	popq %rdi
-L18913:	popq %rdx
-L18914:	popq %rbx
-L18915:	popq %rbp
-L18916:	call L18240
-L18917:	movq %rax, 184(%rsp) 
-L18918:	popq %rax
-L18919:	pushq %rax
-L18920:	movq 184(%rsp), %rax
-L18921:	addq $248, %rsp
-L18922:	ret
-L18923:	jmp L18969
-L18924:	pushq %rax
-L18925:	movq 32(%rsp), %rax
-L18926:	pushq %rax
-L18927:	movq 80(%rsp), %rax
-L18928:	popq %rdi
-L18929:	call L18185
-L18930:	movq %rax, 56(%rsp) 
-L18931:	popq %rax
-L18932:	pushq %rax
-L18933:	movq 56(%rsp), %rax
-L18934:	pushq %rax
-L18935:	movq 16(%rsp), %rax
-L18936:	popq %rdi
-L18937:	call L97
-L18938:	movq %rax, 48(%rsp) 
-L18939:	popq %rax
-L18940:	pushq %rax
-L18941:	movq 16(%rsp), %rax
-L18942:	pushq %rax
-L18943:	movq 88(%rsp), %rax
-L18944:	popq %rdi
-L18945:	call L67
-L18946:	movq %rax, 192(%rsp) 
-L18947:	popq %rax
-L18948:	pushq %rax
-L18949:	movq $0, %rax
-L18950:	pushq %rax
-L18951:	movq 72(%rsp), %rax
-L18952:	pushq %rax
-L18953:	movq 208(%rsp), %rax
-L18954:	pushq %rax
-L18955:	movq 72(%rsp), %rax
-L18956:	pushq %rax
-L18957:	movq 232(%rsp), %rax
-L18958:	popq %rdi
-L18959:	popq %rdx
-L18960:	popq %rbx
-L18961:	popq %rbp
-L18962:	call L18240
-L18963:	movq %rax, 184(%rsp) 
-L18964:	popq %rax
-L18965:	pushq %rax
-L18966:	movq 184(%rsp), %rax
-L18967:	addq $248, %rsp
-L18968:	ret
-L18969:	jmp L19015
-L18970:	pushq %rax
-L18971:	movq 32(%rsp), %rax
-L18972:	pushq %rax
-L18973:	movq 120(%rsp), %rax
-L18974:	popq %rdi
-L18975:	call L18185
-L18976:	movq %rax, 40(%rsp) 
-L18977:	popq %rax
-L18978:	pushq %rax
-L18979:	movq 40(%rsp), %rax
-L18980:	pushq %rax
-L18981:	movq 16(%rsp), %rax
-L18982:	popq %rdi
-L18983:	call L97
-L18984:	movq %rax, 152(%rsp) 
-L18985:	popq %rax
-L18986:	pushq %rax
-L18987:	movq 16(%rsp), %rax
-L18988:	pushq %rax
-L18989:	movq 168(%rsp), %rax
-L18990:	popq %rdi
-L18991:	call L67
-L18992:	movq %rax, 192(%rsp) 
-L18993:	popq %rax
-L18994:	pushq %rax
-L18995:	movq $0, %rax
-L18996:	pushq %rax
-L18997:	movq 112(%rsp), %rax
-L18998:	pushq %rax
-L18999:	movq 208(%rsp), %rax
-L19000:	pushq %rax
-L19001:	movq 176(%rsp), %rax
-L19002:	pushq %rax
-L19003:	movq 232(%rsp), %rax
-L19004:	popq %rdi
-L19005:	popq %rdx
-L19006:	popq %rbx
-L19007:	popq %rbp
-L19008:	call L18240
-L19009:	movq %rax, 184(%rsp) 
-L19010:	popq %rax
-L19011:	pushq %rax
-L19012:	movq 184(%rsp), %rax
-L19013:	addq $248, %rsp
-L19014:	ret
-L19015:	ret
-L19016:	
+L18243:	subq $208, %rsp
+L18244:	pushq %rbp
+L18245:	pushq %rbx
+L18246:	pushq %rdx
+L18247:	pushq %rdi
+L18248:	jmp L18251
+L18249:	jmp L18259
+L18250:	jmp L18311
+L18251:	pushq %rax
+L18252:	pushq %rax
+L18253:	movq $0, %rax
+L18254:	movq %rax, %rbx
+L18255:	popq %rdi
+L18256:	popq %rax
+L18257:	cmpq %rbx, %rdi ; je L18249
+L18258:	jmp L18250
+L18259:	jmp L18262
+L18260:	jmp L18271
+L18261:	jmp L18284
+L18262:	pushq %rax
+L18263:	movq 24(%rsp), %rax
+L18264:	pushq %rax
+L18265:	movq $0, %rax
+L18266:	movq %rax, %rbx
+L18267:	popq %rdi
+L18268:	popq %rax
+L18269:	cmpq %rbx, %rdi ; je L18260
+L18270:	jmp L18261
+L18271:	pushq %rax
+L18272:	movq 8(%rsp), %rax
+L18273:	pushq %rax
+L18274:	movq $0, %rax
+L18275:	popq %rdi
+L18276:	call L97
+L18277:	movq %rax, 232(%rsp) 
+L18278:	popq %rax
+L18279:	pushq %rax
+L18280:	movq 232(%rsp), %rax
+L18281:	addq $248, %rsp
+L18282:	ret
+L18283:	jmp L18310
+L18284:	pushq %rax
+L18285:	movq 24(%rsp), %rax
+L18286:	pushq %rax
+L18287:	movq $0, %rax
+L18288:	popq %rdi
+L18289:	addq %rax, %rdi
+L18290:	movq 0(%rdi), %rax
+L18291:	movq %rax, 224(%rsp) 
+L18292:	popq %rax
+L18293:	pushq %rax
+L18294:	movq 24(%rsp), %rax
+L18295:	pushq %rax
+L18296:	movq $8, %rax
+L18297:	popq %rdi
+L18298:	addq %rax, %rdi
+L18299:	movq 0(%rdi), %rax
+L18300:	movq %rax, 216(%rsp) 
+L18301:	popq %rax
+L18302:	pushq %rax
+L18303:	movq $0, %rax
+L18304:	movq %rax, 208(%rsp) 
+L18305:	popq %rax
+L18306:	pushq %rax
+L18307:	movq 208(%rsp), %rax
+L18308:	addq $248, %rsp
+L18309:	ret
+L18310:	jmp L19018
+L18311:	pushq %rax
+L18312:	pushq %rax
+L18313:	movq $1, %rax
+L18314:	popq %rdi
+L18315:	call L67
+L18316:	movq %rax, 200(%rsp) 
+L18317:	popq %rax
+L18318:	jmp L18321
+L18319:	jmp L18330
+L18320:	jmp L18343
+L18321:	pushq %rax
+L18322:	movq 24(%rsp), %rax
+L18323:	pushq %rax
+L18324:	movq $0, %rax
+L18325:	movq %rax, %rbx
+L18326:	popq %rdi
+L18327:	popq %rax
+L18328:	cmpq %rbx, %rdi ; je L18319
+L18329:	jmp L18320
+L18330:	pushq %rax
+L18331:	movq 8(%rsp), %rax
+L18332:	pushq %rax
+L18333:	movq $0, %rax
+L18334:	popq %rdi
+L18335:	call L97
+L18336:	movq %rax, 232(%rsp) 
+L18337:	popq %rax
+L18338:	pushq %rax
+L18339:	movq 232(%rsp), %rax
+L18340:	addq $248, %rsp
+L18341:	ret
+L18342:	jmp L19018
+L18343:	pushq %rax
+L18344:	movq 24(%rsp), %rax
+L18345:	pushq %rax
+L18346:	movq $0, %rax
+L18347:	popq %rdi
+L18348:	addq %rax, %rdi
+L18349:	movq 0(%rdi), %rax
+L18350:	movq %rax, 224(%rsp) 
+L18351:	popq %rax
+L18352:	pushq %rax
+L18353:	movq 24(%rsp), %rax
+L18354:	pushq %rax
+L18355:	movq $8, %rax
+L18356:	popq %rdi
+L18357:	addq %rax, %rdi
+L18358:	movq 0(%rdi), %rax
+L18359:	movq %rax, 216(%rsp) 
+L18360:	popq %rax
+L18361:	jmp L18364
+L18362:	jmp L18373
+L18363:	jmp L18403
+L18364:	pushq %rax
+L18365:	movq 224(%rsp), %rax
+L18366:	pushq %rax
+L18367:	movq $32, %rax
+L18368:	movq %rax, %rbx
+L18369:	popq %rdi
+L18370:	popq %rax
+L18371:	cmpq %rbx, %rdi ; je L18362
+L18372:	jmp L18363
+L18373:	pushq %rax
+L18374:	movq 16(%rsp), %rax
+L18375:	pushq %rax
+L18376:	movq $1, %rax
+L18377:	popq %rdi
+L18378:	call L67
+L18379:	movq %rax, 192(%rsp) 
+L18380:	popq %rax
+L18381:	pushq %rax
+L18382:	movq $0, %rax
+L18383:	pushq %rax
+L18384:	movq 224(%rsp), %rax
+L18385:	pushq %rax
+L18386:	movq 208(%rsp), %rax
+L18387:	pushq %rax
+L18388:	movq 32(%rsp), %rax
+L18389:	pushq %rax
+L18390:	movq 232(%rsp), %rax
+L18391:	popq %rdi
+L18392:	popq %rdx
+L18393:	popq %rbx
+L18394:	popq %rbp
+L18395:	call L18243
+L18396:	movq %rax, 184(%rsp) 
+L18397:	popq %rax
+L18398:	pushq %rax
+L18399:	movq 184(%rsp), %rax
+L18400:	addq $248, %rsp
+L18401:	ret
+L18402:	jmp L19018
+L18403:	jmp L18406
+L18404:	jmp L18415
+L18405:	jmp L18445
+L18406:	pushq %rax
+L18407:	movq 224(%rsp), %rax
+L18408:	pushq %rax
+L18409:	movq $9, %rax
+L18410:	movq %rax, %rbx
+L18411:	popq %rdi
+L18412:	popq %rax
+L18413:	cmpq %rbx, %rdi ; je L18404
+L18414:	jmp L18405
+L18415:	pushq %rax
+L18416:	movq 16(%rsp), %rax
+L18417:	pushq %rax
+L18418:	movq $1, %rax
+L18419:	popq %rdi
+L18420:	call L67
+L18421:	movq %rax, 192(%rsp) 
+L18422:	popq %rax
+L18423:	pushq %rax
+L18424:	movq $0, %rax
+L18425:	pushq %rax
+L18426:	movq 224(%rsp), %rax
+L18427:	pushq %rax
+L18428:	movq 208(%rsp), %rax
+L18429:	pushq %rax
+L18430:	movq 32(%rsp), %rax
+L18431:	pushq %rax
+L18432:	movq 232(%rsp), %rax
+L18433:	popq %rdi
+L18434:	popq %rdx
+L18435:	popq %rbx
+L18436:	popq %rbp
+L18437:	call L18243
+L18438:	movq %rax, 184(%rsp) 
+L18439:	popq %rax
+L18440:	pushq %rax
+L18441:	movq 184(%rsp), %rax
+L18442:	addq $248, %rsp
+L18443:	ret
+L18444:	jmp L19018
+L18445:	jmp L18448
+L18446:	jmp L18457
+L18447:	jmp L18487
+L18448:	pushq %rax
+L18449:	movq 224(%rsp), %rax
+L18450:	pushq %rax
+L18451:	movq $10, %rax
+L18452:	movq %rax, %rbx
+L18453:	popq %rdi
+L18454:	popq %rax
+L18455:	cmpq %rbx, %rdi ; je L18446
+L18456:	jmp L18447
+L18457:	pushq %rax
+L18458:	movq 16(%rsp), %rax
+L18459:	pushq %rax
+L18460:	movq $1, %rax
+L18461:	popq %rdi
+L18462:	call L67
+L18463:	movq %rax, 192(%rsp) 
+L18464:	popq %rax
+L18465:	pushq %rax
+L18466:	movq $0, %rax
+L18467:	pushq %rax
+L18468:	movq 224(%rsp), %rax
+L18469:	pushq %rax
+L18470:	movq 208(%rsp), %rax
+L18471:	pushq %rax
+L18472:	movq 32(%rsp), %rax
+L18473:	pushq %rax
+L18474:	movq 232(%rsp), %rax
+L18475:	popq %rdi
+L18476:	popq %rdx
+L18477:	popq %rbx
+L18478:	popq %rbp
+L18479:	call L18243
+L18480:	movq %rax, 184(%rsp) 
+L18481:	popq %rax
+L18482:	pushq %rax
+L18483:	movq 184(%rsp), %rax
+L18484:	addq $248, %rsp
+L18485:	ret
+L18486:	jmp L19018
+L18487:	jmp L18490
+L18488:	jmp L18499
+L18489:	jmp L18555
+L18490:	pushq %rax
+L18491:	movq 224(%rsp), %rax
+L18492:	pushq %rax
+L18493:	movq $35, %rax
+L18494:	movq %rax, %rbx
+L18495:	popq %rdi
+L18496:	popq %rax
+L18497:	cmpq %rbx, %rdi ; je L18488
+L18498:	jmp L18489
+L18499:	pushq %rax
+L18500:	movq 216(%rsp), %rax
+L18501:	pushq %rax
+L18502:	movq $0, %rax
+L18503:	popq %rdi
+L18504:	call L18082
+L18505:	movq %rax, 176(%rsp) 
+L18506:	popq %rax
+L18507:	pushq %rax
+L18508:	movq 176(%rsp), %rax
+L18509:	pushq %rax
+L18510:	movq $0, %rax
+L18511:	popq %rdi
+L18512:	addq %rax, %rdi
+L18513:	movq 0(%rdi), %rax
+L18514:	movq %rax, 168(%rsp) 
+L18515:	popq %rax
+L18516:	pushq %rax
+L18517:	movq 176(%rsp), %rax
+L18518:	pushq %rax
+L18519:	movq $8, %rax
+L18520:	popq %rdi
+L18521:	addq %rax, %rdi
+L18522:	movq 0(%rdi), %rax
+L18523:	movq %rax, 160(%rsp) 
+L18524:	popq %rax
+L18525:	pushq %rax
+L18526:	movq 16(%rsp), %rax
+L18527:	pushq %rax
+L18528:	movq 168(%rsp), %rax
+L18529:	popq %rdi
+L18530:	call L67
+L18531:	movq %rax, 192(%rsp) 
+L18532:	popq %rax
+L18533:	pushq %rax
+L18534:	movq $0, %rax
+L18535:	pushq %rax
+L18536:	movq 176(%rsp), %rax
+L18537:	pushq %rax
+L18538:	movq 208(%rsp), %rax
+L18539:	pushq %rax
+L18540:	movq 32(%rsp), %rax
+L18541:	pushq %rax
+L18542:	movq 232(%rsp), %rax
+L18543:	popq %rdi
+L18544:	popq %rdx
+L18545:	popq %rbx
+L18546:	popq %rbp
+L18547:	call L18243
+L18548:	movq %rax, 184(%rsp) 
+L18549:	popq %rax
+L18550:	pushq %rax
+L18551:	movq 184(%rsp), %rax
+L18552:	addq $248, %rsp
+L18553:	ret
+L18554:	jmp L19018
+L18555:	jmp L18558
+L18556:	jmp L18567
+L18557:	jmp L18613
+L18558:	pushq %rax
+L18559:	movq 224(%rsp), %rax
+L18560:	pushq %rax
+L18561:	movq $46, %rax
+L18562:	movq %rax, %rbx
+L18563:	popq %rdi
+L18564:	popq %rax
+L18565:	cmpq %rbx, %rdi ; je L18556
+L18566:	jmp L18557
+L18567:	pushq %rax
+L18568:	movq $4476756, %rax
+L18569:	pushq %rax
+L18570:	movq $0, %rax
+L18571:	popq %rdi
+L18572:	call L97
+L18573:	movq %rax, 192(%rsp) 
+L18574:	popq %rax
+L18575:	pushq %rax
+L18576:	movq 192(%rsp), %rax
+L18577:	pushq %rax
+L18578:	movq 16(%rsp), %rax
+L18579:	popq %rdi
+L18580:	call L97
+L18581:	movq %rax, 152(%rsp) 
+L18582:	popq %rax
+L18583:	pushq %rax
+L18584:	movq 16(%rsp), %rax
+L18585:	pushq %rax
+L18586:	movq $1, %rax
+L18587:	popq %rdi
+L18588:	call L67
+L18589:	movq %rax, 184(%rsp) 
+L18590:	popq %rax
+L18591:	pushq %rax
+L18592:	movq $0, %rax
+L18593:	pushq %rax
+L18594:	movq 224(%rsp), %rax
+L18595:	pushq %rax
+L18596:	movq 200(%rsp), %rax
+L18597:	pushq %rax
+L18598:	movq 176(%rsp), %rax
+L18599:	pushq %rax
+L18600:	movq 232(%rsp), %rax
+L18601:	popq %rdi
+L18602:	popq %rdx
+L18603:	popq %rbx
+L18604:	popq %rbp
+L18605:	call L18243
+L18606:	movq %rax, 144(%rsp) 
+L18607:	popq %rax
+L18608:	pushq %rax
+L18609:	movq 144(%rsp), %rax
+L18610:	addq $248, %rsp
+L18611:	ret
+L18612:	jmp L19018
+L18613:	jmp L18616
+L18614:	jmp L18625
+L18615:	jmp L18671
+L18616:	pushq %rax
+L18617:	movq 224(%rsp), %rax
+L18618:	pushq %rax
+L18619:	movq $40, %rax
+L18620:	movq %rax, %rbx
+L18621:	popq %rdi
+L18622:	popq %rax
+L18623:	cmpq %rbx, %rdi ; je L18614
+L18624:	jmp L18615
+L18625:	pushq %rax
+L18626:	movq $1330660686, %rax
+L18627:	pushq %rax
+L18628:	movq $0, %rax
+L18629:	popq %rdi
+L18630:	call L97
+L18631:	movq %rax, 192(%rsp) 
+L18632:	popq %rax
+L18633:	pushq %rax
+L18634:	movq 192(%rsp), %rax
+L18635:	pushq %rax
+L18636:	movq 16(%rsp), %rax
+L18637:	popq %rdi
+L18638:	call L97
+L18639:	movq %rax, 152(%rsp) 
+L18640:	popq %rax
+L18641:	pushq %rax
+L18642:	movq 16(%rsp), %rax
+L18643:	pushq %rax
+L18644:	movq $1, %rax
+L18645:	popq %rdi
+L18646:	call L67
+L18647:	movq %rax, 184(%rsp) 
+L18648:	popq %rax
+L18649:	pushq %rax
+L18650:	movq $0, %rax
+L18651:	pushq %rax
+L18652:	movq 224(%rsp), %rax
+L18653:	pushq %rax
+L18654:	movq 200(%rsp), %rax
+L18655:	pushq %rax
+L18656:	movq 176(%rsp), %rax
+L18657:	pushq %rax
+L18658:	movq 232(%rsp), %rax
+L18659:	popq %rdi
+L18660:	popq %rdx
+L18661:	popq %rbx
+L18662:	popq %rbp
+L18663:	call L18243
+L18664:	movq %rax, 144(%rsp) 
+L18665:	popq %rax
+L18666:	pushq %rax
+L18667:	movq 144(%rsp), %rax
+L18668:	addq $248, %rsp
+L18669:	ret
+L18670:	jmp L19018
+L18671:	jmp L18674
+L18672:	jmp L18683
+L18673:	jmp L18729
+L18674:	pushq %rax
+L18675:	movq 224(%rsp), %rax
+L18676:	pushq %rax
+L18677:	movq $41, %rax
+L18678:	movq %rax, %rbx
+L18679:	popq %rdi
+L18680:	popq %rax
+L18681:	cmpq %rbx, %rdi ; je L18672
+L18682:	jmp L18673
+L18683:	pushq %rax
+L18684:	movq $289043075909, %rax
+L18685:	pushq %rax
+L18686:	movq $0, %rax
+L18687:	popq %rdi
+L18688:	call L97
+L18689:	movq %rax, 192(%rsp) 
+L18690:	popq %rax
+L18691:	pushq %rax
+L18692:	movq 192(%rsp), %rax
+L18693:	pushq %rax
+L18694:	movq 16(%rsp), %rax
+L18695:	popq %rdi
+L18696:	call L97
+L18697:	movq %rax, 152(%rsp) 
+L18698:	popq %rax
+L18699:	pushq %rax
+L18700:	movq 16(%rsp), %rax
+L18701:	pushq %rax
+L18702:	movq $1, %rax
+L18703:	popq %rdi
+L18704:	call L67
+L18705:	movq %rax, 184(%rsp) 
+L18706:	popq %rax
+L18707:	pushq %rax
+L18708:	movq $0, %rax
+L18709:	pushq %rax
+L18710:	movq 224(%rsp), %rax
+L18711:	pushq %rax
+L18712:	movq 200(%rsp), %rax
+L18713:	pushq %rax
+L18714:	movq 176(%rsp), %rax
+L18715:	pushq %rax
+L18716:	movq 232(%rsp), %rax
+L18717:	popq %rdi
+L18718:	popq %rdx
+L18719:	popq %rbx
+L18720:	popq %rbp
+L18721:	call L18243
+L18722:	movq %rax, 144(%rsp) 
+L18723:	popq %rax
+L18724:	pushq %rax
+L18725:	movq 144(%rsp), %rax
+L18726:	addq $248, %rsp
+L18727:	ret
+L18728:	jmp L19018
+L18729:	jmp L18732
+L18730:	jmp L18741
+L18731:	jmp L18771
+L18732:	pushq %rax
+L18733:	movq 224(%rsp), %rax
+L18734:	pushq %rax
+L18735:	movq $39, %rax
+L18736:	movq %rax, %rbx
+L18737:	popq %rdi
+L18738:	popq %rax
+L18739:	cmpq %rbx, %rdi ; je L18730
+L18740:	jmp L18731
+L18741:	pushq %rax
+L18742:	movq 16(%rsp), %rax
+L18743:	pushq %rax
+L18744:	movq $1, %rax
+L18745:	popq %rdi
+L18746:	call L67
+L18747:	movq %rax, 192(%rsp) 
+L18748:	popq %rax
+L18749:	pushq %rax
+L18750:	movq $1, %rax
+L18751:	pushq %rax
+L18752:	movq 224(%rsp), %rax
+L18753:	pushq %rax
+L18754:	movq 208(%rsp), %rax
+L18755:	pushq %rax
+L18756:	movq 32(%rsp), %rax
+L18757:	pushq %rax
+L18758:	movq 232(%rsp), %rax
+L18759:	popq %rdi
+L18760:	popq %rdx
+L18761:	popq %rbx
+L18762:	popq %rbp
+L18763:	call L18243
+L18764:	movq %rax, 184(%rsp) 
+L18765:	popq %rax
+L18766:	pushq %rax
+L18767:	movq 184(%rsp), %rax
+L18768:	addq $248, %rsp
+L18769:	ret
+L18770:	jmp L19018
+L18771:	pushq %rax
+L18772:	movq 224(%rsp), %rax
+L18773:	pushq %rax
+L18774:	movq 224(%rsp), %rax
+L18775:	popq %rdi
+L18776:	call L97
+L18777:	movq %rax, 136(%rsp) 
+L18778:	popq %rax
+L18779:	pushq %rax
+L18780:	movq $0, %rax
+L18781:	pushq %rax
+L18782:	movq 144(%rsp), %rax
+L18783:	pushq %rax
+L18784:	movq $0, %rax
+L18785:	popq %rdi
+L18786:	popq %rdx
+L18787:	call L17696
+L18788:	movq %rax, 128(%rsp) 
+L18789:	popq %rax
+L18790:	pushq %rax
+L18791:	movq 128(%rsp), %rax
+L18792:	pushq %rax
+L18793:	movq $0, %rax
+L18794:	popq %rdi
+L18795:	addq %rax, %rdi
+L18796:	movq 0(%rdi), %rax
+L18797:	movq %rax, 120(%rsp) 
+L18798:	popq %rax
+L18799:	pushq %rax
+L18800:	movq 128(%rsp), %rax
+L18801:	pushq %rax
+L18802:	movq $8, %rax
+L18803:	popq %rdi
+L18804:	addq %rax, %rdi
+L18805:	movq 0(%rdi), %rax
+L18806:	movq %rax, 160(%rsp) 
+L18807:	popq %rax
+L18808:	pushq %rax
+L18809:	movq 120(%rsp), %rax
+L18810:	pushq %rax
+L18811:	movq $0, %rax
+L18812:	popq %rdi
+L18813:	addq %rax, %rdi
+L18814:	movq 0(%rdi), %rax
+L18815:	movq %rax, 112(%rsp) 
+L18816:	popq %rax
+L18817:	pushq %rax
+L18818:	movq 120(%rsp), %rax
+L18819:	pushq %rax
+L18820:	movq $8, %rax
+L18821:	popq %rdi
+L18822:	addq %rax, %rdi
+L18823:	movq 0(%rdi), %rax
+L18824:	movq %rax, 104(%rsp) 
+L18825:	popq %rax
+L18826:	jmp L18829
+L18827:	jmp L18838
+L18828:	jmp L18973
+L18829:	pushq %rax
+L18830:	movq 160(%rsp), %rax
+L18831:	pushq %rax
+L18832:	movq $0, %rax
+L18833:	movq %rax, %rbx
+L18834:	popq %rdi
+L18835:	popq %rax
+L18836:	cmpq %rbx, %rdi ; je L18827
+L18837:	jmp L18828
+L18838:	pushq %rax
+L18839:	movq $0, %rax
+L18840:	pushq %rax
+L18841:	movq 144(%rsp), %rax
+L18842:	pushq %rax
+L18843:	movq $0, %rax
+L18844:	popq %rdi
+L18845:	popq %rdx
+L18846:	call L17893
+L18847:	movq %rax, 96(%rsp) 
+L18848:	popq %rax
+L18849:	pushq %rax
+L18850:	movq 96(%rsp), %rax
+L18851:	pushq %rax
+L18852:	movq $0, %rax
+L18853:	popq %rdi
+L18854:	addq %rax, %rdi
+L18855:	movq 0(%rdi), %rax
+L18856:	movq %rax, 88(%rsp) 
+L18857:	popq %rax
+L18858:	pushq %rax
+L18859:	movq 96(%rsp), %rax
+L18860:	pushq %rax
+L18861:	movq $8, %rax
+L18862:	popq %rdi
+L18863:	addq %rax, %rdi
+L18864:	movq 0(%rdi), %rax
+L18865:	movq %rax, 80(%rsp) 
+L18866:	popq %rax
+L18867:	pushq %rax
+L18868:	movq 88(%rsp), %rax
+L18869:	pushq %rax
+L18870:	movq $0, %rax
+L18871:	popq %rdi
+L18872:	addq %rax, %rdi
+L18873:	movq 0(%rdi), %rax
+L18874:	movq %rax, 72(%rsp) 
+L18875:	popq %rax
+L18876:	pushq %rax
+L18877:	movq 88(%rsp), %rax
+L18878:	pushq %rax
+L18879:	movq $8, %rax
+L18880:	popq %rdi
+L18881:	addq %rax, %rdi
+L18882:	movq 0(%rdi), %rax
+L18883:	movq %rax, 64(%rsp) 
+L18884:	popq %rax
+L18885:	jmp L18888
+L18886:	jmp L18897
+L18887:	jmp L18927
+L18888:	pushq %rax
+L18889:	movq 80(%rsp), %rax
+L18890:	pushq %rax
+L18891:	movq $0, %rax
+L18892:	movq %rax, %rbx
+L18893:	popq %rdi
+L18894:	popq %rax
+L18895:	cmpq %rbx, %rdi ; je L18886
+L18896:	jmp L18887
+L18897:	pushq %rax
+L18898:	movq 16(%rsp), %rax
+L18899:	pushq %rax
+L18900:	movq $1, %rax
+L18901:	popq %rdi
+L18902:	call L67
+L18903:	movq %rax, 192(%rsp) 
+L18904:	popq %rax
+L18905:	pushq %rax
+L18906:	movq $0, %rax
+L18907:	pushq %rax
+L18908:	movq 224(%rsp), %rax
+L18909:	pushq %rax
+L18910:	movq 208(%rsp), %rax
+L18911:	pushq %rax
+L18912:	movq 32(%rsp), %rax
+L18913:	pushq %rax
+L18914:	movq 232(%rsp), %rax
+L18915:	popq %rdi
+L18916:	popq %rdx
+L18917:	popq %rbx
+L18918:	popq %rbp
+L18919:	call L18243
+L18920:	movq %rax, 184(%rsp) 
+L18921:	popq %rax
+L18922:	pushq %rax
+L18923:	movq 184(%rsp), %rax
+L18924:	addq $248, %rsp
+L18925:	ret
+L18926:	jmp L18972
+L18927:	pushq %rax
+L18928:	movq 32(%rsp), %rax
+L18929:	pushq %rax
+L18930:	movq 80(%rsp), %rax
+L18931:	popq %rdi
+L18932:	call L18188
+L18933:	movq %rax, 56(%rsp) 
+L18934:	popq %rax
+L18935:	pushq %rax
+L18936:	movq 56(%rsp), %rax
+L18937:	pushq %rax
+L18938:	movq 16(%rsp), %rax
+L18939:	popq %rdi
+L18940:	call L97
+L18941:	movq %rax, 48(%rsp) 
+L18942:	popq %rax
+L18943:	pushq %rax
+L18944:	movq 16(%rsp), %rax
+L18945:	pushq %rax
+L18946:	movq 88(%rsp), %rax
+L18947:	popq %rdi
+L18948:	call L67
+L18949:	movq %rax, 192(%rsp) 
+L18950:	popq %rax
+L18951:	pushq %rax
+L18952:	movq $0, %rax
+L18953:	pushq %rax
+L18954:	movq 72(%rsp), %rax
+L18955:	pushq %rax
+L18956:	movq 208(%rsp), %rax
+L18957:	pushq %rax
+L18958:	movq 72(%rsp), %rax
+L18959:	pushq %rax
+L18960:	movq 232(%rsp), %rax
+L18961:	popq %rdi
+L18962:	popq %rdx
+L18963:	popq %rbx
+L18964:	popq %rbp
+L18965:	call L18243
+L18966:	movq %rax, 184(%rsp) 
+L18967:	popq %rax
+L18968:	pushq %rax
+L18969:	movq 184(%rsp), %rax
+L18970:	addq $248, %rsp
+L18971:	ret
+L18972:	jmp L19018
+L18973:	pushq %rax
+L18974:	movq 32(%rsp), %rax
+L18975:	pushq %rax
+L18976:	movq 120(%rsp), %rax
+L18977:	popq %rdi
+L18978:	call L18188
+L18979:	movq %rax, 40(%rsp) 
+L18980:	popq %rax
+L18981:	pushq %rax
+L18982:	movq 40(%rsp), %rax
+L18983:	pushq %rax
+L18984:	movq 16(%rsp), %rax
+L18985:	popq %rdi
+L18986:	call L97
+L18987:	movq %rax, 152(%rsp) 
+L18988:	popq %rax
+L18989:	pushq %rax
+L18990:	movq 16(%rsp), %rax
+L18991:	pushq %rax
+L18992:	movq 168(%rsp), %rax
+L18993:	popq %rdi
+L18994:	call L67
+L18995:	movq %rax, 192(%rsp) 
+L18996:	popq %rax
+L18997:	pushq %rax
+L18998:	movq $0, %rax
+L18999:	pushq %rax
+L19000:	movq 112(%rsp), %rax
+L19001:	pushq %rax
+L19002:	movq 208(%rsp), %rax
+L19003:	pushq %rax
+L19004:	movq 176(%rsp), %rax
+L19005:	pushq %rax
+L19006:	movq 232(%rsp), %rax
+L19007:	popq %rdi
+L19008:	popq %rdx
+L19009:	popq %rbx
+L19010:	popq %rbp
+L19011:	call L18243
+L19012:	movq %rax, 184(%rsp) 
+L19013:	popq %rax
+L19014:	pushq %rax
+L19015:	movq 184(%rsp), %rax
+L19016:	addq $248, %rsp
+L19017:	ret
+L19018:	ret
+L19019:	
   
   	/* lexer_i */
-L19017:	subq $32, %rsp
-L19018:	pushq %rax
-L19019:	call L23711
-L19020:	movq %rax, 24(%rsp) 
-L19021:	popq %rax
-L19022:	pushq %rax
-L19023:	movq $0, %rax
-L19024:	movq %rax, 16(%rsp) 
-L19025:	popq %rax
-L19026:	pushq %rax
-L19027:	movq $0, %rax
-L19028:	pushq %rax
-L19029:	movq 8(%rsp), %rax
-L19030:	pushq %rax
-L19031:	movq 40(%rsp), %rax
-L19032:	pushq %rax
-L19033:	movq 40(%rsp), %rax
-L19034:	pushq %rax
-L19035:	movq 56(%rsp), %rax
-L19036:	popq %rdi
-L19037:	popq %rdx
-L19038:	popq %rbx
-L19039:	popq %rbp
-L19040:	call L18240
-L19041:	movq %rax, 8(%rsp) 
-L19042:	popq %rax
-L19043:	pushq %rax
-L19044:	movq 8(%rsp), %rax
-L19045:	addq $40, %rsp
-L19046:	ret
-L19047:	ret
-L19048:	
+L19020:	subq $32, %rsp
+L19021:	pushq %rax
+L19022:	call L23714
+L19023:	movq %rax, 24(%rsp) 
+L19024:	popq %rax
+L19025:	pushq %rax
+L19026:	movq $0, %rax
+L19027:	movq %rax, 16(%rsp) 
+L19028:	popq %rax
+L19029:	pushq %rax
+L19030:	movq $0, %rax
+L19031:	pushq %rax
+L19032:	movq 8(%rsp), %rax
+L19033:	pushq %rax
+L19034:	movq 40(%rsp), %rax
+L19035:	pushq %rax
+L19036:	movq 40(%rsp), %rax
+L19037:	pushq %rax
+L19038:	movq 56(%rsp), %rax
+L19039:	popq %rdi
+L19040:	popq %rdx
+L19041:	popq %rbx
+L19042:	popq %rbp
+L19043:	call L18243
+L19044:	movq %rax, 8(%rsp) 
+L19045:	popq %rax
+L19046:	pushq %rax
+L19047:	movq 8(%rsp), %rax
+L19048:	addq $40, %rsp
+L19049:	ret
+L19050:	ret
+L19051:	
   
   	/* lexer */
-L19049:	subq $32, %rsp
-L19050:	pushq %rax
-L19051:	call L19017
-L19052:	movq %rax, 24(%rsp) 
-L19053:	popq %rax
-L19054:	jmp L19057
-L19055:	jmp L19066
-L19056:	jmp L19075
-L19057:	pushq %rax
-L19058:	movq 24(%rsp), %rax
-L19059:	pushq %rax
-L19060:	movq $0, %rax
-L19061:	movq %rax, %rbx
-L19062:	popq %rdi
-L19063:	popq %rax
-L19064:	cmpq %rbx, %rdi ; je L19055
-L19065:	jmp L19056
-L19066:	pushq %rax
-L19067:	movq $0, %rax
-L19068:	movq %rax, 16(%rsp) 
-L19069:	popq %rax
-L19070:	pushq %rax
-L19071:	movq 16(%rsp), %rax
-L19072:	addq $40, %rsp
-L19073:	ret
-L19074:	jmp L19088
-L19075:	pushq %rax
-L19076:	movq 24(%rsp), %rax
-L19077:	pushq %rax
-L19078:	movq $0, %rax
-L19079:	popq %rdi
-L19080:	addq %rax, %rdi
-L19081:	movq 0(%rdi), %rax
-L19082:	movq %rax, 8(%rsp) 
-L19083:	popq %rax
-L19084:	pushq %rax
-L19085:	movq 8(%rsp), %rax
-L19086:	addq $40, %rsp
-L19087:	ret
-L19088:	ret
-L19089:	
+L19052:	subq $32, %rsp
+L19053:	pushq %rax
+L19054:	call L19020
+L19055:	movq %rax, 24(%rsp) 
+L19056:	popq %rax
+L19057:	jmp L19060
+L19058:	jmp L19069
+L19059:	jmp L19078
+L19060:	pushq %rax
+L19061:	movq 24(%rsp), %rax
+L19062:	pushq %rax
+L19063:	movq $0, %rax
+L19064:	movq %rax, %rbx
+L19065:	popq %rdi
+L19066:	popq %rax
+L19067:	cmpq %rbx, %rdi ; je L19058
+L19068:	jmp L19059
+L19069:	pushq %rax
+L19070:	movq $0, %rax
+L19071:	movq %rax, 16(%rsp) 
+L19072:	popq %rax
+L19073:	pushq %rax
+L19074:	movq 16(%rsp), %rax
+L19075:	addq $40, %rsp
+L19076:	ret
+L19077:	jmp L19091
+L19078:	pushq %rax
+L19079:	movq 24(%rsp), %rax
+L19080:	pushq %rax
+L19081:	movq $0, %rax
+L19082:	popq %rdi
+L19083:	addq %rax, %rdi
+L19084:	movq 0(%rdi), %rax
+L19085:	movq %rax, 8(%rsp) 
+L19086:	popq %rax
+L19087:	pushq %rax
+L19088:	movq 8(%rsp), %rax
+L19089:	addq $40, %rsp
+L19090:	ret
+L19091:	ret
+L19092:	
   
   	/* vcons */
-L19090:	subq $8, %rsp
-L19091:	pushq %rdi
-L19092:	pushq %rax
-L19093:	movq $1348561266, %rax
-L19094:	pushq %rax
-L19095:	movq 16(%rsp), %rax
-L19096:	pushq %rax
-L19097:	movq 16(%rsp), %rax
-L19098:	pushq %rax
-L19099:	movq $0, %rax
-L19100:	popq %rdi
-L19101:	popq %rdx
-L19102:	popq %rbx
-L19103:	call L158
-L19104:	movq %rax, 16(%rsp) 
-L19105:	popq %rax
-L19106:	pushq %rax
-L19107:	movq 16(%rsp), %rax
-L19108:	addq $24, %rsp
-L19109:	ret
-L19110:	ret
-L19111:	
+L19093:	subq $8, %rsp
+L19094:	pushq %rdi
+L19095:	pushq %rax
+L19096:	movq $1348561266, %rax
+L19097:	pushq %rax
+L19098:	movq 16(%rsp), %rax
+L19099:	pushq %rax
+L19100:	movq 16(%rsp), %rax
+L19101:	pushq %rax
+L19102:	movq $0, %rax
+L19103:	popq %rdi
+L19104:	popq %rdx
+L19105:	popq %rbx
+L19106:	call L158
+L19107:	movq %rax, 16(%rsp) 
+L19108:	popq %rax
+L19109:	pushq %rax
+L19110:	movq 16(%rsp), %rax
+L19111:	addq $24, %rsp
+L19112:	ret
+L19113:	ret
+L19114:	
   
   	/* vhead */
-L19112:	subq $32, %rsp
-L19113:	jmp L19116
-L19114:	jmp L19129
-L19115:	jmp L19165
-L19116:	pushq %rax
-L19117:	pushq %rax
-L19118:	movq $0, %rax
-L19119:	popq %rdi
-L19120:	addq %rax, %rdi
-L19121:	movq 0(%rdi), %rax
-L19122:	pushq %rax
-L19123:	movq $1348561266, %rax
-L19124:	movq %rax, %rbx
-L19125:	popq %rdi
-L19126:	popq %rax
-L19127:	cmpq %rbx, %rdi ; je L19114
-L19128:	jmp L19115
-L19129:	pushq %rax
-L19130:	pushq %rax
-L19131:	movq $8, %rax
-L19132:	popq %rdi
-L19133:	addq %rax, %rdi
-L19134:	movq 0(%rdi), %rax
-L19135:	pushq %rax
-L19136:	movq $0, %rax
-L19137:	popq %rdi
-L19138:	addq %rax, %rdi
-L19139:	movq 0(%rdi), %rax
-L19140:	movq %rax, 32(%rsp) 
-L19141:	popq %rax
-L19142:	pushq %rax
-L19143:	pushq %rax
-L19144:	movq $8, %rax
-L19145:	popq %rdi
-L19146:	addq %rax, %rdi
-L19147:	movq 0(%rdi), %rax
-L19148:	pushq %rax
-L19149:	movq $8, %rax
-L19150:	popq %rdi
-L19151:	addq %rax, %rdi
-L19152:	movq 0(%rdi), %rax
-L19153:	pushq %rax
-L19154:	movq $0, %rax
-L19155:	popq %rdi
-L19156:	addq %rax, %rdi
-L19157:	movq 0(%rdi), %rax
-L19158:	movq %rax, 24(%rsp) 
-L19159:	popq %rax
-L19160:	pushq %rax
-L19161:	movq 32(%rsp), %rax
-L19162:	addq $40, %rsp
-L19163:	ret
-L19164:	jmp L19214
-L19165:	jmp L19168
-L19166:	jmp L19181
-L19167:	jmp L19210
-L19168:	pushq %rax
-L19169:	pushq %rax
-L19170:	movq $0, %rax
-L19171:	popq %rdi
-L19172:	addq %rax, %rdi
-L19173:	movq 0(%rdi), %rax
-L19174:	pushq %rax
-L19175:	movq $5141869, %rax
-L19176:	movq %rax, %rbx
-L19177:	popq %rdi
-L19178:	popq %rax
-L19179:	cmpq %rbx, %rdi ; je L19166
-L19180:	jmp L19167
-L19181:	pushq %rax
-L19182:	pushq %rax
-L19183:	movq $8, %rax
-L19184:	popq %rdi
-L19185:	addq %rax, %rdi
-L19186:	movq 0(%rdi), %rax
-L19187:	pushq %rax
-L19188:	movq $0, %rax
-L19189:	popq %rdi
-L19190:	addq %rax, %rdi
-L19191:	movq 0(%rdi), %rax
-L19192:	movq %rax, 16(%rsp) 
-L19193:	popq %rax
-L19194:	pushq %rax
-L19195:	movq $5141869, %rax
-L19196:	pushq %rax
-L19197:	movq 24(%rsp), %rax
-L19198:	pushq %rax
-L19199:	movq $0, %rax
-L19200:	popq %rdi
-L19201:	popq %rdx
-L19202:	call L133
-L19203:	movq %rax, 8(%rsp) 
-L19204:	popq %rax
-L19205:	pushq %rax
-L19206:	movq 8(%rsp), %rax
-L19207:	addq $40, %rsp
-L19208:	ret
-L19209:	jmp L19214
-L19210:	pushq %rax
-L19211:	movq $0, %rax
-L19212:	addq $40, %rsp
-L19213:	ret
-L19214:	ret
-L19215:	
+L19115:	subq $32, %rsp
+L19116:	jmp L19119
+L19117:	jmp L19132
+L19118:	jmp L19168
+L19119:	pushq %rax
+L19120:	pushq %rax
+L19121:	movq $0, %rax
+L19122:	popq %rdi
+L19123:	addq %rax, %rdi
+L19124:	movq 0(%rdi), %rax
+L19125:	pushq %rax
+L19126:	movq $1348561266, %rax
+L19127:	movq %rax, %rbx
+L19128:	popq %rdi
+L19129:	popq %rax
+L19130:	cmpq %rbx, %rdi ; je L19117
+L19131:	jmp L19118
+L19132:	pushq %rax
+L19133:	pushq %rax
+L19134:	movq $8, %rax
+L19135:	popq %rdi
+L19136:	addq %rax, %rdi
+L19137:	movq 0(%rdi), %rax
+L19138:	pushq %rax
+L19139:	movq $0, %rax
+L19140:	popq %rdi
+L19141:	addq %rax, %rdi
+L19142:	movq 0(%rdi), %rax
+L19143:	movq %rax, 32(%rsp) 
+L19144:	popq %rax
+L19145:	pushq %rax
+L19146:	pushq %rax
+L19147:	movq $8, %rax
+L19148:	popq %rdi
+L19149:	addq %rax, %rdi
+L19150:	movq 0(%rdi), %rax
+L19151:	pushq %rax
+L19152:	movq $8, %rax
+L19153:	popq %rdi
+L19154:	addq %rax, %rdi
+L19155:	movq 0(%rdi), %rax
+L19156:	pushq %rax
+L19157:	movq $0, %rax
+L19158:	popq %rdi
+L19159:	addq %rax, %rdi
+L19160:	movq 0(%rdi), %rax
+L19161:	movq %rax, 24(%rsp) 
+L19162:	popq %rax
+L19163:	pushq %rax
+L19164:	movq 32(%rsp), %rax
+L19165:	addq $40, %rsp
+L19166:	ret
+L19167:	jmp L19217
+L19168:	jmp L19171
+L19169:	jmp L19184
+L19170:	jmp L19213
+L19171:	pushq %rax
+L19172:	pushq %rax
+L19173:	movq $0, %rax
+L19174:	popq %rdi
+L19175:	addq %rax, %rdi
+L19176:	movq 0(%rdi), %rax
+L19177:	pushq %rax
+L19178:	movq $5141869, %rax
+L19179:	movq %rax, %rbx
+L19180:	popq %rdi
+L19181:	popq %rax
+L19182:	cmpq %rbx, %rdi ; je L19169
+L19183:	jmp L19170
+L19184:	pushq %rax
+L19185:	pushq %rax
+L19186:	movq $8, %rax
+L19187:	popq %rdi
+L19188:	addq %rax, %rdi
+L19189:	movq 0(%rdi), %rax
+L19190:	pushq %rax
+L19191:	movq $0, %rax
+L19192:	popq %rdi
+L19193:	addq %rax, %rdi
+L19194:	movq 0(%rdi), %rax
+L19195:	movq %rax, 16(%rsp) 
+L19196:	popq %rax
+L19197:	pushq %rax
+L19198:	movq $5141869, %rax
+L19199:	pushq %rax
+L19200:	movq 24(%rsp), %rax
+L19201:	pushq %rax
+L19202:	movq $0, %rax
+L19203:	popq %rdi
+L19204:	popq %rdx
+L19205:	call L133
+L19206:	movq %rax, 8(%rsp) 
+L19207:	popq %rax
+L19208:	pushq %rax
+L19209:	movq 8(%rsp), %rax
+L19210:	addq $40, %rsp
+L19211:	ret
+L19212:	jmp L19217
+L19213:	pushq %rax
+L19214:	movq $0, %rax
+L19215:	addq $40, %rsp
+L19216:	ret
+L19217:	ret
+L19218:	
   
   	/* vlist */
-L19216:	subq $32, %rsp
-L19217:	jmp L19220
-L19218:	jmp L19228
-L19219:	jmp L19244
-L19220:	pushq %rax
-L19221:	pushq %rax
-L19222:	movq $0, %rax
-L19223:	movq %rax, %rbx
-L19224:	popq %rdi
-L19225:	popq %rax
-L19226:	cmpq %rbx, %rdi ; je L19218
-L19227:	jmp L19219
-L19228:	pushq %rax
-L19229:	movq $5141869, %rax
-L19230:	pushq %rax
-L19231:	movq $0, %rax
-L19232:	pushq %rax
-L19233:	movq $0, %rax
-L19234:	popq %rdi
-L19235:	popq %rdx
-L19236:	call L133
-L19237:	movq %rax, 32(%rsp) 
-L19238:	popq %rax
-L19239:	pushq %rax
-L19240:	movq 32(%rsp), %rax
-L19241:	addq $40, %rsp
-L19242:	ret
-L19243:	jmp L19277
-L19244:	pushq %rax
-L19245:	pushq %rax
-L19246:	movq $0, %rax
-L19247:	popq %rdi
-L19248:	addq %rax, %rdi
-L19249:	movq 0(%rdi), %rax
-L19250:	movq %rax, 24(%rsp) 
-L19251:	popq %rax
-L19252:	pushq %rax
-L19253:	pushq %rax
-L19254:	movq $8, %rax
-L19255:	popq %rdi
-L19256:	addq %rax, %rdi
-L19257:	movq 0(%rdi), %rax
-L19258:	movq %rax, 16(%rsp) 
-L19259:	popq %rax
-L19260:	pushq %rax
-L19261:	movq 16(%rsp), %rax
-L19262:	call L19216
-L19263:	movq %rax, 8(%rsp) 
-L19264:	popq %rax
-L19265:	pushq %rax
-L19266:	movq 24(%rsp), %rax
-L19267:	pushq %rax
-L19268:	movq 16(%rsp), %rax
-L19269:	popq %rdi
-L19270:	call L19090
-L19271:	movq %rax, 32(%rsp) 
-L19272:	popq %rax
-L19273:	pushq %rax
-L19274:	movq 32(%rsp), %rax
-L19275:	addq $40, %rsp
-L19276:	ret
-L19277:	ret
-L19278:	
+L19219:	subq $32, %rsp
+L19220:	jmp L19223
+L19221:	jmp L19231
+L19222:	jmp L19247
+L19223:	pushq %rax
+L19224:	pushq %rax
+L19225:	movq $0, %rax
+L19226:	movq %rax, %rbx
+L19227:	popq %rdi
+L19228:	popq %rax
+L19229:	cmpq %rbx, %rdi ; je L19221
+L19230:	jmp L19222
+L19231:	pushq %rax
+L19232:	movq $5141869, %rax
+L19233:	pushq %rax
+L19234:	movq $0, %rax
+L19235:	pushq %rax
+L19236:	movq $0, %rax
+L19237:	popq %rdi
+L19238:	popq %rdx
+L19239:	call L133
+L19240:	movq %rax, 32(%rsp) 
+L19241:	popq %rax
+L19242:	pushq %rax
+L19243:	movq 32(%rsp), %rax
+L19244:	addq $40, %rsp
+L19245:	ret
+L19246:	jmp L19280
+L19247:	pushq %rax
+L19248:	pushq %rax
+L19249:	movq $0, %rax
+L19250:	popq %rdi
+L19251:	addq %rax, %rdi
+L19252:	movq 0(%rdi), %rax
+L19253:	movq %rax, 24(%rsp) 
+L19254:	popq %rax
+L19255:	pushq %rax
+L19256:	pushq %rax
+L19257:	movq $8, %rax
+L19258:	popq %rdi
+L19259:	addq %rax, %rdi
+L19260:	movq 0(%rdi), %rax
+L19261:	movq %rax, 16(%rsp) 
+L19262:	popq %rax
+L19263:	pushq %rax
+L19264:	movq 16(%rsp), %rax
+L19265:	call L19219
+L19266:	movq %rax, 8(%rsp) 
+L19267:	popq %rax
+L19268:	pushq %rax
+L19269:	movq 24(%rsp), %rax
+L19270:	pushq %rax
+L19271:	movq 16(%rsp), %rax
+L19272:	popq %rdi
+L19273:	call L19093
+L19274:	movq %rax, 32(%rsp) 
+L19275:	popq %rax
+L19276:	pushq %rax
+L19277:	movq 32(%rsp), %rax
+L19278:	addq $40, %rsp
+L19279:	ret
+L19280:	ret
+L19281:	
   
   	/* vupper_f */
-L19279:	subq $40, %rsp
-L19280:	pushq %rdi
-L19281:	jmp L19284
-L19282:	jmp L19292
-L19283:	jmp L19388
-L19284:	pushq %rax
-L19285:	pushq %rax
-L19286:	movq $0, %rax
-L19287:	movq %rax, %rbx
-L19288:	popq %rdi
-L19289:	popq %rax
-L19290:	cmpq %rbx, %rdi ; je L19282
-L19291:	jmp L19283
-L19292:	jmp L19295
-L19293:	jmp L19304
-L19294:	jmp L19379
-L19295:	pushq %rax
-L19296:	movq 8(%rsp), %rax
-L19297:	pushq %rax
-L19298:	movq $256, %rax
-L19299:	movq %rax, %rbx
-L19300:	popq %rdi
-L19301:	popq %rax
-L19302:	cmpq %rbx, %rdi ; jb L19293
-L19303:	jmp L19294
-L19304:	jmp L19307
-L19305:	jmp L19316
-L19306:	jmp L19333
-L19307:	pushq %rax
-L19308:	movq 8(%rsp), %rax
-L19309:	pushq %rax
-L19310:	movq $65, %rax
-L19311:	movq %rax, %rbx
-L19312:	popq %rdi
-L19313:	popq %rax
-L19314:	cmpq %rbx, %rdi ; jb L19305
-L19315:	jmp L19306
-L19316:	pushq %rax
-L19317:	movq $0, %rax
-L19318:	movq %rax, 40(%rsp) 
-L19319:	popq %rax
-L19320:	pushq %rax
-L19321:	movq 40(%rsp), %rax
-L19322:	pushq %rax
-L19323:	movq $0, %rax
-L19324:	popq %rdi
-L19325:	call L97
-L19326:	movq %rax, 32(%rsp) 
-L19327:	popq %rax
-L19328:	pushq %rax
-L19329:	movq 32(%rsp), %rax
-L19330:	addq $56, %rsp
-L19331:	ret
-L19332:	jmp L19378
-L19333:	jmp L19336
-L19334:	jmp L19345
-L19335:	jmp L19362
-L19336:	pushq %rax
-L19337:	movq 8(%rsp), %rax
-L19338:	pushq %rax
-L19339:	movq $91, %rax
-L19340:	movq %rax, %rbx
-L19341:	popq %rdi
-L19342:	popq %rax
-L19343:	cmpq %rbx, %rdi ; jb L19334
-L19344:	jmp L19335
-L19345:	pushq %rax
-L19346:	movq $1, %rax
-L19347:	movq %rax, 40(%rsp) 
-L19348:	popq %rax
-L19349:	pushq %rax
-L19350:	movq 40(%rsp), %rax
-L19351:	pushq %rax
-L19352:	movq $0, %rax
-L19353:	popq %rdi
-L19354:	call L97
-L19355:	movq %rax, 32(%rsp) 
-L19356:	popq %rax
-L19357:	pushq %rax
-L19358:	movq 32(%rsp), %rax
-L19359:	addq $56, %rsp
-L19360:	ret
-L19361:	jmp L19378
-L19362:	pushq %rax
-L19363:	movq $0, %rax
-L19364:	movq %rax, 40(%rsp) 
-L19365:	popq %rax
-L19366:	pushq %rax
-L19367:	movq 40(%rsp), %rax
-L19368:	pushq %rax
-L19369:	movq $0, %rax
-L19370:	popq %rdi
-L19371:	call L97
-L19372:	movq %rax, 32(%rsp) 
-L19373:	popq %rax
-L19374:	pushq %rax
-L19375:	movq 32(%rsp), %rax
-L19376:	addq $56, %rsp
-L19377:	ret
-L19378:	jmp L19387
-L19379:	pushq %rax
-L19380:	movq $0, %rax
-L19381:	movq %rax, 24(%rsp) 
-L19382:	popq %rax
-L19383:	pushq %rax
-L19384:	movq 24(%rsp), %rax
-L19385:	addq $56, %rsp
-L19386:	ret
-L19387:	jmp L19504
-L19388:	pushq %rax
-L19389:	pushq %rax
-L19390:	movq $1, %rax
-L19391:	popq %rdi
-L19392:	call L67
-L19393:	movq %rax, 16(%rsp) 
-L19394:	popq %rax
-L19395:	jmp L19398
-L19396:	jmp L19407
-L19397:	jmp L19482
-L19398:	pushq %rax
-L19399:	movq 8(%rsp), %rax
-L19400:	pushq %rax
-L19401:	movq $256, %rax
-L19402:	movq %rax, %rbx
-L19403:	popq %rdi
-L19404:	popq %rax
-L19405:	cmpq %rbx, %rdi ; jb L19396
-L19406:	jmp L19397
-L19407:	jmp L19410
-L19408:	jmp L19419
-L19409:	jmp L19436
-L19410:	pushq %rax
-L19411:	movq 8(%rsp), %rax
-L19412:	pushq %rax
-L19413:	movq $65, %rax
-L19414:	movq %rax, %rbx
-L19415:	popq %rdi
-L19416:	popq %rax
-L19417:	cmpq %rbx, %rdi ; jb L19408
-L19418:	jmp L19409
-L19419:	pushq %rax
-L19420:	movq $0, %rax
-L19421:	movq %rax, 40(%rsp) 
-L19422:	popq %rax
-L19423:	pushq %rax
-L19424:	movq 40(%rsp), %rax
-L19425:	pushq %rax
-L19426:	movq $0, %rax
-L19427:	popq %rdi
-L19428:	call L97
-L19429:	movq %rax, 32(%rsp) 
-L19430:	popq %rax
-L19431:	pushq %rax
-L19432:	movq 32(%rsp), %rax
-L19433:	addq $56, %rsp
-L19434:	ret
-L19435:	jmp L19481
-L19436:	jmp L19439
-L19437:	jmp L19448
-L19438:	jmp L19465
-L19439:	pushq %rax
-L19440:	movq 8(%rsp), %rax
-L19441:	pushq %rax
-L19442:	movq $91, %rax
-L19443:	movq %rax, %rbx
-L19444:	popq %rdi
-L19445:	popq %rax
-L19446:	cmpq %rbx, %rdi ; jb L19437
-L19447:	jmp L19438
-L19448:	pushq %rax
-L19449:	movq $1, %rax
-L19450:	movq %rax, 40(%rsp) 
-L19451:	popq %rax
-L19452:	pushq %rax
-L19453:	movq 40(%rsp), %rax
-L19454:	pushq %rax
-L19455:	movq $0, %rax
-L19456:	popq %rdi
-L19457:	call L97
-L19458:	movq %rax, 32(%rsp) 
-L19459:	popq %rax
-L19460:	pushq %rax
-L19461:	movq 32(%rsp), %rax
-L19462:	addq $56, %rsp
-L19463:	ret
-L19464:	jmp L19481
-L19465:	pushq %rax
-L19466:	movq $0, %rax
-L19467:	movq %rax, 40(%rsp) 
-L19468:	popq %rax
-L19469:	pushq %rax
-L19470:	movq 40(%rsp), %rax
-L19471:	pushq %rax
-L19472:	movq $0, %rax
-L19473:	popq %rdi
-L19474:	call L97
-L19475:	movq %rax, 32(%rsp) 
-L19476:	popq %rax
-L19477:	pushq %rax
-L19478:	movq 32(%rsp), %rax
-L19479:	addq $56, %rsp
-L19480:	ret
-L19481:	jmp L19504
-L19482:	pushq %rax
-L19483:	movq 8(%rsp), %rax
-L19484:	pushq %rax
-L19485:	movq $256, %rax
-L19486:	movq %rax, %rdi
-L19487:	popq %rax
-L19488:	movq $0, %rdx
-L19489:	divq %rdi
-L19490:	movq %rax, 40(%rsp) 
-L19491:	popq %rax
-L19492:	pushq %rax
-L19493:	movq 40(%rsp), %rax
-L19494:	pushq %rax
-L19495:	movq 24(%rsp), %rax
-L19496:	popq %rdi
-L19497:	call L19279
-L19498:	movq %rax, 32(%rsp) 
-L19499:	popq %rax
-L19500:	pushq %rax
-L19501:	movq 32(%rsp), %rax
-L19502:	addq $56, %rsp
-L19503:	ret
-L19504:	ret
-L19505:	
+L19282:	subq $40, %rsp
+L19283:	pushq %rdi
+L19284:	jmp L19287
+L19285:	jmp L19295
+L19286:	jmp L19391
+L19287:	pushq %rax
+L19288:	pushq %rax
+L19289:	movq $0, %rax
+L19290:	movq %rax, %rbx
+L19291:	popq %rdi
+L19292:	popq %rax
+L19293:	cmpq %rbx, %rdi ; je L19285
+L19294:	jmp L19286
+L19295:	jmp L19298
+L19296:	jmp L19307
+L19297:	jmp L19382
+L19298:	pushq %rax
+L19299:	movq 8(%rsp), %rax
+L19300:	pushq %rax
+L19301:	movq $256, %rax
+L19302:	movq %rax, %rbx
+L19303:	popq %rdi
+L19304:	popq %rax
+L19305:	cmpq %rbx, %rdi ; jb L19296
+L19306:	jmp L19297
+L19307:	jmp L19310
+L19308:	jmp L19319
+L19309:	jmp L19336
+L19310:	pushq %rax
+L19311:	movq 8(%rsp), %rax
+L19312:	pushq %rax
+L19313:	movq $65, %rax
+L19314:	movq %rax, %rbx
+L19315:	popq %rdi
+L19316:	popq %rax
+L19317:	cmpq %rbx, %rdi ; jb L19308
+L19318:	jmp L19309
+L19319:	pushq %rax
+L19320:	movq $0, %rax
+L19321:	movq %rax, 40(%rsp) 
+L19322:	popq %rax
+L19323:	pushq %rax
+L19324:	movq 40(%rsp), %rax
+L19325:	pushq %rax
+L19326:	movq $0, %rax
+L19327:	popq %rdi
+L19328:	call L97
+L19329:	movq %rax, 32(%rsp) 
+L19330:	popq %rax
+L19331:	pushq %rax
+L19332:	movq 32(%rsp), %rax
+L19333:	addq $56, %rsp
+L19334:	ret
+L19335:	jmp L19381
+L19336:	jmp L19339
+L19337:	jmp L19348
+L19338:	jmp L19365
+L19339:	pushq %rax
+L19340:	movq 8(%rsp), %rax
+L19341:	pushq %rax
+L19342:	movq $91, %rax
+L19343:	movq %rax, %rbx
+L19344:	popq %rdi
+L19345:	popq %rax
+L19346:	cmpq %rbx, %rdi ; jb L19337
+L19347:	jmp L19338
+L19348:	pushq %rax
+L19349:	movq $1, %rax
+L19350:	movq %rax, 40(%rsp) 
+L19351:	popq %rax
+L19352:	pushq %rax
+L19353:	movq 40(%rsp), %rax
+L19354:	pushq %rax
+L19355:	movq $0, %rax
+L19356:	popq %rdi
+L19357:	call L97
+L19358:	movq %rax, 32(%rsp) 
+L19359:	popq %rax
+L19360:	pushq %rax
+L19361:	movq 32(%rsp), %rax
+L19362:	addq $56, %rsp
+L19363:	ret
+L19364:	jmp L19381
+L19365:	pushq %rax
+L19366:	movq $0, %rax
+L19367:	movq %rax, 40(%rsp) 
+L19368:	popq %rax
+L19369:	pushq %rax
+L19370:	movq 40(%rsp), %rax
+L19371:	pushq %rax
+L19372:	movq $0, %rax
+L19373:	popq %rdi
+L19374:	call L97
+L19375:	movq %rax, 32(%rsp) 
+L19376:	popq %rax
+L19377:	pushq %rax
+L19378:	movq 32(%rsp), %rax
+L19379:	addq $56, %rsp
+L19380:	ret
+L19381:	jmp L19390
+L19382:	pushq %rax
+L19383:	movq $0, %rax
+L19384:	movq %rax, 24(%rsp) 
+L19385:	popq %rax
+L19386:	pushq %rax
+L19387:	movq 24(%rsp), %rax
+L19388:	addq $56, %rsp
+L19389:	ret
+L19390:	jmp L19507
+L19391:	pushq %rax
+L19392:	pushq %rax
+L19393:	movq $1, %rax
+L19394:	popq %rdi
+L19395:	call L67
+L19396:	movq %rax, 16(%rsp) 
+L19397:	popq %rax
+L19398:	jmp L19401
+L19399:	jmp L19410
+L19400:	jmp L19485
+L19401:	pushq %rax
+L19402:	movq 8(%rsp), %rax
+L19403:	pushq %rax
+L19404:	movq $256, %rax
+L19405:	movq %rax, %rbx
+L19406:	popq %rdi
+L19407:	popq %rax
+L19408:	cmpq %rbx, %rdi ; jb L19399
+L19409:	jmp L19400
+L19410:	jmp L19413
+L19411:	jmp L19422
+L19412:	jmp L19439
+L19413:	pushq %rax
+L19414:	movq 8(%rsp), %rax
+L19415:	pushq %rax
+L19416:	movq $65, %rax
+L19417:	movq %rax, %rbx
+L19418:	popq %rdi
+L19419:	popq %rax
+L19420:	cmpq %rbx, %rdi ; jb L19411
+L19421:	jmp L19412
+L19422:	pushq %rax
+L19423:	movq $0, %rax
+L19424:	movq %rax, 40(%rsp) 
+L19425:	popq %rax
+L19426:	pushq %rax
+L19427:	movq 40(%rsp), %rax
+L19428:	pushq %rax
+L19429:	movq $0, %rax
+L19430:	popq %rdi
+L19431:	call L97
+L19432:	movq %rax, 32(%rsp) 
+L19433:	popq %rax
+L19434:	pushq %rax
+L19435:	movq 32(%rsp), %rax
+L19436:	addq $56, %rsp
+L19437:	ret
+L19438:	jmp L19484
+L19439:	jmp L19442
+L19440:	jmp L19451
+L19441:	jmp L19468
+L19442:	pushq %rax
+L19443:	movq 8(%rsp), %rax
+L19444:	pushq %rax
+L19445:	movq $91, %rax
+L19446:	movq %rax, %rbx
+L19447:	popq %rdi
+L19448:	popq %rax
+L19449:	cmpq %rbx, %rdi ; jb L19440
+L19450:	jmp L19441
+L19451:	pushq %rax
+L19452:	movq $1, %rax
+L19453:	movq %rax, 40(%rsp) 
+L19454:	popq %rax
+L19455:	pushq %rax
+L19456:	movq 40(%rsp), %rax
+L19457:	pushq %rax
+L19458:	movq $0, %rax
+L19459:	popq %rdi
+L19460:	call L97
+L19461:	movq %rax, 32(%rsp) 
+L19462:	popq %rax
+L19463:	pushq %rax
+L19464:	movq 32(%rsp), %rax
+L19465:	addq $56, %rsp
+L19466:	ret
+L19467:	jmp L19484
+L19468:	pushq %rax
+L19469:	movq $0, %rax
+L19470:	movq %rax, 40(%rsp) 
+L19471:	popq %rax
+L19472:	pushq %rax
+L19473:	movq 40(%rsp), %rax
+L19474:	pushq %rax
+L19475:	movq $0, %rax
+L19476:	popq %rdi
+L19477:	call L97
+L19478:	movq %rax, 32(%rsp) 
+L19479:	popq %rax
+L19480:	pushq %rax
+L19481:	movq 32(%rsp), %rax
+L19482:	addq $56, %rsp
+L19483:	ret
+L19484:	jmp L19507
+L19485:	pushq %rax
+L19486:	movq 8(%rsp), %rax
+L19487:	pushq %rax
+L19488:	movq $256, %rax
+L19489:	movq %rax, %rdi
+L19490:	popq %rax
+L19491:	movq $0, %rdx
+L19492:	divq %rdi
+L19493:	movq %rax, 40(%rsp) 
+L19494:	popq %rax
+L19495:	pushq %rax
+L19496:	movq 40(%rsp), %rax
+L19497:	pushq %rax
+L19498:	movq 24(%rsp), %rax
+L19499:	popq %rdi
+L19500:	call L19282
+L19501:	movq %rax, 32(%rsp) 
+L19502:	popq %rax
+L19503:	pushq %rax
+L19504:	movq 32(%rsp), %rax
+L19505:	addq $56, %rsp
+L19506:	ret
+L19507:	ret
+L19508:	
   
   	/* vupper */
-L19506:	subq $32, %rsp
-L19507:	pushq %rax
-L19508:	pushq %rax
-L19509:	movq 8(%rsp), %rax
-L19510:	popq %rdi
-L19511:	call L19279
-L19512:	movq %rax, 24(%rsp) 
-L19513:	popq %rax
-L19514:	jmp L19517
-L19515:	jmp L19526
-L19516:	jmp L19535
-L19517:	pushq %rax
-L19518:	movq 24(%rsp), %rax
-L19519:	pushq %rax
-L19520:	movq $0, %rax
-L19521:	movq %rax, %rbx
-L19522:	popq %rdi
-L19523:	popq %rax
-L19524:	cmpq %rbx, %rdi ; je L19515
-L19525:	jmp L19516
-L19526:	pushq %rax
-L19527:	movq $0, %rax
-L19528:	movq %rax, 16(%rsp) 
-L19529:	popq %rax
-L19530:	pushq %rax
-L19531:	movq 16(%rsp), %rax
-L19532:	addq $40, %rsp
-L19533:	ret
-L19534:	jmp L19548
-L19535:	pushq %rax
-L19536:	movq 24(%rsp), %rax
-L19537:	pushq %rax
-L19538:	movq $0, %rax
-L19539:	popq %rdi
-L19540:	addq %rax, %rdi
-L19541:	movq 0(%rdi), %rax
-L19542:	movq %rax, 8(%rsp) 
-L19543:	popq %rax
-L19544:	pushq %rax
-L19545:	movq 8(%rsp), %rax
-L19546:	addq $40, %rsp
-L19547:	ret
-L19548:	ret
-L19549:	
+L19509:	subq $32, %rsp
+L19510:	pushq %rax
+L19511:	pushq %rax
+L19512:	movq 8(%rsp), %rax
+L19513:	popq %rdi
+L19514:	call L19282
+L19515:	movq %rax, 24(%rsp) 
+L19516:	popq %rax
+L19517:	jmp L19520
+L19518:	jmp L19529
+L19519:	jmp L19538
+L19520:	pushq %rax
+L19521:	movq 24(%rsp), %rax
+L19522:	pushq %rax
+L19523:	movq $0, %rax
+L19524:	movq %rax, %rbx
+L19525:	popq %rdi
+L19526:	popq %rax
+L19527:	cmpq %rbx, %rdi ; je L19518
+L19528:	jmp L19519
+L19529:	pushq %rax
+L19530:	movq $0, %rax
+L19531:	movq %rax, 16(%rsp) 
+L19532:	popq %rax
+L19533:	pushq %rax
+L19534:	movq 16(%rsp), %rax
+L19535:	addq $40, %rsp
+L19536:	ret
+L19537:	jmp L19551
+L19538:	pushq %rax
+L19539:	movq 24(%rsp), %rax
+L19540:	pushq %rax
+L19541:	movq $0, %rax
+L19542:	popq %rdi
+L19543:	addq %rax, %rdi
+L19544:	movq 0(%rdi), %rax
+L19545:	movq %rax, 8(%rsp) 
+L19546:	popq %rax
+L19547:	pushq %rax
+L19548:	movq 8(%rsp), %rax
+L19549:	addq $40, %rsp
+L19550:	ret
+L19551:	ret
+L19552:	
   
   	/* vgetNum */
-L19550:	subq $32, %rsp
-L19551:	jmp L19554
-L19552:	jmp L19567
-L19553:	jmp L19603
-L19554:	pushq %rax
-L19555:	pushq %rax
-L19556:	movq $0, %rax
-L19557:	popq %rdi
-L19558:	addq %rax, %rdi
-L19559:	movq 0(%rdi), %rax
-L19560:	pushq %rax
-L19561:	movq $1348561266, %rax
-L19562:	movq %rax, %rbx
-L19563:	popq %rdi
-L19564:	popq %rax
-L19565:	cmpq %rbx, %rdi ; je L19552
-L19566:	jmp L19553
-L19567:	pushq %rax
-L19568:	pushq %rax
-L19569:	movq $8, %rax
-L19570:	popq %rdi
-L19571:	addq %rax, %rdi
-L19572:	movq 0(%rdi), %rax
-L19573:	pushq %rax
-L19574:	movq $0, %rax
-L19575:	popq %rdi
-L19576:	addq %rax, %rdi
-L19577:	movq 0(%rdi), %rax
-L19578:	movq %rax, 24(%rsp) 
-L19579:	popq %rax
-L19580:	pushq %rax
-L19581:	pushq %rax
-L19582:	movq $8, %rax
-L19583:	popq %rdi
-L19584:	addq %rax, %rdi
-L19585:	movq 0(%rdi), %rax
-L19586:	pushq %rax
-L19587:	movq $8, %rax
-L19588:	popq %rdi
-L19589:	addq %rax, %rdi
-L19590:	movq 0(%rdi), %rax
-L19591:	pushq %rax
-L19592:	movq $0, %rax
-L19593:	popq %rdi
-L19594:	addq %rax, %rdi
-L19595:	movq 0(%rdi), %rax
-L19596:	movq %rax, 16(%rsp) 
-L19597:	popq %rax
-L19598:	pushq %rax
-L19599:	movq $0, %rax
-L19600:	addq $40, %rsp
-L19601:	ret
-L19602:	jmp L19641
-L19603:	jmp L19606
-L19604:	jmp L19619
-L19605:	jmp L19637
-L19606:	pushq %rax
-L19607:	pushq %rax
-L19608:	movq $0, %rax
-L19609:	popq %rdi
-L19610:	addq %rax, %rdi
-L19611:	movq 0(%rdi), %rax
-L19612:	pushq %rax
-L19613:	movq $5141869, %rax
-L19614:	movq %rax, %rbx
-L19615:	popq %rdi
-L19616:	popq %rax
-L19617:	cmpq %rbx, %rdi ; je L19604
-L19618:	jmp L19605
-L19619:	pushq %rax
-L19620:	pushq %rax
-L19621:	movq $8, %rax
-L19622:	popq %rdi
-L19623:	addq %rax, %rdi
-L19624:	movq 0(%rdi), %rax
-L19625:	pushq %rax
-L19626:	movq $0, %rax
-L19627:	popq %rdi
-L19628:	addq %rax, %rdi
-L19629:	movq 0(%rdi), %rax
-L19630:	movq %rax, 8(%rsp) 
-L19631:	popq %rax
-L19632:	pushq %rax
-L19633:	movq 8(%rsp), %rax
-L19634:	addq $40, %rsp
-L19635:	ret
-L19636:	jmp L19641
-L19637:	pushq %rax
-L19638:	movq $0, %rax
-L19639:	addq $40, %rsp
-L19640:	ret
-L19641:	ret
-L19642:	
+L19553:	subq $32, %rsp
+L19554:	jmp L19557
+L19555:	jmp L19570
+L19556:	jmp L19606
+L19557:	pushq %rax
+L19558:	pushq %rax
+L19559:	movq $0, %rax
+L19560:	popq %rdi
+L19561:	addq %rax, %rdi
+L19562:	movq 0(%rdi), %rax
+L19563:	pushq %rax
+L19564:	movq $1348561266, %rax
+L19565:	movq %rax, %rbx
+L19566:	popq %rdi
+L19567:	popq %rax
+L19568:	cmpq %rbx, %rdi ; je L19555
+L19569:	jmp L19556
+L19570:	pushq %rax
+L19571:	pushq %rax
+L19572:	movq $8, %rax
+L19573:	popq %rdi
+L19574:	addq %rax, %rdi
+L19575:	movq 0(%rdi), %rax
+L19576:	pushq %rax
+L19577:	movq $0, %rax
+L19578:	popq %rdi
+L19579:	addq %rax, %rdi
+L19580:	movq 0(%rdi), %rax
+L19581:	movq %rax, 24(%rsp) 
+L19582:	popq %rax
+L19583:	pushq %rax
+L19584:	pushq %rax
+L19585:	movq $8, %rax
+L19586:	popq %rdi
+L19587:	addq %rax, %rdi
+L19588:	movq 0(%rdi), %rax
+L19589:	pushq %rax
+L19590:	movq $8, %rax
+L19591:	popq %rdi
+L19592:	addq %rax, %rdi
+L19593:	movq 0(%rdi), %rax
+L19594:	pushq %rax
+L19595:	movq $0, %rax
+L19596:	popq %rdi
+L19597:	addq %rax, %rdi
+L19598:	movq 0(%rdi), %rax
+L19599:	movq %rax, 16(%rsp) 
+L19600:	popq %rax
+L19601:	pushq %rax
+L19602:	movq $0, %rax
+L19603:	addq $40, %rsp
+L19604:	ret
+L19605:	jmp L19644
+L19606:	jmp L19609
+L19607:	jmp L19622
+L19608:	jmp L19640
+L19609:	pushq %rax
+L19610:	pushq %rax
+L19611:	movq $0, %rax
+L19612:	popq %rdi
+L19613:	addq %rax, %rdi
+L19614:	movq 0(%rdi), %rax
+L19615:	pushq %rax
+L19616:	movq $5141869, %rax
+L19617:	movq %rax, %rbx
+L19618:	popq %rdi
+L19619:	popq %rax
+L19620:	cmpq %rbx, %rdi ; je L19607
+L19621:	jmp L19608
+L19622:	pushq %rax
+L19623:	pushq %rax
+L19624:	movq $8, %rax
+L19625:	popq %rdi
+L19626:	addq %rax, %rdi
+L19627:	movq 0(%rdi), %rax
+L19628:	pushq %rax
+L19629:	movq $0, %rax
+L19630:	popq %rdi
+L19631:	addq %rax, %rdi
+L19632:	movq 0(%rdi), %rax
+L19633:	movq %rax, 8(%rsp) 
+L19634:	popq %rax
+L19635:	pushq %rax
+L19636:	movq 8(%rsp), %rax
+L19637:	addq $40, %rsp
+L19638:	ret
+L19639:	jmp L19644
+L19640:	pushq %rax
+L19641:	movq $0, %rax
+L19642:	addq $40, %rsp
+L19643:	ret
+L19644:	ret
+L19645:	
   
   	/* vtail */
-L19643:	subq $32, %rsp
-L19644:	jmp L19647
-L19645:	jmp L19660
-L19646:	jmp L19696
-L19647:	pushq %rax
-L19648:	pushq %rax
-L19649:	movq $0, %rax
-L19650:	popq %rdi
-L19651:	addq %rax, %rdi
-L19652:	movq 0(%rdi), %rax
-L19653:	pushq %rax
-L19654:	movq $1348561266, %rax
-L19655:	movq %rax, %rbx
-L19656:	popq %rdi
-L19657:	popq %rax
-L19658:	cmpq %rbx, %rdi ; je L19645
-L19659:	jmp L19646
-L19660:	pushq %rax
-L19661:	pushq %rax
-L19662:	movq $8, %rax
-L19663:	popq %rdi
-L19664:	addq %rax, %rdi
-L19665:	movq 0(%rdi), %rax
-L19666:	pushq %rax
-L19667:	movq $0, %rax
-L19668:	popq %rdi
-L19669:	addq %rax, %rdi
-L19670:	movq 0(%rdi), %rax
-L19671:	movq %rax, 32(%rsp) 
-L19672:	popq %rax
-L19673:	pushq %rax
-L19674:	pushq %rax
-L19675:	movq $8, %rax
-L19676:	popq %rdi
-L19677:	addq %rax, %rdi
-L19678:	movq 0(%rdi), %rax
-L19679:	pushq %rax
-L19680:	movq $8, %rax
-L19681:	popq %rdi
-L19682:	addq %rax, %rdi
-L19683:	movq 0(%rdi), %rax
-L19684:	pushq %rax
-L19685:	movq $0, %rax
-L19686:	popq %rdi
-L19687:	addq %rax, %rdi
-L19688:	movq 0(%rdi), %rax
-L19689:	movq %rax, 24(%rsp) 
-L19690:	popq %rax
-L19691:	pushq %rax
-L19692:	movq 24(%rsp), %rax
-L19693:	addq $40, %rsp
-L19694:	ret
-L19695:	jmp L19745
-L19696:	jmp L19699
-L19697:	jmp L19712
-L19698:	jmp L19741
-L19699:	pushq %rax
-L19700:	pushq %rax
-L19701:	movq $0, %rax
-L19702:	popq %rdi
-L19703:	addq %rax, %rdi
-L19704:	movq 0(%rdi), %rax
-L19705:	pushq %rax
-L19706:	movq $5141869, %rax
-L19707:	movq %rax, %rbx
-L19708:	popq %rdi
-L19709:	popq %rax
-L19710:	cmpq %rbx, %rdi ; je L19697
-L19711:	jmp L19698
-L19712:	pushq %rax
-L19713:	pushq %rax
-L19714:	movq $8, %rax
-L19715:	popq %rdi
-L19716:	addq %rax, %rdi
-L19717:	movq 0(%rdi), %rax
-L19718:	pushq %rax
-L19719:	movq $0, %rax
-L19720:	popq %rdi
-L19721:	addq %rax, %rdi
-L19722:	movq 0(%rdi), %rax
-L19723:	movq %rax, 16(%rsp) 
-L19724:	popq %rax
-L19725:	pushq %rax
-L19726:	movq $5141869, %rax
-L19727:	pushq %rax
-L19728:	movq 24(%rsp), %rax
-L19729:	pushq %rax
-L19730:	movq $0, %rax
-L19731:	popq %rdi
-L19732:	popq %rdx
-L19733:	call L133
-L19734:	movq %rax, 8(%rsp) 
-L19735:	popq %rax
-L19736:	pushq %rax
-L19737:	movq 8(%rsp), %rax
-L19738:	addq $40, %rsp
-L19739:	ret
-L19740:	jmp L19745
-L19741:	pushq %rax
-L19742:	movq $0, %rax
-L19743:	addq $40, %rsp
-L19744:	ret
-L19745:	ret
-L19746:	
+L19646:	subq $32, %rsp
+L19647:	jmp L19650
+L19648:	jmp L19663
+L19649:	jmp L19699
+L19650:	pushq %rax
+L19651:	pushq %rax
+L19652:	movq $0, %rax
+L19653:	popq %rdi
+L19654:	addq %rax, %rdi
+L19655:	movq 0(%rdi), %rax
+L19656:	pushq %rax
+L19657:	movq $1348561266, %rax
+L19658:	movq %rax, %rbx
+L19659:	popq %rdi
+L19660:	popq %rax
+L19661:	cmpq %rbx, %rdi ; je L19648
+L19662:	jmp L19649
+L19663:	pushq %rax
+L19664:	pushq %rax
+L19665:	movq $8, %rax
+L19666:	popq %rdi
+L19667:	addq %rax, %rdi
+L19668:	movq 0(%rdi), %rax
+L19669:	pushq %rax
+L19670:	movq $0, %rax
+L19671:	popq %rdi
+L19672:	addq %rax, %rdi
+L19673:	movq 0(%rdi), %rax
+L19674:	movq %rax, 32(%rsp) 
+L19675:	popq %rax
+L19676:	pushq %rax
+L19677:	pushq %rax
+L19678:	movq $8, %rax
+L19679:	popq %rdi
+L19680:	addq %rax, %rdi
+L19681:	movq 0(%rdi), %rax
+L19682:	pushq %rax
+L19683:	movq $8, %rax
+L19684:	popq %rdi
+L19685:	addq %rax, %rdi
+L19686:	movq 0(%rdi), %rax
+L19687:	pushq %rax
+L19688:	movq $0, %rax
+L19689:	popq %rdi
+L19690:	addq %rax, %rdi
+L19691:	movq 0(%rdi), %rax
+L19692:	movq %rax, 24(%rsp) 
+L19693:	popq %rax
+L19694:	pushq %rax
+L19695:	movq 24(%rsp), %rax
+L19696:	addq $40, %rsp
+L19697:	ret
+L19698:	jmp L19748
+L19699:	jmp L19702
+L19700:	jmp L19715
+L19701:	jmp L19744
+L19702:	pushq %rax
+L19703:	pushq %rax
+L19704:	movq $0, %rax
+L19705:	popq %rdi
+L19706:	addq %rax, %rdi
+L19707:	movq 0(%rdi), %rax
+L19708:	pushq %rax
+L19709:	movq $5141869, %rax
+L19710:	movq %rax, %rbx
+L19711:	popq %rdi
+L19712:	popq %rax
+L19713:	cmpq %rbx, %rdi ; je L19700
+L19714:	jmp L19701
+L19715:	pushq %rax
+L19716:	pushq %rax
+L19717:	movq $8, %rax
+L19718:	popq %rdi
+L19719:	addq %rax, %rdi
+L19720:	movq 0(%rdi), %rax
+L19721:	pushq %rax
+L19722:	movq $0, %rax
+L19723:	popq %rdi
+L19724:	addq %rax, %rdi
+L19725:	movq 0(%rdi), %rax
+L19726:	movq %rax, 16(%rsp) 
+L19727:	popq %rax
+L19728:	pushq %rax
+L19729:	movq $5141869, %rax
+L19730:	pushq %rax
+L19731:	movq 24(%rsp), %rax
+L19732:	pushq %rax
+L19733:	movq $0, %rax
+L19734:	popq %rdi
+L19735:	popq %rdx
+L19736:	call L133
+L19737:	movq %rax, 8(%rsp) 
+L19738:	popq %rax
+L19739:	pushq %rax
+L19740:	movq 8(%rsp), %rax
+L19741:	addq $40, %rsp
+L19742:	ret
+L19743:	jmp L19748
+L19744:	pushq %rax
+L19745:	movq $0, %rax
+L19746:	addq $40, %rsp
+L19747:	ret
+L19748:	ret
+L19749:	
   
   	/* vel0 */
-L19747:	subq $16, %rsp
-L19748:	pushq %rax
-L19749:	call L19112
-L19750:	movq %rax, 8(%rsp) 
-L19751:	popq %rax
-L19752:	pushq %rax
-L19753:	movq 8(%rsp), %rax
-L19754:	addq $24, %rsp
-L19755:	ret
-L19756:	ret
-L19757:	
+L19750:	subq $16, %rsp
+L19751:	pushq %rax
+L19752:	call L19115
+L19753:	movq %rax, 8(%rsp) 
+L19754:	popq %rax
+L19755:	pushq %rax
+L19756:	movq 8(%rsp), %rax
+L19757:	addq $24, %rsp
+L19758:	ret
+L19759:	ret
+L19760:	
   
   	/* vel1 */
-L19758:	subq $16, %rsp
-L19759:	pushq %rax
-L19760:	call L19643
-L19761:	movq %rax, 16(%rsp) 
-L19762:	popq %rax
-L19763:	pushq %rax
-L19764:	movq 16(%rsp), %rax
-L19765:	call L19112
-L19766:	movq %rax, 8(%rsp) 
-L19767:	popq %rax
-L19768:	pushq %rax
-L19769:	movq 8(%rsp), %rax
-L19770:	addq $24, %rsp
-L19771:	ret
-L19772:	ret
-L19773:	
+L19761:	subq $16, %rsp
+L19762:	pushq %rax
+L19763:	call L19646
+L19764:	movq %rax, 16(%rsp) 
+L19765:	popq %rax
+L19766:	pushq %rax
+L19767:	movq 16(%rsp), %rax
+L19768:	call L19115
+L19769:	movq %rax, 8(%rsp) 
+L19770:	popq %rax
+L19771:	pushq %rax
+L19772:	movq 8(%rsp), %rax
+L19773:	addq $24, %rsp
+L19774:	ret
+L19775:	ret
+L19776:	
   
   	/* vel2 */
-L19774:	subq $16, %rsp
-L19775:	pushq %rax
-L19776:	call L19643
-L19777:	movq %rax, 16(%rsp) 
-L19778:	popq %rax
-L19779:	pushq %rax
-L19780:	movq 16(%rsp), %rax
-L19781:	call L19758
-L19782:	movq %rax, 8(%rsp) 
-L19783:	popq %rax
-L19784:	pushq %rax
-L19785:	movq 8(%rsp), %rax
-L19786:	addq $24, %rsp
-L19787:	ret
-L19788:	ret
-L19789:	
+L19777:	subq $16, %rsp
+L19778:	pushq %rax
+L19779:	call L19646
+L19780:	movq %rax, 16(%rsp) 
+L19781:	popq %rax
+L19782:	pushq %rax
+L19783:	movq 16(%rsp), %rax
+L19784:	call L19761
+L19785:	movq %rax, 8(%rsp) 
+L19786:	popq %rax
+L19787:	pushq %rax
+L19788:	movq 8(%rsp), %rax
+L19789:	addq $24, %rsp
+L19790:	ret
+L19791:	ret
+L19792:	
   
   	/* vel3 */
-L19790:	subq $16, %rsp
-L19791:	pushq %rax
-L19792:	call L19643
-L19793:	movq %rax, 16(%rsp) 
-L19794:	popq %rax
-L19795:	pushq %rax
-L19796:	movq 16(%rsp), %rax
-L19797:	call L19774
-L19798:	movq %rax, 8(%rsp) 
-L19799:	popq %rax
-L19800:	pushq %rax
-L19801:	movq 8(%rsp), %rax
-L19802:	addq $24, %rsp
-L19803:	ret
-L19804:	ret
-L19805:	
+L19793:	subq $16, %rsp
+L19794:	pushq %rax
+L19795:	call L19646
+L19796:	movq %rax, 16(%rsp) 
+L19797:	popq %rax
+L19798:	pushq %rax
+L19799:	movq 16(%rsp), %rax
+L19800:	call L19777
+L19801:	movq %rax, 8(%rsp) 
+L19802:	popq %rax
+L19803:	pushq %rax
+L19804:	movq 8(%rsp), %rax
+L19805:	addq $24, %rsp
+L19806:	ret
+L19807:	ret
+L19808:	
   
   	/* visNum */
-L19806:	subq $32, %rsp
-L19807:	jmp L19810
-L19808:	jmp L19823
-L19809:	jmp L19863
-L19810:	pushq %rax
-L19811:	pushq %rax
-L19812:	movq $0, %rax
-L19813:	popq %rdi
-L19814:	addq %rax, %rdi
-L19815:	movq 0(%rdi), %rax
-L19816:	pushq %rax
-L19817:	movq $1348561266, %rax
-L19818:	movq %rax, %rbx
-L19819:	popq %rdi
-L19820:	popq %rax
-L19821:	cmpq %rbx, %rdi ; je L19808
-L19822:	jmp L19809
-L19823:	pushq %rax
-L19824:	pushq %rax
-L19825:	movq $8, %rax
-L19826:	popq %rdi
-L19827:	addq %rax, %rdi
-L19828:	movq 0(%rdi), %rax
-L19829:	pushq %rax
-L19830:	movq $0, %rax
-L19831:	popq %rdi
-L19832:	addq %rax, %rdi
-L19833:	movq 0(%rdi), %rax
-L19834:	movq %rax, 32(%rsp) 
-L19835:	popq %rax
-L19836:	pushq %rax
-L19837:	pushq %rax
-L19838:	movq $8, %rax
-L19839:	popq %rdi
-L19840:	addq %rax, %rdi
-L19841:	movq 0(%rdi), %rax
-L19842:	pushq %rax
-L19843:	movq $8, %rax
-L19844:	popq %rdi
-L19845:	addq %rax, %rdi
-L19846:	movq 0(%rdi), %rax
-L19847:	pushq %rax
-L19848:	movq $0, %rax
-L19849:	popq %rdi
-L19850:	addq %rax, %rdi
-L19851:	movq 0(%rdi), %rax
-L19852:	movq %rax, 24(%rsp) 
-L19853:	popq %rax
-L19854:	pushq %rax
-L19855:	movq $0, %rax
-L19856:	movq %rax, 16(%rsp) 
-L19857:	popq %rax
-L19858:	pushq %rax
-L19859:	movq 16(%rsp), %rax
-L19860:	addq $40, %rsp
-L19861:	ret
-L19862:	jmp L19905
-L19863:	jmp L19866
-L19864:	jmp L19879
-L19865:	jmp L19901
-L19866:	pushq %rax
-L19867:	pushq %rax
-L19868:	movq $0, %rax
-L19869:	popq %rdi
-L19870:	addq %rax, %rdi
-L19871:	movq 0(%rdi), %rax
-L19872:	pushq %rax
-L19873:	movq $5141869, %rax
-L19874:	movq %rax, %rbx
-L19875:	popq %rdi
-L19876:	popq %rax
-L19877:	cmpq %rbx, %rdi ; je L19864
-L19878:	jmp L19865
-L19879:	pushq %rax
-L19880:	pushq %rax
-L19881:	movq $8, %rax
-L19882:	popq %rdi
-L19883:	addq %rax, %rdi
-L19884:	movq 0(%rdi), %rax
-L19885:	pushq %rax
-L19886:	movq $0, %rax
-L19887:	popq %rdi
-L19888:	addq %rax, %rdi
-L19889:	movq 0(%rdi), %rax
-L19890:	movq %rax, 8(%rsp) 
-L19891:	popq %rax
-L19892:	pushq %rax
-L19893:	movq $1, %rax
-L19894:	movq %rax, 16(%rsp) 
-L19895:	popq %rax
-L19896:	pushq %rax
-L19897:	movq 16(%rsp), %rax
-L19898:	addq $40, %rsp
-L19899:	ret
-L19900:	jmp L19905
-L19901:	pushq %rax
-L19902:	movq $0, %rax
-L19903:	addq $40, %rsp
-L19904:	ret
-L19905:	ret
-L19906:	
+L19809:	subq $32, %rsp
+L19810:	jmp L19813
+L19811:	jmp L19826
+L19812:	jmp L19866
+L19813:	pushq %rax
+L19814:	pushq %rax
+L19815:	movq $0, %rax
+L19816:	popq %rdi
+L19817:	addq %rax, %rdi
+L19818:	movq 0(%rdi), %rax
+L19819:	pushq %rax
+L19820:	movq $1348561266, %rax
+L19821:	movq %rax, %rbx
+L19822:	popq %rdi
+L19823:	popq %rax
+L19824:	cmpq %rbx, %rdi ; je L19811
+L19825:	jmp L19812
+L19826:	pushq %rax
+L19827:	pushq %rax
+L19828:	movq $8, %rax
+L19829:	popq %rdi
+L19830:	addq %rax, %rdi
+L19831:	movq 0(%rdi), %rax
+L19832:	pushq %rax
+L19833:	movq $0, %rax
+L19834:	popq %rdi
+L19835:	addq %rax, %rdi
+L19836:	movq 0(%rdi), %rax
+L19837:	movq %rax, 32(%rsp) 
+L19838:	popq %rax
+L19839:	pushq %rax
+L19840:	pushq %rax
+L19841:	movq $8, %rax
+L19842:	popq %rdi
+L19843:	addq %rax, %rdi
+L19844:	movq 0(%rdi), %rax
+L19845:	pushq %rax
+L19846:	movq $8, %rax
+L19847:	popq %rdi
+L19848:	addq %rax, %rdi
+L19849:	movq 0(%rdi), %rax
+L19850:	pushq %rax
+L19851:	movq $0, %rax
+L19852:	popq %rdi
+L19853:	addq %rax, %rdi
+L19854:	movq 0(%rdi), %rax
+L19855:	movq %rax, 24(%rsp) 
+L19856:	popq %rax
+L19857:	pushq %rax
+L19858:	movq $0, %rax
+L19859:	movq %rax, 16(%rsp) 
+L19860:	popq %rax
+L19861:	pushq %rax
+L19862:	movq 16(%rsp), %rax
+L19863:	addq $40, %rsp
+L19864:	ret
+L19865:	jmp L19908
+L19866:	jmp L19869
+L19867:	jmp L19882
+L19868:	jmp L19904
+L19869:	pushq %rax
+L19870:	pushq %rax
+L19871:	movq $0, %rax
+L19872:	popq %rdi
+L19873:	addq %rax, %rdi
+L19874:	movq 0(%rdi), %rax
+L19875:	pushq %rax
+L19876:	movq $5141869, %rax
+L19877:	movq %rax, %rbx
+L19878:	popq %rdi
+L19879:	popq %rax
+L19880:	cmpq %rbx, %rdi ; je L19867
+L19881:	jmp L19868
+L19882:	pushq %rax
+L19883:	pushq %rax
+L19884:	movq $8, %rax
+L19885:	popq %rdi
+L19886:	addq %rax, %rdi
+L19887:	movq 0(%rdi), %rax
+L19888:	pushq %rax
+L19889:	movq $0, %rax
+L19890:	popq %rdi
+L19891:	addq %rax, %rdi
+L19892:	movq 0(%rdi), %rax
+L19893:	movq %rax, 8(%rsp) 
+L19894:	popq %rax
+L19895:	pushq %rax
+L19896:	movq $1, %rax
+L19897:	movq %rax, 16(%rsp) 
+L19898:	popq %rax
+L19899:	pushq %rax
+L19900:	movq 16(%rsp), %rax
+L19901:	addq $40, %rsp
+L19902:	ret
+L19903:	jmp L19908
+L19904:	pushq %rax
+L19905:	movq $0, %rax
+L19906:	addq $40, %rsp
+L19907:	ret
+L19908:	ret
+L19909:	
   
   	/* visPair */
-L19907:	subq $32, %rsp
-L19908:	jmp L19911
-L19909:	jmp L19924
-L19910:	jmp L19964
-L19911:	pushq %rax
-L19912:	pushq %rax
-L19913:	movq $0, %rax
-L19914:	popq %rdi
-L19915:	addq %rax, %rdi
-L19916:	movq 0(%rdi), %rax
-L19917:	pushq %rax
-L19918:	movq $1348561266, %rax
-L19919:	movq %rax, %rbx
-L19920:	popq %rdi
-L19921:	popq %rax
-L19922:	cmpq %rbx, %rdi ; je L19909
-L19923:	jmp L19910
-L19924:	pushq %rax
-L19925:	pushq %rax
-L19926:	movq $8, %rax
-L19927:	popq %rdi
-L19928:	addq %rax, %rdi
-L19929:	movq 0(%rdi), %rax
-L19930:	pushq %rax
-L19931:	movq $0, %rax
-L19932:	popq %rdi
-L19933:	addq %rax, %rdi
-L19934:	movq 0(%rdi), %rax
-L19935:	movq %rax, 32(%rsp) 
-L19936:	popq %rax
-L19937:	pushq %rax
-L19938:	pushq %rax
-L19939:	movq $8, %rax
-L19940:	popq %rdi
-L19941:	addq %rax, %rdi
-L19942:	movq 0(%rdi), %rax
-L19943:	pushq %rax
-L19944:	movq $8, %rax
-L19945:	popq %rdi
-L19946:	addq %rax, %rdi
-L19947:	movq 0(%rdi), %rax
-L19948:	pushq %rax
-L19949:	movq $0, %rax
-L19950:	popq %rdi
-L19951:	addq %rax, %rdi
-L19952:	movq 0(%rdi), %rax
-L19953:	movq %rax, 24(%rsp) 
-L19954:	popq %rax
-L19955:	pushq %rax
-L19956:	movq $1, %rax
-L19957:	movq %rax, 16(%rsp) 
-L19958:	popq %rax
-L19959:	pushq %rax
-L19960:	movq 16(%rsp), %rax
-L19961:	addq $40, %rsp
-L19962:	ret
-L19963:	jmp L20006
-L19964:	jmp L19967
-L19965:	jmp L19980
-L19966:	jmp L20002
-L19967:	pushq %rax
-L19968:	pushq %rax
-L19969:	movq $0, %rax
-L19970:	popq %rdi
-L19971:	addq %rax, %rdi
-L19972:	movq 0(%rdi), %rax
-L19973:	pushq %rax
-L19974:	movq $5141869, %rax
-L19975:	movq %rax, %rbx
-L19976:	popq %rdi
-L19977:	popq %rax
-L19978:	cmpq %rbx, %rdi ; je L19965
-L19979:	jmp L19966
-L19980:	pushq %rax
-L19981:	pushq %rax
-L19982:	movq $8, %rax
-L19983:	popq %rdi
-L19984:	addq %rax, %rdi
-L19985:	movq 0(%rdi), %rax
-L19986:	pushq %rax
-L19987:	movq $0, %rax
-L19988:	popq %rdi
-L19989:	addq %rax, %rdi
-L19990:	movq 0(%rdi), %rax
-L19991:	movq %rax, 8(%rsp) 
-L19992:	popq %rax
-L19993:	pushq %rax
-L19994:	movq $0, %rax
-L19995:	movq %rax, 16(%rsp) 
-L19996:	popq %rax
-L19997:	pushq %rax
-L19998:	movq 16(%rsp), %rax
-L19999:	addq $40, %rsp
-L20000:	ret
-L20001:	jmp L20006
-L20002:	pushq %rax
-L20003:	movq $0, %rax
-L20004:	addq $40, %rsp
-L20005:	ret
-L20006:	ret
-L20007:	
+L19910:	subq $32, %rsp
+L19911:	jmp L19914
+L19912:	jmp L19927
+L19913:	jmp L19967
+L19914:	pushq %rax
+L19915:	pushq %rax
+L19916:	movq $0, %rax
+L19917:	popq %rdi
+L19918:	addq %rax, %rdi
+L19919:	movq 0(%rdi), %rax
+L19920:	pushq %rax
+L19921:	movq $1348561266, %rax
+L19922:	movq %rax, %rbx
+L19923:	popq %rdi
+L19924:	popq %rax
+L19925:	cmpq %rbx, %rdi ; je L19912
+L19926:	jmp L19913
+L19927:	pushq %rax
+L19928:	pushq %rax
+L19929:	movq $8, %rax
+L19930:	popq %rdi
+L19931:	addq %rax, %rdi
+L19932:	movq 0(%rdi), %rax
+L19933:	pushq %rax
+L19934:	movq $0, %rax
+L19935:	popq %rdi
+L19936:	addq %rax, %rdi
+L19937:	movq 0(%rdi), %rax
+L19938:	movq %rax, 32(%rsp) 
+L19939:	popq %rax
+L19940:	pushq %rax
+L19941:	pushq %rax
+L19942:	movq $8, %rax
+L19943:	popq %rdi
+L19944:	addq %rax, %rdi
+L19945:	movq 0(%rdi), %rax
+L19946:	pushq %rax
+L19947:	movq $8, %rax
+L19948:	popq %rdi
+L19949:	addq %rax, %rdi
+L19950:	movq 0(%rdi), %rax
+L19951:	pushq %rax
+L19952:	movq $0, %rax
+L19953:	popq %rdi
+L19954:	addq %rax, %rdi
+L19955:	movq 0(%rdi), %rax
+L19956:	movq %rax, 24(%rsp) 
+L19957:	popq %rax
+L19958:	pushq %rax
+L19959:	movq $1, %rax
+L19960:	movq %rax, 16(%rsp) 
+L19961:	popq %rax
+L19962:	pushq %rax
+L19963:	movq 16(%rsp), %rax
+L19964:	addq $40, %rsp
+L19965:	ret
+L19966:	jmp L20009
+L19967:	jmp L19970
+L19968:	jmp L19983
+L19969:	jmp L20005
+L19970:	pushq %rax
+L19971:	pushq %rax
+L19972:	movq $0, %rax
+L19973:	popq %rdi
+L19974:	addq %rax, %rdi
+L19975:	movq 0(%rdi), %rax
+L19976:	pushq %rax
+L19977:	movq $5141869, %rax
+L19978:	movq %rax, %rbx
+L19979:	popq %rdi
+L19980:	popq %rax
+L19981:	cmpq %rbx, %rdi ; je L19968
+L19982:	jmp L19969
+L19983:	pushq %rax
+L19984:	pushq %rax
+L19985:	movq $8, %rax
+L19986:	popq %rdi
+L19987:	addq %rax, %rdi
+L19988:	movq 0(%rdi), %rax
+L19989:	pushq %rax
+L19990:	movq $0, %rax
+L19991:	popq %rdi
+L19992:	addq %rax, %rdi
+L19993:	movq 0(%rdi), %rax
+L19994:	movq %rax, 8(%rsp) 
+L19995:	popq %rax
+L19996:	pushq %rax
+L19997:	movq $0, %rax
+L19998:	movq %rax, 16(%rsp) 
+L19999:	popq %rax
+L20000:	pushq %rax
+L20001:	movq 16(%rsp), %rax
+L20002:	addq $40, %rsp
+L20003:	ret
+L20004:	jmp L20009
+L20005:	pushq %rax
+L20006:	movq $0, %rax
+L20007:	addq $40, %rsp
+L20008:	ret
+L20009:	ret
+L20010:	
   
   	/* quote */
-L20008:	subq $32, %rsp
-L20009:	pushq %rax
-L20010:	movq $5141869, %rax
-L20011:	pushq %rax
-L20012:	movq $39, %rax
-L20013:	pushq %rax
-L20014:	movq $0, %rax
-L20015:	popq %rdi
-L20016:	popq %rdx
-L20017:	call L133
-L20018:	movq %rax, 32(%rsp) 
-L20019:	popq %rax
-L20020:	pushq %rax
-L20021:	movq $5141869, %rax
-L20022:	pushq %rax
-L20023:	movq 8(%rsp), %rax
-L20024:	pushq %rax
-L20025:	movq $0, %rax
-L20026:	popq %rdi
-L20027:	popq %rdx
-L20028:	call L133
-L20029:	movq %rax, 24(%rsp) 
-L20030:	popq %rax
-L20031:	pushq %rax
-L20032:	movq 32(%rsp), %rax
-L20033:	pushq %rax
-L20034:	movq 32(%rsp), %rax
-L20035:	pushq %rax
-L20036:	movq $0, %rax
-L20037:	popq %rdi
-L20038:	popq %rdx
-L20039:	call L133
-L20040:	movq %rax, 16(%rsp) 
-L20041:	popq %rax
-L20042:	pushq %rax
-L20043:	movq 16(%rsp), %rax
-L20044:	call L19216
-L20045:	movq %rax, 8(%rsp) 
-L20046:	popq %rax
-L20047:	pushq %rax
-L20048:	movq 8(%rsp), %rax
-L20049:	addq $40, %rsp
-L20050:	ret
-L20051:	ret
-L20052:	
+L20011:	subq $32, %rsp
+L20012:	pushq %rax
+L20013:	movq $5141869, %rax
+L20014:	pushq %rax
+L20015:	movq $39, %rax
+L20016:	pushq %rax
+L20017:	movq $0, %rax
+L20018:	popq %rdi
+L20019:	popq %rdx
+L20020:	call L133
+L20021:	movq %rax, 32(%rsp) 
+L20022:	popq %rax
+L20023:	pushq %rax
+L20024:	movq $5141869, %rax
+L20025:	pushq %rax
+L20026:	movq 8(%rsp), %rax
+L20027:	pushq %rax
+L20028:	movq $0, %rax
+L20029:	popq %rdi
+L20030:	popq %rdx
+L20031:	call L133
+L20032:	movq %rax, 24(%rsp) 
+L20033:	popq %rax
+L20034:	pushq %rax
+L20035:	movq 32(%rsp), %rax
+L20036:	pushq %rax
+L20037:	movq 32(%rsp), %rax
+L20038:	pushq %rax
+L20039:	movq $0, %rax
+L20040:	popq %rdi
+L20041:	popq %rdx
+L20042:	call L133
+L20043:	movq %rax, 16(%rsp) 
+L20044:	popq %rax
+L20045:	pushq %rax
+L20046:	movq 16(%rsp), %rax
+L20047:	call L19219
+L20048:	movq %rax, 8(%rsp) 
+L20049:	popq %rax
+L20050:	pushq %rax
+L20051:	movq 8(%rsp), %rax
+L20052:	addq $40, %rsp
+L20053:	ret
+L20054:	ret
+L20055:	
   
   	/* parse */
-L20053:	subq $112, %rsp
-L20054:	pushq %rdx
-L20055:	pushq %rdi
-L20056:	jmp L20059
-L20057:	jmp L20068
-L20058:	jmp L20073
-L20059:	pushq %rax
-L20060:	movq 16(%rsp), %rax
-L20061:	pushq %rax
-L20062:	movq $0, %rax
-L20063:	movq %rax, %rbx
-L20064:	popq %rdi
-L20065:	popq %rax
-L20066:	cmpq %rbx, %rdi ; je L20057
-L20067:	jmp L20058
-L20068:	pushq %rax
-L20069:	movq 8(%rsp), %rax
-L20070:	addq $136, %rsp
-L20071:	ret
-L20072:	jmp L20413
-L20073:	pushq %rax
-L20074:	movq 16(%rsp), %rax
-L20075:	pushq %rax
-L20076:	movq $0, %rax
-L20077:	popq %rdi
-L20078:	addq %rax, %rdi
-L20079:	movq 0(%rdi), %rax
-L20080:	movq %rax, 128(%rsp) 
-L20081:	popq %rax
-L20082:	pushq %rax
-L20083:	movq 16(%rsp), %rax
-L20084:	pushq %rax
-L20085:	movq $8, %rax
-L20086:	popq %rdi
-L20087:	addq %rax, %rdi
-L20088:	movq 0(%rdi), %rax
-L20089:	movq %rax, 120(%rsp) 
-L20090:	popq %rax
-L20091:	jmp L20094
-L20092:	jmp L20108
-L20093:	jmp L20181
-L20094:	pushq %rax
-L20095:	movq 128(%rsp), %rax
-L20096:	pushq %rax
-L20097:	movq $0, %rax
-L20098:	popq %rdi
-L20099:	addq %rax, %rdi
-L20100:	movq 0(%rdi), %rax
-L20101:	pushq %rax
-L20102:	movq $1330660686, %rax
-L20103:	movq %rax, %rbx
-L20104:	popq %rdi
-L20105:	popq %rax
-L20106:	cmpq %rbx, %rdi ; je L20092
-L20107:	jmp L20093
-L20108:	jmp L20111
-L20109:	jmp L20119
-L20110:	jmp L20135
-L20111:	pushq %rax
-L20112:	pushq %rax
-L20113:	movq $0, %rax
-L20114:	movq %rax, %rbx
-L20115:	popq %rdi
-L20116:	popq %rax
-L20117:	cmpq %rbx, %rdi ; je L20109
-L20118:	jmp L20110
-L20119:	pushq %rax
-L20120:	movq 120(%rsp), %rax
-L20121:	pushq %rax
-L20122:	movq 16(%rsp), %rax
-L20123:	pushq %rax
-L20124:	movq 16(%rsp), %rax
-L20125:	popq %rdi
-L20126:	popq %rdx
-L20127:	call L20053
-L20128:	movq %rax, 112(%rsp) 
-L20129:	popq %rax
-L20130:	pushq %rax
-L20131:	movq 112(%rsp), %rax
-L20132:	addq $136, %rsp
-L20133:	ret
-L20134:	jmp L20180
-L20135:	pushq %rax
-L20136:	pushq %rax
-L20137:	movq $0, %rax
-L20138:	popq %rdi
-L20139:	addq %rax, %rdi
-L20140:	movq 0(%rdi), %rax
-L20141:	movq %rax, 104(%rsp) 
-L20142:	popq %rax
-L20143:	pushq %rax
-L20144:	pushq %rax
-L20145:	movq $8, %rax
-L20146:	popq %rdi
-L20147:	addq %rax, %rdi
-L20148:	movq 0(%rdi), %rax
-L20149:	movq %rax, 96(%rsp) 
-L20150:	popq %rax
-L20151:	pushq %rax
-L20152:	movq $1348561266, %rax
-L20153:	pushq %rax
-L20154:	movq 16(%rsp), %rax
-L20155:	pushq %rax
-L20156:	movq 120(%rsp), %rax
-L20157:	pushq %rax
-L20158:	movq $0, %rax
-L20159:	popq %rdi
-L20160:	popq %rdx
-L20161:	popq %rbx
-L20162:	call L158
-L20163:	movq %rax, 88(%rsp) 
-L20164:	popq %rax
-L20165:	pushq %rax
-L20166:	movq 120(%rsp), %rax
-L20167:	pushq %rax
-L20168:	movq 96(%rsp), %rax
-L20169:	pushq %rax
-L20170:	movq 112(%rsp), %rax
-L20171:	popq %rdi
-L20172:	popq %rdx
-L20173:	call L20053
-L20174:	movq %rax, 112(%rsp) 
-L20175:	popq %rax
-L20176:	pushq %rax
-L20177:	movq 112(%rsp), %rax
-L20178:	addq $136, %rsp
-L20179:	ret
-L20180:	jmp L20413
-L20181:	jmp L20184
-L20182:	jmp L20198
-L20183:	jmp L20233
-L20184:	pushq %rax
-L20185:	movq 128(%rsp), %rax
-L20186:	pushq %rax
-L20187:	movq $0, %rax
-L20188:	popq %rdi
-L20189:	addq %rax, %rdi
-L20190:	movq 0(%rdi), %rax
-L20191:	pushq %rax
-L20192:	movq $289043075909, %rax
-L20193:	movq %rax, %rbx
-L20194:	popq %rdi
-L20195:	popq %rax
-L20196:	cmpq %rbx, %rdi ; je L20182
-L20197:	jmp L20183
-L20198:	pushq %rax
-L20199:	movq $5141869, %rax
-L20200:	pushq %rax
-L20201:	movq $0, %rax
-L20202:	pushq %rax
-L20203:	movq $0, %rax
-L20204:	popq %rdi
-L20205:	popq %rdx
-L20206:	call L133
-L20207:	movq %rax, 80(%rsp) 
-L20208:	popq %rax
-L20209:	pushq %rax
-L20210:	movq 8(%rsp), %rax
-L20211:	pushq %rax
-L20212:	movq 8(%rsp), %rax
-L20213:	popq %rdi
-L20214:	call L97
-L20215:	movq %rax, 72(%rsp) 
-L20216:	popq %rax
-L20217:	pushq %rax
-L20218:	movq 120(%rsp), %rax
-L20219:	pushq %rax
-L20220:	movq 88(%rsp), %rax
-L20221:	pushq %rax
-L20222:	movq 88(%rsp), %rax
-L20223:	popq %rdi
-L20224:	popq %rdx
-L20225:	call L20053
-L20226:	movq %rax, 112(%rsp) 
-L20227:	popq %rax
-L20228:	pushq %rax
-L20229:	movq 112(%rsp), %rax
-L20230:	addq $136, %rsp
-L20231:	ret
-L20232:	jmp L20413
-L20233:	jmp L20236
-L20234:	jmp L20250
-L20235:	jmp L20271
-L20236:	pushq %rax
-L20237:	movq 128(%rsp), %rax
-L20238:	pushq %rax
-L20239:	movq $0, %rax
-L20240:	popq %rdi
-L20241:	addq %rax, %rdi
-L20242:	movq 0(%rdi), %rax
-L20243:	pushq %rax
-L20244:	movq $4476756, %rax
-L20245:	movq %rax, %rbx
-L20246:	popq %rdi
-L20247:	popq %rax
-L20248:	cmpq %rbx, %rdi ; je L20234
-L20249:	jmp L20235
-L20250:	pushq %rax
-L20251:	movq 8(%rsp), %rax
-L20252:	call L19112
-L20253:	movq %rax, 64(%rsp) 
-L20254:	popq %rax
-L20255:	pushq %rax
-L20256:	movq 120(%rsp), %rax
-L20257:	pushq %rax
-L20258:	movq 72(%rsp), %rax
-L20259:	pushq %rax
-L20260:	movq 16(%rsp), %rax
-L20261:	popq %rdi
-L20262:	popq %rdx
-L20263:	call L20053
-L20264:	movq %rax, 112(%rsp) 
-L20265:	popq %rax
-L20266:	pushq %rax
-L20267:	movq 112(%rsp), %rax
-L20268:	addq $136, %rsp
-L20269:	ret
-L20270:	jmp L20413
-L20271:	jmp L20274
-L20272:	jmp L20288
-L20273:	jmp L20343
-L20274:	pushq %rax
-L20275:	movq 128(%rsp), %rax
-L20276:	pushq %rax
-L20277:	movq $0, %rax
-L20278:	popq %rdi
-L20279:	addq %rax, %rdi
-L20280:	movq 0(%rdi), %rax
-L20281:	pushq %rax
-L20282:	movq $5133645, %rax
-L20283:	movq %rax, %rbx
-L20284:	popq %rdi
-L20285:	popq %rax
-L20286:	cmpq %rbx, %rdi ; je L20272
-L20287:	jmp L20273
-L20288:	pushq %rax
-L20289:	movq 128(%rsp), %rax
-L20290:	pushq %rax
-L20291:	movq $8, %rax
-L20292:	popq %rdi
-L20293:	addq %rax, %rdi
-L20294:	movq 0(%rdi), %rax
-L20295:	pushq %rax
-L20296:	movq $0, %rax
-L20297:	popq %rdi
-L20298:	addq %rax, %rdi
-L20299:	movq 0(%rdi), %rax
-L20300:	movq %rax, 56(%rsp) 
-L20301:	popq %rax
-L20302:	pushq %rax
-L20303:	movq $5141869, %rax
-L20304:	pushq %rax
-L20305:	movq 64(%rsp), %rax
-L20306:	pushq %rax
-L20307:	movq $0, %rax
-L20308:	popq %rdi
-L20309:	popq %rdx
-L20310:	call L133
-L20311:	movq %rax, 48(%rsp) 
-L20312:	popq %rax
-L20313:	pushq %rax
-L20314:	movq $1348561266, %rax
-L20315:	pushq %rax
-L20316:	movq 56(%rsp), %rax
-L20317:	pushq %rax
-L20318:	movq 24(%rsp), %rax
-L20319:	pushq %rax
-L20320:	movq $0, %rax
-L20321:	popq %rdi
-L20322:	popq %rdx
-L20323:	popq %rbx
-L20324:	call L158
-L20325:	movq %rax, 40(%rsp) 
-L20326:	popq %rax
-L20327:	pushq %rax
-L20328:	movq 120(%rsp), %rax
-L20329:	pushq %rax
-L20330:	movq 48(%rsp), %rax
-L20331:	pushq %rax
-L20332:	movq 16(%rsp), %rax
-L20333:	popq %rdi
-L20334:	popq %rdx
-L20335:	call L20053
-L20336:	movq %rax, 112(%rsp) 
-L20337:	popq %rax
-L20338:	pushq %rax
-L20339:	movq 112(%rsp), %rax
-L20340:	addq $136, %rsp
-L20341:	ret
-L20342:	jmp L20413
-L20343:	jmp L20346
-L20344:	jmp L20360
-L20345:	jmp L20409
-L20346:	pushq %rax
-L20347:	movq 128(%rsp), %rax
-L20348:	pushq %rax
-L20349:	movq $0, %rax
-L20350:	popq %rdi
-L20351:	addq %rax, %rdi
-L20352:	movq 0(%rdi), %rax
-L20353:	pushq %rax
-L20354:	movq $349323613253, %rax
-L20355:	movq %rax, %rbx
-L20356:	popq %rdi
-L20357:	popq %rax
-L20358:	cmpq %rbx, %rdi ; je L20344
-L20359:	jmp L20345
-L20360:	pushq %rax
-L20361:	movq 128(%rsp), %rax
-L20362:	pushq %rax
-L20363:	movq $8, %rax
-L20364:	popq %rdi
-L20365:	addq %rax, %rdi
-L20366:	movq 0(%rdi), %rax
-L20367:	pushq %rax
-L20368:	movq $0, %rax
-L20369:	popq %rdi
-L20370:	addq %rax, %rdi
-L20371:	movq 0(%rdi), %rax
-L20372:	movq %rax, 56(%rsp) 
-L20373:	popq %rax
-L20374:	pushq %rax
-L20375:	movq 56(%rsp), %rax
-L20376:	call L20008
-L20377:	movq %rax, 32(%rsp) 
-L20378:	popq %rax
-L20379:	pushq %rax
-L20380:	movq $1348561266, %rax
-L20381:	pushq %rax
-L20382:	movq 40(%rsp), %rax
-L20383:	pushq %rax
-L20384:	movq 24(%rsp), %rax
-L20385:	pushq %rax
-L20386:	movq $0, %rax
-L20387:	popq %rdi
-L20388:	popq %rdx
-L20389:	popq %rbx
-L20390:	call L158
-L20391:	movq %rax, 24(%rsp) 
-L20392:	popq %rax
-L20393:	pushq %rax
-L20394:	movq 120(%rsp), %rax
-L20395:	pushq %rax
-L20396:	movq 32(%rsp), %rax
-L20397:	pushq %rax
-L20398:	movq 16(%rsp), %rax
-L20399:	popq %rdi
-L20400:	popq %rdx
-L20401:	call L20053
-L20402:	movq %rax, 112(%rsp) 
-L20403:	popq %rax
-L20404:	pushq %rax
-L20405:	movq 112(%rsp), %rax
-L20406:	addq $136, %rsp
-L20407:	ret
-L20408:	jmp L20413
-L20409:	pushq %rax
-L20410:	movq $0, %rax
-L20411:	addq $136, %rsp
-L20412:	ret
-L20413:	ret
-L20414:	
+L20056:	subq $112, %rsp
+L20057:	pushq %rdx
+L20058:	pushq %rdi
+L20059:	jmp L20062
+L20060:	jmp L20071
+L20061:	jmp L20076
+L20062:	pushq %rax
+L20063:	movq 16(%rsp), %rax
+L20064:	pushq %rax
+L20065:	movq $0, %rax
+L20066:	movq %rax, %rbx
+L20067:	popq %rdi
+L20068:	popq %rax
+L20069:	cmpq %rbx, %rdi ; je L20060
+L20070:	jmp L20061
+L20071:	pushq %rax
+L20072:	movq 8(%rsp), %rax
+L20073:	addq $136, %rsp
+L20074:	ret
+L20075:	jmp L20416
+L20076:	pushq %rax
+L20077:	movq 16(%rsp), %rax
+L20078:	pushq %rax
+L20079:	movq $0, %rax
+L20080:	popq %rdi
+L20081:	addq %rax, %rdi
+L20082:	movq 0(%rdi), %rax
+L20083:	movq %rax, 128(%rsp) 
+L20084:	popq %rax
+L20085:	pushq %rax
+L20086:	movq 16(%rsp), %rax
+L20087:	pushq %rax
+L20088:	movq $8, %rax
+L20089:	popq %rdi
+L20090:	addq %rax, %rdi
+L20091:	movq 0(%rdi), %rax
+L20092:	movq %rax, 120(%rsp) 
+L20093:	popq %rax
+L20094:	jmp L20097
+L20095:	jmp L20111
+L20096:	jmp L20184
+L20097:	pushq %rax
+L20098:	movq 128(%rsp), %rax
+L20099:	pushq %rax
+L20100:	movq $0, %rax
+L20101:	popq %rdi
+L20102:	addq %rax, %rdi
+L20103:	movq 0(%rdi), %rax
+L20104:	pushq %rax
+L20105:	movq $1330660686, %rax
+L20106:	movq %rax, %rbx
+L20107:	popq %rdi
+L20108:	popq %rax
+L20109:	cmpq %rbx, %rdi ; je L20095
+L20110:	jmp L20096
+L20111:	jmp L20114
+L20112:	jmp L20122
+L20113:	jmp L20138
+L20114:	pushq %rax
+L20115:	pushq %rax
+L20116:	movq $0, %rax
+L20117:	movq %rax, %rbx
+L20118:	popq %rdi
+L20119:	popq %rax
+L20120:	cmpq %rbx, %rdi ; je L20112
+L20121:	jmp L20113
+L20122:	pushq %rax
+L20123:	movq 120(%rsp), %rax
+L20124:	pushq %rax
+L20125:	movq 16(%rsp), %rax
+L20126:	pushq %rax
+L20127:	movq 16(%rsp), %rax
+L20128:	popq %rdi
+L20129:	popq %rdx
+L20130:	call L20056
+L20131:	movq %rax, 112(%rsp) 
+L20132:	popq %rax
+L20133:	pushq %rax
+L20134:	movq 112(%rsp), %rax
+L20135:	addq $136, %rsp
+L20136:	ret
+L20137:	jmp L20183
+L20138:	pushq %rax
+L20139:	pushq %rax
+L20140:	movq $0, %rax
+L20141:	popq %rdi
+L20142:	addq %rax, %rdi
+L20143:	movq 0(%rdi), %rax
+L20144:	movq %rax, 104(%rsp) 
+L20145:	popq %rax
+L20146:	pushq %rax
+L20147:	pushq %rax
+L20148:	movq $8, %rax
+L20149:	popq %rdi
+L20150:	addq %rax, %rdi
+L20151:	movq 0(%rdi), %rax
+L20152:	movq %rax, 96(%rsp) 
+L20153:	popq %rax
+L20154:	pushq %rax
+L20155:	movq $1348561266, %rax
+L20156:	pushq %rax
+L20157:	movq 16(%rsp), %rax
+L20158:	pushq %rax
+L20159:	movq 120(%rsp), %rax
+L20160:	pushq %rax
+L20161:	movq $0, %rax
+L20162:	popq %rdi
+L20163:	popq %rdx
+L20164:	popq %rbx
+L20165:	call L158
+L20166:	movq %rax, 88(%rsp) 
+L20167:	popq %rax
+L20168:	pushq %rax
+L20169:	movq 120(%rsp), %rax
+L20170:	pushq %rax
+L20171:	movq 96(%rsp), %rax
+L20172:	pushq %rax
+L20173:	movq 112(%rsp), %rax
+L20174:	popq %rdi
+L20175:	popq %rdx
+L20176:	call L20056
+L20177:	movq %rax, 112(%rsp) 
+L20178:	popq %rax
+L20179:	pushq %rax
+L20180:	movq 112(%rsp), %rax
+L20181:	addq $136, %rsp
+L20182:	ret
+L20183:	jmp L20416
+L20184:	jmp L20187
+L20185:	jmp L20201
+L20186:	jmp L20236
+L20187:	pushq %rax
+L20188:	movq 128(%rsp), %rax
+L20189:	pushq %rax
+L20190:	movq $0, %rax
+L20191:	popq %rdi
+L20192:	addq %rax, %rdi
+L20193:	movq 0(%rdi), %rax
+L20194:	pushq %rax
+L20195:	movq $289043075909, %rax
+L20196:	movq %rax, %rbx
+L20197:	popq %rdi
+L20198:	popq %rax
+L20199:	cmpq %rbx, %rdi ; je L20185
+L20200:	jmp L20186
+L20201:	pushq %rax
+L20202:	movq $5141869, %rax
+L20203:	pushq %rax
+L20204:	movq $0, %rax
+L20205:	pushq %rax
+L20206:	movq $0, %rax
+L20207:	popq %rdi
+L20208:	popq %rdx
+L20209:	call L133
+L20210:	movq %rax, 80(%rsp) 
+L20211:	popq %rax
+L20212:	pushq %rax
+L20213:	movq 8(%rsp), %rax
+L20214:	pushq %rax
+L20215:	movq 8(%rsp), %rax
+L20216:	popq %rdi
+L20217:	call L97
+L20218:	movq %rax, 72(%rsp) 
+L20219:	popq %rax
+L20220:	pushq %rax
+L20221:	movq 120(%rsp), %rax
+L20222:	pushq %rax
+L20223:	movq 88(%rsp), %rax
+L20224:	pushq %rax
+L20225:	movq 88(%rsp), %rax
+L20226:	popq %rdi
+L20227:	popq %rdx
+L20228:	call L20056
+L20229:	movq %rax, 112(%rsp) 
+L20230:	popq %rax
+L20231:	pushq %rax
+L20232:	movq 112(%rsp), %rax
+L20233:	addq $136, %rsp
+L20234:	ret
+L20235:	jmp L20416
+L20236:	jmp L20239
+L20237:	jmp L20253
+L20238:	jmp L20274
+L20239:	pushq %rax
+L20240:	movq 128(%rsp), %rax
+L20241:	pushq %rax
+L20242:	movq $0, %rax
+L20243:	popq %rdi
+L20244:	addq %rax, %rdi
+L20245:	movq 0(%rdi), %rax
+L20246:	pushq %rax
+L20247:	movq $4476756, %rax
+L20248:	movq %rax, %rbx
+L20249:	popq %rdi
+L20250:	popq %rax
+L20251:	cmpq %rbx, %rdi ; je L20237
+L20252:	jmp L20238
+L20253:	pushq %rax
+L20254:	movq 8(%rsp), %rax
+L20255:	call L19115
+L20256:	movq %rax, 64(%rsp) 
+L20257:	popq %rax
+L20258:	pushq %rax
+L20259:	movq 120(%rsp), %rax
+L20260:	pushq %rax
+L20261:	movq 72(%rsp), %rax
+L20262:	pushq %rax
+L20263:	movq 16(%rsp), %rax
+L20264:	popq %rdi
+L20265:	popq %rdx
+L20266:	call L20056
+L20267:	movq %rax, 112(%rsp) 
+L20268:	popq %rax
+L20269:	pushq %rax
+L20270:	movq 112(%rsp), %rax
+L20271:	addq $136, %rsp
+L20272:	ret
+L20273:	jmp L20416
+L20274:	jmp L20277
+L20275:	jmp L20291
+L20276:	jmp L20346
+L20277:	pushq %rax
+L20278:	movq 128(%rsp), %rax
+L20279:	pushq %rax
+L20280:	movq $0, %rax
+L20281:	popq %rdi
+L20282:	addq %rax, %rdi
+L20283:	movq 0(%rdi), %rax
+L20284:	pushq %rax
+L20285:	movq $5133645, %rax
+L20286:	movq %rax, %rbx
+L20287:	popq %rdi
+L20288:	popq %rax
+L20289:	cmpq %rbx, %rdi ; je L20275
+L20290:	jmp L20276
+L20291:	pushq %rax
+L20292:	movq 128(%rsp), %rax
+L20293:	pushq %rax
+L20294:	movq $8, %rax
+L20295:	popq %rdi
+L20296:	addq %rax, %rdi
+L20297:	movq 0(%rdi), %rax
+L20298:	pushq %rax
+L20299:	movq $0, %rax
+L20300:	popq %rdi
+L20301:	addq %rax, %rdi
+L20302:	movq 0(%rdi), %rax
+L20303:	movq %rax, 56(%rsp) 
+L20304:	popq %rax
+L20305:	pushq %rax
+L20306:	movq $5141869, %rax
+L20307:	pushq %rax
+L20308:	movq 64(%rsp), %rax
+L20309:	pushq %rax
+L20310:	movq $0, %rax
+L20311:	popq %rdi
+L20312:	popq %rdx
+L20313:	call L133
+L20314:	movq %rax, 48(%rsp) 
+L20315:	popq %rax
+L20316:	pushq %rax
+L20317:	movq $1348561266, %rax
+L20318:	pushq %rax
+L20319:	movq 56(%rsp), %rax
+L20320:	pushq %rax
+L20321:	movq 24(%rsp), %rax
+L20322:	pushq %rax
+L20323:	movq $0, %rax
+L20324:	popq %rdi
+L20325:	popq %rdx
+L20326:	popq %rbx
+L20327:	call L158
+L20328:	movq %rax, 40(%rsp) 
+L20329:	popq %rax
+L20330:	pushq %rax
+L20331:	movq 120(%rsp), %rax
+L20332:	pushq %rax
+L20333:	movq 48(%rsp), %rax
+L20334:	pushq %rax
+L20335:	movq 16(%rsp), %rax
+L20336:	popq %rdi
+L20337:	popq %rdx
+L20338:	call L20056
+L20339:	movq %rax, 112(%rsp) 
+L20340:	popq %rax
+L20341:	pushq %rax
+L20342:	movq 112(%rsp), %rax
+L20343:	addq $136, %rsp
+L20344:	ret
+L20345:	jmp L20416
+L20346:	jmp L20349
+L20347:	jmp L20363
+L20348:	jmp L20412
+L20349:	pushq %rax
+L20350:	movq 128(%rsp), %rax
+L20351:	pushq %rax
+L20352:	movq $0, %rax
+L20353:	popq %rdi
+L20354:	addq %rax, %rdi
+L20355:	movq 0(%rdi), %rax
+L20356:	pushq %rax
+L20357:	movq $349323613253, %rax
+L20358:	movq %rax, %rbx
+L20359:	popq %rdi
+L20360:	popq %rax
+L20361:	cmpq %rbx, %rdi ; je L20347
+L20362:	jmp L20348
+L20363:	pushq %rax
+L20364:	movq 128(%rsp), %rax
+L20365:	pushq %rax
+L20366:	movq $8, %rax
+L20367:	popq %rdi
+L20368:	addq %rax, %rdi
+L20369:	movq 0(%rdi), %rax
+L20370:	pushq %rax
+L20371:	movq $0, %rax
+L20372:	popq %rdi
+L20373:	addq %rax, %rdi
+L20374:	movq 0(%rdi), %rax
+L20375:	movq %rax, 56(%rsp) 
+L20376:	popq %rax
+L20377:	pushq %rax
+L20378:	movq 56(%rsp), %rax
+L20379:	call L20011
+L20380:	movq %rax, 32(%rsp) 
+L20381:	popq %rax
+L20382:	pushq %rax
+L20383:	movq $1348561266, %rax
+L20384:	pushq %rax
+L20385:	movq 40(%rsp), %rax
+L20386:	pushq %rax
+L20387:	movq 24(%rsp), %rax
+L20388:	pushq %rax
+L20389:	movq $0, %rax
+L20390:	popq %rdi
+L20391:	popq %rdx
+L20392:	popq %rbx
+L20393:	call L158
+L20394:	movq %rax, 24(%rsp) 
+L20395:	popq %rax
+L20396:	pushq %rax
+L20397:	movq 120(%rsp), %rax
+L20398:	pushq %rax
+L20399:	movq 32(%rsp), %rax
+L20400:	pushq %rax
+L20401:	movq 16(%rsp), %rax
+L20402:	popq %rdi
+L20403:	popq %rdx
+L20404:	call L20056
+L20405:	movq %rax, 112(%rsp) 
+L20406:	popq %rax
+L20407:	pushq %rax
+L20408:	movq 112(%rsp), %rax
+L20409:	addq $136, %rsp
+L20410:	ret
+L20411:	jmp L20416
+L20412:	pushq %rax
+L20413:	movq $0, %rax
+L20414:	addq $136, %rsp
+L20415:	ret
+L20416:	ret
+L20417:	
   
   	/* v2list */
-L20415:	subq $48, %rsp
-L20416:	jmp L20419
-L20417:	jmp L20432
-L20418:	jmp L20481
-L20419:	pushq %rax
-L20420:	pushq %rax
-L20421:	movq $0, %rax
-L20422:	popq %rdi
-L20423:	addq %rax, %rdi
-L20424:	movq 0(%rdi), %rax
-L20425:	pushq %rax
-L20426:	movq $1348561266, %rax
-L20427:	movq %rax, %rbx
-L20428:	popq %rdi
-L20429:	popq %rax
-L20430:	cmpq %rbx, %rdi ; je L20417
-L20431:	jmp L20418
-L20432:	pushq %rax
-L20433:	pushq %rax
-L20434:	movq $8, %rax
-L20435:	popq %rdi
-L20436:	addq %rax, %rdi
-L20437:	movq 0(%rdi), %rax
-L20438:	pushq %rax
-L20439:	movq $0, %rax
-L20440:	popq %rdi
-L20441:	addq %rax, %rdi
-L20442:	movq 0(%rdi), %rax
-L20443:	movq %rax, 48(%rsp) 
-L20444:	popq %rax
-L20445:	pushq %rax
-L20446:	pushq %rax
-L20447:	movq $8, %rax
-L20448:	popq %rdi
-L20449:	addq %rax, %rdi
-L20450:	movq 0(%rdi), %rax
-L20451:	pushq %rax
-L20452:	movq $8, %rax
-L20453:	popq %rdi
-L20454:	addq %rax, %rdi
-L20455:	movq 0(%rdi), %rax
-L20456:	pushq %rax
-L20457:	movq $0, %rax
-L20458:	popq %rdi
-L20459:	addq %rax, %rdi
-L20460:	movq 0(%rdi), %rax
-L20461:	movq %rax, 40(%rsp) 
-L20462:	popq %rax
-L20463:	pushq %rax
-L20464:	movq 40(%rsp), %rax
-L20465:	call L20415
-L20466:	movq %rax, 32(%rsp) 
-L20467:	popq %rax
-L20468:	pushq %rax
-L20469:	movq 48(%rsp), %rax
-L20470:	pushq %rax
-L20471:	movq 40(%rsp), %rax
-L20472:	popq %rdi
-L20473:	call L97
-L20474:	movq %rax, 24(%rsp) 
-L20475:	popq %rax
-L20476:	pushq %rax
-L20477:	movq 24(%rsp), %rax
-L20478:	addq $56, %rsp
-L20479:	ret
-L20480:	jmp L20523
-L20481:	jmp L20484
-L20482:	jmp L20497
-L20483:	jmp L20519
-L20484:	pushq %rax
-L20485:	pushq %rax
-L20486:	movq $0, %rax
-L20487:	popq %rdi
-L20488:	addq %rax, %rdi
-L20489:	movq 0(%rdi), %rax
-L20490:	pushq %rax
-L20491:	movq $5141869, %rax
-L20492:	movq %rax, %rbx
-L20493:	popq %rdi
-L20494:	popq %rax
-L20495:	cmpq %rbx, %rdi ; je L20482
-L20496:	jmp L20483
-L20497:	pushq %rax
-L20498:	pushq %rax
-L20499:	movq $8, %rax
-L20500:	popq %rdi
-L20501:	addq %rax, %rdi
-L20502:	movq 0(%rdi), %rax
-L20503:	pushq %rax
-L20504:	movq $0, %rax
-L20505:	popq %rdi
-L20506:	addq %rax, %rdi
-L20507:	movq 0(%rdi), %rax
-L20508:	movq %rax, 16(%rsp) 
-L20509:	popq %rax
-L20510:	pushq %rax
-L20511:	movq $0, %rax
-L20512:	movq %rax, 8(%rsp) 
-L20513:	popq %rax
-L20514:	pushq %rax
-L20515:	movq 8(%rsp), %rax
-L20516:	addq $56, %rsp
-L20517:	ret
-L20518:	jmp L20523
-L20519:	pushq %rax
-L20520:	movq $0, %rax
-L20521:	addq $56, %rsp
-L20522:	ret
-L20523:	ret
-L20524:	
+L20418:	subq $48, %rsp
+L20419:	jmp L20422
+L20420:	jmp L20435
+L20421:	jmp L20484
+L20422:	pushq %rax
+L20423:	pushq %rax
+L20424:	movq $0, %rax
+L20425:	popq %rdi
+L20426:	addq %rax, %rdi
+L20427:	movq 0(%rdi), %rax
+L20428:	pushq %rax
+L20429:	movq $1348561266, %rax
+L20430:	movq %rax, %rbx
+L20431:	popq %rdi
+L20432:	popq %rax
+L20433:	cmpq %rbx, %rdi ; je L20420
+L20434:	jmp L20421
+L20435:	pushq %rax
+L20436:	pushq %rax
+L20437:	movq $8, %rax
+L20438:	popq %rdi
+L20439:	addq %rax, %rdi
+L20440:	movq 0(%rdi), %rax
+L20441:	pushq %rax
+L20442:	movq $0, %rax
+L20443:	popq %rdi
+L20444:	addq %rax, %rdi
+L20445:	movq 0(%rdi), %rax
+L20446:	movq %rax, 48(%rsp) 
+L20447:	popq %rax
+L20448:	pushq %rax
+L20449:	pushq %rax
+L20450:	movq $8, %rax
+L20451:	popq %rdi
+L20452:	addq %rax, %rdi
+L20453:	movq 0(%rdi), %rax
+L20454:	pushq %rax
+L20455:	movq $8, %rax
+L20456:	popq %rdi
+L20457:	addq %rax, %rdi
+L20458:	movq 0(%rdi), %rax
+L20459:	pushq %rax
+L20460:	movq $0, %rax
+L20461:	popq %rdi
+L20462:	addq %rax, %rdi
+L20463:	movq 0(%rdi), %rax
+L20464:	movq %rax, 40(%rsp) 
+L20465:	popq %rax
+L20466:	pushq %rax
+L20467:	movq 40(%rsp), %rax
+L20468:	call L20418
+L20469:	movq %rax, 32(%rsp) 
+L20470:	popq %rax
+L20471:	pushq %rax
+L20472:	movq 48(%rsp), %rax
+L20473:	pushq %rax
+L20474:	movq 40(%rsp), %rax
+L20475:	popq %rdi
+L20476:	call L97
+L20477:	movq %rax, 24(%rsp) 
+L20478:	popq %rax
+L20479:	pushq %rax
+L20480:	movq 24(%rsp), %rax
+L20481:	addq $56, %rsp
+L20482:	ret
+L20483:	jmp L20526
+L20484:	jmp L20487
+L20485:	jmp L20500
+L20486:	jmp L20522
+L20487:	pushq %rax
+L20488:	pushq %rax
+L20489:	movq $0, %rax
+L20490:	popq %rdi
+L20491:	addq %rax, %rdi
+L20492:	movq 0(%rdi), %rax
+L20493:	pushq %rax
+L20494:	movq $5141869, %rax
+L20495:	movq %rax, %rbx
+L20496:	popq %rdi
+L20497:	popq %rax
+L20498:	cmpq %rbx, %rdi ; je L20485
+L20499:	jmp L20486
+L20500:	pushq %rax
+L20501:	pushq %rax
+L20502:	movq $8, %rax
+L20503:	popq %rdi
+L20504:	addq %rax, %rdi
+L20505:	movq 0(%rdi), %rax
+L20506:	pushq %rax
+L20507:	movq $0, %rax
+L20508:	popq %rdi
+L20509:	addq %rax, %rdi
+L20510:	movq 0(%rdi), %rax
+L20511:	movq %rax, 16(%rsp) 
+L20512:	popq %rax
+L20513:	pushq %rax
+L20514:	movq $0, %rax
+L20515:	movq %rax, 8(%rsp) 
+L20516:	popq %rax
+L20517:	pushq %rax
+L20518:	movq 8(%rsp), %rax
+L20519:	addq $56, %rsp
+L20520:	ret
+L20521:	jmp L20526
+L20522:	pushq %rax
+L20523:	movq $0, %rax
+L20524:	addq $56, %rsp
+L20525:	ret
+L20526:	ret
+L20527:	
   
   	/* num2exp */
-L20525:	subq $16, %rsp
-L20526:	pushq %rax
-L20527:	call L19506
-L20528:	movq %rax, 16(%rsp) 
-L20529:	popq %rax
-L20530:	jmp L20533
-L20531:	jmp L20542
-L20532:	jmp L20586
-L20533:	pushq %rax
-L20534:	movq 16(%rsp), %rax
-L20535:	pushq %rax
-L20536:	movq $1, %rax
-L20537:	movq %rax, %rbx
-L20538:	popq %rdi
-L20539:	popq %rax
-L20540:	cmpq %rbx, %rdi ; je L20531
-L20541:	jmp L20532
-L20542:	jmp L20545
-L20543:	jmp L20554
-L20544:	jmp L20570
-L20545:	pushq %rax
-L20546:	movq $18446744073709551615, %rax
-L20547:	pushq %rax
-L20548:	movq 8(%rsp), %rax
-L20549:	movq %rax, %rbx
-L20550:	popq %rdi
-L20551:	popq %rax
-L20552:	cmpq %rbx, %rdi ; jb L20543
-L20553:	jmp L20544
-L20554:	pushq %rax
-L20555:	movq $289632318324, %rax
-L20556:	pushq %rax
-L20557:	movq $0, %rax
-L20558:	pushq %rax
-L20559:	movq $0, %rax
-L20560:	popq %rdi
-L20561:	popq %rdx
-L20562:	call L133
-L20563:	movq %rax, 8(%rsp) 
-L20564:	popq %rax
-L20565:	pushq %rax
-L20566:	movq 8(%rsp), %rax
-L20567:	addq $24, %rsp
-L20568:	ret
-L20569:	jmp L20585
-L20570:	pushq %rax
-L20571:	movq $289632318324, %rax
-L20572:	pushq %rax
-L20573:	movq 8(%rsp), %rax
-L20574:	pushq %rax
-L20575:	movq $0, %rax
-L20576:	popq %rdi
-L20577:	popq %rdx
-L20578:	call L133
-L20579:	movq %rax, 8(%rsp) 
-L20580:	popq %rax
-L20581:	pushq %rax
-L20582:	movq 8(%rsp), %rax
-L20583:	addq $24, %rsp
-L20584:	ret
-L20585:	jmp L20601
-L20586:	pushq %rax
-L20587:	movq $5661042, %rax
-L20588:	pushq %rax
-L20589:	movq 8(%rsp), %rax
-L20590:	pushq %rax
-L20591:	movq $0, %rax
-L20592:	popq %rdi
-L20593:	popq %rdx
-L20594:	call L133
-L20595:	movq %rax, 8(%rsp) 
-L20596:	popq %rax
-L20597:	pushq %rax
-L20598:	movq 8(%rsp), %rax
-L20599:	addq $24, %rsp
-L20600:	ret
-L20601:	ret
-L20602:	
+L20528:	subq $16, %rsp
+L20529:	pushq %rax
+L20530:	call L19509
+L20531:	movq %rax, 16(%rsp) 
+L20532:	popq %rax
+L20533:	jmp L20536
+L20534:	jmp L20545
+L20535:	jmp L20589
+L20536:	pushq %rax
+L20537:	movq 16(%rsp), %rax
+L20538:	pushq %rax
+L20539:	movq $1, %rax
+L20540:	movq %rax, %rbx
+L20541:	popq %rdi
+L20542:	popq %rax
+L20543:	cmpq %rbx, %rdi ; je L20534
+L20544:	jmp L20535
+L20545:	jmp L20548
+L20546:	jmp L20557
+L20547:	jmp L20573
+L20548:	pushq %rax
+L20549:	movq $18446744073709551615, %rax
+L20550:	pushq %rax
+L20551:	movq 8(%rsp), %rax
+L20552:	movq %rax, %rbx
+L20553:	popq %rdi
+L20554:	popq %rax
+L20555:	cmpq %rbx, %rdi ; jb L20546
+L20556:	jmp L20547
+L20557:	pushq %rax
+L20558:	movq $289632318324, %rax
+L20559:	pushq %rax
+L20560:	movq $0, %rax
+L20561:	pushq %rax
+L20562:	movq $0, %rax
+L20563:	popq %rdi
+L20564:	popq %rdx
+L20565:	call L133
+L20566:	movq %rax, 8(%rsp) 
+L20567:	popq %rax
+L20568:	pushq %rax
+L20569:	movq 8(%rsp), %rax
+L20570:	addq $24, %rsp
+L20571:	ret
+L20572:	jmp L20588
+L20573:	pushq %rax
+L20574:	movq $289632318324, %rax
+L20575:	pushq %rax
+L20576:	movq 8(%rsp), %rax
+L20577:	pushq %rax
+L20578:	movq $0, %rax
+L20579:	popq %rdi
+L20580:	popq %rdx
+L20581:	call L133
+L20582:	movq %rax, 8(%rsp) 
+L20583:	popq %rax
+L20584:	pushq %rax
+L20585:	movq 8(%rsp), %rax
+L20586:	addq $24, %rsp
+L20587:	ret
+L20588:	jmp L20604
+L20589:	pushq %rax
+L20590:	movq $5661042, %rax
+L20591:	pushq %rax
+L20592:	movq 8(%rsp), %rax
+L20593:	pushq %rax
+L20594:	movq $0, %rax
+L20595:	popq %rdi
+L20596:	popq %rdx
+L20597:	call L133
+L20598:	movq %rax, 8(%rsp) 
+L20599:	popq %rax
+L20600:	pushq %rax
+L20601:	movq 8(%rsp), %rax
+L20602:	addq $24, %rsp
+L20603:	ret
+L20604:	ret
+L20605:	
   
   	/* v2exp */
-L20603:	subq $96, %rsp
-L20604:	jmp L20607
-L20605:	jmp L20620
-L20606:	jmp L21116
-L20607:	pushq %rax
-L20608:	pushq %rax
-L20609:	movq $0, %rax
-L20610:	popq %rdi
-L20611:	addq %rax, %rdi
-L20612:	movq 0(%rdi), %rax
-L20613:	pushq %rax
-L20614:	movq $1348561266, %rax
-L20615:	movq %rax, %rbx
-L20616:	popq %rdi
-L20617:	popq %rax
-L20618:	cmpq %rbx, %rdi ; je L20605
-L20619:	jmp L20606
-L20620:	pushq %rax
-L20621:	pushq %rax
-L20622:	movq $8, %rax
-L20623:	popq %rdi
-L20624:	addq %rax, %rdi
-L20625:	movq 0(%rdi), %rax
-L20626:	pushq %rax
-L20627:	movq $0, %rax
-L20628:	popq %rdi
-L20629:	addq %rax, %rdi
-L20630:	movq 0(%rdi), %rax
-L20631:	movq %rax, 96(%rsp) 
-L20632:	popq %rax
-L20633:	pushq %rax
-L20634:	pushq %rax
-L20635:	movq $8, %rax
-L20636:	popq %rdi
-L20637:	addq %rax, %rdi
-L20638:	movq 0(%rdi), %rax
-L20639:	pushq %rax
-L20640:	movq $8, %rax
-L20641:	popq %rdi
-L20642:	addq %rax, %rdi
-L20643:	movq 0(%rdi), %rax
-L20644:	pushq %rax
-L20645:	movq $0, %rax
-L20646:	popq %rdi
-L20647:	addq %rax, %rdi
-L20648:	movq 0(%rdi), %rax
-L20649:	movq %rax, 88(%rsp) 
-L20650:	popq %rax
-L20651:	pushq %rax
-L20652:	movq 96(%rsp), %rax
-L20653:	call L19550
-L20654:	movq %rax, 80(%rsp) 
-L20655:	popq %rax
-L20656:	jmp L20659
-L20657:	jmp L20673
-L20658:	jmp L21070
-L20659:	pushq %rax
-L20660:	movq 88(%rsp), %rax
-L20661:	pushq %rax
-L20662:	movq $0, %rax
-L20663:	popq %rdi
-L20664:	addq %rax, %rdi
-L20665:	movq 0(%rdi), %rax
-L20666:	pushq %rax
-L20667:	movq $1348561266, %rax
-L20668:	movq %rax, %rbx
-L20669:	popq %rdi
-L20670:	popq %rax
-L20671:	cmpq %rbx, %rdi ; je L20657
-L20672:	jmp L20658
-L20673:	pushq %rax
-L20674:	movq 88(%rsp), %rax
-L20675:	pushq %rax
-L20676:	movq $8, %rax
-L20677:	popq %rdi
-L20678:	addq %rax, %rdi
-L20679:	movq 0(%rdi), %rax
-L20680:	pushq %rax
-L20681:	movq $0, %rax
-L20682:	popq %rdi
-L20683:	addq %rax, %rdi
-L20684:	movq 0(%rdi), %rax
-L20685:	movq %rax, 72(%rsp) 
-L20686:	popq %rax
-L20687:	pushq %rax
-L20688:	movq 88(%rsp), %rax
-L20689:	pushq %rax
-L20690:	movq $8, %rax
-L20691:	popq %rdi
-L20692:	addq %rax, %rdi
-L20693:	movq 0(%rdi), %rax
-L20694:	pushq %rax
-L20695:	movq $8, %rax
-L20696:	popq %rdi
-L20697:	addq %rax, %rdi
-L20698:	movq 0(%rdi), %rax
-L20699:	pushq %rax
-L20700:	movq $0, %rax
-L20701:	popq %rdi
-L20702:	addq %rax, %rdi
-L20703:	movq 0(%rdi), %rax
-L20704:	movq %rax, 64(%rsp) 
-L20705:	popq %rax
-L20706:	jmp L20709
-L20707:	jmp L20718
-L20708:	jmp L20767
-L20709:	pushq %rax
-L20710:	movq 80(%rsp), %rax
-L20711:	pushq %rax
-L20712:	movq $39, %rax
-L20713:	movq %rax, %rbx
-L20714:	popq %rdi
-L20715:	popq %rax
-L20716:	cmpq %rbx, %rdi ; je L20707
-L20717:	jmp L20708
-L20718:	pushq %rax
-L20719:	movq 72(%rsp), %rax
-L20720:	call L19550
-L20721:	movq %rax, 56(%rsp) 
-L20722:	popq %rax
-L20723:	jmp L20726
-L20724:	jmp L20735
-L20725:	jmp L20751
-L20726:	pushq %rax
-L20727:	movq $18446744073709551615, %rax
-L20728:	pushq %rax
-L20729:	movq 64(%rsp), %rax
-L20730:	movq %rax, %rbx
-L20731:	popq %rdi
-L20732:	popq %rax
-L20733:	cmpq %rbx, %rdi ; jb L20724
-L20734:	jmp L20725
-L20735:	pushq %rax
-L20736:	movq $289632318324, %rax
-L20737:	pushq %rax
-L20738:	movq $0, %rax
-L20739:	pushq %rax
-L20740:	movq $0, %rax
-L20741:	popq %rdi
-L20742:	popq %rdx
-L20743:	call L133
-L20744:	movq %rax, 48(%rsp) 
-L20745:	popq %rax
-L20746:	pushq %rax
-L20747:	movq 48(%rsp), %rax
-L20748:	addq $104, %rsp
-L20749:	ret
-L20750:	jmp L20766
-L20751:	pushq %rax
-L20752:	movq $289632318324, %rax
-L20753:	pushq %rax
-L20754:	movq 64(%rsp), %rax
-L20755:	pushq %rax
-L20756:	movq $0, %rax
-L20757:	popq %rdi
-L20758:	popq %rdx
-L20759:	call L133
-L20760:	movq %rax, 48(%rsp) 
-L20761:	popq %rax
-L20762:	pushq %rax
-L20763:	movq 48(%rsp), %rax
-L20764:	addq $104, %rsp
-L20765:	ret
-L20766:	jmp L21069
-L20767:	jmp L20770
-L20768:	jmp L20779
-L20769:	jmp L20800
-L20770:	pushq %rax
-L20771:	movq 80(%rsp), %rax
-L20772:	pushq %rax
-L20773:	movq $7758194, %rax
-L20774:	movq %rax, %rbx
-L20775:	popq %rdi
-L20776:	popq %rax
-L20777:	cmpq %rbx, %rdi ; je L20768
-L20778:	jmp L20769
-L20779:	pushq %rax
-L20780:	movq 72(%rsp), %rax
-L20781:	call L19550
-L20782:	movq %rax, 56(%rsp) 
-L20783:	popq %rax
-L20784:	pushq %rax
-L20785:	movq $5661042, %rax
-L20786:	pushq %rax
-L20787:	movq 64(%rsp), %rax
-L20788:	pushq %rax
-L20789:	movq $0, %rax
-L20790:	popq %rdi
-L20791:	popq %rdx
-L20792:	call L133
-L20793:	movq %rax, 48(%rsp) 
-L20794:	popq %rax
-L20795:	pushq %rax
-L20796:	movq 48(%rsp), %rax
-L20797:	addq $104, %rsp
-L20798:	ret
-L20799:	jmp L21069
-L20800:	jmp L20803
-L20801:	jmp L20817
-L20802:	jmp L21024
-L20803:	pushq %rax
-L20804:	movq 64(%rsp), %rax
-L20805:	pushq %rax
-L20806:	movq $0, %rax
-L20807:	popq %rdi
-L20808:	addq %rax, %rdi
-L20809:	movq 0(%rdi), %rax
-L20810:	pushq %rax
-L20811:	movq $1348561266, %rax
-L20812:	movq %rax, %rbx
-L20813:	popq %rdi
-L20814:	popq %rax
-L20815:	cmpq %rbx, %rdi ; je L20801
-L20816:	jmp L20802
-L20817:	pushq %rax
-L20818:	movq 64(%rsp), %rax
-L20819:	pushq %rax
-L20820:	movq $8, %rax
-L20821:	popq %rdi
-L20822:	addq %rax, %rdi
-L20823:	movq 0(%rdi), %rax
-L20824:	pushq %rax
-L20825:	movq $0, %rax
-L20826:	popq %rdi
-L20827:	addq %rax, %rdi
-L20828:	movq 0(%rdi), %rax
-L20829:	movq %rax, 40(%rsp) 
-L20830:	popq %rax
-L20831:	pushq %rax
-L20832:	movq 64(%rsp), %rax
-L20833:	pushq %rax
-L20834:	movq $8, %rax
-L20835:	popq %rdi
-L20836:	addq %rax, %rdi
-L20837:	movq 0(%rdi), %rax
-L20838:	pushq %rax
-L20839:	movq $8, %rax
-L20840:	popq %rdi
-L20841:	addq %rax, %rdi
-L20842:	movq 0(%rdi), %rax
-L20843:	pushq %rax
-L20844:	movq $0, %rax
-L20845:	popq %rdi
-L20846:	addq %rax, %rdi
-L20847:	movq 0(%rdi), %rax
-L20848:	movq %rax, 32(%rsp) 
-L20849:	popq %rax
-L20850:	jmp L20853
-L20851:	jmp L20862
-L20852:	jmp L20891
-L20853:	pushq %rax
-L20854:	movq 80(%rsp), %rax
-L20855:	pushq %rax
-L20856:	movq $43, %rax
-L20857:	movq %rax, %rbx
-L20858:	popq %rdi
-L20859:	popq %rax
-L20860:	cmpq %rbx, %rdi ; je L20851
-L20861:	jmp L20852
-L20862:	pushq %rax
-L20863:	movq 72(%rsp), %rax
-L20864:	call L20603
-L20865:	movq %rax, 24(%rsp) 
-L20866:	popq %rax
-L20867:	pushq %rax
-L20868:	movq 40(%rsp), %rax
-L20869:	call L20603
-L20870:	movq %rax, 16(%rsp) 
-L20871:	popq %rax
-L20872:	pushq %rax
-L20873:	movq $4285540, %rax
-L20874:	pushq %rax
-L20875:	movq 32(%rsp), %rax
-L20876:	pushq %rax
-L20877:	movq 32(%rsp), %rax
-L20878:	pushq %rax
-L20879:	movq $0, %rax
-L20880:	popq %rdi
-L20881:	popq %rdx
-L20882:	popq %rbx
-L20883:	call L158
-L20884:	movq %rax, 48(%rsp) 
-L20885:	popq %rax
-L20886:	pushq %rax
-L20887:	movq 48(%rsp), %rax
-L20888:	addq $104, %rsp
-L20889:	ret
-L20890:	jmp L21023
-L20891:	jmp L20894
-L20892:	jmp L20903
-L20893:	jmp L20932
-L20894:	pushq %rax
-L20895:	movq 80(%rsp), %rax
-L20896:	pushq %rax
-L20897:	movq $45, %rax
-L20898:	movq %rax, %rbx
-L20899:	popq %rdi
-L20900:	popq %rax
-L20901:	cmpq %rbx, %rdi ; je L20892
-L20902:	jmp L20893
-L20903:	pushq %rax
-L20904:	movq 72(%rsp), %rax
-L20905:	call L20603
-L20906:	movq %rax, 24(%rsp) 
-L20907:	popq %rax
-L20908:	pushq %rax
-L20909:	movq 40(%rsp), %rax
-L20910:	call L20603
-L20911:	movq %rax, 16(%rsp) 
-L20912:	popq %rax
-L20913:	pushq %rax
-L20914:	movq $5469538, %rax
-L20915:	pushq %rax
-L20916:	movq 32(%rsp), %rax
-L20917:	pushq %rax
-L20918:	movq 32(%rsp), %rax
-L20919:	pushq %rax
-L20920:	movq $0, %rax
-L20921:	popq %rdi
-L20922:	popq %rdx
-L20923:	popq %rbx
-L20924:	call L158
-L20925:	movq %rax, 48(%rsp) 
-L20926:	popq %rax
-L20927:	pushq %rax
-L20928:	movq 48(%rsp), %rax
-L20929:	addq $104, %rsp
-L20930:	ret
-L20931:	jmp L21023
-L20932:	jmp L20935
-L20933:	jmp L20944
-L20934:	jmp L20973
-L20935:	pushq %rax
-L20936:	movq 80(%rsp), %rax
-L20937:	pushq %rax
-L20938:	movq $6580598, %rax
-L20939:	movq %rax, %rbx
-L20940:	popq %rdi
-L20941:	popq %rax
-L20942:	cmpq %rbx, %rdi ; je L20933
-L20943:	jmp L20934
-L20944:	pushq %rax
-L20945:	movq 72(%rsp), %rax
-L20946:	call L20603
-L20947:	movq %rax, 24(%rsp) 
-L20948:	popq %rax
-L20949:	pushq %rax
-L20950:	movq 40(%rsp), %rax
-L20951:	call L20603
-L20952:	movq %rax, 16(%rsp) 
-L20953:	popq %rax
-L20954:	pushq %rax
-L20955:	movq $4483446, %rax
-L20956:	pushq %rax
-L20957:	movq 32(%rsp), %rax
-L20958:	pushq %rax
-L20959:	movq 32(%rsp), %rax
-L20960:	pushq %rax
-L20961:	movq $0, %rax
-L20962:	popq %rdi
-L20963:	popq %rdx
-L20964:	popq %rbx
-L20965:	call L158
-L20966:	movq %rax, 48(%rsp) 
-L20967:	popq %rax
-L20968:	pushq %rax
-L20969:	movq 48(%rsp), %rax
-L20970:	addq $104, %rsp
-L20971:	ret
-L20972:	jmp L21023
-L20973:	jmp L20976
-L20974:	jmp L20985
-L20975:	jmp L21014
-L20976:	pushq %rax
-L20977:	movq 80(%rsp), %rax
-L20978:	pushq %rax
-L20979:	movq $1919246692, %rax
-L20980:	movq %rax, %rbx
-L20981:	popq %rdi
-L20982:	popq %rax
-L20983:	cmpq %rbx, %rdi ; je L20974
-L20984:	jmp L20975
-L20985:	pushq %rax
-L20986:	movq 72(%rsp), %rax
-L20987:	call L20603
-L20988:	movq %rax, 24(%rsp) 
-L20989:	popq %rax
-L20990:	pushq %rax
-L20991:	movq 40(%rsp), %rax
-L20992:	call L20603
-L20993:	movq %rax, 16(%rsp) 
-L20994:	popq %rax
-L20995:	pushq %rax
-L20996:	movq $1382375780, %rax
-L20997:	pushq %rax
-L20998:	movq 32(%rsp), %rax
-L20999:	pushq %rax
-L21000:	movq 32(%rsp), %rax
-L21001:	pushq %rax
-L21002:	movq $0, %rax
-L21003:	popq %rdi
-L21004:	popq %rdx
-L21005:	popq %rbx
-L21006:	call L158
-L21007:	movq %rax, 48(%rsp) 
-L21008:	popq %rax
-L21009:	pushq %rax
-L21010:	movq 48(%rsp), %rax
-L21011:	addq $104, %rsp
-L21012:	ret
-L21013:	jmp L21023
-L21014:	pushq %rax
-L21015:	movq 80(%rsp), %rax
-L21016:	call L20525
-L21017:	movq %rax, 48(%rsp) 
-L21018:	popq %rax
-L21019:	pushq %rax
-L21020:	movq 48(%rsp), %rax
-L21021:	addq $104, %rsp
-L21022:	ret
-L21023:	jmp L21069
-L21024:	jmp L21027
-L21025:	jmp L21041
-L21026:	jmp L21065
-L21027:	pushq %rax
-L21028:	movq 64(%rsp), %rax
-L21029:	pushq %rax
-L21030:	movq $0, %rax
-L21031:	popq %rdi
-L21032:	addq %rax, %rdi
-L21033:	movq 0(%rdi), %rax
-L21034:	pushq %rax
-L21035:	movq $5141869, %rax
-L21036:	movq %rax, %rbx
-L21037:	popq %rdi
-L21038:	popq %rax
-L21039:	cmpq %rbx, %rdi ; je L21025
-L21040:	jmp L21026
-L21041:	pushq %rax
-L21042:	movq 64(%rsp), %rax
-L21043:	pushq %rax
-L21044:	movq $8, %rax
-L21045:	popq %rdi
-L21046:	addq %rax, %rdi
-L21047:	movq 0(%rdi), %rax
-L21048:	pushq %rax
-L21049:	movq $0, %rax
-L21050:	popq %rdi
-L21051:	addq %rax, %rdi
-L21052:	movq 0(%rdi), %rax
-L21053:	movq %rax, 8(%rsp) 
-L21054:	popq %rax
-L21055:	pushq %rax
-L21056:	movq 80(%rsp), %rax
-L21057:	call L20525
-L21058:	movq %rax, 48(%rsp) 
-L21059:	popq %rax
-L21060:	pushq %rax
-L21061:	movq 48(%rsp), %rax
-L21062:	addq $104, %rsp
-L21063:	ret
-L21064:	jmp L21069
-L21065:	pushq %rax
-L21066:	movq $0, %rax
-L21067:	addq $104, %rsp
-L21068:	ret
-L21069:	jmp L21115
-L21070:	jmp L21073
-L21071:	jmp L21087
-L21072:	jmp L21111
-L21073:	pushq %rax
-L21074:	movq 88(%rsp), %rax
-L21075:	pushq %rax
-L21076:	movq $0, %rax
-L21077:	popq %rdi
-L21078:	addq %rax, %rdi
-L21079:	movq 0(%rdi), %rax
-L21080:	pushq %rax
-L21081:	movq $5141869, %rax
-L21082:	movq %rax, %rbx
-L21083:	popq %rdi
-L21084:	popq %rax
-L21085:	cmpq %rbx, %rdi ; je L21071
-L21086:	jmp L21072
-L21087:	pushq %rax
-L21088:	movq 88(%rsp), %rax
-L21089:	pushq %rax
-L21090:	movq $8, %rax
-L21091:	popq %rdi
-L21092:	addq %rax, %rdi
-L21093:	movq 0(%rdi), %rax
-L21094:	pushq %rax
-L21095:	movq $0, %rax
-L21096:	popq %rdi
-L21097:	addq %rax, %rdi
-L21098:	movq 0(%rdi), %rax
-L21099:	movq %rax, 8(%rsp) 
-L21100:	popq %rax
-L21101:	pushq %rax
-L21102:	movq 80(%rsp), %rax
-L21103:	call L20525
-L21104:	movq %rax, 48(%rsp) 
-L21105:	popq %rax
-L21106:	pushq %rax
-L21107:	movq 48(%rsp), %rax
-L21108:	addq $104, %rsp
-L21109:	ret
-L21110:	jmp L21115
-L21111:	pushq %rax
-L21112:	movq $0, %rax
-L21113:	addq $104, %rsp
-L21114:	ret
-L21115:	jmp L21159
-L21116:	jmp L21119
-L21117:	jmp L21132
-L21118:	jmp L21155
-L21119:	pushq %rax
-L21120:	pushq %rax
-L21121:	movq $0, %rax
-L21122:	popq %rdi
-L21123:	addq %rax, %rdi
-L21124:	movq 0(%rdi), %rax
-L21125:	pushq %rax
-L21126:	movq $5141869, %rax
-L21127:	movq %rax, %rbx
-L21128:	popq %rdi
-L21129:	popq %rax
-L21130:	cmpq %rbx, %rdi ; je L21117
-L21131:	jmp L21118
-L21132:	pushq %rax
-L21133:	pushq %rax
-L21134:	movq $8, %rax
-L21135:	popq %rdi
-L21136:	addq %rax, %rdi
-L21137:	movq 0(%rdi), %rax
-L21138:	pushq %rax
-L21139:	movq $0, %rax
-L21140:	popq %rdi
-L21141:	addq %rax, %rdi
-L21142:	movq 0(%rdi), %rax
-L21143:	movq %rax, 80(%rsp) 
-L21144:	popq %rax
-L21145:	pushq %rax
-L21146:	movq 80(%rsp), %rax
-L21147:	call L20525
-L21148:	movq %rax, 48(%rsp) 
-L21149:	popq %rax
-L21150:	pushq %rax
-L21151:	movq 48(%rsp), %rax
-L21152:	addq $104, %rsp
-L21153:	ret
-L21154:	jmp L21159
-L21155:	pushq %rax
-L21156:	movq $0, %rax
-L21157:	addq $104, %rsp
-L21158:	ret
-L21159:	ret
-L21160:	
+L20606:	subq $96, %rsp
+L20607:	jmp L20610
+L20608:	jmp L20623
+L20609:	jmp L21119
+L20610:	pushq %rax
+L20611:	pushq %rax
+L20612:	movq $0, %rax
+L20613:	popq %rdi
+L20614:	addq %rax, %rdi
+L20615:	movq 0(%rdi), %rax
+L20616:	pushq %rax
+L20617:	movq $1348561266, %rax
+L20618:	movq %rax, %rbx
+L20619:	popq %rdi
+L20620:	popq %rax
+L20621:	cmpq %rbx, %rdi ; je L20608
+L20622:	jmp L20609
+L20623:	pushq %rax
+L20624:	pushq %rax
+L20625:	movq $8, %rax
+L20626:	popq %rdi
+L20627:	addq %rax, %rdi
+L20628:	movq 0(%rdi), %rax
+L20629:	pushq %rax
+L20630:	movq $0, %rax
+L20631:	popq %rdi
+L20632:	addq %rax, %rdi
+L20633:	movq 0(%rdi), %rax
+L20634:	movq %rax, 96(%rsp) 
+L20635:	popq %rax
+L20636:	pushq %rax
+L20637:	pushq %rax
+L20638:	movq $8, %rax
+L20639:	popq %rdi
+L20640:	addq %rax, %rdi
+L20641:	movq 0(%rdi), %rax
+L20642:	pushq %rax
+L20643:	movq $8, %rax
+L20644:	popq %rdi
+L20645:	addq %rax, %rdi
+L20646:	movq 0(%rdi), %rax
+L20647:	pushq %rax
+L20648:	movq $0, %rax
+L20649:	popq %rdi
+L20650:	addq %rax, %rdi
+L20651:	movq 0(%rdi), %rax
+L20652:	movq %rax, 88(%rsp) 
+L20653:	popq %rax
+L20654:	pushq %rax
+L20655:	movq 96(%rsp), %rax
+L20656:	call L19553
+L20657:	movq %rax, 80(%rsp) 
+L20658:	popq %rax
+L20659:	jmp L20662
+L20660:	jmp L20676
+L20661:	jmp L21073
+L20662:	pushq %rax
+L20663:	movq 88(%rsp), %rax
+L20664:	pushq %rax
+L20665:	movq $0, %rax
+L20666:	popq %rdi
+L20667:	addq %rax, %rdi
+L20668:	movq 0(%rdi), %rax
+L20669:	pushq %rax
+L20670:	movq $1348561266, %rax
+L20671:	movq %rax, %rbx
+L20672:	popq %rdi
+L20673:	popq %rax
+L20674:	cmpq %rbx, %rdi ; je L20660
+L20675:	jmp L20661
+L20676:	pushq %rax
+L20677:	movq 88(%rsp), %rax
+L20678:	pushq %rax
+L20679:	movq $8, %rax
+L20680:	popq %rdi
+L20681:	addq %rax, %rdi
+L20682:	movq 0(%rdi), %rax
+L20683:	pushq %rax
+L20684:	movq $0, %rax
+L20685:	popq %rdi
+L20686:	addq %rax, %rdi
+L20687:	movq 0(%rdi), %rax
+L20688:	movq %rax, 72(%rsp) 
+L20689:	popq %rax
+L20690:	pushq %rax
+L20691:	movq 88(%rsp), %rax
+L20692:	pushq %rax
+L20693:	movq $8, %rax
+L20694:	popq %rdi
+L20695:	addq %rax, %rdi
+L20696:	movq 0(%rdi), %rax
+L20697:	pushq %rax
+L20698:	movq $8, %rax
+L20699:	popq %rdi
+L20700:	addq %rax, %rdi
+L20701:	movq 0(%rdi), %rax
+L20702:	pushq %rax
+L20703:	movq $0, %rax
+L20704:	popq %rdi
+L20705:	addq %rax, %rdi
+L20706:	movq 0(%rdi), %rax
+L20707:	movq %rax, 64(%rsp) 
+L20708:	popq %rax
+L20709:	jmp L20712
+L20710:	jmp L20721
+L20711:	jmp L20770
+L20712:	pushq %rax
+L20713:	movq 80(%rsp), %rax
+L20714:	pushq %rax
+L20715:	movq $39, %rax
+L20716:	movq %rax, %rbx
+L20717:	popq %rdi
+L20718:	popq %rax
+L20719:	cmpq %rbx, %rdi ; je L20710
+L20720:	jmp L20711
+L20721:	pushq %rax
+L20722:	movq 72(%rsp), %rax
+L20723:	call L19553
+L20724:	movq %rax, 56(%rsp) 
+L20725:	popq %rax
+L20726:	jmp L20729
+L20727:	jmp L20738
+L20728:	jmp L20754
+L20729:	pushq %rax
+L20730:	movq $18446744073709551615, %rax
+L20731:	pushq %rax
+L20732:	movq 64(%rsp), %rax
+L20733:	movq %rax, %rbx
+L20734:	popq %rdi
+L20735:	popq %rax
+L20736:	cmpq %rbx, %rdi ; jb L20727
+L20737:	jmp L20728
+L20738:	pushq %rax
+L20739:	movq $289632318324, %rax
+L20740:	pushq %rax
+L20741:	movq $0, %rax
+L20742:	pushq %rax
+L20743:	movq $0, %rax
+L20744:	popq %rdi
+L20745:	popq %rdx
+L20746:	call L133
+L20747:	movq %rax, 48(%rsp) 
+L20748:	popq %rax
+L20749:	pushq %rax
+L20750:	movq 48(%rsp), %rax
+L20751:	addq $104, %rsp
+L20752:	ret
+L20753:	jmp L20769
+L20754:	pushq %rax
+L20755:	movq $289632318324, %rax
+L20756:	pushq %rax
+L20757:	movq 64(%rsp), %rax
+L20758:	pushq %rax
+L20759:	movq $0, %rax
+L20760:	popq %rdi
+L20761:	popq %rdx
+L20762:	call L133
+L20763:	movq %rax, 48(%rsp) 
+L20764:	popq %rax
+L20765:	pushq %rax
+L20766:	movq 48(%rsp), %rax
+L20767:	addq $104, %rsp
+L20768:	ret
+L20769:	jmp L21072
+L20770:	jmp L20773
+L20771:	jmp L20782
+L20772:	jmp L20803
+L20773:	pushq %rax
+L20774:	movq 80(%rsp), %rax
+L20775:	pushq %rax
+L20776:	movq $7758194, %rax
+L20777:	movq %rax, %rbx
+L20778:	popq %rdi
+L20779:	popq %rax
+L20780:	cmpq %rbx, %rdi ; je L20771
+L20781:	jmp L20772
+L20782:	pushq %rax
+L20783:	movq 72(%rsp), %rax
+L20784:	call L19553
+L20785:	movq %rax, 56(%rsp) 
+L20786:	popq %rax
+L20787:	pushq %rax
+L20788:	movq $5661042, %rax
+L20789:	pushq %rax
+L20790:	movq 64(%rsp), %rax
+L20791:	pushq %rax
+L20792:	movq $0, %rax
+L20793:	popq %rdi
+L20794:	popq %rdx
+L20795:	call L133
+L20796:	movq %rax, 48(%rsp) 
+L20797:	popq %rax
+L20798:	pushq %rax
+L20799:	movq 48(%rsp), %rax
+L20800:	addq $104, %rsp
+L20801:	ret
+L20802:	jmp L21072
+L20803:	jmp L20806
+L20804:	jmp L20820
+L20805:	jmp L21027
+L20806:	pushq %rax
+L20807:	movq 64(%rsp), %rax
+L20808:	pushq %rax
+L20809:	movq $0, %rax
+L20810:	popq %rdi
+L20811:	addq %rax, %rdi
+L20812:	movq 0(%rdi), %rax
+L20813:	pushq %rax
+L20814:	movq $1348561266, %rax
+L20815:	movq %rax, %rbx
+L20816:	popq %rdi
+L20817:	popq %rax
+L20818:	cmpq %rbx, %rdi ; je L20804
+L20819:	jmp L20805
+L20820:	pushq %rax
+L20821:	movq 64(%rsp), %rax
+L20822:	pushq %rax
+L20823:	movq $8, %rax
+L20824:	popq %rdi
+L20825:	addq %rax, %rdi
+L20826:	movq 0(%rdi), %rax
+L20827:	pushq %rax
+L20828:	movq $0, %rax
+L20829:	popq %rdi
+L20830:	addq %rax, %rdi
+L20831:	movq 0(%rdi), %rax
+L20832:	movq %rax, 40(%rsp) 
+L20833:	popq %rax
+L20834:	pushq %rax
+L20835:	movq 64(%rsp), %rax
+L20836:	pushq %rax
+L20837:	movq $8, %rax
+L20838:	popq %rdi
+L20839:	addq %rax, %rdi
+L20840:	movq 0(%rdi), %rax
+L20841:	pushq %rax
+L20842:	movq $8, %rax
+L20843:	popq %rdi
+L20844:	addq %rax, %rdi
+L20845:	movq 0(%rdi), %rax
+L20846:	pushq %rax
+L20847:	movq $0, %rax
+L20848:	popq %rdi
+L20849:	addq %rax, %rdi
+L20850:	movq 0(%rdi), %rax
+L20851:	movq %rax, 32(%rsp) 
+L20852:	popq %rax
+L20853:	jmp L20856
+L20854:	jmp L20865
+L20855:	jmp L20894
+L20856:	pushq %rax
+L20857:	movq 80(%rsp), %rax
+L20858:	pushq %rax
+L20859:	movq $43, %rax
+L20860:	movq %rax, %rbx
+L20861:	popq %rdi
+L20862:	popq %rax
+L20863:	cmpq %rbx, %rdi ; je L20854
+L20864:	jmp L20855
+L20865:	pushq %rax
+L20866:	movq 72(%rsp), %rax
+L20867:	call L20606
+L20868:	movq %rax, 24(%rsp) 
+L20869:	popq %rax
+L20870:	pushq %rax
+L20871:	movq 40(%rsp), %rax
+L20872:	call L20606
+L20873:	movq %rax, 16(%rsp) 
+L20874:	popq %rax
+L20875:	pushq %rax
+L20876:	movq $4285540, %rax
+L20877:	pushq %rax
+L20878:	movq 32(%rsp), %rax
+L20879:	pushq %rax
+L20880:	movq 32(%rsp), %rax
+L20881:	pushq %rax
+L20882:	movq $0, %rax
+L20883:	popq %rdi
+L20884:	popq %rdx
+L20885:	popq %rbx
+L20886:	call L158
+L20887:	movq %rax, 48(%rsp) 
+L20888:	popq %rax
+L20889:	pushq %rax
+L20890:	movq 48(%rsp), %rax
+L20891:	addq $104, %rsp
+L20892:	ret
+L20893:	jmp L21026
+L20894:	jmp L20897
+L20895:	jmp L20906
+L20896:	jmp L20935
+L20897:	pushq %rax
+L20898:	movq 80(%rsp), %rax
+L20899:	pushq %rax
+L20900:	movq $45, %rax
+L20901:	movq %rax, %rbx
+L20902:	popq %rdi
+L20903:	popq %rax
+L20904:	cmpq %rbx, %rdi ; je L20895
+L20905:	jmp L20896
+L20906:	pushq %rax
+L20907:	movq 72(%rsp), %rax
+L20908:	call L20606
+L20909:	movq %rax, 24(%rsp) 
+L20910:	popq %rax
+L20911:	pushq %rax
+L20912:	movq 40(%rsp), %rax
+L20913:	call L20606
+L20914:	movq %rax, 16(%rsp) 
+L20915:	popq %rax
+L20916:	pushq %rax
+L20917:	movq $5469538, %rax
+L20918:	pushq %rax
+L20919:	movq 32(%rsp), %rax
+L20920:	pushq %rax
+L20921:	movq 32(%rsp), %rax
+L20922:	pushq %rax
+L20923:	movq $0, %rax
+L20924:	popq %rdi
+L20925:	popq %rdx
+L20926:	popq %rbx
+L20927:	call L158
+L20928:	movq %rax, 48(%rsp) 
+L20929:	popq %rax
+L20930:	pushq %rax
+L20931:	movq 48(%rsp), %rax
+L20932:	addq $104, %rsp
+L20933:	ret
+L20934:	jmp L21026
+L20935:	jmp L20938
+L20936:	jmp L20947
+L20937:	jmp L20976
+L20938:	pushq %rax
+L20939:	movq 80(%rsp), %rax
+L20940:	pushq %rax
+L20941:	movq $6580598, %rax
+L20942:	movq %rax, %rbx
+L20943:	popq %rdi
+L20944:	popq %rax
+L20945:	cmpq %rbx, %rdi ; je L20936
+L20946:	jmp L20937
+L20947:	pushq %rax
+L20948:	movq 72(%rsp), %rax
+L20949:	call L20606
+L20950:	movq %rax, 24(%rsp) 
+L20951:	popq %rax
+L20952:	pushq %rax
+L20953:	movq 40(%rsp), %rax
+L20954:	call L20606
+L20955:	movq %rax, 16(%rsp) 
+L20956:	popq %rax
+L20957:	pushq %rax
+L20958:	movq $4483446, %rax
+L20959:	pushq %rax
+L20960:	movq 32(%rsp), %rax
+L20961:	pushq %rax
+L20962:	movq 32(%rsp), %rax
+L20963:	pushq %rax
+L20964:	movq $0, %rax
+L20965:	popq %rdi
+L20966:	popq %rdx
+L20967:	popq %rbx
+L20968:	call L158
+L20969:	movq %rax, 48(%rsp) 
+L20970:	popq %rax
+L20971:	pushq %rax
+L20972:	movq 48(%rsp), %rax
+L20973:	addq $104, %rsp
+L20974:	ret
+L20975:	jmp L21026
+L20976:	jmp L20979
+L20977:	jmp L20988
+L20978:	jmp L21017
+L20979:	pushq %rax
+L20980:	movq 80(%rsp), %rax
+L20981:	pushq %rax
+L20982:	movq $1919246692, %rax
+L20983:	movq %rax, %rbx
+L20984:	popq %rdi
+L20985:	popq %rax
+L20986:	cmpq %rbx, %rdi ; je L20977
+L20987:	jmp L20978
+L20988:	pushq %rax
+L20989:	movq 72(%rsp), %rax
+L20990:	call L20606
+L20991:	movq %rax, 24(%rsp) 
+L20992:	popq %rax
+L20993:	pushq %rax
+L20994:	movq 40(%rsp), %rax
+L20995:	call L20606
+L20996:	movq %rax, 16(%rsp) 
+L20997:	popq %rax
+L20998:	pushq %rax
+L20999:	movq $1382375780, %rax
+L21000:	pushq %rax
+L21001:	movq 32(%rsp), %rax
+L21002:	pushq %rax
+L21003:	movq 32(%rsp), %rax
+L21004:	pushq %rax
+L21005:	movq $0, %rax
+L21006:	popq %rdi
+L21007:	popq %rdx
+L21008:	popq %rbx
+L21009:	call L158
+L21010:	movq %rax, 48(%rsp) 
+L21011:	popq %rax
+L21012:	pushq %rax
+L21013:	movq 48(%rsp), %rax
+L21014:	addq $104, %rsp
+L21015:	ret
+L21016:	jmp L21026
+L21017:	pushq %rax
+L21018:	movq 80(%rsp), %rax
+L21019:	call L20528
+L21020:	movq %rax, 48(%rsp) 
+L21021:	popq %rax
+L21022:	pushq %rax
+L21023:	movq 48(%rsp), %rax
+L21024:	addq $104, %rsp
+L21025:	ret
+L21026:	jmp L21072
+L21027:	jmp L21030
+L21028:	jmp L21044
+L21029:	jmp L21068
+L21030:	pushq %rax
+L21031:	movq 64(%rsp), %rax
+L21032:	pushq %rax
+L21033:	movq $0, %rax
+L21034:	popq %rdi
+L21035:	addq %rax, %rdi
+L21036:	movq 0(%rdi), %rax
+L21037:	pushq %rax
+L21038:	movq $5141869, %rax
+L21039:	movq %rax, %rbx
+L21040:	popq %rdi
+L21041:	popq %rax
+L21042:	cmpq %rbx, %rdi ; je L21028
+L21043:	jmp L21029
+L21044:	pushq %rax
+L21045:	movq 64(%rsp), %rax
+L21046:	pushq %rax
+L21047:	movq $8, %rax
+L21048:	popq %rdi
+L21049:	addq %rax, %rdi
+L21050:	movq 0(%rdi), %rax
+L21051:	pushq %rax
+L21052:	movq $0, %rax
+L21053:	popq %rdi
+L21054:	addq %rax, %rdi
+L21055:	movq 0(%rdi), %rax
+L21056:	movq %rax, 8(%rsp) 
+L21057:	popq %rax
+L21058:	pushq %rax
+L21059:	movq 80(%rsp), %rax
+L21060:	call L20528
+L21061:	movq %rax, 48(%rsp) 
+L21062:	popq %rax
+L21063:	pushq %rax
+L21064:	movq 48(%rsp), %rax
+L21065:	addq $104, %rsp
+L21066:	ret
+L21067:	jmp L21072
+L21068:	pushq %rax
+L21069:	movq $0, %rax
+L21070:	addq $104, %rsp
+L21071:	ret
+L21072:	jmp L21118
+L21073:	jmp L21076
+L21074:	jmp L21090
+L21075:	jmp L21114
+L21076:	pushq %rax
+L21077:	movq 88(%rsp), %rax
+L21078:	pushq %rax
+L21079:	movq $0, %rax
+L21080:	popq %rdi
+L21081:	addq %rax, %rdi
+L21082:	movq 0(%rdi), %rax
+L21083:	pushq %rax
+L21084:	movq $5141869, %rax
+L21085:	movq %rax, %rbx
+L21086:	popq %rdi
+L21087:	popq %rax
+L21088:	cmpq %rbx, %rdi ; je L21074
+L21089:	jmp L21075
+L21090:	pushq %rax
+L21091:	movq 88(%rsp), %rax
+L21092:	pushq %rax
+L21093:	movq $8, %rax
+L21094:	popq %rdi
+L21095:	addq %rax, %rdi
+L21096:	movq 0(%rdi), %rax
+L21097:	pushq %rax
+L21098:	movq $0, %rax
+L21099:	popq %rdi
+L21100:	addq %rax, %rdi
+L21101:	movq 0(%rdi), %rax
+L21102:	movq %rax, 8(%rsp) 
+L21103:	popq %rax
+L21104:	pushq %rax
+L21105:	movq 80(%rsp), %rax
+L21106:	call L20528
+L21107:	movq %rax, 48(%rsp) 
+L21108:	popq %rax
+L21109:	pushq %rax
+L21110:	movq 48(%rsp), %rax
+L21111:	addq $104, %rsp
+L21112:	ret
+L21113:	jmp L21118
+L21114:	pushq %rax
+L21115:	movq $0, %rax
+L21116:	addq $104, %rsp
+L21117:	ret
+L21118:	jmp L21162
+L21119:	jmp L21122
+L21120:	jmp L21135
+L21121:	jmp L21158
+L21122:	pushq %rax
+L21123:	pushq %rax
+L21124:	movq $0, %rax
+L21125:	popq %rdi
+L21126:	addq %rax, %rdi
+L21127:	movq 0(%rdi), %rax
+L21128:	pushq %rax
+L21129:	movq $5141869, %rax
+L21130:	movq %rax, %rbx
+L21131:	popq %rdi
+L21132:	popq %rax
+L21133:	cmpq %rbx, %rdi ; je L21120
+L21134:	jmp L21121
+L21135:	pushq %rax
+L21136:	pushq %rax
+L21137:	movq $8, %rax
+L21138:	popq %rdi
+L21139:	addq %rax, %rdi
+L21140:	movq 0(%rdi), %rax
+L21141:	pushq %rax
+L21142:	movq $0, %rax
+L21143:	popq %rdi
+L21144:	addq %rax, %rdi
+L21145:	movq 0(%rdi), %rax
+L21146:	movq %rax, 80(%rsp) 
+L21147:	popq %rax
+L21148:	pushq %rax
+L21149:	movq 80(%rsp), %rax
+L21150:	call L20528
+L21151:	movq %rax, 48(%rsp) 
+L21152:	popq %rax
+L21153:	pushq %rax
+L21154:	movq 48(%rsp), %rax
+L21155:	addq $104, %rsp
+L21156:	ret
+L21157:	jmp L21162
+L21158:	pushq %rax
+L21159:	movq $0, %rax
+L21160:	addq $104, %rsp
+L21161:	ret
+L21162:	ret
+L21163:	
   
   	/* vs2exps */
-L21161:	subq $48, %rsp
-L21162:	jmp L21165
-L21163:	jmp L21173
-L21164:	jmp L21182
-L21165:	pushq %rax
-L21166:	pushq %rax
-L21167:	movq $0, %rax
-L21168:	movq %rax, %rbx
-L21169:	popq %rdi
-L21170:	popq %rax
-L21171:	cmpq %rbx, %rdi ; je L21163
-L21172:	jmp L21164
-L21173:	pushq %rax
-L21174:	movq $0, %rax
-L21175:	movq %rax, 48(%rsp) 
-L21176:	popq %rax
-L21177:	pushq %rax
-L21178:	movq 48(%rsp), %rax
-L21179:	addq $56, %rsp
-L21180:	ret
-L21181:	jmp L21220
-L21182:	pushq %rax
-L21183:	pushq %rax
-L21184:	movq $0, %rax
-L21185:	popq %rdi
-L21186:	addq %rax, %rdi
-L21187:	movq 0(%rdi), %rax
-L21188:	movq %rax, 40(%rsp) 
-L21189:	popq %rax
-L21190:	pushq %rax
-L21191:	pushq %rax
-L21192:	movq $8, %rax
-L21193:	popq %rdi
-L21194:	addq %rax, %rdi
-L21195:	movq 0(%rdi), %rax
-L21196:	movq %rax, 32(%rsp) 
-L21197:	popq %rax
-L21198:	pushq %rax
-L21199:	movq 40(%rsp), %rax
-L21200:	call L20603
-L21201:	movq %rax, 24(%rsp) 
-L21202:	popq %rax
-L21203:	pushq %rax
-L21204:	movq 32(%rsp), %rax
-L21205:	call L21161
-L21206:	movq %rax, 16(%rsp) 
-L21207:	popq %rax
-L21208:	pushq %rax
-L21209:	movq 24(%rsp), %rax
-L21210:	pushq %rax
-L21211:	movq 24(%rsp), %rax
-L21212:	popq %rdi
-L21213:	call L97
-L21214:	movq %rax, 8(%rsp) 
-L21215:	popq %rax
-L21216:	pushq %rax
-L21217:	movq 8(%rsp), %rax
-L21218:	addq $56, %rsp
-L21219:	ret
-L21220:	ret
-L21221:	
+L21164:	subq $48, %rsp
+L21165:	jmp L21168
+L21166:	jmp L21176
+L21167:	jmp L21185
+L21168:	pushq %rax
+L21169:	pushq %rax
+L21170:	movq $0, %rax
+L21171:	movq %rax, %rbx
+L21172:	popq %rdi
+L21173:	popq %rax
+L21174:	cmpq %rbx, %rdi ; je L21166
+L21175:	jmp L21167
+L21176:	pushq %rax
+L21177:	movq $0, %rax
+L21178:	movq %rax, 48(%rsp) 
+L21179:	popq %rax
+L21180:	pushq %rax
+L21181:	movq 48(%rsp), %rax
+L21182:	addq $56, %rsp
+L21183:	ret
+L21184:	jmp L21223
+L21185:	pushq %rax
+L21186:	pushq %rax
+L21187:	movq $0, %rax
+L21188:	popq %rdi
+L21189:	addq %rax, %rdi
+L21190:	movq 0(%rdi), %rax
+L21191:	movq %rax, 40(%rsp) 
+L21192:	popq %rax
+L21193:	pushq %rax
+L21194:	pushq %rax
+L21195:	movq $8, %rax
+L21196:	popq %rdi
+L21197:	addq %rax, %rdi
+L21198:	movq 0(%rdi), %rax
+L21199:	movq %rax, 32(%rsp) 
+L21200:	popq %rax
+L21201:	pushq %rax
+L21202:	movq 40(%rsp), %rax
+L21203:	call L20606
+L21204:	movq %rax, 24(%rsp) 
+L21205:	popq %rax
+L21206:	pushq %rax
+L21207:	movq 32(%rsp), %rax
+L21208:	call L21164
+L21209:	movq %rax, 16(%rsp) 
+L21210:	popq %rax
+L21211:	pushq %rax
+L21212:	movq 24(%rsp), %rax
+L21213:	pushq %rax
+L21214:	movq 24(%rsp), %rax
+L21215:	popq %rdi
+L21216:	call L97
+L21217:	movq %rax, 8(%rsp) 
+L21218:	popq %rax
+L21219:	pushq %rax
+L21220:	movq 8(%rsp), %rax
+L21221:	addq $56, %rsp
+L21222:	ret
+L21223:	ret
+L21224:	
   
   	/* v2cmp */
-L21222:	subq $16, %rsp
-L21223:	pushq %rax
-L21224:	call L19550
-L21225:	movq %rax, 16(%rsp) 
-L21226:	popq %rax
-L21227:	jmp L21230
-L21228:	jmp L21239
-L21229:	jmp L21248
-L21230:	pushq %rax
-L21231:	movq 16(%rsp), %rax
-L21232:	pushq %rax
-L21233:	movq $60, %rax
-L21234:	movq %rax, %rbx
-L21235:	popq %rdi
-L21236:	popq %rax
-L21237:	cmpq %rbx, %rdi ; je L21228
-L21238:	jmp L21229
-L21239:	pushq %rax
-L21240:	movq $1281717107, %rax
-L21241:	movq %rax, 8(%rsp) 
-L21242:	popq %rax
-L21243:	pushq %rax
-L21244:	movq 8(%rsp), %rax
-L21245:	addq $24, %rsp
-L21246:	ret
-L21247:	jmp L21277
-L21248:	jmp L21251
-L21249:	jmp L21260
-L21250:	jmp L21269
-L21251:	pushq %rax
-L21252:	movq 16(%rsp), %rax
-L21253:	pushq %rax
-L21254:	movq $61, %rax
-L21255:	movq %rax, %rbx
-L21256:	popq %rdi
-L21257:	popq %rax
-L21258:	cmpq %rbx, %rdi ; je L21249
-L21259:	jmp L21250
-L21260:	pushq %rax
-L21261:	movq $298256261484, %rax
-L21262:	movq %rax, 8(%rsp) 
-L21263:	popq %rax
-L21264:	pushq %rax
-L21265:	movq 8(%rsp), %rax
-L21266:	addq $24, %rsp
-L21267:	ret
-L21268:	jmp L21277
-L21269:	pushq %rax
-L21270:	movq $1281717107, %rax
-L21271:	movq %rax, 8(%rsp) 
-L21272:	popq %rax
-L21273:	pushq %rax
-L21274:	movq 8(%rsp), %rax
-L21275:	addq $24, %rsp
-L21276:	ret
-L21277:	ret
-L21278:	
+L21225:	subq $16, %rsp
+L21226:	pushq %rax
+L21227:	call L19553
+L21228:	movq %rax, 16(%rsp) 
+L21229:	popq %rax
+L21230:	jmp L21233
+L21231:	jmp L21242
+L21232:	jmp L21251
+L21233:	pushq %rax
+L21234:	movq 16(%rsp), %rax
+L21235:	pushq %rax
+L21236:	movq $60, %rax
+L21237:	movq %rax, %rbx
+L21238:	popq %rdi
+L21239:	popq %rax
+L21240:	cmpq %rbx, %rdi ; je L21231
+L21241:	jmp L21232
+L21242:	pushq %rax
+L21243:	movq $1281717107, %rax
+L21244:	movq %rax, 8(%rsp) 
+L21245:	popq %rax
+L21246:	pushq %rax
+L21247:	movq 8(%rsp), %rax
+L21248:	addq $24, %rsp
+L21249:	ret
+L21250:	jmp L21280
+L21251:	jmp L21254
+L21252:	jmp L21263
+L21253:	jmp L21272
+L21254:	pushq %rax
+L21255:	movq 16(%rsp), %rax
+L21256:	pushq %rax
+L21257:	movq $61, %rax
+L21258:	movq %rax, %rbx
+L21259:	popq %rdi
+L21260:	popq %rax
+L21261:	cmpq %rbx, %rdi ; je L21252
+L21262:	jmp L21253
+L21263:	pushq %rax
+L21264:	movq $298256261484, %rax
+L21265:	movq %rax, 8(%rsp) 
+L21266:	popq %rax
+L21267:	pushq %rax
+L21268:	movq 8(%rsp), %rax
+L21269:	addq $24, %rsp
+L21270:	ret
+L21271:	jmp L21280
+L21272:	pushq %rax
+L21273:	movq $1281717107, %rax
+L21274:	movq %rax, 8(%rsp) 
+L21275:	popq %rax
+L21276:	pushq %rax
+L21277:	movq 8(%rsp), %rax
+L21278:	addq $24, %rsp
+L21279:	ret
+L21280:	ret
+L21281:	
   
   	/* v2test */
-L21279:	subq $144, %rsp
-L21280:	jmp L21283
-L21281:	jmp L21296
-L21282:	jmp L21746
-L21283:	pushq %rax
-L21284:	pushq %rax
-L21285:	movq $0, %rax
-L21286:	popq %rdi
-L21287:	addq %rax, %rdi
-L21288:	movq 0(%rdi), %rax
-L21289:	pushq %rax
-L21290:	movq $1348561266, %rax
-L21291:	movq %rax, %rbx
-L21292:	popq %rdi
-L21293:	popq %rax
-L21294:	cmpq %rbx, %rdi ; je L21281
-L21295:	jmp L21282
-L21296:	pushq %rax
-L21297:	pushq %rax
-L21298:	movq $8, %rax
-L21299:	popq %rdi
-L21300:	addq %rax, %rdi
-L21301:	movq 0(%rdi), %rax
-L21302:	pushq %rax
-L21303:	movq $0, %rax
-L21304:	popq %rdi
-L21305:	addq %rax, %rdi
-L21306:	movq 0(%rdi), %rax
-L21307:	movq %rax, 144(%rsp) 
-L21308:	popq %rax
-L21309:	pushq %rax
-L21310:	pushq %rax
-L21311:	movq $8, %rax
-L21312:	popq %rdi
-L21313:	addq %rax, %rdi
-L21314:	movq 0(%rdi), %rax
-L21315:	pushq %rax
-L21316:	movq $8, %rax
-L21317:	popq %rdi
-L21318:	addq %rax, %rdi
-L21319:	movq 0(%rdi), %rax
-L21320:	pushq %rax
-L21321:	movq $0, %rax
-L21322:	popq %rdi
-L21323:	addq %rax, %rdi
-L21324:	movq 0(%rdi), %rax
-L21325:	movq %rax, 136(%rsp) 
-L21326:	popq %rax
-L21327:	pushq %rax
-L21328:	movq 144(%rsp), %rax
-L21329:	call L19550
-L21330:	movq %rax, 128(%rsp) 
-L21331:	popq %rax
-L21332:	jmp L21335
-L21333:	jmp L21349
-L21334:	jmp L21665
-L21335:	pushq %rax
-L21336:	movq 136(%rsp), %rax
-L21337:	pushq %rax
-L21338:	movq $0, %rax
-L21339:	popq %rdi
-L21340:	addq %rax, %rdi
-L21341:	movq 0(%rdi), %rax
-L21342:	pushq %rax
-L21343:	movq $1348561266, %rax
-L21344:	movq %rax, %rbx
-L21345:	popq %rdi
-L21346:	popq %rax
-L21347:	cmpq %rbx, %rdi ; je L21333
-L21348:	jmp L21334
-L21349:	pushq %rax
-L21350:	movq 136(%rsp), %rax
-L21351:	pushq %rax
-L21352:	movq $8, %rax
-L21353:	popq %rdi
-L21354:	addq %rax, %rdi
-L21355:	movq 0(%rdi), %rax
-L21356:	pushq %rax
-L21357:	movq $0, %rax
-L21358:	popq %rdi
-L21359:	addq %rax, %rdi
-L21360:	movq 0(%rdi), %rax
-L21361:	movq %rax, 120(%rsp) 
-L21362:	popq %rax
-L21363:	pushq %rax
-L21364:	movq 136(%rsp), %rax
-L21365:	pushq %rax
-L21366:	movq $8, %rax
-L21367:	popq %rdi
-L21368:	addq %rax, %rdi
-L21369:	movq 0(%rdi), %rax
-L21370:	pushq %rax
-L21371:	movq $8, %rax
-L21372:	popq %rdi
-L21373:	addq %rax, %rdi
-L21374:	movq 0(%rdi), %rax
-L21375:	pushq %rax
-L21376:	movq $0, %rax
-L21377:	popq %rdi
-L21378:	addq %rax, %rdi
-L21379:	movq 0(%rdi), %rax
-L21380:	movq %rax, 112(%rsp) 
-L21381:	popq %rax
-L21382:	jmp L21385
-L21383:	jmp L21394
-L21384:	jmp L21415
-L21385:	pushq %rax
-L21386:	movq 128(%rsp), %rax
-L21387:	pushq %rax
-L21388:	movq $7237492, %rax
-L21389:	movq %rax, %rbx
-L21390:	popq %rdi
-L21391:	popq %rax
-L21392:	cmpq %rbx, %rdi ; je L21383
-L21393:	jmp L21384
-L21394:	pushq %rax
-L21395:	movq 120(%rsp), %rax
-L21396:	call L21279
-L21397:	movq %rax, 104(%rsp) 
-L21398:	popq %rax
-L21399:	pushq %rax
-L21400:	movq $5140340, %rax
-L21401:	pushq %rax
-L21402:	movq 112(%rsp), %rax
-L21403:	pushq %rax
-L21404:	movq $0, %rax
-L21405:	popq %rdi
-L21406:	popq %rdx
-L21407:	call L133
-L21408:	movq %rax, 96(%rsp) 
-L21409:	popq %rax
-L21410:	pushq %rax
-L21411:	movq 96(%rsp), %rax
-L21412:	addq $152, %rsp
-L21413:	ret
-L21414:	jmp L21664
-L21415:	jmp L21418
-L21416:	jmp L21432
-L21417:	jmp L21584
-L21418:	pushq %rax
-L21419:	movq 112(%rsp), %rax
-L21420:	pushq %rax
-L21421:	movq $0, %rax
-L21422:	popq %rdi
-L21423:	addq %rax, %rdi
-L21424:	movq 0(%rdi), %rax
-L21425:	pushq %rax
-L21426:	movq $1348561266, %rax
-L21427:	movq %rax, %rbx
-L21428:	popq %rdi
-L21429:	popq %rax
-L21430:	cmpq %rbx, %rdi ; je L21416
-L21431:	jmp L21417
-L21432:	pushq %rax
-L21433:	movq 112(%rsp), %rax
-L21434:	pushq %rax
-L21435:	movq $8, %rax
-L21436:	popq %rdi
-L21437:	addq %rax, %rdi
-L21438:	movq 0(%rdi), %rax
-L21439:	pushq %rax
-L21440:	movq $0, %rax
-L21441:	popq %rdi
-L21442:	addq %rax, %rdi
-L21443:	movq 0(%rdi), %rax
-L21444:	movq %rax, 88(%rsp) 
-L21445:	popq %rax
-L21446:	pushq %rax
-L21447:	movq 112(%rsp), %rax
-L21448:	pushq %rax
-L21449:	movq $8, %rax
-L21450:	popq %rdi
-L21451:	addq %rax, %rdi
-L21452:	movq 0(%rdi), %rax
-L21453:	pushq %rax
-L21454:	movq $8, %rax
-L21455:	popq %rdi
-L21456:	addq %rax, %rdi
-L21457:	movq 0(%rdi), %rax
-L21458:	pushq %rax
-L21459:	movq $0, %rax
-L21460:	popq %rdi
-L21461:	addq %rax, %rdi
-L21462:	movq 0(%rdi), %rax
-L21463:	movq %rax, 80(%rsp) 
-L21464:	popq %rax
-L21465:	jmp L21468
-L21466:	jmp L21477
-L21467:	jmp L21506
-L21468:	pushq %rax
-L21469:	movq 128(%rsp), %rax
-L21470:	pushq %rax
-L21471:	movq $6385252, %rax
-L21472:	movq %rax, %rbx
-L21473:	popq %rdi
-L21474:	popq %rax
-L21475:	cmpq %rbx, %rdi ; je L21466
-L21476:	jmp L21467
-L21477:	pushq %rax
-L21478:	movq 120(%rsp), %rax
-L21479:	call L21279
-L21480:	movq %rax, 104(%rsp) 
-L21481:	popq %rax
-L21482:	pushq %rax
-L21483:	movq 88(%rsp), %rax
-L21484:	call L21279
-L21485:	movq %rax, 72(%rsp) 
-L21486:	popq %rax
-L21487:	pushq %rax
-L21488:	movq $4288100, %rax
-L21489:	pushq %rax
-L21490:	movq 112(%rsp), %rax
-L21491:	pushq %rax
-L21492:	movq 88(%rsp), %rax
-L21493:	pushq %rax
-L21494:	movq $0, %rax
-L21495:	popq %rdi
-L21496:	popq %rdx
-L21497:	popq %rbx
-L21498:	call L158
-L21499:	movq %rax, 96(%rsp) 
-L21500:	popq %rax
-L21501:	pushq %rax
-L21502:	movq 96(%rsp), %rax
-L21503:	addq $152, %rsp
-L21504:	ret
-L21505:	jmp L21583
-L21506:	jmp L21509
-L21507:	jmp L21518
-L21508:	jmp L21547
-L21509:	pushq %rax
-L21510:	movq 128(%rsp), %rax
-L21511:	pushq %rax
-L21512:	movq $28530, %rax
-L21513:	movq %rax, %rbx
-L21514:	popq %rdi
-L21515:	popq %rax
-L21516:	cmpq %rbx, %rdi ; je L21507
-L21517:	jmp L21508
-L21518:	pushq %rax
-L21519:	movq 120(%rsp), %rax
-L21520:	call L21279
-L21521:	movq %rax, 104(%rsp) 
-L21522:	popq %rax
-L21523:	pushq %rax
-L21524:	movq 88(%rsp), %rax
-L21525:	call L21279
-L21526:	movq %rax, 72(%rsp) 
-L21527:	popq %rax
-L21528:	pushq %rax
-L21529:	movq $20338, %rax
-L21530:	pushq %rax
-L21531:	movq 112(%rsp), %rax
-L21532:	pushq %rax
-L21533:	movq 88(%rsp), %rax
-L21534:	pushq %rax
-L21535:	movq $0, %rax
-L21536:	popq %rdi
-L21537:	popq %rdx
-L21538:	popq %rbx
-L21539:	call L158
-L21540:	movq %rax, 96(%rsp) 
-L21541:	popq %rax
-L21542:	pushq %rax
-L21543:	movq 96(%rsp), %rax
-L21544:	addq $152, %rsp
-L21545:	ret
-L21546:	jmp L21583
-L21547:	pushq %rax
-L21548:	movq 144(%rsp), %rax
-L21549:	call L21222
-L21550:	movq %rax, 64(%rsp) 
-L21551:	popq %rax
-L21552:	pushq %rax
-L21553:	movq 120(%rsp), %rax
-L21554:	call L20603
-L21555:	movq %rax, 56(%rsp) 
-L21556:	popq %rax
-L21557:	pushq %rax
-L21558:	movq 88(%rsp), %rax
-L21559:	call L20603
-L21560:	movq %rax, 48(%rsp) 
-L21561:	popq %rax
-L21562:	pushq %rax
-L21563:	movq $1415934836, %rax
-L21564:	pushq %rax
-L21565:	movq 72(%rsp), %rax
-L21566:	pushq %rax
-L21567:	movq 72(%rsp), %rax
-L21568:	pushq %rax
-L21569:	movq 72(%rsp), %rax
-L21570:	pushq %rax
-L21571:	movq $0, %rax
-L21572:	popq %rdi
-L21573:	popq %rdx
-L21574:	popq %rbx
-L21575:	popq %rbp
-L21576:	call L187
-L21577:	movq %rax, 96(%rsp) 
-L21578:	popq %rax
-L21579:	pushq %rax
-L21580:	movq 96(%rsp), %rax
-L21581:	addq $152, %rsp
-L21582:	ret
-L21583:	jmp L21664
-L21584:	jmp L21587
-L21585:	jmp L21601
-L21586:	jmp L21660
-L21587:	pushq %rax
-L21588:	movq 112(%rsp), %rax
-L21589:	pushq %rax
-L21590:	movq $0, %rax
-L21591:	popq %rdi
-L21592:	addq %rax, %rdi
-L21593:	movq 0(%rdi), %rax
-L21594:	pushq %rax
-L21595:	movq $5141869, %rax
-L21596:	movq %rax, %rbx
-L21597:	popq %rdi
-L21598:	popq %rax
-L21599:	cmpq %rbx, %rdi ; je L21585
-L21600:	jmp L21586
-L21601:	pushq %rax
-L21602:	movq 112(%rsp), %rax
-L21603:	pushq %rax
-L21604:	movq $8, %rax
-L21605:	popq %rdi
-L21606:	addq %rax, %rdi
-L21607:	movq 0(%rdi), %rax
-L21608:	pushq %rax
-L21609:	movq $0, %rax
-L21610:	popq %rdi
-L21611:	addq %rax, %rdi
-L21612:	movq 0(%rdi), %rax
-L21613:	movq %rax, 40(%rsp) 
-L21614:	popq %rax
-L21615:	pushq %rax
-L21616:	movq $0, %rax
-L21617:	movq %rax, 32(%rsp) 
-L21618:	popq %rax
-L21619:	pushq %rax
-L21620:	movq $289632318324, %rax
-L21621:	pushq %rax
-L21622:	movq 40(%rsp), %rax
-L21623:	pushq %rax
-L21624:	movq $0, %rax
-L21625:	popq %rdi
-L21626:	popq %rdx
-L21627:	call L133
-L21628:	movq %rax, 24(%rsp) 
-L21629:	popq %rax
-L21630:	pushq %rax
-L21631:	movq $1281717107, %rax
-L21632:	movq %rax, 96(%rsp) 
-L21633:	popq %rax
-L21634:	pushq %rax
-L21635:	movq 96(%rsp), %rax
-L21636:	movq %rax, 16(%rsp) 
-L21637:	popq %rax
-L21638:	pushq %rax
-L21639:	movq $1415934836, %rax
-L21640:	pushq %rax
-L21641:	movq 24(%rsp), %rax
-L21642:	pushq %rax
-L21643:	movq 40(%rsp), %rax
-L21644:	pushq %rax
-L21645:	movq 48(%rsp), %rax
-L21646:	pushq %rax
-L21647:	movq $0, %rax
-L21648:	popq %rdi
-L21649:	popq %rdx
-L21650:	popq %rbx
-L21651:	popq %rbp
-L21652:	call L187
-L21653:	movq %rax, 8(%rsp) 
-L21654:	popq %rax
-L21655:	pushq %rax
-L21656:	movq 8(%rsp), %rax
-L21657:	addq $152, %rsp
-L21658:	ret
-L21659:	jmp L21664
-L21660:	pushq %rax
-L21661:	movq $0, %rax
-L21662:	addq $152, %rsp
-L21663:	ret
-L21664:	jmp L21745
-L21665:	jmp L21668
-L21666:	jmp L21682
-L21667:	jmp L21741
-L21668:	pushq %rax
-L21669:	movq 136(%rsp), %rax
-L21670:	pushq %rax
-L21671:	movq $0, %rax
-L21672:	popq %rdi
-L21673:	addq %rax, %rdi
-L21674:	movq 0(%rdi), %rax
-L21675:	pushq %rax
-L21676:	movq $5141869, %rax
-L21677:	movq %rax, %rbx
-L21678:	popq %rdi
-L21679:	popq %rax
-L21680:	cmpq %rbx, %rdi ; je L21666
-L21681:	jmp L21667
-L21682:	pushq %rax
-L21683:	movq 136(%rsp), %rax
-L21684:	pushq %rax
-L21685:	movq $8, %rax
-L21686:	popq %rdi
-L21687:	addq %rax, %rdi
-L21688:	movq 0(%rdi), %rax
-L21689:	pushq %rax
-L21690:	movq $0, %rax
-L21691:	popq %rdi
-L21692:	addq %rax, %rdi
-L21693:	movq 0(%rdi), %rax
-L21694:	movq %rax, 40(%rsp) 
-L21695:	popq %rax
-L21696:	pushq %rax
-L21697:	movq $0, %rax
-L21698:	movq %rax, 32(%rsp) 
-L21699:	popq %rax
-L21700:	pushq %rax
-L21701:	movq $289632318324, %rax
-L21702:	pushq %rax
-L21703:	movq 40(%rsp), %rax
-L21704:	pushq %rax
-L21705:	movq $0, %rax
-L21706:	popq %rdi
-L21707:	popq %rdx
-L21708:	call L133
-L21709:	movq %rax, 24(%rsp) 
-L21710:	popq %rax
-L21711:	pushq %rax
-L21712:	movq $1281717107, %rax
-L21713:	movq %rax, 96(%rsp) 
-L21714:	popq %rax
-L21715:	pushq %rax
-L21716:	movq 96(%rsp), %rax
-L21717:	movq %rax, 16(%rsp) 
-L21718:	popq %rax
-L21719:	pushq %rax
-L21720:	movq $1415934836, %rax
-L21721:	pushq %rax
-L21722:	movq 24(%rsp), %rax
-L21723:	pushq %rax
-L21724:	movq 40(%rsp), %rax
-L21725:	pushq %rax
-L21726:	movq 48(%rsp), %rax
-L21727:	pushq %rax
-L21728:	movq $0, %rax
-L21729:	popq %rdi
-L21730:	popq %rdx
-L21731:	popq %rbx
-L21732:	popq %rbp
-L21733:	call L187
-L21734:	movq %rax, 8(%rsp) 
-L21735:	popq %rax
-L21736:	pushq %rax
-L21737:	movq 8(%rsp), %rax
-L21738:	addq $152, %rsp
-L21739:	ret
-L21740:	jmp L21745
-L21741:	pushq %rax
-L21742:	movq $0, %rax
-L21743:	addq $152, %rsp
-L21744:	ret
-L21745:	jmp L21824
-L21746:	jmp L21749
-L21747:	jmp L21762
-L21748:	jmp L21820
-L21749:	pushq %rax
-L21750:	pushq %rax
-L21751:	movq $0, %rax
-L21752:	popq %rdi
-L21753:	addq %rax, %rdi
-L21754:	movq 0(%rdi), %rax
-L21755:	pushq %rax
-L21756:	movq $5141869, %rax
-L21757:	movq %rax, %rbx
-L21758:	popq %rdi
-L21759:	popq %rax
-L21760:	cmpq %rbx, %rdi ; je L21747
-L21761:	jmp L21748
-L21762:	pushq %rax
-L21763:	pushq %rax
-L21764:	movq $8, %rax
-L21765:	popq %rdi
-L21766:	addq %rax, %rdi
-L21767:	movq 0(%rdi), %rax
-L21768:	pushq %rax
-L21769:	movq $0, %rax
-L21770:	popq %rdi
-L21771:	addq %rax, %rdi
-L21772:	movq 0(%rdi), %rax
-L21773:	movq %rax, 128(%rsp) 
-L21774:	popq %rax
-L21775:	pushq %rax
-L21776:	movq $0, %rax
-L21777:	movq %rax, 32(%rsp) 
-L21778:	popq %rax
-L21779:	pushq %rax
-L21780:	movq $289632318324, %rax
-L21781:	pushq %rax
-L21782:	movq 40(%rsp), %rax
-L21783:	pushq %rax
-L21784:	movq $0, %rax
-L21785:	popq %rdi
-L21786:	popq %rdx
-L21787:	call L133
-L21788:	movq %rax, 24(%rsp) 
-L21789:	popq %rax
-L21790:	pushq %rax
-L21791:	movq $1281717107, %rax
-L21792:	movq %rax, 96(%rsp) 
-L21793:	popq %rax
-L21794:	pushq %rax
-L21795:	movq 96(%rsp), %rax
-L21796:	movq %rax, 16(%rsp) 
-L21797:	popq %rax
-L21798:	pushq %rax
-L21799:	movq $1415934836, %rax
-L21800:	pushq %rax
-L21801:	movq 24(%rsp), %rax
-L21802:	pushq %rax
-L21803:	movq 40(%rsp), %rax
-L21804:	pushq %rax
-L21805:	movq 48(%rsp), %rax
-L21806:	pushq %rax
-L21807:	movq $0, %rax
-L21808:	popq %rdi
-L21809:	popq %rdx
-L21810:	popq %rbx
-L21811:	popq %rbp
-L21812:	call L187
-L21813:	movq %rax, 8(%rsp) 
-L21814:	popq %rax
-L21815:	pushq %rax
-L21816:	movq 8(%rsp), %rax
-L21817:	addq $152, %rsp
-L21818:	ret
-L21819:	jmp L21824
-L21820:	pushq %rax
-L21821:	movq $0, %rax
-L21822:	addq $152, %rsp
-L21823:	ret
-L21824:	ret
-L21825:	
+L21282:	subq $144, %rsp
+L21283:	jmp L21286
+L21284:	jmp L21299
+L21285:	jmp L21749
+L21286:	pushq %rax
+L21287:	pushq %rax
+L21288:	movq $0, %rax
+L21289:	popq %rdi
+L21290:	addq %rax, %rdi
+L21291:	movq 0(%rdi), %rax
+L21292:	pushq %rax
+L21293:	movq $1348561266, %rax
+L21294:	movq %rax, %rbx
+L21295:	popq %rdi
+L21296:	popq %rax
+L21297:	cmpq %rbx, %rdi ; je L21284
+L21298:	jmp L21285
+L21299:	pushq %rax
+L21300:	pushq %rax
+L21301:	movq $8, %rax
+L21302:	popq %rdi
+L21303:	addq %rax, %rdi
+L21304:	movq 0(%rdi), %rax
+L21305:	pushq %rax
+L21306:	movq $0, %rax
+L21307:	popq %rdi
+L21308:	addq %rax, %rdi
+L21309:	movq 0(%rdi), %rax
+L21310:	movq %rax, 144(%rsp) 
+L21311:	popq %rax
+L21312:	pushq %rax
+L21313:	pushq %rax
+L21314:	movq $8, %rax
+L21315:	popq %rdi
+L21316:	addq %rax, %rdi
+L21317:	movq 0(%rdi), %rax
+L21318:	pushq %rax
+L21319:	movq $8, %rax
+L21320:	popq %rdi
+L21321:	addq %rax, %rdi
+L21322:	movq 0(%rdi), %rax
+L21323:	pushq %rax
+L21324:	movq $0, %rax
+L21325:	popq %rdi
+L21326:	addq %rax, %rdi
+L21327:	movq 0(%rdi), %rax
+L21328:	movq %rax, 136(%rsp) 
+L21329:	popq %rax
+L21330:	pushq %rax
+L21331:	movq 144(%rsp), %rax
+L21332:	call L19553
+L21333:	movq %rax, 128(%rsp) 
+L21334:	popq %rax
+L21335:	jmp L21338
+L21336:	jmp L21352
+L21337:	jmp L21668
+L21338:	pushq %rax
+L21339:	movq 136(%rsp), %rax
+L21340:	pushq %rax
+L21341:	movq $0, %rax
+L21342:	popq %rdi
+L21343:	addq %rax, %rdi
+L21344:	movq 0(%rdi), %rax
+L21345:	pushq %rax
+L21346:	movq $1348561266, %rax
+L21347:	movq %rax, %rbx
+L21348:	popq %rdi
+L21349:	popq %rax
+L21350:	cmpq %rbx, %rdi ; je L21336
+L21351:	jmp L21337
+L21352:	pushq %rax
+L21353:	movq 136(%rsp), %rax
+L21354:	pushq %rax
+L21355:	movq $8, %rax
+L21356:	popq %rdi
+L21357:	addq %rax, %rdi
+L21358:	movq 0(%rdi), %rax
+L21359:	pushq %rax
+L21360:	movq $0, %rax
+L21361:	popq %rdi
+L21362:	addq %rax, %rdi
+L21363:	movq 0(%rdi), %rax
+L21364:	movq %rax, 120(%rsp) 
+L21365:	popq %rax
+L21366:	pushq %rax
+L21367:	movq 136(%rsp), %rax
+L21368:	pushq %rax
+L21369:	movq $8, %rax
+L21370:	popq %rdi
+L21371:	addq %rax, %rdi
+L21372:	movq 0(%rdi), %rax
+L21373:	pushq %rax
+L21374:	movq $8, %rax
+L21375:	popq %rdi
+L21376:	addq %rax, %rdi
+L21377:	movq 0(%rdi), %rax
+L21378:	pushq %rax
+L21379:	movq $0, %rax
+L21380:	popq %rdi
+L21381:	addq %rax, %rdi
+L21382:	movq 0(%rdi), %rax
+L21383:	movq %rax, 112(%rsp) 
+L21384:	popq %rax
+L21385:	jmp L21388
+L21386:	jmp L21397
+L21387:	jmp L21418
+L21388:	pushq %rax
+L21389:	movq 128(%rsp), %rax
+L21390:	pushq %rax
+L21391:	movq $7237492, %rax
+L21392:	movq %rax, %rbx
+L21393:	popq %rdi
+L21394:	popq %rax
+L21395:	cmpq %rbx, %rdi ; je L21386
+L21396:	jmp L21387
+L21397:	pushq %rax
+L21398:	movq 120(%rsp), %rax
+L21399:	call L21282
+L21400:	movq %rax, 104(%rsp) 
+L21401:	popq %rax
+L21402:	pushq %rax
+L21403:	movq $5140340, %rax
+L21404:	pushq %rax
+L21405:	movq 112(%rsp), %rax
+L21406:	pushq %rax
+L21407:	movq $0, %rax
+L21408:	popq %rdi
+L21409:	popq %rdx
+L21410:	call L133
+L21411:	movq %rax, 96(%rsp) 
+L21412:	popq %rax
+L21413:	pushq %rax
+L21414:	movq 96(%rsp), %rax
+L21415:	addq $152, %rsp
+L21416:	ret
+L21417:	jmp L21667
+L21418:	jmp L21421
+L21419:	jmp L21435
+L21420:	jmp L21587
+L21421:	pushq %rax
+L21422:	movq 112(%rsp), %rax
+L21423:	pushq %rax
+L21424:	movq $0, %rax
+L21425:	popq %rdi
+L21426:	addq %rax, %rdi
+L21427:	movq 0(%rdi), %rax
+L21428:	pushq %rax
+L21429:	movq $1348561266, %rax
+L21430:	movq %rax, %rbx
+L21431:	popq %rdi
+L21432:	popq %rax
+L21433:	cmpq %rbx, %rdi ; je L21419
+L21434:	jmp L21420
+L21435:	pushq %rax
+L21436:	movq 112(%rsp), %rax
+L21437:	pushq %rax
+L21438:	movq $8, %rax
+L21439:	popq %rdi
+L21440:	addq %rax, %rdi
+L21441:	movq 0(%rdi), %rax
+L21442:	pushq %rax
+L21443:	movq $0, %rax
+L21444:	popq %rdi
+L21445:	addq %rax, %rdi
+L21446:	movq 0(%rdi), %rax
+L21447:	movq %rax, 88(%rsp) 
+L21448:	popq %rax
+L21449:	pushq %rax
+L21450:	movq 112(%rsp), %rax
+L21451:	pushq %rax
+L21452:	movq $8, %rax
+L21453:	popq %rdi
+L21454:	addq %rax, %rdi
+L21455:	movq 0(%rdi), %rax
+L21456:	pushq %rax
+L21457:	movq $8, %rax
+L21458:	popq %rdi
+L21459:	addq %rax, %rdi
+L21460:	movq 0(%rdi), %rax
+L21461:	pushq %rax
+L21462:	movq $0, %rax
+L21463:	popq %rdi
+L21464:	addq %rax, %rdi
+L21465:	movq 0(%rdi), %rax
+L21466:	movq %rax, 80(%rsp) 
+L21467:	popq %rax
+L21468:	jmp L21471
+L21469:	jmp L21480
+L21470:	jmp L21509
+L21471:	pushq %rax
+L21472:	movq 128(%rsp), %rax
+L21473:	pushq %rax
+L21474:	movq $6385252, %rax
+L21475:	movq %rax, %rbx
+L21476:	popq %rdi
+L21477:	popq %rax
+L21478:	cmpq %rbx, %rdi ; je L21469
+L21479:	jmp L21470
+L21480:	pushq %rax
+L21481:	movq 120(%rsp), %rax
+L21482:	call L21282
+L21483:	movq %rax, 104(%rsp) 
+L21484:	popq %rax
+L21485:	pushq %rax
+L21486:	movq 88(%rsp), %rax
+L21487:	call L21282
+L21488:	movq %rax, 72(%rsp) 
+L21489:	popq %rax
+L21490:	pushq %rax
+L21491:	movq $4288100, %rax
+L21492:	pushq %rax
+L21493:	movq 112(%rsp), %rax
+L21494:	pushq %rax
+L21495:	movq 88(%rsp), %rax
+L21496:	pushq %rax
+L21497:	movq $0, %rax
+L21498:	popq %rdi
+L21499:	popq %rdx
+L21500:	popq %rbx
+L21501:	call L158
+L21502:	movq %rax, 96(%rsp) 
+L21503:	popq %rax
+L21504:	pushq %rax
+L21505:	movq 96(%rsp), %rax
+L21506:	addq $152, %rsp
+L21507:	ret
+L21508:	jmp L21586
+L21509:	jmp L21512
+L21510:	jmp L21521
+L21511:	jmp L21550
+L21512:	pushq %rax
+L21513:	movq 128(%rsp), %rax
+L21514:	pushq %rax
+L21515:	movq $28530, %rax
+L21516:	movq %rax, %rbx
+L21517:	popq %rdi
+L21518:	popq %rax
+L21519:	cmpq %rbx, %rdi ; je L21510
+L21520:	jmp L21511
+L21521:	pushq %rax
+L21522:	movq 120(%rsp), %rax
+L21523:	call L21282
+L21524:	movq %rax, 104(%rsp) 
+L21525:	popq %rax
+L21526:	pushq %rax
+L21527:	movq 88(%rsp), %rax
+L21528:	call L21282
+L21529:	movq %rax, 72(%rsp) 
+L21530:	popq %rax
+L21531:	pushq %rax
+L21532:	movq $20338, %rax
+L21533:	pushq %rax
+L21534:	movq 112(%rsp), %rax
+L21535:	pushq %rax
+L21536:	movq 88(%rsp), %rax
+L21537:	pushq %rax
+L21538:	movq $0, %rax
+L21539:	popq %rdi
+L21540:	popq %rdx
+L21541:	popq %rbx
+L21542:	call L158
+L21543:	movq %rax, 96(%rsp) 
+L21544:	popq %rax
+L21545:	pushq %rax
+L21546:	movq 96(%rsp), %rax
+L21547:	addq $152, %rsp
+L21548:	ret
+L21549:	jmp L21586
+L21550:	pushq %rax
+L21551:	movq 144(%rsp), %rax
+L21552:	call L21225
+L21553:	movq %rax, 64(%rsp) 
+L21554:	popq %rax
+L21555:	pushq %rax
+L21556:	movq 120(%rsp), %rax
+L21557:	call L20606
+L21558:	movq %rax, 56(%rsp) 
+L21559:	popq %rax
+L21560:	pushq %rax
+L21561:	movq 88(%rsp), %rax
+L21562:	call L20606
+L21563:	movq %rax, 48(%rsp) 
+L21564:	popq %rax
+L21565:	pushq %rax
+L21566:	movq $1415934836, %rax
+L21567:	pushq %rax
+L21568:	movq 72(%rsp), %rax
+L21569:	pushq %rax
+L21570:	movq 72(%rsp), %rax
+L21571:	pushq %rax
+L21572:	movq 72(%rsp), %rax
+L21573:	pushq %rax
+L21574:	movq $0, %rax
+L21575:	popq %rdi
+L21576:	popq %rdx
+L21577:	popq %rbx
+L21578:	popq %rbp
+L21579:	call L187
+L21580:	movq %rax, 96(%rsp) 
+L21581:	popq %rax
+L21582:	pushq %rax
+L21583:	movq 96(%rsp), %rax
+L21584:	addq $152, %rsp
+L21585:	ret
+L21586:	jmp L21667
+L21587:	jmp L21590
+L21588:	jmp L21604
+L21589:	jmp L21663
+L21590:	pushq %rax
+L21591:	movq 112(%rsp), %rax
+L21592:	pushq %rax
+L21593:	movq $0, %rax
+L21594:	popq %rdi
+L21595:	addq %rax, %rdi
+L21596:	movq 0(%rdi), %rax
+L21597:	pushq %rax
+L21598:	movq $5141869, %rax
+L21599:	movq %rax, %rbx
+L21600:	popq %rdi
+L21601:	popq %rax
+L21602:	cmpq %rbx, %rdi ; je L21588
+L21603:	jmp L21589
+L21604:	pushq %rax
+L21605:	movq 112(%rsp), %rax
+L21606:	pushq %rax
+L21607:	movq $8, %rax
+L21608:	popq %rdi
+L21609:	addq %rax, %rdi
+L21610:	movq 0(%rdi), %rax
+L21611:	pushq %rax
+L21612:	movq $0, %rax
+L21613:	popq %rdi
+L21614:	addq %rax, %rdi
+L21615:	movq 0(%rdi), %rax
+L21616:	movq %rax, 40(%rsp) 
+L21617:	popq %rax
+L21618:	pushq %rax
+L21619:	movq $0, %rax
+L21620:	movq %rax, 32(%rsp) 
+L21621:	popq %rax
+L21622:	pushq %rax
+L21623:	movq $289632318324, %rax
+L21624:	pushq %rax
+L21625:	movq 40(%rsp), %rax
+L21626:	pushq %rax
+L21627:	movq $0, %rax
+L21628:	popq %rdi
+L21629:	popq %rdx
+L21630:	call L133
+L21631:	movq %rax, 24(%rsp) 
+L21632:	popq %rax
+L21633:	pushq %rax
+L21634:	movq $1281717107, %rax
+L21635:	movq %rax, 96(%rsp) 
+L21636:	popq %rax
+L21637:	pushq %rax
+L21638:	movq 96(%rsp), %rax
+L21639:	movq %rax, 16(%rsp) 
+L21640:	popq %rax
+L21641:	pushq %rax
+L21642:	movq $1415934836, %rax
+L21643:	pushq %rax
+L21644:	movq 24(%rsp), %rax
+L21645:	pushq %rax
+L21646:	movq 40(%rsp), %rax
+L21647:	pushq %rax
+L21648:	movq 48(%rsp), %rax
+L21649:	pushq %rax
+L21650:	movq $0, %rax
+L21651:	popq %rdi
+L21652:	popq %rdx
+L21653:	popq %rbx
+L21654:	popq %rbp
+L21655:	call L187
+L21656:	movq %rax, 8(%rsp) 
+L21657:	popq %rax
+L21658:	pushq %rax
+L21659:	movq 8(%rsp), %rax
+L21660:	addq $152, %rsp
+L21661:	ret
+L21662:	jmp L21667
+L21663:	pushq %rax
+L21664:	movq $0, %rax
+L21665:	addq $152, %rsp
+L21666:	ret
+L21667:	jmp L21748
+L21668:	jmp L21671
+L21669:	jmp L21685
+L21670:	jmp L21744
+L21671:	pushq %rax
+L21672:	movq 136(%rsp), %rax
+L21673:	pushq %rax
+L21674:	movq $0, %rax
+L21675:	popq %rdi
+L21676:	addq %rax, %rdi
+L21677:	movq 0(%rdi), %rax
+L21678:	pushq %rax
+L21679:	movq $5141869, %rax
+L21680:	movq %rax, %rbx
+L21681:	popq %rdi
+L21682:	popq %rax
+L21683:	cmpq %rbx, %rdi ; je L21669
+L21684:	jmp L21670
+L21685:	pushq %rax
+L21686:	movq 136(%rsp), %rax
+L21687:	pushq %rax
+L21688:	movq $8, %rax
+L21689:	popq %rdi
+L21690:	addq %rax, %rdi
+L21691:	movq 0(%rdi), %rax
+L21692:	pushq %rax
+L21693:	movq $0, %rax
+L21694:	popq %rdi
+L21695:	addq %rax, %rdi
+L21696:	movq 0(%rdi), %rax
+L21697:	movq %rax, 40(%rsp) 
+L21698:	popq %rax
+L21699:	pushq %rax
+L21700:	movq $0, %rax
+L21701:	movq %rax, 32(%rsp) 
+L21702:	popq %rax
+L21703:	pushq %rax
+L21704:	movq $289632318324, %rax
+L21705:	pushq %rax
+L21706:	movq 40(%rsp), %rax
+L21707:	pushq %rax
+L21708:	movq $0, %rax
+L21709:	popq %rdi
+L21710:	popq %rdx
+L21711:	call L133
+L21712:	movq %rax, 24(%rsp) 
+L21713:	popq %rax
+L21714:	pushq %rax
+L21715:	movq $1281717107, %rax
+L21716:	movq %rax, 96(%rsp) 
+L21717:	popq %rax
+L21718:	pushq %rax
+L21719:	movq 96(%rsp), %rax
+L21720:	movq %rax, 16(%rsp) 
+L21721:	popq %rax
+L21722:	pushq %rax
+L21723:	movq $1415934836, %rax
+L21724:	pushq %rax
+L21725:	movq 24(%rsp), %rax
+L21726:	pushq %rax
+L21727:	movq 40(%rsp), %rax
+L21728:	pushq %rax
+L21729:	movq 48(%rsp), %rax
+L21730:	pushq %rax
+L21731:	movq $0, %rax
+L21732:	popq %rdi
+L21733:	popq %rdx
+L21734:	popq %rbx
+L21735:	popq %rbp
+L21736:	call L187
+L21737:	movq %rax, 8(%rsp) 
+L21738:	popq %rax
+L21739:	pushq %rax
+L21740:	movq 8(%rsp), %rax
+L21741:	addq $152, %rsp
+L21742:	ret
+L21743:	jmp L21748
+L21744:	pushq %rax
+L21745:	movq $0, %rax
+L21746:	addq $152, %rsp
+L21747:	ret
+L21748:	jmp L21827
+L21749:	jmp L21752
+L21750:	jmp L21765
+L21751:	jmp L21823
+L21752:	pushq %rax
+L21753:	pushq %rax
+L21754:	movq $0, %rax
+L21755:	popq %rdi
+L21756:	addq %rax, %rdi
+L21757:	movq 0(%rdi), %rax
+L21758:	pushq %rax
+L21759:	movq $5141869, %rax
+L21760:	movq %rax, %rbx
+L21761:	popq %rdi
+L21762:	popq %rax
+L21763:	cmpq %rbx, %rdi ; je L21750
+L21764:	jmp L21751
+L21765:	pushq %rax
+L21766:	pushq %rax
+L21767:	movq $8, %rax
+L21768:	popq %rdi
+L21769:	addq %rax, %rdi
+L21770:	movq 0(%rdi), %rax
+L21771:	pushq %rax
+L21772:	movq $0, %rax
+L21773:	popq %rdi
+L21774:	addq %rax, %rdi
+L21775:	movq 0(%rdi), %rax
+L21776:	movq %rax, 128(%rsp) 
+L21777:	popq %rax
+L21778:	pushq %rax
+L21779:	movq $0, %rax
+L21780:	movq %rax, 32(%rsp) 
+L21781:	popq %rax
+L21782:	pushq %rax
+L21783:	movq $289632318324, %rax
+L21784:	pushq %rax
+L21785:	movq 40(%rsp), %rax
+L21786:	pushq %rax
+L21787:	movq $0, %rax
+L21788:	popq %rdi
+L21789:	popq %rdx
+L21790:	call L133
+L21791:	movq %rax, 24(%rsp) 
+L21792:	popq %rax
+L21793:	pushq %rax
+L21794:	movq $1281717107, %rax
+L21795:	movq %rax, 96(%rsp) 
+L21796:	popq %rax
+L21797:	pushq %rax
+L21798:	movq 96(%rsp), %rax
+L21799:	movq %rax, 16(%rsp) 
+L21800:	popq %rax
+L21801:	pushq %rax
+L21802:	movq $1415934836, %rax
+L21803:	pushq %rax
+L21804:	movq 24(%rsp), %rax
+L21805:	pushq %rax
+L21806:	movq 40(%rsp), %rax
+L21807:	pushq %rax
+L21808:	movq 48(%rsp), %rax
+L21809:	pushq %rax
+L21810:	movq $0, %rax
+L21811:	popq %rdi
+L21812:	popq %rdx
+L21813:	popq %rbx
+L21814:	popq %rbp
+L21815:	call L187
+L21816:	movq %rax, 8(%rsp) 
+L21817:	popq %rax
+L21818:	pushq %rax
+L21819:	movq 8(%rsp), %rax
+L21820:	addq $152, %rsp
+L21821:	ret
+L21822:	jmp L21827
+L21823:	pushq %rax
+L21824:	movq $0, %rax
+L21825:	addq $152, %rsp
+L21826:	ret
+L21827:	ret
+L21828:	
   
   	/* v2cmd */
-L21826:	subq $240, %rsp
-L21827:	jmp L21830
-L21828:	jmp L21843
-L21829:	jmp L22745
-L21830:	pushq %rax
-L21831:	pushq %rax
-L21832:	movq $0, %rax
-L21833:	popq %rdi
-L21834:	addq %rax, %rdi
-L21835:	movq 0(%rdi), %rax
-L21836:	pushq %rax
-L21837:	movq $1348561266, %rax
-L21838:	movq %rax, %rbx
-L21839:	popq %rdi
-L21840:	popq %rax
-L21841:	cmpq %rbx, %rdi ; je L21828
-L21842:	jmp L21829
-L21843:	pushq %rax
-L21844:	pushq %rax
-L21845:	movq $8, %rax
-L21846:	popq %rdi
-L21847:	addq %rax, %rdi
-L21848:	movq 0(%rdi), %rax
-L21849:	pushq %rax
-L21850:	movq $0, %rax
-L21851:	popq %rdi
-L21852:	addq %rax, %rdi
-L21853:	movq 0(%rdi), %rax
-L21854:	movq %rax, 240(%rsp) 
-L21855:	popq %rax
-L21856:	pushq %rax
-L21857:	pushq %rax
-L21858:	movq $8, %rax
-L21859:	popq %rdi
-L21860:	addq %rax, %rdi
-L21861:	movq 0(%rdi), %rax
-L21862:	pushq %rax
-L21863:	movq $8, %rax
-L21864:	popq %rdi
-L21865:	addq %rax, %rdi
-L21866:	movq 0(%rdi), %rax
-L21867:	pushq %rax
-L21868:	movq $0, %rax
-L21869:	popq %rdi
-L21870:	addq %rax, %rdi
-L21871:	movq 0(%rdi), %rax
-L21872:	movq %rax, 232(%rsp) 
-L21873:	popq %rax
-L21874:	pushq %rax
-L21875:	movq 240(%rsp), %rax
-L21876:	call L19907
-L21877:	movq %rax, 224(%rsp) 
-L21878:	popq %rax
-L21879:	jmp L21882
-L21880:	jmp L21891
-L21881:	jmp L21947
-L21882:	pushq %rax
-L21883:	movq 224(%rsp), %rax
-L21884:	pushq %rax
-L21885:	movq $1, %rax
-L21886:	movq %rax, %rbx
-L21887:	popq %rdi
-L21888:	popq %rax
-L21889:	cmpq %rbx, %rdi ; je L21880
-L21890:	jmp L21881
-L21891:	pushq %rax
-L21892:	movq 232(%rsp), %rax
-L21893:	call L19806
-L21894:	movq %rax, 216(%rsp) 
-L21895:	popq %rax
-L21896:	jmp L21899
-L21897:	jmp L21908
-L21898:	jmp L21918
-L21899:	pushq %rax
-L21900:	movq 216(%rsp), %rax
-L21901:	pushq %rax
-L21902:	movq $1, %rax
-L21903:	movq %rax, %rbx
-L21904:	popq %rdi
-L21905:	popq %rax
-L21906:	cmpq %rbx, %rdi ; je L21897
-L21907:	jmp L21898
-L21908:	pushq %rax
-L21909:	movq 240(%rsp), %rax
-L21910:	call L21826
-L21911:	movq %rax, 208(%rsp) 
-L21912:	popq %rax
-L21913:	pushq %rax
-L21914:	movq 208(%rsp), %rax
-L21915:	addq $248, %rsp
-L21916:	ret
-L21917:	jmp L21946
-L21918:	pushq %rax
-L21919:	movq 240(%rsp), %rax
-L21920:	call L21826
-L21921:	movq %rax, 200(%rsp) 
-L21922:	popq %rax
-L21923:	pushq %rax
-L21924:	movq 232(%rsp), %rax
-L21925:	call L21826
-L21926:	movq %rax, 192(%rsp) 
-L21927:	popq %rax
-L21928:	pushq %rax
-L21929:	movq $5465457, %rax
-L21930:	pushq %rax
-L21931:	movq 208(%rsp), %rax
-L21932:	pushq %rax
-L21933:	movq 208(%rsp), %rax
-L21934:	pushq %rax
-L21935:	movq $0, %rax
-L21936:	popq %rdi
-L21937:	popq %rdx
-L21938:	popq %rbx
-L21939:	call L158
-L21940:	movq %rax, 208(%rsp) 
-L21941:	popq %rax
-L21942:	pushq %rax
-L21943:	movq 208(%rsp), %rax
-L21944:	addq $248, %rsp
-L21945:	ret
-L21946:	jmp L22744
-L21947:	pushq %rax
-L21948:	movq 240(%rsp), %rax
-L21949:	call L19550
-L21950:	movq %rax, 184(%rsp) 
-L21951:	popq %rax
-L21952:	jmp L21955
-L21953:	jmp L21964
-L21954:	jmp L21981
-L21955:	pushq %rax
-L21956:	movq 184(%rsp), %rax
-L21957:	pushq %rax
-L21958:	movq $418263298676, %rax
-L21959:	movq %rax, %rbx
-L21960:	popq %rdi
-L21961:	popq %rax
-L21962:	cmpq %rbx, %rdi ; je L21953
-L21963:	jmp L21954
-L21964:	pushq %rax
-L21965:	movq $280824345204, %rax
-L21966:	pushq %rax
-L21967:	movq $0, %rax
-L21968:	popq %rdi
-L21969:	call L97
-L21970:	movq %rax, 208(%rsp) 
-L21971:	popq %rax
-L21972:	pushq %rax
-L21973:	movq 208(%rsp), %rax
-L21974:	movq %rax, 176(%rsp) 
-L21975:	popq %rax
-L21976:	pushq %rax
-L21977:	movq 176(%rsp), %rax
-L21978:	addq $248, %rsp
-L21979:	ret
-L21980:	jmp L22744
-L21981:	jmp L21984
-L21982:	jmp L21998
-L21983:	jmp L22692
-L21984:	pushq %rax
-L21985:	movq 232(%rsp), %rax
-L21986:	pushq %rax
-L21987:	movq $0, %rax
-L21988:	popq %rdi
-L21989:	addq %rax, %rdi
-L21990:	movq 0(%rdi), %rax
-L21991:	pushq %rax
-L21992:	movq $1348561266, %rax
-L21993:	movq %rax, %rbx
-L21994:	popq %rdi
-L21995:	popq %rax
-L21996:	cmpq %rbx, %rdi ; je L21982
-L21997:	jmp L21983
-L21998:	pushq %rax
-L21999:	movq 232(%rsp), %rax
-L22000:	pushq %rax
-L22001:	movq $8, %rax
-L22002:	popq %rdi
-L22003:	addq %rax, %rdi
-L22004:	movq 0(%rdi), %rax
-L22005:	pushq %rax
-L22006:	movq $0, %rax
-L22007:	popq %rdi
-L22008:	addq %rax, %rdi
-L22009:	movq 0(%rdi), %rax
-L22010:	movq %rax, 168(%rsp) 
-L22011:	popq %rax
-L22012:	pushq %rax
-L22013:	movq 232(%rsp), %rax
-L22014:	pushq %rax
-L22015:	movq $8, %rax
-L22016:	popq %rdi
-L22017:	addq %rax, %rdi
-L22018:	movq 0(%rdi), %rax
-L22019:	pushq %rax
-L22020:	movq $8, %rax
-L22021:	popq %rdi
-L22022:	addq %rax, %rdi
-L22023:	movq 0(%rdi), %rax
-L22024:	pushq %rax
-L22025:	movq $0, %rax
-L22026:	popq %rdi
-L22027:	addq %rax, %rdi
-L22028:	movq 0(%rdi), %rax
-L22029:	movq %rax, 160(%rsp) 
-L22030:	popq %rax
-L22031:	jmp L22034
-L22032:	jmp L22043
-L22033:	jmp L22064
-L22034:	pushq %rax
-L22035:	movq 184(%rsp), %rax
-L22036:	pushq %rax
-L22037:	movq $125780071117422, %rax
-L22038:	movq %rax, %rbx
-L22039:	popq %rdi
-L22040:	popq %rax
-L22041:	cmpq %rbx, %rdi ; je L22032
-L22042:	jmp L22033
-L22043:	pushq %rax
-L22044:	movq 168(%rsp), %rax
-L22045:	call L20603
-L22046:	movq %rax, 152(%rsp) 
-L22047:	popq %rax
-L22048:	pushq %rax
-L22049:	movq $90595699028590, %rax
-L22050:	pushq %rax
-L22051:	movq 160(%rsp), %rax
-L22052:	pushq %rax
-L22053:	movq $0, %rax
-L22054:	popq %rdi
-L22055:	popq %rdx
-L22056:	call L133
-L22057:	movq %rax, 208(%rsp) 
-L22058:	popq %rax
-L22059:	pushq %rax
-L22060:	movq 208(%rsp), %rax
-L22061:	addq $248, %rsp
-L22062:	ret
-L22063:	jmp L22691
-L22064:	jmp L22067
-L22065:	jmp L22076
-L22066:	jmp L22097
-L22067:	pushq %rax
-L22068:	movq 184(%rsp), %rax
-L22069:	pushq %rax
-L22070:	movq $29103473159594354, %rax
-L22071:	movq %rax, %rbx
-L22072:	popq %rdi
-L22073:	popq %rax
-L22074:	cmpq %rbx, %rdi ; je L22065
-L22075:	jmp L22066
-L22076:	pushq %rax
-L22077:	movq 168(%rsp), %rax
-L22078:	call L19550
-L22079:	movq %rax, 144(%rsp) 
-L22080:	popq %rax
-L22081:	pushq %rax
-L22082:	movq $20096273367982450, %rax
-L22083:	pushq %rax
-L22084:	movq 152(%rsp), %rax
-L22085:	pushq %rax
-L22086:	movq $0, %rax
-L22087:	popq %rdi
-L22088:	popq %rdx
-L22089:	call L133
-L22090:	movq %rax, 208(%rsp) 
-L22091:	popq %rax
-L22092:	pushq %rax
-L22093:	movq 208(%rsp), %rax
-L22094:	addq $248, %rsp
-L22095:	ret
-L22096:	jmp L22691
-L22097:	jmp L22100
-L22098:	jmp L22109
-L22099:	jmp L22130
-L22100:	pushq %rax
-L22101:	movq 184(%rsp), %rax
-L22102:	pushq %rax
-L22103:	movq $31654340136034674, %rax
-L22104:	movq %rax, %rbx
-L22105:	popq %rdi
-L22106:	popq %rax
-L22107:	cmpq %rbx, %rdi ; je L22098
-L22108:	jmp L22099
-L22109:	pushq %rax
-L22110:	movq 168(%rsp), %rax
-L22111:	call L20603
-L22112:	movq %rax, 152(%rsp) 
-L22113:	popq %rax
-L22114:	pushq %rax
-L22115:	movq $22647140344422770, %rax
-L22116:	pushq %rax
-L22117:	movq 160(%rsp), %rax
-L22118:	pushq %rax
-L22119:	movq $0, %rax
-L22120:	popq %rdi
-L22121:	popq %rdx
-L22122:	call L133
-L22123:	movq %rax, 208(%rsp) 
-L22124:	popq %rax
-L22125:	pushq %rax
-L22126:	movq 208(%rsp), %rax
-L22127:	addq $248, %rsp
-L22128:	ret
-L22129:	jmp L22691
-L22130:	jmp L22133
-L22131:	jmp L22147
-L22132:	jmp L22639
-L22133:	pushq %rax
-L22134:	movq 160(%rsp), %rax
-L22135:	pushq %rax
-L22136:	movq $0, %rax
-L22137:	popq %rdi
-L22138:	addq %rax, %rdi
-L22139:	movq 0(%rdi), %rax
-L22140:	pushq %rax
-L22141:	movq $1348561266, %rax
-L22142:	movq %rax, %rbx
-L22143:	popq %rdi
-L22144:	popq %rax
-L22145:	cmpq %rbx, %rdi ; je L22131
-L22146:	jmp L22132
-L22147:	pushq %rax
-L22148:	movq 160(%rsp), %rax
-L22149:	pushq %rax
-L22150:	movq $8, %rax
-L22151:	popq %rdi
-L22152:	addq %rax, %rdi
-L22153:	movq 0(%rdi), %rax
-L22154:	pushq %rax
-L22155:	movq $0, %rax
-L22156:	popq %rdi
-L22157:	addq %rax, %rdi
-L22158:	movq 0(%rdi), %rax
-L22159:	movq %rax, 136(%rsp) 
-L22160:	popq %rax
-L22161:	pushq %rax
-L22162:	movq 160(%rsp), %rax
-L22163:	pushq %rax
-L22164:	movq $8, %rax
-L22165:	popq %rdi
-L22166:	addq %rax, %rdi
-L22167:	movq 0(%rdi), %rax
-L22168:	pushq %rax
-L22169:	movq $8, %rax
-L22170:	popq %rdi
-L22171:	addq %rax, %rdi
-L22172:	movq 0(%rdi), %rax
-L22173:	pushq %rax
-L22174:	movq $0, %rax
-L22175:	popq %rdi
-L22176:	addq %rax, %rdi
-L22177:	movq 0(%rdi), %rax
-L22178:	movq %rax, 128(%rsp) 
-L22179:	popq %rax
-L22180:	jmp L22183
-L22181:	jmp L22192
-L22182:	jmp L22221
-L22183:	pushq %rax
-L22184:	movq 184(%rsp), %rax
-L22185:	pushq %rax
-L22186:	movq $107148485420910, %rax
-L22187:	movq %rax, %rbx
-L22188:	popq %rdi
-L22189:	popq %rax
-L22190:	cmpq %rbx, %rdi ; je L22181
-L22191:	jmp L22182
-L22192:	pushq %rax
-L22193:	movq 168(%rsp), %rax
-L22194:	call L19550
-L22195:	movq %rax, 144(%rsp) 
-L22196:	popq %rax
-L22197:	pushq %rax
-L22198:	movq 136(%rsp), %rax
-L22199:	call L20603
-L22200:	movq %rax, 120(%rsp) 
-L22201:	popq %rax
-L22202:	pushq %rax
-L22203:	movq $71964113332078, %rax
-L22204:	pushq %rax
-L22205:	movq 152(%rsp), %rax
-L22206:	pushq %rax
-L22207:	movq 136(%rsp), %rax
-L22208:	pushq %rax
-L22209:	movq $0, %rax
-L22210:	popq %rdi
-L22211:	popq %rdx
-L22212:	popq %rbx
-L22213:	call L158
-L22214:	movq %rax, 208(%rsp) 
-L22215:	popq %rax
-L22216:	pushq %rax
-L22217:	movq 208(%rsp), %rax
-L22218:	addq $248, %rsp
-L22219:	ret
-L22220:	jmp L22638
-L22221:	jmp L22224
-L22222:	jmp L22233
-L22223:	jmp L22262
-L22224:	pushq %rax
-L22225:	movq 184(%rsp), %rax
-L22226:	pushq %rax
-L22227:	movq $512852847717, %rax
-L22228:	movq %rax, %rbx
-L22229:	popq %rdi
-L22230:	popq %rax
-L22231:	cmpq %rbx, %rdi ; je L22222
-L22232:	jmp L22223
-L22233:	pushq %rax
-L22234:	movq 168(%rsp), %rax
-L22235:	call L21279
-L22236:	movq %rax, 112(%rsp) 
-L22237:	popq %rax
-L22238:	pushq %rax
-L22239:	movq 136(%rsp), %rax
-L22240:	call L21826
-L22241:	movq %rax, 104(%rsp) 
-L22242:	popq %rax
-L22243:	pushq %rax
-L22244:	movq $375413894245, %rax
-L22245:	pushq %rax
-L22246:	movq 120(%rsp), %rax
-L22247:	pushq %rax
-L22248:	movq 120(%rsp), %rax
-L22249:	pushq %rax
-L22250:	movq $0, %rax
-L22251:	popq %rdi
-L22252:	popq %rdx
-L22253:	popq %rbx
-L22254:	call L158
-L22255:	movq %rax, 208(%rsp) 
-L22256:	popq %rax
-L22257:	pushq %rax
-L22258:	movq 208(%rsp), %rax
-L22259:	addq $248, %rsp
-L22260:	ret
-L22261:	jmp L22638
-L22262:	jmp L22265
-L22263:	jmp L22274
-L22264:	jmp L22303
-L22265:	pushq %rax
-L22266:	movq 184(%rsp), %rax
-L22267:	pushq %rax
-L22268:	movq $418430873443, %rax
-L22269:	movq %rax, %rbx
-L22270:	popq %rdi
-L22271:	popq %rax
-L22272:	cmpq %rbx, %rdi ; je L22263
-L22273:	jmp L22264
-L22274:	pushq %rax
-L22275:	movq 168(%rsp), %rax
-L22276:	call L19550
-L22277:	movq %rax, 144(%rsp) 
-L22278:	popq %rax
-L22279:	pushq %rax
-L22280:	movq 136(%rsp), %rax
-L22281:	call L20603
-L22282:	movq %rax, 120(%rsp) 
-L22283:	popq %rax
-L22284:	pushq %rax
-L22285:	movq $280991919971, %rax
-L22286:	pushq %rax
-L22287:	movq 152(%rsp), %rax
-L22288:	pushq %rax
-L22289:	movq 136(%rsp), %rax
-L22290:	pushq %rax
-L22291:	movq $0, %rax
-L22292:	popq %rdi
-L22293:	popq %rdx
-L22294:	popq %rbx
-L22295:	call L158
-L22296:	movq %rax, 208(%rsp) 
-L22297:	popq %rax
-L22298:	pushq %rax
-L22299:	movq 208(%rsp), %rax
-L22300:	addq $248, %rsp
-L22301:	ret
-L22302:	jmp L22638
-L22303:	jmp L22306
-L22304:	jmp L22320
-L22305:	jmp L22561
-L22306:	pushq %rax
-L22307:	movq 128(%rsp), %rax
-L22308:	pushq %rax
-L22309:	movq $0, %rax
-L22310:	popq %rdi
-L22311:	addq %rax, %rdi
-L22312:	movq 0(%rdi), %rax
-L22313:	pushq %rax
-L22314:	movq $1348561266, %rax
-L22315:	movq %rax, %rbx
-L22316:	popq %rdi
-L22317:	popq %rax
-L22318:	cmpq %rbx, %rdi ; je L22304
-L22319:	jmp L22305
-L22320:	pushq %rax
-L22321:	movq 128(%rsp), %rax
-L22322:	pushq %rax
-L22323:	movq $8, %rax
-L22324:	popq %rdi
-L22325:	addq %rax, %rdi
-L22326:	movq 0(%rdi), %rax
-L22327:	pushq %rax
-L22328:	movq $0, %rax
-L22329:	popq %rdi
-L22330:	addq %rax, %rdi
-L22331:	movq 0(%rdi), %rax
-L22332:	movq %rax, 96(%rsp) 
-L22333:	popq %rax
-L22334:	pushq %rax
-L22335:	movq 128(%rsp), %rax
-L22336:	pushq %rax
-L22337:	movq $8, %rax
-L22338:	popq %rdi
-L22339:	addq %rax, %rdi
-L22340:	movq 0(%rdi), %rax
-L22341:	pushq %rax
-L22342:	movq $8, %rax
-L22343:	popq %rdi
-L22344:	addq %rax, %rdi
-L22345:	movq 0(%rdi), %rax
-L22346:	pushq %rax
-L22347:	movq $0, %rax
-L22348:	popq %rdi
-L22349:	addq %rax, %rdi
-L22350:	movq 0(%rdi), %rax
-L22351:	movq %rax, 88(%rsp) 
-L22352:	popq %rax
-L22353:	jmp L22356
-L22354:	jmp L22365
-L22355:	jmp L22402
-L22356:	pushq %rax
-L22357:	movq 184(%rsp), %rax
-L22358:	pushq %rax
-L22359:	movq $129125580895333, %rax
-L22360:	movq %rax, %rbx
-L22361:	popq %rdi
-L22362:	popq %rax
-L22363:	cmpq %rbx, %rdi ; je L22354
-L22364:	jmp L22355
-L22365:	pushq %rax
-L22366:	movq 168(%rsp), %rax
-L22367:	call L20603
-L22368:	movq %rax, 152(%rsp) 
-L22369:	popq %rax
-L22370:	pushq %rax
-L22371:	movq 136(%rsp), %rax
-L22372:	call L20603
-L22373:	movq %rax, 120(%rsp) 
-L22374:	popq %rax
-L22375:	pushq %rax
-L22376:	movq 96(%rsp), %rax
-L22377:	call L20603
-L22378:	movq %rax, 80(%rsp) 
-L22379:	popq %rax
-L22380:	pushq %rax
-L22381:	movq $93941208806501, %rax
-L22382:	pushq %rax
-L22383:	movq 160(%rsp), %rax
-L22384:	pushq %rax
-L22385:	movq 136(%rsp), %rax
-L22386:	pushq %rax
-L22387:	movq 104(%rsp), %rax
-L22388:	pushq %rax
-L22389:	movq $0, %rax
-L22390:	popq %rdi
-L22391:	popq %rdx
-L22392:	popq %rbx
-L22393:	popq %rbp
-L22394:	call L187
-L22395:	movq %rax, 208(%rsp) 
-L22396:	popq %rax
-L22397:	pushq %rax
-L22398:	movq 208(%rsp), %rax
-L22399:	addq $248, %rsp
-L22400:	ret
-L22401:	jmp L22560
-L22402:	jmp L22405
-L22403:	jmp L22414
-L22404:	jmp L22451
-L22405:	pushq %rax
-L22406:	movq 184(%rsp), %rax
-L22407:	pushq %rax
-L22408:	movq $26982, %rax
-L22409:	movq %rax, %rbx
-L22410:	popq %rdi
-L22411:	popq %rax
-L22412:	cmpq %rbx, %rdi ; je L22403
-L22413:	jmp L22404
-L22414:	pushq %rax
-L22415:	movq 168(%rsp), %rax
-L22416:	call L21279
-L22417:	movq %rax, 112(%rsp) 
-L22418:	popq %rax
-L22419:	pushq %rax
-L22420:	movq 136(%rsp), %rax
-L22421:	call L21826
-L22422:	movq %rax, 104(%rsp) 
-L22423:	popq %rax
-L22424:	pushq %rax
-L22425:	movq 96(%rsp), %rax
-L22426:	call L21826
-L22427:	movq %rax, 72(%rsp) 
-L22428:	popq %rax
-L22429:	pushq %rax
-L22430:	movq $18790, %rax
-L22431:	pushq %rax
-L22432:	movq 120(%rsp), %rax
-L22433:	pushq %rax
-L22434:	movq 120(%rsp), %rax
-L22435:	pushq %rax
-L22436:	movq 96(%rsp), %rax
-L22437:	pushq %rax
-L22438:	movq $0, %rax
-L22439:	popq %rdi
-L22440:	popq %rdx
-L22441:	popq %rbx
-L22442:	popq %rbp
-L22443:	call L187
-L22444:	movq %rax, 208(%rsp) 
-L22445:	popq %rax
-L22446:	pushq %rax
-L22447:	movq 208(%rsp), %rax
-L22448:	addq $248, %rsp
-L22449:	ret
-L22450:	jmp L22560
-L22451:	jmp L22454
-L22452:	jmp L22463
-L22453:	jmp L22505
-L22454:	pushq %rax
-L22455:	movq 184(%rsp), %rax
-L22456:	pushq %rax
-L22457:	movq $1667329132, %rax
-L22458:	movq %rax, %rbx
-L22459:	popq %rdi
-L22460:	popq %rax
-L22461:	cmpq %rbx, %rdi ; je L22452
-L22462:	jmp L22453
-L22463:	pushq %rax
-L22464:	movq 168(%rsp), %rax
-L22465:	call L19550
-L22466:	movq %rax, 144(%rsp) 
-L22467:	popq %rax
-L22468:	pushq %rax
-L22469:	movq 136(%rsp), %rax
-L22470:	call L19550
-L22471:	movq %rax, 64(%rsp) 
-L22472:	popq %rax
-L22473:	pushq %rax
-L22474:	movq 96(%rsp), %rax
-L22475:	call L20415
-L22476:	movq %rax, 56(%rsp) 
-L22477:	popq %rax
-L22478:	pushq %rax
-L22479:	movq 56(%rsp), %rax
-L22480:	call L21161
-L22481:	movq %rax, 80(%rsp) 
-L22482:	popq %rax
-L22483:	pushq %rax
-L22484:	movq $1130458220, %rax
-L22485:	pushq %rax
-L22486:	movq 152(%rsp), %rax
-L22487:	pushq %rax
-L22488:	movq 80(%rsp), %rax
-L22489:	pushq %rax
-L22490:	movq 104(%rsp), %rax
-L22491:	pushq %rax
-L22492:	movq $0, %rax
-L22493:	popq %rdi
-L22494:	popq %rdx
-L22495:	popq %rbx
-L22496:	popq %rbp
-L22497:	call L187
-L22498:	movq %rax, 208(%rsp) 
-L22499:	popq %rax
-L22500:	pushq %rax
-L22501:	movq 208(%rsp), %rax
-L22502:	addq $248, %rsp
-L22503:	ret
-L22504:	jmp L22560
-L22505:	pushq %rax
-L22506:	movq 240(%rsp), %rax
-L22507:	call L19550
-L22508:	movq %rax, 48(%rsp) 
-L22509:	popq %rax
-L22510:	pushq %rax
-L22511:	movq 168(%rsp), %rax
-L22512:	call L19550
-L22513:	movq %rax, 144(%rsp) 
-L22514:	popq %rax
-L22515:	pushq %rax
-L22516:	movq $1348561266, %rax
-L22517:	pushq %rax
-L22518:	movq 144(%rsp), %rax
-L22519:	pushq %rax
-L22520:	movq 112(%rsp), %rax
-L22521:	pushq %rax
-L22522:	movq $0, %rax
-L22523:	popq %rdi
-L22524:	popq %rdx
-L22525:	popq %rbx
-L22526:	call L158
-L22527:	movq %rax, 40(%rsp) 
-L22528:	popq %rax
-L22529:	pushq %rax
-L22530:	movq 40(%rsp), %rax
-L22531:	call L20415
-L22532:	movq %rax, 32(%rsp) 
-L22533:	popq %rax
-L22534:	pushq %rax
-L22535:	movq 32(%rsp), %rax
-L22536:	call L21161
-L22537:	movq %rax, 24(%rsp) 
-L22538:	popq %rax
-L22539:	pushq %rax
-L22540:	movq $1130458220, %rax
-L22541:	pushq %rax
-L22542:	movq 56(%rsp), %rax
-L22543:	pushq %rax
-L22544:	movq 160(%rsp), %rax
-L22545:	pushq %rax
-L22546:	movq 48(%rsp), %rax
-L22547:	pushq %rax
-L22548:	movq $0, %rax
-L22549:	popq %rdi
-L22550:	popq %rdx
-L22551:	popq %rbx
-L22552:	popq %rbp
-L22553:	call L187
-L22554:	movq %rax, 208(%rsp) 
-L22555:	popq %rax
-L22556:	pushq %rax
-L22557:	movq 208(%rsp), %rax
-L22558:	addq $248, %rsp
-L22559:	ret
-L22560:	jmp L22638
-L22561:	jmp L22564
-L22562:	jmp L22578
-L22563:	jmp L22634
-L22564:	pushq %rax
-L22565:	movq 128(%rsp), %rax
-L22566:	pushq %rax
-L22567:	movq $0, %rax
-L22568:	popq %rdi
-L22569:	addq %rax, %rdi
-L22570:	movq 0(%rdi), %rax
-L22571:	pushq %rax
-L22572:	movq $5141869, %rax
-L22573:	movq %rax, %rbx
-L22574:	popq %rdi
-L22575:	popq %rax
-L22576:	cmpq %rbx, %rdi ; je L22562
-L22577:	jmp L22563
-L22578:	pushq %rax
-L22579:	movq 128(%rsp), %rax
-L22580:	pushq %rax
-L22581:	movq $8, %rax
-L22582:	popq %rdi
-L22583:	addq %rax, %rdi
-L22584:	movq 0(%rdi), %rax
-L22585:	pushq %rax
-L22586:	movq $0, %rax
-L22587:	popq %rdi
-L22588:	addq %rax, %rdi
-L22589:	movq 0(%rdi), %rax
-L22590:	movq %rax, 16(%rsp) 
-L22591:	popq %rax
-L22592:	pushq %rax
-L22593:	movq 240(%rsp), %rax
-L22594:	call L19550
-L22595:	movq %rax, 48(%rsp) 
-L22596:	popq %rax
-L22597:	pushq %rax
-L22598:	movq 168(%rsp), %rax
-L22599:	call L19550
-L22600:	movq %rax, 144(%rsp) 
-L22601:	popq %rax
-L22602:	pushq %rax
-L22603:	movq 136(%rsp), %rax
-L22604:	call L20415
-L22605:	movq %rax, 8(%rsp) 
-L22606:	popq %rax
-L22607:	pushq %rax
-L22608:	movq 8(%rsp), %rax
-L22609:	call L21161
-L22610:	movq %rax, 120(%rsp) 
-L22611:	popq %rax
-L22612:	pushq %rax
-L22613:	movq $1130458220, %rax
-L22614:	pushq %rax
-L22615:	movq 56(%rsp), %rax
-L22616:	pushq %rax
-L22617:	movq 160(%rsp), %rax
-L22618:	pushq %rax
-L22619:	movq 144(%rsp), %rax
-L22620:	pushq %rax
-L22621:	movq $0, %rax
-L22622:	popq %rdi
-L22623:	popq %rdx
-L22624:	popq %rbx
-L22625:	popq %rbp
-L22626:	call L187
-L22627:	movq %rax, 208(%rsp) 
-L22628:	popq %rax
-L22629:	pushq %rax
-L22630:	movq 208(%rsp), %rax
-L22631:	addq $248, %rsp
-L22632:	ret
-L22633:	jmp L22638
-L22634:	pushq %rax
-L22635:	movq $0, %rax
-L22636:	addq $248, %rsp
-L22637:	ret
-L22638:	jmp L22691
-L22639:	jmp L22642
-L22640:	jmp L22656
-L22641:	jmp L22687
-L22642:	pushq %rax
-L22643:	movq 160(%rsp), %rax
-L22644:	pushq %rax
-L22645:	movq $0, %rax
-L22646:	popq %rdi
-L22647:	addq %rax, %rdi
-L22648:	movq 0(%rdi), %rax
-L22649:	pushq %rax
-L22650:	movq $5141869, %rax
-L22651:	movq %rax, %rbx
-L22652:	popq %rdi
-L22653:	popq %rax
-L22654:	cmpq %rbx, %rdi ; je L22640
-L22655:	jmp L22641
-L22656:	pushq %rax
-L22657:	movq 160(%rsp), %rax
-L22658:	pushq %rax
-L22659:	movq $8, %rax
-L22660:	popq %rdi
-L22661:	addq %rax, %rdi
-L22662:	movq 0(%rdi), %rax
-L22663:	pushq %rax
-L22664:	movq $0, %rax
-L22665:	popq %rdi
-L22666:	addq %rax, %rdi
-L22667:	movq 0(%rdi), %rax
-L22668:	movq %rax, 16(%rsp) 
-L22669:	popq %rax
-L22670:	pushq %rax
-L22671:	movq $1399548272, %rax
-L22672:	pushq %rax
-L22673:	movq $0, %rax
-L22674:	popq %rdi
-L22675:	call L97
-L22676:	movq %rax, 208(%rsp) 
-L22677:	popq %rax
-L22678:	pushq %rax
-L22679:	movq 208(%rsp), %rax
-L22680:	movq %rax, 176(%rsp) 
-L22681:	popq %rax
-L22682:	pushq %rax
-L22683:	movq 176(%rsp), %rax
-L22684:	addq $248, %rsp
-L22685:	ret
-L22686:	jmp L22691
-L22687:	pushq %rax
-L22688:	movq $0, %rax
-L22689:	addq $248, %rsp
-L22690:	ret
-L22691:	jmp L22744
-L22692:	jmp L22695
-L22693:	jmp L22709
-L22694:	jmp L22740
-L22695:	pushq %rax
-L22696:	movq 232(%rsp), %rax
-L22697:	pushq %rax
-L22698:	movq $0, %rax
-L22699:	popq %rdi
-L22700:	addq %rax, %rdi
-L22701:	movq 0(%rdi), %rax
-L22702:	pushq %rax
-L22703:	movq $5141869, %rax
-L22704:	movq %rax, %rbx
-L22705:	popq %rdi
-L22706:	popq %rax
-L22707:	cmpq %rbx, %rdi ; je L22693
-L22708:	jmp L22694
-L22709:	pushq %rax
-L22710:	movq 232(%rsp), %rax
-L22711:	pushq %rax
-L22712:	movq $8, %rax
-L22713:	popq %rdi
-L22714:	addq %rax, %rdi
-L22715:	movq 0(%rdi), %rax
-L22716:	pushq %rax
-L22717:	movq $0, %rax
-L22718:	popq %rdi
-L22719:	addq %rax, %rdi
-L22720:	movq 0(%rdi), %rax
-L22721:	movq %rax, 16(%rsp) 
-L22722:	popq %rax
-L22723:	pushq %rax
-L22724:	movq $1399548272, %rax
-L22725:	pushq %rax
-L22726:	movq $0, %rax
-L22727:	popq %rdi
-L22728:	call L97
-L22729:	movq %rax, 208(%rsp) 
-L22730:	popq %rax
-L22731:	pushq %rax
-L22732:	movq 208(%rsp), %rax
-L22733:	movq %rax, 176(%rsp) 
-L22734:	popq %rax
-L22735:	pushq %rax
-L22736:	movq 176(%rsp), %rax
-L22737:	addq $248, %rsp
-L22738:	ret
-L22739:	jmp L22744
-L22740:	pushq %rax
-L22741:	movq $0, %rax
-L22742:	addq $248, %rsp
-L22743:	ret
-L22744:	jmp L22795
-L22745:	jmp L22748
-L22746:	jmp L22761
-L22747:	jmp L22791
-L22748:	pushq %rax
-L22749:	pushq %rax
-L22750:	movq $0, %rax
-L22751:	popq %rdi
-L22752:	addq %rax, %rdi
-L22753:	movq 0(%rdi), %rax
-L22754:	pushq %rax
-L22755:	movq $5141869, %rax
-L22756:	movq %rax, %rbx
-L22757:	popq %rdi
-L22758:	popq %rax
-L22759:	cmpq %rbx, %rdi ; je L22746
-L22760:	jmp L22747
-L22761:	pushq %rax
-L22762:	pushq %rax
-L22763:	movq $8, %rax
-L22764:	popq %rdi
-L22765:	addq %rax, %rdi
-L22766:	movq 0(%rdi), %rax
-L22767:	pushq %rax
-L22768:	movq $0, %rax
-L22769:	popq %rdi
-L22770:	addq %rax, %rdi
-L22771:	movq 0(%rdi), %rax
-L22772:	movq %rax, 184(%rsp) 
-L22773:	popq %rax
-L22774:	pushq %rax
-L22775:	movq $1399548272, %rax
-L22776:	pushq %rax
-L22777:	movq $0, %rax
-L22778:	popq %rdi
-L22779:	call L97
-L22780:	movq %rax, 208(%rsp) 
-L22781:	popq %rax
-L22782:	pushq %rax
-L22783:	movq 208(%rsp), %rax
-L22784:	movq %rax, 176(%rsp) 
-L22785:	popq %rax
-L22786:	pushq %rax
-L22787:	movq 176(%rsp), %rax
-L22788:	addq $248, %rsp
-L22789:	ret
-L22790:	jmp L22795
-L22791:	pushq %rax
-L22792:	movq $0, %rax
-L22793:	addq $248, %rsp
-L22794:	ret
-L22795:	ret
-L22796:	
+L21829:	subq $240, %rsp
+L21830:	jmp L21833
+L21831:	jmp L21846
+L21832:	jmp L22748
+L21833:	pushq %rax
+L21834:	pushq %rax
+L21835:	movq $0, %rax
+L21836:	popq %rdi
+L21837:	addq %rax, %rdi
+L21838:	movq 0(%rdi), %rax
+L21839:	pushq %rax
+L21840:	movq $1348561266, %rax
+L21841:	movq %rax, %rbx
+L21842:	popq %rdi
+L21843:	popq %rax
+L21844:	cmpq %rbx, %rdi ; je L21831
+L21845:	jmp L21832
+L21846:	pushq %rax
+L21847:	pushq %rax
+L21848:	movq $8, %rax
+L21849:	popq %rdi
+L21850:	addq %rax, %rdi
+L21851:	movq 0(%rdi), %rax
+L21852:	pushq %rax
+L21853:	movq $0, %rax
+L21854:	popq %rdi
+L21855:	addq %rax, %rdi
+L21856:	movq 0(%rdi), %rax
+L21857:	movq %rax, 240(%rsp) 
+L21858:	popq %rax
+L21859:	pushq %rax
+L21860:	pushq %rax
+L21861:	movq $8, %rax
+L21862:	popq %rdi
+L21863:	addq %rax, %rdi
+L21864:	movq 0(%rdi), %rax
+L21865:	pushq %rax
+L21866:	movq $8, %rax
+L21867:	popq %rdi
+L21868:	addq %rax, %rdi
+L21869:	movq 0(%rdi), %rax
+L21870:	pushq %rax
+L21871:	movq $0, %rax
+L21872:	popq %rdi
+L21873:	addq %rax, %rdi
+L21874:	movq 0(%rdi), %rax
+L21875:	movq %rax, 232(%rsp) 
+L21876:	popq %rax
+L21877:	pushq %rax
+L21878:	movq 240(%rsp), %rax
+L21879:	call L19910
+L21880:	movq %rax, 224(%rsp) 
+L21881:	popq %rax
+L21882:	jmp L21885
+L21883:	jmp L21894
+L21884:	jmp L21950
+L21885:	pushq %rax
+L21886:	movq 224(%rsp), %rax
+L21887:	pushq %rax
+L21888:	movq $1, %rax
+L21889:	movq %rax, %rbx
+L21890:	popq %rdi
+L21891:	popq %rax
+L21892:	cmpq %rbx, %rdi ; je L21883
+L21893:	jmp L21884
+L21894:	pushq %rax
+L21895:	movq 232(%rsp), %rax
+L21896:	call L19809
+L21897:	movq %rax, 216(%rsp) 
+L21898:	popq %rax
+L21899:	jmp L21902
+L21900:	jmp L21911
+L21901:	jmp L21921
+L21902:	pushq %rax
+L21903:	movq 216(%rsp), %rax
+L21904:	pushq %rax
+L21905:	movq $1, %rax
+L21906:	movq %rax, %rbx
+L21907:	popq %rdi
+L21908:	popq %rax
+L21909:	cmpq %rbx, %rdi ; je L21900
+L21910:	jmp L21901
+L21911:	pushq %rax
+L21912:	movq 240(%rsp), %rax
+L21913:	call L21829
+L21914:	movq %rax, 208(%rsp) 
+L21915:	popq %rax
+L21916:	pushq %rax
+L21917:	movq 208(%rsp), %rax
+L21918:	addq $248, %rsp
+L21919:	ret
+L21920:	jmp L21949
+L21921:	pushq %rax
+L21922:	movq 240(%rsp), %rax
+L21923:	call L21829
+L21924:	movq %rax, 200(%rsp) 
+L21925:	popq %rax
+L21926:	pushq %rax
+L21927:	movq 232(%rsp), %rax
+L21928:	call L21829
+L21929:	movq %rax, 192(%rsp) 
+L21930:	popq %rax
+L21931:	pushq %rax
+L21932:	movq $5465457, %rax
+L21933:	pushq %rax
+L21934:	movq 208(%rsp), %rax
+L21935:	pushq %rax
+L21936:	movq 208(%rsp), %rax
+L21937:	pushq %rax
+L21938:	movq $0, %rax
+L21939:	popq %rdi
+L21940:	popq %rdx
+L21941:	popq %rbx
+L21942:	call L158
+L21943:	movq %rax, 208(%rsp) 
+L21944:	popq %rax
+L21945:	pushq %rax
+L21946:	movq 208(%rsp), %rax
+L21947:	addq $248, %rsp
+L21948:	ret
+L21949:	jmp L22747
+L21950:	pushq %rax
+L21951:	movq 240(%rsp), %rax
+L21952:	call L19553
+L21953:	movq %rax, 184(%rsp) 
+L21954:	popq %rax
+L21955:	jmp L21958
+L21956:	jmp L21967
+L21957:	jmp L21984
+L21958:	pushq %rax
+L21959:	movq 184(%rsp), %rax
+L21960:	pushq %rax
+L21961:	movq $418263298676, %rax
+L21962:	movq %rax, %rbx
+L21963:	popq %rdi
+L21964:	popq %rax
+L21965:	cmpq %rbx, %rdi ; je L21956
+L21966:	jmp L21957
+L21967:	pushq %rax
+L21968:	movq $280824345204, %rax
+L21969:	pushq %rax
+L21970:	movq $0, %rax
+L21971:	popq %rdi
+L21972:	call L97
+L21973:	movq %rax, 208(%rsp) 
+L21974:	popq %rax
+L21975:	pushq %rax
+L21976:	movq 208(%rsp), %rax
+L21977:	movq %rax, 176(%rsp) 
+L21978:	popq %rax
+L21979:	pushq %rax
+L21980:	movq 176(%rsp), %rax
+L21981:	addq $248, %rsp
+L21982:	ret
+L21983:	jmp L22747
+L21984:	jmp L21987
+L21985:	jmp L22001
+L21986:	jmp L22695
+L21987:	pushq %rax
+L21988:	movq 232(%rsp), %rax
+L21989:	pushq %rax
+L21990:	movq $0, %rax
+L21991:	popq %rdi
+L21992:	addq %rax, %rdi
+L21993:	movq 0(%rdi), %rax
+L21994:	pushq %rax
+L21995:	movq $1348561266, %rax
+L21996:	movq %rax, %rbx
+L21997:	popq %rdi
+L21998:	popq %rax
+L21999:	cmpq %rbx, %rdi ; je L21985
+L22000:	jmp L21986
+L22001:	pushq %rax
+L22002:	movq 232(%rsp), %rax
+L22003:	pushq %rax
+L22004:	movq $8, %rax
+L22005:	popq %rdi
+L22006:	addq %rax, %rdi
+L22007:	movq 0(%rdi), %rax
+L22008:	pushq %rax
+L22009:	movq $0, %rax
+L22010:	popq %rdi
+L22011:	addq %rax, %rdi
+L22012:	movq 0(%rdi), %rax
+L22013:	movq %rax, 168(%rsp) 
+L22014:	popq %rax
+L22015:	pushq %rax
+L22016:	movq 232(%rsp), %rax
+L22017:	pushq %rax
+L22018:	movq $8, %rax
+L22019:	popq %rdi
+L22020:	addq %rax, %rdi
+L22021:	movq 0(%rdi), %rax
+L22022:	pushq %rax
+L22023:	movq $8, %rax
+L22024:	popq %rdi
+L22025:	addq %rax, %rdi
+L22026:	movq 0(%rdi), %rax
+L22027:	pushq %rax
+L22028:	movq $0, %rax
+L22029:	popq %rdi
+L22030:	addq %rax, %rdi
+L22031:	movq 0(%rdi), %rax
+L22032:	movq %rax, 160(%rsp) 
+L22033:	popq %rax
+L22034:	jmp L22037
+L22035:	jmp L22046
+L22036:	jmp L22067
+L22037:	pushq %rax
+L22038:	movq 184(%rsp), %rax
+L22039:	pushq %rax
+L22040:	movq $125780071117422, %rax
+L22041:	movq %rax, %rbx
+L22042:	popq %rdi
+L22043:	popq %rax
+L22044:	cmpq %rbx, %rdi ; je L22035
+L22045:	jmp L22036
+L22046:	pushq %rax
+L22047:	movq 168(%rsp), %rax
+L22048:	call L20606
+L22049:	movq %rax, 152(%rsp) 
+L22050:	popq %rax
+L22051:	pushq %rax
+L22052:	movq $90595699028590, %rax
+L22053:	pushq %rax
+L22054:	movq 160(%rsp), %rax
+L22055:	pushq %rax
+L22056:	movq $0, %rax
+L22057:	popq %rdi
+L22058:	popq %rdx
+L22059:	call L133
+L22060:	movq %rax, 208(%rsp) 
+L22061:	popq %rax
+L22062:	pushq %rax
+L22063:	movq 208(%rsp), %rax
+L22064:	addq $248, %rsp
+L22065:	ret
+L22066:	jmp L22694
+L22067:	jmp L22070
+L22068:	jmp L22079
+L22069:	jmp L22100
+L22070:	pushq %rax
+L22071:	movq 184(%rsp), %rax
+L22072:	pushq %rax
+L22073:	movq $29103473159594354, %rax
+L22074:	movq %rax, %rbx
+L22075:	popq %rdi
+L22076:	popq %rax
+L22077:	cmpq %rbx, %rdi ; je L22068
+L22078:	jmp L22069
+L22079:	pushq %rax
+L22080:	movq 168(%rsp), %rax
+L22081:	call L19553
+L22082:	movq %rax, 144(%rsp) 
+L22083:	popq %rax
+L22084:	pushq %rax
+L22085:	movq $20096273367982450, %rax
+L22086:	pushq %rax
+L22087:	movq 152(%rsp), %rax
+L22088:	pushq %rax
+L22089:	movq $0, %rax
+L22090:	popq %rdi
+L22091:	popq %rdx
+L22092:	call L133
+L22093:	movq %rax, 208(%rsp) 
+L22094:	popq %rax
+L22095:	pushq %rax
+L22096:	movq 208(%rsp), %rax
+L22097:	addq $248, %rsp
+L22098:	ret
+L22099:	jmp L22694
+L22100:	jmp L22103
+L22101:	jmp L22112
+L22102:	jmp L22133
+L22103:	pushq %rax
+L22104:	movq 184(%rsp), %rax
+L22105:	pushq %rax
+L22106:	movq $31654340136034674, %rax
+L22107:	movq %rax, %rbx
+L22108:	popq %rdi
+L22109:	popq %rax
+L22110:	cmpq %rbx, %rdi ; je L22101
+L22111:	jmp L22102
+L22112:	pushq %rax
+L22113:	movq 168(%rsp), %rax
+L22114:	call L20606
+L22115:	movq %rax, 152(%rsp) 
+L22116:	popq %rax
+L22117:	pushq %rax
+L22118:	movq $22647140344422770, %rax
+L22119:	pushq %rax
+L22120:	movq 160(%rsp), %rax
+L22121:	pushq %rax
+L22122:	movq $0, %rax
+L22123:	popq %rdi
+L22124:	popq %rdx
+L22125:	call L133
+L22126:	movq %rax, 208(%rsp) 
+L22127:	popq %rax
+L22128:	pushq %rax
+L22129:	movq 208(%rsp), %rax
+L22130:	addq $248, %rsp
+L22131:	ret
+L22132:	jmp L22694
+L22133:	jmp L22136
+L22134:	jmp L22150
+L22135:	jmp L22642
+L22136:	pushq %rax
+L22137:	movq 160(%rsp), %rax
+L22138:	pushq %rax
+L22139:	movq $0, %rax
+L22140:	popq %rdi
+L22141:	addq %rax, %rdi
+L22142:	movq 0(%rdi), %rax
+L22143:	pushq %rax
+L22144:	movq $1348561266, %rax
+L22145:	movq %rax, %rbx
+L22146:	popq %rdi
+L22147:	popq %rax
+L22148:	cmpq %rbx, %rdi ; je L22134
+L22149:	jmp L22135
+L22150:	pushq %rax
+L22151:	movq 160(%rsp), %rax
+L22152:	pushq %rax
+L22153:	movq $8, %rax
+L22154:	popq %rdi
+L22155:	addq %rax, %rdi
+L22156:	movq 0(%rdi), %rax
+L22157:	pushq %rax
+L22158:	movq $0, %rax
+L22159:	popq %rdi
+L22160:	addq %rax, %rdi
+L22161:	movq 0(%rdi), %rax
+L22162:	movq %rax, 136(%rsp) 
+L22163:	popq %rax
+L22164:	pushq %rax
+L22165:	movq 160(%rsp), %rax
+L22166:	pushq %rax
+L22167:	movq $8, %rax
+L22168:	popq %rdi
+L22169:	addq %rax, %rdi
+L22170:	movq 0(%rdi), %rax
+L22171:	pushq %rax
+L22172:	movq $8, %rax
+L22173:	popq %rdi
+L22174:	addq %rax, %rdi
+L22175:	movq 0(%rdi), %rax
+L22176:	pushq %rax
+L22177:	movq $0, %rax
+L22178:	popq %rdi
+L22179:	addq %rax, %rdi
+L22180:	movq 0(%rdi), %rax
+L22181:	movq %rax, 128(%rsp) 
+L22182:	popq %rax
+L22183:	jmp L22186
+L22184:	jmp L22195
+L22185:	jmp L22224
+L22186:	pushq %rax
+L22187:	movq 184(%rsp), %rax
+L22188:	pushq %rax
+L22189:	movq $107148485420910, %rax
+L22190:	movq %rax, %rbx
+L22191:	popq %rdi
+L22192:	popq %rax
+L22193:	cmpq %rbx, %rdi ; je L22184
+L22194:	jmp L22185
+L22195:	pushq %rax
+L22196:	movq 168(%rsp), %rax
+L22197:	call L19553
+L22198:	movq %rax, 144(%rsp) 
+L22199:	popq %rax
+L22200:	pushq %rax
+L22201:	movq 136(%rsp), %rax
+L22202:	call L20606
+L22203:	movq %rax, 120(%rsp) 
+L22204:	popq %rax
+L22205:	pushq %rax
+L22206:	movq $71964113332078, %rax
+L22207:	pushq %rax
+L22208:	movq 152(%rsp), %rax
+L22209:	pushq %rax
+L22210:	movq 136(%rsp), %rax
+L22211:	pushq %rax
+L22212:	movq $0, %rax
+L22213:	popq %rdi
+L22214:	popq %rdx
+L22215:	popq %rbx
+L22216:	call L158
+L22217:	movq %rax, 208(%rsp) 
+L22218:	popq %rax
+L22219:	pushq %rax
+L22220:	movq 208(%rsp), %rax
+L22221:	addq $248, %rsp
+L22222:	ret
+L22223:	jmp L22641
+L22224:	jmp L22227
+L22225:	jmp L22236
+L22226:	jmp L22265
+L22227:	pushq %rax
+L22228:	movq 184(%rsp), %rax
+L22229:	pushq %rax
+L22230:	movq $512852847717, %rax
+L22231:	movq %rax, %rbx
+L22232:	popq %rdi
+L22233:	popq %rax
+L22234:	cmpq %rbx, %rdi ; je L22225
+L22235:	jmp L22226
+L22236:	pushq %rax
+L22237:	movq 168(%rsp), %rax
+L22238:	call L21282
+L22239:	movq %rax, 112(%rsp) 
+L22240:	popq %rax
+L22241:	pushq %rax
+L22242:	movq 136(%rsp), %rax
+L22243:	call L21829
+L22244:	movq %rax, 104(%rsp) 
+L22245:	popq %rax
+L22246:	pushq %rax
+L22247:	movq $375413894245, %rax
+L22248:	pushq %rax
+L22249:	movq 120(%rsp), %rax
+L22250:	pushq %rax
+L22251:	movq 120(%rsp), %rax
+L22252:	pushq %rax
+L22253:	movq $0, %rax
+L22254:	popq %rdi
+L22255:	popq %rdx
+L22256:	popq %rbx
+L22257:	call L158
+L22258:	movq %rax, 208(%rsp) 
+L22259:	popq %rax
+L22260:	pushq %rax
+L22261:	movq 208(%rsp), %rax
+L22262:	addq $248, %rsp
+L22263:	ret
+L22264:	jmp L22641
+L22265:	jmp L22268
+L22266:	jmp L22277
+L22267:	jmp L22306
+L22268:	pushq %rax
+L22269:	movq 184(%rsp), %rax
+L22270:	pushq %rax
+L22271:	movq $418430873443, %rax
+L22272:	movq %rax, %rbx
+L22273:	popq %rdi
+L22274:	popq %rax
+L22275:	cmpq %rbx, %rdi ; je L22266
+L22276:	jmp L22267
+L22277:	pushq %rax
+L22278:	movq 168(%rsp), %rax
+L22279:	call L19553
+L22280:	movq %rax, 144(%rsp) 
+L22281:	popq %rax
+L22282:	pushq %rax
+L22283:	movq 136(%rsp), %rax
+L22284:	call L20606
+L22285:	movq %rax, 120(%rsp) 
+L22286:	popq %rax
+L22287:	pushq %rax
+L22288:	movq $280991919971, %rax
+L22289:	pushq %rax
+L22290:	movq 152(%rsp), %rax
+L22291:	pushq %rax
+L22292:	movq 136(%rsp), %rax
+L22293:	pushq %rax
+L22294:	movq $0, %rax
+L22295:	popq %rdi
+L22296:	popq %rdx
+L22297:	popq %rbx
+L22298:	call L158
+L22299:	movq %rax, 208(%rsp) 
+L22300:	popq %rax
+L22301:	pushq %rax
+L22302:	movq 208(%rsp), %rax
+L22303:	addq $248, %rsp
+L22304:	ret
+L22305:	jmp L22641
+L22306:	jmp L22309
+L22307:	jmp L22323
+L22308:	jmp L22564
+L22309:	pushq %rax
+L22310:	movq 128(%rsp), %rax
+L22311:	pushq %rax
+L22312:	movq $0, %rax
+L22313:	popq %rdi
+L22314:	addq %rax, %rdi
+L22315:	movq 0(%rdi), %rax
+L22316:	pushq %rax
+L22317:	movq $1348561266, %rax
+L22318:	movq %rax, %rbx
+L22319:	popq %rdi
+L22320:	popq %rax
+L22321:	cmpq %rbx, %rdi ; je L22307
+L22322:	jmp L22308
+L22323:	pushq %rax
+L22324:	movq 128(%rsp), %rax
+L22325:	pushq %rax
+L22326:	movq $8, %rax
+L22327:	popq %rdi
+L22328:	addq %rax, %rdi
+L22329:	movq 0(%rdi), %rax
+L22330:	pushq %rax
+L22331:	movq $0, %rax
+L22332:	popq %rdi
+L22333:	addq %rax, %rdi
+L22334:	movq 0(%rdi), %rax
+L22335:	movq %rax, 96(%rsp) 
+L22336:	popq %rax
+L22337:	pushq %rax
+L22338:	movq 128(%rsp), %rax
+L22339:	pushq %rax
+L22340:	movq $8, %rax
+L22341:	popq %rdi
+L22342:	addq %rax, %rdi
+L22343:	movq 0(%rdi), %rax
+L22344:	pushq %rax
+L22345:	movq $8, %rax
+L22346:	popq %rdi
+L22347:	addq %rax, %rdi
+L22348:	movq 0(%rdi), %rax
+L22349:	pushq %rax
+L22350:	movq $0, %rax
+L22351:	popq %rdi
+L22352:	addq %rax, %rdi
+L22353:	movq 0(%rdi), %rax
+L22354:	movq %rax, 88(%rsp) 
+L22355:	popq %rax
+L22356:	jmp L22359
+L22357:	jmp L22368
+L22358:	jmp L22405
+L22359:	pushq %rax
+L22360:	movq 184(%rsp), %rax
+L22361:	pushq %rax
+L22362:	movq $129125580895333, %rax
+L22363:	movq %rax, %rbx
+L22364:	popq %rdi
+L22365:	popq %rax
+L22366:	cmpq %rbx, %rdi ; je L22357
+L22367:	jmp L22358
+L22368:	pushq %rax
+L22369:	movq 168(%rsp), %rax
+L22370:	call L20606
+L22371:	movq %rax, 152(%rsp) 
+L22372:	popq %rax
+L22373:	pushq %rax
+L22374:	movq 136(%rsp), %rax
+L22375:	call L20606
+L22376:	movq %rax, 120(%rsp) 
+L22377:	popq %rax
+L22378:	pushq %rax
+L22379:	movq 96(%rsp), %rax
+L22380:	call L20606
+L22381:	movq %rax, 80(%rsp) 
+L22382:	popq %rax
+L22383:	pushq %rax
+L22384:	movq $93941208806501, %rax
+L22385:	pushq %rax
+L22386:	movq 160(%rsp), %rax
+L22387:	pushq %rax
+L22388:	movq 136(%rsp), %rax
+L22389:	pushq %rax
+L22390:	movq 104(%rsp), %rax
+L22391:	pushq %rax
+L22392:	movq $0, %rax
+L22393:	popq %rdi
+L22394:	popq %rdx
+L22395:	popq %rbx
+L22396:	popq %rbp
+L22397:	call L187
+L22398:	movq %rax, 208(%rsp) 
+L22399:	popq %rax
+L22400:	pushq %rax
+L22401:	movq 208(%rsp), %rax
+L22402:	addq $248, %rsp
+L22403:	ret
+L22404:	jmp L22563
+L22405:	jmp L22408
+L22406:	jmp L22417
+L22407:	jmp L22454
+L22408:	pushq %rax
+L22409:	movq 184(%rsp), %rax
+L22410:	pushq %rax
+L22411:	movq $26982, %rax
+L22412:	movq %rax, %rbx
+L22413:	popq %rdi
+L22414:	popq %rax
+L22415:	cmpq %rbx, %rdi ; je L22406
+L22416:	jmp L22407
+L22417:	pushq %rax
+L22418:	movq 168(%rsp), %rax
+L22419:	call L21282
+L22420:	movq %rax, 112(%rsp) 
+L22421:	popq %rax
+L22422:	pushq %rax
+L22423:	movq 136(%rsp), %rax
+L22424:	call L21829
+L22425:	movq %rax, 104(%rsp) 
+L22426:	popq %rax
+L22427:	pushq %rax
+L22428:	movq 96(%rsp), %rax
+L22429:	call L21829
+L22430:	movq %rax, 72(%rsp) 
+L22431:	popq %rax
+L22432:	pushq %rax
+L22433:	movq $18790, %rax
+L22434:	pushq %rax
+L22435:	movq 120(%rsp), %rax
+L22436:	pushq %rax
+L22437:	movq 120(%rsp), %rax
+L22438:	pushq %rax
+L22439:	movq 96(%rsp), %rax
+L22440:	pushq %rax
+L22441:	movq $0, %rax
+L22442:	popq %rdi
+L22443:	popq %rdx
+L22444:	popq %rbx
+L22445:	popq %rbp
+L22446:	call L187
+L22447:	movq %rax, 208(%rsp) 
+L22448:	popq %rax
+L22449:	pushq %rax
+L22450:	movq 208(%rsp), %rax
+L22451:	addq $248, %rsp
+L22452:	ret
+L22453:	jmp L22563
+L22454:	jmp L22457
+L22455:	jmp L22466
+L22456:	jmp L22508
+L22457:	pushq %rax
+L22458:	movq 184(%rsp), %rax
+L22459:	pushq %rax
+L22460:	movq $1667329132, %rax
+L22461:	movq %rax, %rbx
+L22462:	popq %rdi
+L22463:	popq %rax
+L22464:	cmpq %rbx, %rdi ; je L22455
+L22465:	jmp L22456
+L22466:	pushq %rax
+L22467:	movq 168(%rsp), %rax
+L22468:	call L19553
+L22469:	movq %rax, 144(%rsp) 
+L22470:	popq %rax
+L22471:	pushq %rax
+L22472:	movq 136(%rsp), %rax
+L22473:	call L19553
+L22474:	movq %rax, 64(%rsp) 
+L22475:	popq %rax
+L22476:	pushq %rax
+L22477:	movq 96(%rsp), %rax
+L22478:	call L20418
+L22479:	movq %rax, 56(%rsp) 
+L22480:	popq %rax
+L22481:	pushq %rax
+L22482:	movq 56(%rsp), %rax
+L22483:	call L21164
+L22484:	movq %rax, 80(%rsp) 
+L22485:	popq %rax
+L22486:	pushq %rax
+L22487:	movq $1130458220, %rax
+L22488:	pushq %rax
+L22489:	movq 152(%rsp), %rax
+L22490:	pushq %rax
+L22491:	movq 80(%rsp), %rax
+L22492:	pushq %rax
+L22493:	movq 104(%rsp), %rax
+L22494:	pushq %rax
+L22495:	movq $0, %rax
+L22496:	popq %rdi
+L22497:	popq %rdx
+L22498:	popq %rbx
+L22499:	popq %rbp
+L22500:	call L187
+L22501:	movq %rax, 208(%rsp) 
+L22502:	popq %rax
+L22503:	pushq %rax
+L22504:	movq 208(%rsp), %rax
+L22505:	addq $248, %rsp
+L22506:	ret
+L22507:	jmp L22563
+L22508:	pushq %rax
+L22509:	movq 240(%rsp), %rax
+L22510:	call L19553
+L22511:	movq %rax, 48(%rsp) 
+L22512:	popq %rax
+L22513:	pushq %rax
+L22514:	movq 168(%rsp), %rax
+L22515:	call L19553
+L22516:	movq %rax, 144(%rsp) 
+L22517:	popq %rax
+L22518:	pushq %rax
+L22519:	movq $1348561266, %rax
+L22520:	pushq %rax
+L22521:	movq 144(%rsp), %rax
+L22522:	pushq %rax
+L22523:	movq 112(%rsp), %rax
+L22524:	pushq %rax
+L22525:	movq $0, %rax
+L22526:	popq %rdi
+L22527:	popq %rdx
+L22528:	popq %rbx
+L22529:	call L158
+L22530:	movq %rax, 40(%rsp) 
+L22531:	popq %rax
+L22532:	pushq %rax
+L22533:	movq 40(%rsp), %rax
+L22534:	call L20418
+L22535:	movq %rax, 32(%rsp) 
+L22536:	popq %rax
+L22537:	pushq %rax
+L22538:	movq 32(%rsp), %rax
+L22539:	call L21164
+L22540:	movq %rax, 24(%rsp) 
+L22541:	popq %rax
+L22542:	pushq %rax
+L22543:	movq $1130458220, %rax
+L22544:	pushq %rax
+L22545:	movq 56(%rsp), %rax
+L22546:	pushq %rax
+L22547:	movq 160(%rsp), %rax
+L22548:	pushq %rax
+L22549:	movq 48(%rsp), %rax
+L22550:	pushq %rax
+L22551:	movq $0, %rax
+L22552:	popq %rdi
+L22553:	popq %rdx
+L22554:	popq %rbx
+L22555:	popq %rbp
+L22556:	call L187
+L22557:	movq %rax, 208(%rsp) 
+L22558:	popq %rax
+L22559:	pushq %rax
+L22560:	movq 208(%rsp), %rax
+L22561:	addq $248, %rsp
+L22562:	ret
+L22563:	jmp L22641
+L22564:	jmp L22567
+L22565:	jmp L22581
+L22566:	jmp L22637
+L22567:	pushq %rax
+L22568:	movq 128(%rsp), %rax
+L22569:	pushq %rax
+L22570:	movq $0, %rax
+L22571:	popq %rdi
+L22572:	addq %rax, %rdi
+L22573:	movq 0(%rdi), %rax
+L22574:	pushq %rax
+L22575:	movq $5141869, %rax
+L22576:	movq %rax, %rbx
+L22577:	popq %rdi
+L22578:	popq %rax
+L22579:	cmpq %rbx, %rdi ; je L22565
+L22580:	jmp L22566
+L22581:	pushq %rax
+L22582:	movq 128(%rsp), %rax
+L22583:	pushq %rax
+L22584:	movq $8, %rax
+L22585:	popq %rdi
+L22586:	addq %rax, %rdi
+L22587:	movq 0(%rdi), %rax
+L22588:	pushq %rax
+L22589:	movq $0, %rax
+L22590:	popq %rdi
+L22591:	addq %rax, %rdi
+L22592:	movq 0(%rdi), %rax
+L22593:	movq %rax, 16(%rsp) 
+L22594:	popq %rax
+L22595:	pushq %rax
+L22596:	movq 240(%rsp), %rax
+L22597:	call L19553
+L22598:	movq %rax, 48(%rsp) 
+L22599:	popq %rax
+L22600:	pushq %rax
+L22601:	movq 168(%rsp), %rax
+L22602:	call L19553
+L22603:	movq %rax, 144(%rsp) 
+L22604:	popq %rax
+L22605:	pushq %rax
+L22606:	movq 136(%rsp), %rax
+L22607:	call L20418
+L22608:	movq %rax, 8(%rsp) 
+L22609:	popq %rax
+L22610:	pushq %rax
+L22611:	movq 8(%rsp), %rax
+L22612:	call L21164
+L22613:	movq %rax, 120(%rsp) 
+L22614:	popq %rax
+L22615:	pushq %rax
+L22616:	movq $1130458220, %rax
+L22617:	pushq %rax
+L22618:	movq 56(%rsp), %rax
+L22619:	pushq %rax
+L22620:	movq 160(%rsp), %rax
+L22621:	pushq %rax
+L22622:	movq 144(%rsp), %rax
+L22623:	pushq %rax
+L22624:	movq $0, %rax
+L22625:	popq %rdi
+L22626:	popq %rdx
+L22627:	popq %rbx
+L22628:	popq %rbp
+L22629:	call L187
+L22630:	movq %rax, 208(%rsp) 
+L22631:	popq %rax
+L22632:	pushq %rax
+L22633:	movq 208(%rsp), %rax
+L22634:	addq $248, %rsp
+L22635:	ret
+L22636:	jmp L22641
+L22637:	pushq %rax
+L22638:	movq $0, %rax
+L22639:	addq $248, %rsp
+L22640:	ret
+L22641:	jmp L22694
+L22642:	jmp L22645
+L22643:	jmp L22659
+L22644:	jmp L22690
+L22645:	pushq %rax
+L22646:	movq 160(%rsp), %rax
+L22647:	pushq %rax
+L22648:	movq $0, %rax
+L22649:	popq %rdi
+L22650:	addq %rax, %rdi
+L22651:	movq 0(%rdi), %rax
+L22652:	pushq %rax
+L22653:	movq $5141869, %rax
+L22654:	movq %rax, %rbx
+L22655:	popq %rdi
+L22656:	popq %rax
+L22657:	cmpq %rbx, %rdi ; je L22643
+L22658:	jmp L22644
+L22659:	pushq %rax
+L22660:	movq 160(%rsp), %rax
+L22661:	pushq %rax
+L22662:	movq $8, %rax
+L22663:	popq %rdi
+L22664:	addq %rax, %rdi
+L22665:	movq 0(%rdi), %rax
+L22666:	pushq %rax
+L22667:	movq $0, %rax
+L22668:	popq %rdi
+L22669:	addq %rax, %rdi
+L22670:	movq 0(%rdi), %rax
+L22671:	movq %rax, 16(%rsp) 
+L22672:	popq %rax
+L22673:	pushq %rax
+L22674:	movq $1399548272, %rax
+L22675:	pushq %rax
+L22676:	movq $0, %rax
+L22677:	popq %rdi
+L22678:	call L97
+L22679:	movq %rax, 208(%rsp) 
+L22680:	popq %rax
+L22681:	pushq %rax
+L22682:	movq 208(%rsp), %rax
+L22683:	movq %rax, 176(%rsp) 
+L22684:	popq %rax
+L22685:	pushq %rax
+L22686:	movq 176(%rsp), %rax
+L22687:	addq $248, %rsp
+L22688:	ret
+L22689:	jmp L22694
+L22690:	pushq %rax
+L22691:	movq $0, %rax
+L22692:	addq $248, %rsp
+L22693:	ret
+L22694:	jmp L22747
+L22695:	jmp L22698
+L22696:	jmp L22712
+L22697:	jmp L22743
+L22698:	pushq %rax
+L22699:	movq 232(%rsp), %rax
+L22700:	pushq %rax
+L22701:	movq $0, %rax
+L22702:	popq %rdi
+L22703:	addq %rax, %rdi
+L22704:	movq 0(%rdi), %rax
+L22705:	pushq %rax
+L22706:	movq $5141869, %rax
+L22707:	movq %rax, %rbx
+L22708:	popq %rdi
+L22709:	popq %rax
+L22710:	cmpq %rbx, %rdi ; je L22696
+L22711:	jmp L22697
+L22712:	pushq %rax
+L22713:	movq 232(%rsp), %rax
+L22714:	pushq %rax
+L22715:	movq $8, %rax
+L22716:	popq %rdi
+L22717:	addq %rax, %rdi
+L22718:	movq 0(%rdi), %rax
+L22719:	pushq %rax
+L22720:	movq $0, %rax
+L22721:	popq %rdi
+L22722:	addq %rax, %rdi
+L22723:	movq 0(%rdi), %rax
+L22724:	movq %rax, 16(%rsp) 
+L22725:	popq %rax
+L22726:	pushq %rax
+L22727:	movq $1399548272, %rax
+L22728:	pushq %rax
+L22729:	movq $0, %rax
+L22730:	popq %rdi
+L22731:	call L97
+L22732:	movq %rax, 208(%rsp) 
+L22733:	popq %rax
+L22734:	pushq %rax
+L22735:	movq 208(%rsp), %rax
+L22736:	movq %rax, 176(%rsp) 
+L22737:	popq %rax
+L22738:	pushq %rax
+L22739:	movq 176(%rsp), %rax
+L22740:	addq $248, %rsp
+L22741:	ret
+L22742:	jmp L22747
+L22743:	pushq %rax
+L22744:	movq $0, %rax
+L22745:	addq $248, %rsp
+L22746:	ret
+L22747:	jmp L22798
+L22748:	jmp L22751
+L22749:	jmp L22764
+L22750:	jmp L22794
+L22751:	pushq %rax
+L22752:	pushq %rax
+L22753:	movq $0, %rax
+L22754:	popq %rdi
+L22755:	addq %rax, %rdi
+L22756:	movq 0(%rdi), %rax
+L22757:	pushq %rax
+L22758:	movq $5141869, %rax
+L22759:	movq %rax, %rbx
+L22760:	popq %rdi
+L22761:	popq %rax
+L22762:	cmpq %rbx, %rdi ; je L22749
+L22763:	jmp L22750
+L22764:	pushq %rax
+L22765:	pushq %rax
+L22766:	movq $8, %rax
+L22767:	popq %rdi
+L22768:	addq %rax, %rdi
+L22769:	movq 0(%rdi), %rax
+L22770:	pushq %rax
+L22771:	movq $0, %rax
+L22772:	popq %rdi
+L22773:	addq %rax, %rdi
+L22774:	movq 0(%rdi), %rax
+L22775:	movq %rax, 184(%rsp) 
+L22776:	popq %rax
+L22777:	pushq %rax
+L22778:	movq $1399548272, %rax
+L22779:	pushq %rax
+L22780:	movq $0, %rax
+L22781:	popq %rdi
+L22782:	call L97
+L22783:	movq %rax, 208(%rsp) 
+L22784:	popq %rax
+L22785:	pushq %rax
+L22786:	movq 208(%rsp), %rax
+L22787:	movq %rax, 176(%rsp) 
+L22788:	popq %rax
+L22789:	pushq %rax
+L22790:	movq 176(%rsp), %rax
+L22791:	addq $248, %rsp
+L22792:	ret
+L22793:	jmp L22798
+L22794:	pushq %rax
+L22795:	movq $0, %rax
+L22796:	addq $248, %rsp
+L22797:	ret
+L22798:	ret
+L22799:	
   
   	/* vs2args */
-L22797:	subq $48, %rsp
-L22798:	jmp L22801
-L22799:	jmp L22809
-L22800:	jmp L22818
-L22801:	pushq %rax
-L22802:	pushq %rax
-L22803:	movq $0, %rax
-L22804:	movq %rax, %rbx
-L22805:	popq %rdi
-L22806:	popq %rax
-L22807:	cmpq %rbx, %rdi ; je L22799
-L22808:	jmp L22800
-L22809:	pushq %rax
-L22810:	movq $0, %rax
-L22811:	movq %rax, 48(%rsp) 
-L22812:	popq %rax
-L22813:	pushq %rax
-L22814:	movq 48(%rsp), %rax
-L22815:	addq $56, %rsp
-L22816:	ret
-L22817:	jmp L22856
-L22818:	pushq %rax
-L22819:	pushq %rax
-L22820:	movq $0, %rax
-L22821:	popq %rdi
-L22822:	addq %rax, %rdi
-L22823:	movq 0(%rdi), %rax
-L22824:	movq %rax, 40(%rsp) 
-L22825:	popq %rax
-L22826:	pushq %rax
-L22827:	pushq %rax
-L22828:	movq $8, %rax
-L22829:	popq %rdi
-L22830:	addq %rax, %rdi
-L22831:	movq 0(%rdi), %rax
-L22832:	movq %rax, 32(%rsp) 
-L22833:	popq %rax
-L22834:	pushq %rax
-L22835:	movq 40(%rsp), %rax
-L22836:	call L19550
-L22837:	movq %rax, 24(%rsp) 
-L22838:	popq %rax
-L22839:	pushq %rax
-L22840:	movq 32(%rsp), %rax
-L22841:	call L22797
-L22842:	movq %rax, 16(%rsp) 
-L22843:	popq %rax
-L22844:	pushq %rax
-L22845:	movq 24(%rsp), %rax
-L22846:	pushq %rax
-L22847:	movq 24(%rsp), %rax
-L22848:	popq %rdi
-L22849:	call L97
-L22850:	movq %rax, 8(%rsp) 
-L22851:	popq %rax
-L22852:	pushq %rax
-L22853:	movq 8(%rsp), %rax
-L22854:	addq $56, %rsp
-L22855:	ret
-L22856:	ret
-L22857:	
+L22800:	subq $48, %rsp
+L22801:	jmp L22804
+L22802:	jmp L22812
+L22803:	jmp L22821
+L22804:	pushq %rax
+L22805:	pushq %rax
+L22806:	movq $0, %rax
+L22807:	movq %rax, %rbx
+L22808:	popq %rdi
+L22809:	popq %rax
+L22810:	cmpq %rbx, %rdi ; je L22802
+L22811:	jmp L22803
+L22812:	pushq %rax
+L22813:	movq $0, %rax
+L22814:	movq %rax, 48(%rsp) 
+L22815:	popq %rax
+L22816:	pushq %rax
+L22817:	movq 48(%rsp), %rax
+L22818:	addq $56, %rsp
+L22819:	ret
+L22820:	jmp L22859
+L22821:	pushq %rax
+L22822:	pushq %rax
+L22823:	movq $0, %rax
+L22824:	popq %rdi
+L22825:	addq %rax, %rdi
+L22826:	movq 0(%rdi), %rax
+L22827:	movq %rax, 40(%rsp) 
+L22828:	popq %rax
+L22829:	pushq %rax
+L22830:	pushq %rax
+L22831:	movq $8, %rax
+L22832:	popq %rdi
+L22833:	addq %rax, %rdi
+L22834:	movq 0(%rdi), %rax
+L22835:	movq %rax, 32(%rsp) 
+L22836:	popq %rax
+L22837:	pushq %rax
+L22838:	movq 40(%rsp), %rax
+L22839:	call L19553
+L22840:	movq %rax, 24(%rsp) 
+L22841:	popq %rax
+L22842:	pushq %rax
+L22843:	movq 32(%rsp), %rax
+L22844:	call L22800
+L22845:	movq %rax, 16(%rsp) 
+L22846:	popq %rax
+L22847:	pushq %rax
+L22848:	movq 24(%rsp), %rax
+L22849:	pushq %rax
+L22850:	movq 24(%rsp), %rax
+L22851:	popq %rdi
+L22852:	call L97
+L22853:	movq %rax, 8(%rsp) 
+L22854:	popq %rax
+L22855:	pushq %rax
+L22856:	movq 8(%rsp), %rax
+L22857:	addq $56, %rsp
+L22858:	ret
+L22859:	ret
+L22860:	
   
   	/* v2func */
-L22858:	subq $64, %rsp
-L22859:	pushq %rax
-L22860:	call L19758
-L22861:	movq %rax, 64(%rsp) 
-L22862:	popq %rax
-L22863:	pushq %rax
-L22864:	movq 64(%rsp), %rax
-L22865:	call L19550
-L22866:	movq %rax, 56(%rsp) 
-L22867:	popq %rax
-L22868:	pushq %rax
-L22869:	call L19774
-L22870:	movq %rax, 48(%rsp) 
-L22871:	popq %rax
-L22872:	pushq %rax
-L22873:	movq 48(%rsp), %rax
-L22874:	call L20415
-L22875:	movq %rax, 40(%rsp) 
-L22876:	popq %rax
-L22877:	pushq %rax
-L22878:	movq 40(%rsp), %rax
-L22879:	call L22797
-L22880:	movq %rax, 32(%rsp) 
-L22881:	popq %rax
-L22882:	pushq %rax
-L22883:	call L19790
-L22884:	movq %rax, 24(%rsp) 
-L22885:	popq %rax
-L22886:	pushq %rax
-L22887:	movq 24(%rsp), %rax
-L22888:	call L21826
-L22889:	movq %rax, 16(%rsp) 
-L22890:	popq %rax
-L22891:	pushq %rax
-L22892:	movq $1182101091, %rax
-L22893:	pushq %rax
-L22894:	movq 64(%rsp), %rax
-L22895:	pushq %rax
-L22896:	movq 48(%rsp), %rax
-L22897:	pushq %rax
-L22898:	movq 40(%rsp), %rax
-L22899:	pushq %rax
-L22900:	movq $0, %rax
-L22901:	popq %rdi
-L22902:	popq %rdx
-L22903:	popq %rbx
-L22904:	popq %rbp
-L22905:	call L187
-L22906:	movq %rax, 8(%rsp) 
-L22907:	popq %rax
-L22908:	pushq %rax
-L22909:	movq 8(%rsp), %rax
-L22910:	addq $72, %rsp
-L22911:	ret
-L22912:	ret
-L22913:	
+L22861:	subq $64, %rsp
+L22862:	pushq %rax
+L22863:	call L19761
+L22864:	movq %rax, 64(%rsp) 
+L22865:	popq %rax
+L22866:	pushq %rax
+L22867:	movq 64(%rsp), %rax
+L22868:	call L19553
+L22869:	movq %rax, 56(%rsp) 
+L22870:	popq %rax
+L22871:	pushq %rax
+L22872:	call L19777
+L22873:	movq %rax, 48(%rsp) 
+L22874:	popq %rax
+L22875:	pushq %rax
+L22876:	movq 48(%rsp), %rax
+L22877:	call L20418
+L22878:	movq %rax, 40(%rsp) 
+L22879:	popq %rax
+L22880:	pushq %rax
+L22881:	movq 40(%rsp), %rax
+L22882:	call L22800
+L22883:	movq %rax, 32(%rsp) 
+L22884:	popq %rax
+L22885:	pushq %rax
+L22886:	call L19793
+L22887:	movq %rax, 24(%rsp) 
+L22888:	popq %rax
+L22889:	pushq %rax
+L22890:	movq 24(%rsp), %rax
+L22891:	call L21829
+L22892:	movq %rax, 16(%rsp) 
+L22893:	popq %rax
+L22894:	pushq %rax
+L22895:	movq $1182101091, %rax
+L22896:	pushq %rax
+L22897:	movq 64(%rsp), %rax
+L22898:	pushq %rax
+L22899:	movq 48(%rsp), %rax
+L22900:	pushq %rax
+L22901:	movq 40(%rsp), %rax
+L22902:	pushq %rax
+L22903:	movq $0, %rax
+L22904:	popq %rdi
+L22905:	popq %rdx
+L22906:	popq %rbx
+L22907:	popq %rbp
+L22908:	call L187
+L22909:	movq %rax, 8(%rsp) 
+L22910:	popq %rax
+L22911:	pushq %rax
+L22912:	movq 8(%rsp), %rax
+L22913:	addq $72, %rsp
+L22914:	ret
+L22915:	ret
+L22916:	
   
   	/* v2funcs */
-L22914:	subq $48, %rsp
-L22915:	jmp L22918
-L22916:	jmp L22926
-L22917:	jmp L22935
-L22918:	pushq %rax
-L22919:	pushq %rax
-L22920:	movq $0, %rax
-L22921:	movq %rax, %rbx
-L22922:	popq %rdi
-L22923:	popq %rax
-L22924:	cmpq %rbx, %rdi ; je L22916
-L22925:	jmp L22917
-L22926:	pushq %rax
-L22927:	movq $0, %rax
-L22928:	movq %rax, 48(%rsp) 
-L22929:	popq %rax
-L22930:	pushq %rax
-L22931:	movq 48(%rsp), %rax
-L22932:	addq $56, %rsp
-L22933:	ret
-L22934:	jmp L22973
-L22935:	pushq %rax
-L22936:	pushq %rax
-L22937:	movq $0, %rax
-L22938:	popq %rdi
-L22939:	addq %rax, %rdi
-L22940:	movq 0(%rdi), %rax
-L22941:	movq %rax, 40(%rsp) 
-L22942:	popq %rax
-L22943:	pushq %rax
-L22944:	pushq %rax
-L22945:	movq $8, %rax
-L22946:	popq %rdi
-L22947:	addq %rax, %rdi
-L22948:	movq 0(%rdi), %rax
-L22949:	movq %rax, 32(%rsp) 
-L22950:	popq %rax
-L22951:	pushq %rax
-L22952:	movq 40(%rsp), %rax
-L22953:	call L22858
-L22954:	movq %rax, 24(%rsp) 
-L22955:	popq %rax
-L22956:	pushq %rax
-L22957:	movq 32(%rsp), %rax
-L22958:	call L22914
-L22959:	movq %rax, 16(%rsp) 
-L22960:	popq %rax
-L22961:	pushq %rax
-L22962:	movq 24(%rsp), %rax
-L22963:	pushq %rax
-L22964:	movq 24(%rsp), %rax
-L22965:	popq %rdi
-L22966:	call L97
-L22967:	movq %rax, 8(%rsp) 
-L22968:	popq %rax
-L22969:	pushq %rax
-L22970:	movq 8(%rsp), %rax
-L22971:	addq $56, %rsp
-L22972:	ret
-L22973:	ret
-L22974:	
+L22917:	subq $48, %rsp
+L22918:	jmp L22921
+L22919:	jmp L22929
+L22920:	jmp L22938
+L22921:	pushq %rax
+L22922:	pushq %rax
+L22923:	movq $0, %rax
+L22924:	movq %rax, %rbx
+L22925:	popq %rdi
+L22926:	popq %rax
+L22927:	cmpq %rbx, %rdi ; je L22919
+L22928:	jmp L22920
+L22929:	pushq %rax
+L22930:	movq $0, %rax
+L22931:	movq %rax, 48(%rsp) 
+L22932:	popq %rax
+L22933:	pushq %rax
+L22934:	movq 48(%rsp), %rax
+L22935:	addq $56, %rsp
+L22936:	ret
+L22937:	jmp L22976
+L22938:	pushq %rax
+L22939:	pushq %rax
+L22940:	movq $0, %rax
+L22941:	popq %rdi
+L22942:	addq %rax, %rdi
+L22943:	movq 0(%rdi), %rax
+L22944:	movq %rax, 40(%rsp) 
+L22945:	popq %rax
+L22946:	pushq %rax
+L22947:	pushq %rax
+L22948:	movq $8, %rax
+L22949:	popq %rdi
+L22950:	addq %rax, %rdi
+L22951:	movq 0(%rdi), %rax
+L22952:	movq %rax, 32(%rsp) 
+L22953:	popq %rax
+L22954:	pushq %rax
+L22955:	movq 40(%rsp), %rax
+L22956:	call L22861
+L22957:	movq %rax, 24(%rsp) 
+L22958:	popq %rax
+L22959:	pushq %rax
+L22960:	movq 32(%rsp), %rax
+L22961:	call L22917
+L22962:	movq %rax, 16(%rsp) 
+L22963:	popq %rax
+L22964:	pushq %rax
+L22965:	movq 24(%rsp), %rax
+L22966:	pushq %rax
+L22967:	movq 24(%rsp), %rax
+L22968:	popq %rdi
+L22969:	call L97
+L22970:	movq %rax, 8(%rsp) 
+L22971:	popq %rax
+L22972:	pushq %rax
+L22973:	movq 8(%rsp), %rax
+L22974:	addq $56, %rsp
+L22975:	ret
+L22976:	ret
+L22977:	
   
   	/* vs2prog */
-L22975:	subq $16, %rsp
-L22976:	pushq %rax
-L22977:	call L22914
-L22978:	movq %rax, 16(%rsp) 
-L22979:	popq %rax
-L22980:	pushq %rax
-L22981:	movq $22643820939338093, %rax
-L22982:	pushq %rax
-L22983:	movq 24(%rsp), %rax
-L22984:	pushq %rax
-L22985:	movq $0, %rax
-L22986:	popq %rdi
-L22987:	popq %rdx
-L22988:	call L133
-L22989:	movq %rax, 8(%rsp) 
-L22990:	popq %rax
-L22991:	pushq %rax
-L22992:	movq 8(%rsp), %rax
-L22993:	addq $24, %rsp
-L22994:	ret
-L22995:	ret
-L22996:	
+L22978:	subq $16, %rsp
+L22979:	pushq %rax
+L22980:	call L22917
+L22981:	movq %rax, 16(%rsp) 
+L22982:	popq %rax
+L22983:	pushq %rax
+L22984:	movq $22643820939338093, %rax
+L22985:	pushq %rax
+L22986:	movq 24(%rsp), %rax
+L22987:	pushq %rax
+L22988:	movq $0, %rax
+L22989:	popq %rdi
+L22990:	popq %rdx
+L22991:	call L133
+L22992:	movq %rax, 8(%rsp) 
+L22993:	popq %rax
+L22994:	pushq %rax
+L22995:	movq 8(%rsp), %rax
+L22996:	addq $24, %rsp
+L22997:	ret
+L22998:	ret
+L22999:	
   
   	/* parser */
-L22997:	subq $48, %rsp
-L22998:	pushq %rax
-L22999:	movq $5141869, %rax
-L23000:	pushq %rax
-L23001:	movq $0, %rax
-L23002:	pushq %rax
-L23003:	movq $0, %rax
-L23004:	popq %rdi
-L23005:	popq %rdx
-L23006:	call L133
-L23007:	movq %rax, 40(%rsp) 
-L23008:	popq %rax
-L23009:	pushq %rax
-L23010:	movq $0, %rax
-L23011:	movq %rax, 32(%rsp) 
-L23012:	popq %rax
-L23013:	pushq %rax
-L23014:	pushq %rax
-L23015:	movq 48(%rsp), %rax
+L23000:	subq $48, %rsp
+L23001:	pushq %rax
+L23002:	movq $5141869, %rax
+L23003:	pushq %rax
+L23004:	movq $0, %rax
+L23005:	pushq %rax
+L23006:	movq $0, %rax
+L23007:	popq %rdi
+L23008:	popq %rdx
+L23009:	call L133
+L23010:	movq %rax, 40(%rsp) 
+L23011:	popq %rax
+L23012:	pushq %rax
+L23013:	movq $0, %rax
+L23014:	movq %rax, 32(%rsp) 
+L23015:	popq %rax
 L23016:	pushq %rax
-L23017:	movq 48(%rsp), %rax
-L23018:	popq %rdi
-L23019:	popq %rdx
-L23020:	call L20053
-L23021:	movq %rax, 24(%rsp) 
-L23022:	popq %rax
-L23023:	pushq %rax
-L23024:	movq 24(%rsp), %rax
-L23025:	call L20415
-L23026:	movq %rax, 16(%rsp) 
-L23027:	popq %rax
-L23028:	pushq %rax
-L23029:	movq 16(%rsp), %rax
-L23030:	call L22975
-L23031:	movq %rax, 8(%rsp) 
-L23032:	popq %rax
-L23033:	pushq %rax
-L23034:	movq 8(%rsp), %rax
-L23035:	addq $56, %rsp
-L23036:	ret
-L23037:	ret
-L23038:	
+L23017:	pushq %rax
+L23018:	movq 48(%rsp), %rax
+L23019:	pushq %rax
+L23020:	movq 48(%rsp), %rax
+L23021:	popq %rdi
+L23022:	popq %rdx
+L23023:	call L20056
+L23024:	movq %rax, 24(%rsp) 
+L23025:	popq %rax
+L23026:	pushq %rax
+L23027:	movq 24(%rsp), %rax
+L23028:	call L20418
+L23029:	movq %rax, 16(%rsp) 
+L23030:	popq %rax
+L23031:	pushq %rax
+L23032:	movq 16(%rsp), %rax
+L23033:	call L22978
+L23034:	movq %rax, 8(%rsp) 
+L23035:	popq %rax
+L23036:	pushq %rax
+L23037:	movq 8(%rsp), %rax
+L23038:	addq $56, %rsp
+L23039:	ret
+L23040:	ret
+L23041:	
   
   	/* str2imp */
-L23039:	subq $16, %rsp
-L23040:	pushq %rax
-L23041:	call L19049
-L23042:	movq %rax, 16(%rsp) 
-L23043:	popq %rax
-L23044:	pushq %rax
-L23045:	movq 16(%rsp), %rax
-L23046:	call L22997
-L23047:	movq %rax, 8(%rsp) 
-L23048:	popq %rax
-L23049:	pushq %rax
-L23050:	movq 8(%rsp), %rax
-L23051:	addq $24, %rsp
-L23052:	ret
-L23053:	ret
-L23054:	
+L23042:	subq $16, %rsp
+L23043:	pushq %rax
+L23044:	call L19052
+L23045:	movq %rax, 16(%rsp) 
+L23046:	popq %rax
+L23047:	pushq %rax
+L23048:	movq 16(%rsp), %rax
+L23049:	call L23000
+L23050:	movq %rax, 8(%rsp) 
+L23051:	popq %rax
+L23052:	pushq %rax
+L23053:	movq 8(%rsp), %rax
+L23054:	addq $24, %rsp
+L23055:	ret
+L23056:	ret
+L23057:	
   
   	/* mulnat_8 */
-L23055:	subq $32, %rsp
-L23056:	pushq %rax
-L23057:	pushq %rax
-L23058:	movq 8(%rsp), %rax
-L23059:	popq %rdi
-L23060:	call L23
-L23061:	movq %rax, 24(%rsp) 
-L23062:	popq %rax
-L23063:	pushq %rax
-L23064:	movq 24(%rsp), %rax
-L23065:	pushq %rax
-L23066:	movq 32(%rsp), %rax
-L23067:	popq %rdi
-L23068:	call L23
-L23069:	movq %rax, 16(%rsp) 
-L23070:	popq %rax
-L23071:	pushq %rax
-L23072:	movq 16(%rsp), %rax
-L23073:	pushq %rax
-L23074:	movq 24(%rsp), %rax
-L23075:	popq %rdi
-L23076:	call L23
-L23077:	movq %rax, 8(%rsp) 
-L23078:	popq %rax
-L23079:	pushq %rax
-L23080:	movq 8(%rsp), %rax
-L23081:	addq $40, %rsp
-L23082:	ret
-L23083:	ret
-L23084:	
+L23058:	subq $32, %rsp
+L23059:	pushq %rax
+L23060:	pushq %rax
+L23061:	movq 8(%rsp), %rax
+L23062:	popq %rdi
+L23063:	call L23
+L23064:	movq %rax, 24(%rsp) 
+L23065:	popq %rax
+L23066:	pushq %rax
+L23067:	movq 24(%rsp), %rax
+L23068:	pushq %rax
+L23069:	movq 32(%rsp), %rax
+L23070:	popq %rdi
+L23071:	call L23
+L23072:	movq %rax, 16(%rsp) 
+L23073:	popq %rax
+L23074:	pushq %rax
+L23075:	movq 16(%rsp), %rax
+L23076:	pushq %rax
+L23077:	movq 24(%rsp), %rax
+L23078:	popq %rdi
+L23079:	call L23
+L23080:	movq %rax, 8(%rsp) 
+L23081:	popq %rax
+L23082:	pushq %rax
+L23083:	movq 8(%rsp), %rax
+L23084:	addq $40, %rsp
+L23085:	ret
+L23086:	ret
+L23087:	
   
   	/* mulnat10 */
-L23085:	subq $32, %rsp
-L23086:	pushq %rax
-L23087:	pushq %rax
-L23088:	movq 8(%rsp), %rax
-L23089:	popq %rdi
-L23090:	call L23
-L23091:	movq %rax, 32(%rsp) 
-L23092:	popq %rax
-L23093:	pushq %rax
-L23094:	movq 32(%rsp), %rax
-L23095:	pushq %rax
-L23096:	movq 40(%rsp), %rax
-L23097:	popq %rdi
-L23098:	call L23
-L23099:	movq %rax, 24(%rsp) 
-L23100:	popq %rax
-L23101:	pushq %rax
-L23102:	movq 24(%rsp), %rax
-L23103:	pushq %rax
-L23104:	movq 32(%rsp), %rax
-L23105:	popq %rdi
-L23106:	call L23
-L23107:	movq %rax, 16(%rsp) 
-L23108:	popq %rax
-L23109:	pushq %rax
-L23110:	movq 16(%rsp), %rax
-L23111:	pushq %rax
-L23112:	movq 40(%rsp), %rax
-L23113:	popq %rdi
-L23114:	call L23
-L23115:	movq %rax, 8(%rsp) 
-L23116:	popq %rax
-L23117:	pushq %rax
-L23118:	movq 8(%rsp), %rax
-L23119:	addq $40, %rsp
-L23120:	ret
-L23121:	ret
-L23122:	
+L23088:	subq $32, %rsp
+L23089:	pushq %rax
+L23090:	pushq %rax
+L23091:	movq 8(%rsp), %rax
+L23092:	popq %rdi
+L23093:	call L23
+L23094:	movq %rax, 32(%rsp) 
+L23095:	popq %rax
+L23096:	pushq %rax
+L23097:	movq 32(%rsp), %rax
+L23098:	pushq %rax
+L23099:	movq 40(%rsp), %rax
+L23100:	popq %rdi
+L23101:	call L23
+L23102:	movq %rax, 24(%rsp) 
+L23103:	popq %rax
+L23104:	pushq %rax
+L23105:	movq 24(%rsp), %rax
+L23106:	pushq %rax
+L23107:	movq 32(%rsp), %rax
+L23108:	popq %rdi
+L23109:	call L23
+L23110:	movq %rax, 16(%rsp) 
+L23111:	popq %rax
+L23112:	pushq %rax
+L23113:	movq 16(%rsp), %rax
+L23114:	pushq %rax
+L23115:	movq 40(%rsp), %rax
+L23116:	popq %rdi
+L23117:	call L23
+L23118:	movq %rax, 8(%rsp) 
+L23119:	popq %rax
+L23120:	pushq %rax
+L23121:	movq 8(%rsp), %rax
+L23122:	addq $40, %rsp
+L23123:	ret
+L23124:	ret
+L23125:	
   
   	/* mulN_10 */
-L23123:	subq $32, %rsp
-L23124:	pushq %rax
-L23125:	pushq %rax
-L23126:	movq 8(%rsp), %rax
-L23127:	popq %rdi
-L23128:	call L23
-L23129:	movq %rax, 32(%rsp) 
-L23130:	popq %rax
-L23131:	pushq %rax
-L23132:	movq 32(%rsp), %rax
-L23133:	pushq %rax
-L23134:	movq 40(%rsp), %rax
-L23135:	popq %rdi
-L23136:	call L23
-L23137:	movq %rax, 24(%rsp) 
-L23138:	popq %rax
-L23139:	pushq %rax
-L23140:	movq 24(%rsp), %rax
-L23141:	pushq %rax
-L23142:	movq 32(%rsp), %rax
-L23143:	popq %rdi
-L23144:	call L23
-L23145:	movq %rax, 16(%rsp) 
-L23146:	popq %rax
-L23147:	pushq %rax
-L23148:	movq 16(%rsp), %rax
-L23149:	pushq %rax
-L23150:	movq 40(%rsp), %rax
-L23151:	popq %rdi
-L23152:	call L23
-L23153:	movq %rax, 8(%rsp) 
-L23154:	popq %rax
-L23155:	pushq %rax
-L23156:	movq 8(%rsp), %rax
-L23157:	addq $40, %rsp
-L23158:	ret
-L23159:	ret
-L23160:	
+L23126:	subq $32, %rsp
+L23127:	pushq %rax
+L23128:	pushq %rax
+L23129:	movq 8(%rsp), %rax
+L23130:	popq %rdi
+L23131:	call L23
+L23132:	movq %rax, 32(%rsp) 
+L23133:	popq %rax
+L23134:	pushq %rax
+L23135:	movq 32(%rsp), %rax
+L23136:	pushq %rax
+L23137:	movq 40(%rsp), %rax
+L23138:	popq %rdi
+L23139:	call L23
+L23140:	movq %rax, 24(%rsp) 
+L23141:	popq %rax
+L23142:	pushq %rax
+L23143:	movq 24(%rsp), %rax
+L23144:	pushq %rax
+L23145:	movq 32(%rsp), %rax
+L23146:	popq %rdi
+L23147:	call L23
+L23148:	movq %rax, 16(%rsp) 
+L23149:	popq %rax
+L23150:	pushq %rax
+L23151:	movq 16(%rsp), %rax
+L23152:	pushq %rax
+L23153:	movq 40(%rsp), %rax
+L23154:	popq %rdi
+L23155:	call L23
+L23156:	movq %rax, 8(%rsp) 
+L23157:	popq %rax
+L23158:	pushq %rax
+L23159:	movq 8(%rsp), %rax
+L23160:	addq $40, %rsp
+L23161:	ret
+L23162:	ret
+L23163:	
   
   	/* mulN_256 */
-L23161:	subq $64, %rsp
-L23162:	pushq %rax
-L23163:	pushq %rax
-L23164:	movq 8(%rsp), %rax
-L23165:	popq %rdi
-L23166:	call L23
-L23167:	movq %rax, 64(%rsp) 
-L23168:	popq %rax
-L23169:	pushq %rax
-L23170:	movq 64(%rsp), %rax
-L23171:	pushq %rax
-L23172:	movq 72(%rsp), %rax
-L23173:	popq %rdi
-L23174:	call L23
-L23175:	movq %rax, 56(%rsp) 
-L23176:	popq %rax
-L23177:	pushq %rax
-L23178:	movq 56(%rsp), %rax
-L23179:	pushq %rax
-L23180:	movq 64(%rsp), %rax
-L23181:	popq %rdi
-L23182:	call L23
-L23183:	movq %rax, 48(%rsp) 
-L23184:	popq %rax
-L23185:	pushq %rax
-L23186:	movq 48(%rsp), %rax
-L23187:	pushq %rax
-L23188:	movq 56(%rsp), %rax
-L23189:	popq %rdi
-L23190:	call L23
-L23191:	movq %rax, 40(%rsp) 
-L23192:	popq %rax
-L23193:	pushq %rax
-L23194:	movq 40(%rsp), %rax
-L23195:	pushq %rax
-L23196:	movq 48(%rsp), %rax
-L23197:	popq %rdi
-L23198:	call L23
-L23199:	movq %rax, 32(%rsp) 
-L23200:	popq %rax
-L23201:	pushq %rax
-L23202:	movq 32(%rsp), %rax
-L23203:	pushq %rax
-L23204:	movq 40(%rsp), %rax
-L23205:	popq %rdi
-L23206:	call L23
-L23207:	movq %rax, 24(%rsp) 
-L23208:	popq %rax
-L23209:	pushq %rax
-L23210:	movq 24(%rsp), %rax
-L23211:	pushq %rax
-L23212:	movq 32(%rsp), %rax
-L23213:	popq %rdi
-L23214:	call L23
-L23215:	movq %rax, 16(%rsp) 
-L23216:	popq %rax
-L23217:	pushq %rax
-L23218:	movq 16(%rsp), %rax
-L23219:	pushq %rax
-L23220:	movq 24(%rsp), %rax
-L23221:	popq %rdi
-L23222:	call L23
-L23223:	movq %rax, 8(%rsp) 
-L23224:	popq %rax
-L23225:	pushq %rax
-L23226:	movq 8(%rsp), %rax
-L23227:	addq $72, %rsp
-L23228:	ret
-L23229:	ret
-L23230:	
+L23164:	subq $64, %rsp
+L23165:	pushq %rax
+L23166:	pushq %rax
+L23167:	movq 8(%rsp), %rax
+L23168:	popq %rdi
+L23169:	call L23
+L23170:	movq %rax, 64(%rsp) 
+L23171:	popq %rax
+L23172:	pushq %rax
+L23173:	movq 64(%rsp), %rax
+L23174:	pushq %rax
+L23175:	movq 72(%rsp), %rax
+L23176:	popq %rdi
+L23177:	call L23
+L23178:	movq %rax, 56(%rsp) 
+L23179:	popq %rax
+L23180:	pushq %rax
+L23181:	movq 56(%rsp), %rax
+L23182:	pushq %rax
+L23183:	movq 64(%rsp), %rax
+L23184:	popq %rdi
+L23185:	call L23
+L23186:	movq %rax, 48(%rsp) 
+L23187:	popq %rax
+L23188:	pushq %rax
+L23189:	movq 48(%rsp), %rax
+L23190:	pushq %rax
+L23191:	movq 56(%rsp), %rax
+L23192:	popq %rdi
+L23193:	call L23
+L23194:	movq %rax, 40(%rsp) 
+L23195:	popq %rax
+L23196:	pushq %rax
+L23197:	movq 40(%rsp), %rax
+L23198:	pushq %rax
+L23199:	movq 48(%rsp), %rax
+L23200:	popq %rdi
+L23201:	call L23
+L23202:	movq %rax, 32(%rsp) 
+L23203:	popq %rax
+L23204:	pushq %rax
+L23205:	movq 32(%rsp), %rax
+L23206:	pushq %rax
+L23207:	movq 40(%rsp), %rax
+L23208:	popq %rdi
+L23209:	call L23
+L23210:	movq %rax, 24(%rsp) 
+L23211:	popq %rax
+L23212:	pushq %rax
+L23213:	movq 24(%rsp), %rax
+L23214:	pushq %rax
+L23215:	movq 32(%rsp), %rax
+L23216:	popq %rdi
+L23217:	call L23
+L23218:	movq %rax, 16(%rsp) 
+L23219:	popq %rax
+L23220:	pushq %rax
+L23221:	movq 16(%rsp), %rax
+L23222:	pushq %rax
+L23223:	movq 24(%rsp), %rax
+L23224:	popq %rdi
+L23225:	call L23
+L23226:	movq %rax, 8(%rsp) 
+L23227:	popq %rax
+L23228:	pushq %rax
+L23229:	movq 8(%rsp), %rax
+L23230:	addq $72, %rsp
+L23231:	ret
+L23232:	ret
+L23233:	
   
   	/* natmod10 */
-L23231:	subq $32, %rsp
-L23232:	pushq %rax
-L23233:	pushq %rax
-L23234:	movq $10, %rax
-L23235:	movq %rax, %rdi
-L23236:	popq %rax
-L23237:	movq $0, %rdx
-L23238:	divq %rdi
-L23239:	movq %rax, 24(%rsp) 
-L23240:	popq %rax
-L23241:	pushq %rax
-L23242:	movq 24(%rsp), %rax
-L23243:	call L23085
-L23244:	movq %rax, 16(%rsp) 
-L23245:	popq %rax
-L23246:	pushq %rax
-L23247:	pushq %rax
-L23248:	movq 24(%rsp), %rax
-L23249:	popq %rdi
-L23250:	call L67
-L23251:	movq %rax, 8(%rsp) 
-L23252:	popq %rax
-L23253:	pushq %rax
-L23254:	movq 8(%rsp), %rax
-L23255:	addq $40, %rsp
-L23256:	ret
-L23257:	ret
-L23258:	
+L23234:	subq $32, %rsp
+L23235:	pushq %rax
+L23236:	pushq %rax
+L23237:	movq $10, %rax
+L23238:	movq %rax, %rdi
+L23239:	popq %rax
+L23240:	movq $0, %rdx
+L23241:	divq %rdi
+L23242:	movq %rax, 24(%rsp) 
+L23243:	popq %rax
+L23244:	pushq %rax
+L23245:	movq 24(%rsp), %rax
+L23246:	call L23088
+L23247:	movq %rax, 16(%rsp) 
+L23248:	popq %rax
+L23249:	pushq %rax
+L23250:	pushq %rax
+L23251:	movq 24(%rsp), %rax
+L23252:	popq %rdi
+L23253:	call L67
+L23254:	movq %rax, 8(%rsp) 
+L23255:	popq %rax
+L23256:	pushq %rax
+L23257:	movq 8(%rsp), %rax
+L23258:	addq $40, %rsp
+L23259:	ret
+L23260:	ret
+L23261:	
   
   	/* Nmod_10 */
-L23259:	subq $32, %rsp
-L23260:	pushq %rax
-L23261:	pushq %rax
-L23262:	movq $10, %rax
-L23263:	movq %rax, %rdi
-L23264:	popq %rax
-L23265:	movq $0, %rdx
-L23266:	divq %rdi
-L23267:	movq %rax, 24(%rsp) 
-L23268:	popq %rax
-L23269:	pushq %rax
-L23270:	movq 24(%rsp), %rax
-L23271:	call L23123
-L23272:	movq %rax, 16(%rsp) 
-L23273:	popq %rax
-L23274:	pushq %rax
-L23275:	pushq %rax
-L23276:	movq 24(%rsp), %rax
-L23277:	popq %rdi
-L23278:	call L67
-L23279:	movq %rax, 8(%rsp) 
-L23280:	popq %rax
-L23281:	pushq %rax
-L23282:	movq 8(%rsp), %rax
-L23283:	addq $40, %rsp
-L23284:	ret
-L23285:	ret
-L23286:	
+L23262:	subq $32, %rsp
+L23263:	pushq %rax
+L23264:	pushq %rax
+L23265:	movq $10, %rax
+L23266:	movq %rax, %rdi
+L23267:	popq %rax
+L23268:	movq $0, %rdx
+L23269:	divq %rdi
+L23270:	movq %rax, 24(%rsp) 
+L23271:	popq %rax
+L23272:	pushq %rax
+L23273:	movq 24(%rsp), %rax
+L23274:	call L23126
+L23275:	movq %rax, 16(%rsp) 
+L23276:	popq %rax
+L23277:	pushq %rax
+L23278:	pushq %rax
+L23279:	movq 24(%rsp), %rax
+L23280:	popq %rdi
+L23281:	call L67
+L23282:	movq %rax, 8(%rsp) 
+L23283:	popq %rax
+L23284:	pushq %rax
+L23285:	movq 8(%rsp), %rax
+L23286:	addq $40, %rsp
+L23287:	ret
+L23288:	ret
+L23289:	
   
   	/* Nmod_256 */
-L23287:	subq $32, %rsp
-L23288:	pushq %rax
-L23289:	pushq %rax
-L23290:	movq $256, %rax
-L23291:	movq %rax, %rdi
-L23292:	popq %rax
-L23293:	movq $0, %rdx
-L23294:	divq %rdi
-L23295:	movq %rax, 24(%rsp) 
-L23296:	popq %rax
-L23297:	pushq %rax
-L23298:	movq 24(%rsp), %rax
-L23299:	call L23161
-L23300:	movq %rax, 16(%rsp) 
-L23301:	popq %rax
-L23302:	pushq %rax
-L23303:	pushq %rax
-L23304:	movq 24(%rsp), %rax
-L23305:	popq %rdi
-L23306:	call L67
-L23307:	movq %rax, 8(%rsp) 
-L23308:	popq %rax
-L23309:	pushq %rax
-L23310:	movq 8(%rsp), %rax
-L23311:	addq $40, %rsp
-L23312:	ret
-L23313:	ret
-L23314:	
+L23290:	subq $32, %rsp
+L23291:	pushq %rax
+L23292:	pushq %rax
+L23293:	movq $256, %rax
+L23294:	movq %rax, %rdi
+L23295:	popq %rax
+L23296:	movq $0, %rdx
+L23297:	divq %rdi
+L23298:	movq %rax, 24(%rsp) 
+L23299:	popq %rax
+L23300:	pushq %rax
+L23301:	movq 24(%rsp), %rax
+L23302:	call L23164
+L23303:	movq %rax, 16(%rsp) 
+L23304:	popq %rax
+L23305:	pushq %rax
+L23306:	pushq %rax
+L23307:	movq 24(%rsp), %rax
+L23308:	popq %rdi
+L23309:	call L67
+L23310:	movq %rax, 8(%rsp) 
+L23311:	popq %rax
+L23312:	pushq %rax
+L23313:	movq 8(%rsp), %rax
+L23314:	addq $40, %rsp
+L23315:	ret
+L23316:	ret
+L23317:	
   
   	/* num2strf */
-L23315:	subq $64, %rsp
-L23316:	pushq %rdx
-L23317:	pushq %rdi
-L23318:	jmp L23321
-L23319:	jmp L23330
-L23320:	jmp L23381
-L23321:	pushq %rax
-L23322:	movq 8(%rsp), %rax
-L23323:	pushq %rax
-L23324:	movq $0, %rax
-L23325:	movq %rax, %rbx
-L23326:	popq %rdi
-L23327:	popq %rax
-L23328:	cmpq %rbx, %rdi ; je L23319
-L23329:	jmp L23320
-L23330:	jmp L23333
-L23331:	jmp L23342
-L23332:	jmp L23372
-L23333:	pushq %rax
-L23334:	movq 16(%rsp), %rax
-L23335:	pushq %rax
-L23336:	movq $10, %rax
-L23337:	movq %rax, %rbx
-L23338:	popq %rdi
-L23339:	popq %rax
-L23340:	cmpq %rbx, %rdi ; jb L23331
-L23341:	jmp L23332
-L23342:	pushq %rax
-L23343:	movq 16(%rsp), %rax
-L23344:	call L23231
-L23345:	movq %rax, 72(%rsp) 
-L23346:	popq %rax
-L23347:	pushq %rax
-L23348:	movq $48, %rax
-L23349:	pushq %rax
-L23350:	movq 80(%rsp), %rax
-L23351:	popq %rdi
-L23352:	call L23
-L23353:	movq %rax, 64(%rsp) 
-L23354:	popq %rax
-L23355:	pushq %rax
-L23356:	movq 64(%rsp), %rax
-L23357:	movq %rax, 56(%rsp) 
-L23358:	popq %rax
-L23359:	pushq %rax
-L23360:	movq 56(%rsp), %rax
-L23361:	pushq %rax
-L23362:	movq 8(%rsp), %rax
-L23363:	popq %rdi
-L23364:	call L97
-L23365:	movq %rax, 48(%rsp) 
-L23366:	popq %rax
-L23367:	pushq %rax
-L23368:	movq 48(%rsp), %rax
-L23369:	addq $88, %rsp
-L23370:	ret
-L23371:	jmp L23380
-L23372:	pushq %rax
-L23373:	movq $0, %rax
-L23374:	movq %rax, 64(%rsp) 
-L23375:	popq %rax
-L23376:	pushq %rax
-L23377:	movq 64(%rsp), %rax
-L23378:	addq $88, %rsp
-L23379:	ret
-L23380:	jmp L23481
-L23381:	pushq %rax
-L23382:	movq 8(%rsp), %rax
-L23383:	pushq %rax
-L23384:	movq $1, %rax
-L23385:	popq %rdi
-L23386:	call L67
-L23387:	movq %rax, 40(%rsp) 
-L23388:	popq %rax
-L23389:	jmp L23392
-L23390:	jmp L23401
-L23391:	jmp L23431
-L23392:	pushq %rax
-L23393:	movq 16(%rsp), %rax
-L23394:	pushq %rax
-L23395:	movq $10, %rax
-L23396:	movq %rax, %rbx
-L23397:	popq %rdi
-L23398:	popq %rax
-L23399:	cmpq %rbx, %rdi ; jb L23390
-L23400:	jmp L23391
-L23401:	pushq %rax
-L23402:	movq 16(%rsp), %rax
-L23403:	call L23231
-L23404:	movq %rax, 72(%rsp) 
-L23405:	popq %rax
-L23406:	pushq %rax
-L23407:	movq $48, %rax
-L23408:	pushq %rax
-L23409:	movq 80(%rsp), %rax
-L23410:	popq %rdi
-L23411:	call L23
-L23412:	movq %rax, 64(%rsp) 
-L23413:	popq %rax
-L23414:	pushq %rax
-L23415:	movq 64(%rsp), %rax
-L23416:	movq %rax, 56(%rsp) 
-L23417:	popq %rax
-L23418:	pushq %rax
-L23419:	movq 56(%rsp), %rax
-L23420:	pushq %rax
-L23421:	movq 8(%rsp), %rax
-L23422:	popq %rdi
-L23423:	call L97
-L23424:	movq %rax, 48(%rsp) 
-L23425:	popq %rax
-L23426:	pushq %rax
-L23427:	movq 48(%rsp), %rax
-L23428:	addq $88, %rsp
-L23429:	ret
-L23430:	jmp L23481
-L23431:	pushq %rax
-L23432:	movq 16(%rsp), %rax
-L23433:	call L23231
-L23434:	movq %rax, 72(%rsp) 
-L23435:	popq %rax
-L23436:	pushq %rax
-L23437:	movq $48, %rax
-L23438:	pushq %rax
-L23439:	movq 80(%rsp), %rax
-L23440:	popq %rdi
-L23441:	call L23
-L23442:	movq %rax, 64(%rsp) 
-L23443:	popq %rax
-L23444:	pushq %rax
-L23445:	movq 64(%rsp), %rax
-L23446:	movq %rax, 56(%rsp) 
-L23447:	popq %rax
-L23448:	pushq %rax
-L23449:	movq 16(%rsp), %rax
-L23450:	pushq %rax
-L23451:	movq $10, %rax
-L23452:	movq %rax, %rdi
-L23453:	popq %rax
-L23454:	movq $0, %rdx
-L23455:	divq %rdi
-L23456:	movq %rax, 48(%rsp) 
-L23457:	popq %rax
-L23458:	pushq %rax
-L23459:	movq 56(%rsp), %rax
-L23460:	pushq %rax
-L23461:	movq 8(%rsp), %rax
-L23462:	popq %rdi
-L23463:	call L97
-L23464:	movq %rax, 32(%rsp) 
-L23465:	popq %rax
-L23466:	pushq %rax
-L23467:	movq 48(%rsp), %rax
-L23468:	pushq %rax
-L23469:	movq 48(%rsp), %rax
-L23470:	pushq %rax
-L23471:	movq 48(%rsp), %rax
-L23472:	popq %rdi
-L23473:	popq %rdx
-L23474:	call L23315
-L23475:	movq %rax, 24(%rsp) 
-L23476:	popq %rax
-L23477:	pushq %rax
-L23478:	movq 24(%rsp), %rax
-L23479:	addq $88, %rsp
-L23480:	ret
-L23481:	ret
-L23482:	
+L23318:	subq $64, %rsp
+L23319:	pushq %rdx
+L23320:	pushq %rdi
+L23321:	jmp L23324
+L23322:	jmp L23333
+L23323:	jmp L23384
+L23324:	pushq %rax
+L23325:	movq 8(%rsp), %rax
+L23326:	pushq %rax
+L23327:	movq $0, %rax
+L23328:	movq %rax, %rbx
+L23329:	popq %rdi
+L23330:	popq %rax
+L23331:	cmpq %rbx, %rdi ; je L23322
+L23332:	jmp L23323
+L23333:	jmp L23336
+L23334:	jmp L23345
+L23335:	jmp L23375
+L23336:	pushq %rax
+L23337:	movq 16(%rsp), %rax
+L23338:	pushq %rax
+L23339:	movq $10, %rax
+L23340:	movq %rax, %rbx
+L23341:	popq %rdi
+L23342:	popq %rax
+L23343:	cmpq %rbx, %rdi ; jb L23334
+L23344:	jmp L23335
+L23345:	pushq %rax
+L23346:	movq 16(%rsp), %rax
+L23347:	call L23234
+L23348:	movq %rax, 72(%rsp) 
+L23349:	popq %rax
+L23350:	pushq %rax
+L23351:	movq $48, %rax
+L23352:	pushq %rax
+L23353:	movq 80(%rsp), %rax
+L23354:	popq %rdi
+L23355:	call L23
+L23356:	movq %rax, 64(%rsp) 
+L23357:	popq %rax
+L23358:	pushq %rax
+L23359:	movq 64(%rsp), %rax
+L23360:	movq %rax, 56(%rsp) 
+L23361:	popq %rax
+L23362:	pushq %rax
+L23363:	movq 56(%rsp), %rax
+L23364:	pushq %rax
+L23365:	movq 8(%rsp), %rax
+L23366:	popq %rdi
+L23367:	call L97
+L23368:	movq %rax, 48(%rsp) 
+L23369:	popq %rax
+L23370:	pushq %rax
+L23371:	movq 48(%rsp), %rax
+L23372:	addq $88, %rsp
+L23373:	ret
+L23374:	jmp L23383
+L23375:	pushq %rax
+L23376:	movq $0, %rax
+L23377:	movq %rax, 64(%rsp) 
+L23378:	popq %rax
+L23379:	pushq %rax
+L23380:	movq 64(%rsp), %rax
+L23381:	addq $88, %rsp
+L23382:	ret
+L23383:	jmp L23484
+L23384:	pushq %rax
+L23385:	movq 8(%rsp), %rax
+L23386:	pushq %rax
+L23387:	movq $1, %rax
+L23388:	popq %rdi
+L23389:	call L67
+L23390:	movq %rax, 40(%rsp) 
+L23391:	popq %rax
+L23392:	jmp L23395
+L23393:	jmp L23404
+L23394:	jmp L23434
+L23395:	pushq %rax
+L23396:	movq 16(%rsp), %rax
+L23397:	pushq %rax
+L23398:	movq $10, %rax
+L23399:	movq %rax, %rbx
+L23400:	popq %rdi
+L23401:	popq %rax
+L23402:	cmpq %rbx, %rdi ; jb L23393
+L23403:	jmp L23394
+L23404:	pushq %rax
+L23405:	movq 16(%rsp), %rax
+L23406:	call L23234
+L23407:	movq %rax, 72(%rsp) 
+L23408:	popq %rax
+L23409:	pushq %rax
+L23410:	movq $48, %rax
+L23411:	pushq %rax
+L23412:	movq 80(%rsp), %rax
+L23413:	popq %rdi
+L23414:	call L23
+L23415:	movq %rax, 64(%rsp) 
+L23416:	popq %rax
+L23417:	pushq %rax
+L23418:	movq 64(%rsp), %rax
+L23419:	movq %rax, 56(%rsp) 
+L23420:	popq %rax
+L23421:	pushq %rax
+L23422:	movq 56(%rsp), %rax
+L23423:	pushq %rax
+L23424:	movq 8(%rsp), %rax
+L23425:	popq %rdi
+L23426:	call L97
+L23427:	movq %rax, 48(%rsp) 
+L23428:	popq %rax
+L23429:	pushq %rax
+L23430:	movq 48(%rsp), %rax
+L23431:	addq $88, %rsp
+L23432:	ret
+L23433:	jmp L23484
+L23434:	pushq %rax
+L23435:	movq 16(%rsp), %rax
+L23436:	call L23234
+L23437:	movq %rax, 72(%rsp) 
+L23438:	popq %rax
+L23439:	pushq %rax
+L23440:	movq $48, %rax
+L23441:	pushq %rax
+L23442:	movq 80(%rsp), %rax
+L23443:	popq %rdi
+L23444:	call L23
+L23445:	movq %rax, 64(%rsp) 
+L23446:	popq %rax
+L23447:	pushq %rax
+L23448:	movq 64(%rsp), %rax
+L23449:	movq %rax, 56(%rsp) 
+L23450:	popq %rax
+L23451:	pushq %rax
+L23452:	movq 16(%rsp), %rax
+L23453:	pushq %rax
+L23454:	movq $10, %rax
+L23455:	movq %rax, %rdi
+L23456:	popq %rax
+L23457:	movq $0, %rdx
+L23458:	divq %rdi
+L23459:	movq %rax, 48(%rsp) 
+L23460:	popq %rax
+L23461:	pushq %rax
+L23462:	movq 56(%rsp), %rax
+L23463:	pushq %rax
+L23464:	movq 8(%rsp), %rax
+L23465:	popq %rdi
+L23466:	call L97
+L23467:	movq %rax, 32(%rsp) 
+L23468:	popq %rax
+L23469:	pushq %rax
+L23470:	movq 48(%rsp), %rax
+L23471:	pushq %rax
+L23472:	movq 48(%rsp), %rax
+L23473:	pushq %rax
+L23474:	movq 48(%rsp), %rax
+L23475:	popq %rdi
+L23476:	popq %rdx
+L23477:	call L23318
+L23478:	movq %rax, 24(%rsp) 
+L23479:	popq %rax
+L23480:	pushq %rax
+L23481:	movq 24(%rsp), %rax
+L23482:	addq $88, %rsp
+L23483:	ret
+L23484:	ret
+L23485:	
   
   	/* num2str */
-L23483:	subq $8, %rsp
-L23484:	pushq %rdi
-L23485:	pushq %rax
-L23486:	movq 8(%rsp), %rax
-L23487:	pushq %rax
-L23488:	movq 16(%rsp), %rax
-L23489:	pushq %rax
-L23490:	movq 16(%rsp), %rax
-L23491:	popq %rdi
-L23492:	popq %rdx
-L23493:	call L23315
-L23494:	movq %rax, 16(%rsp) 
-L23495:	popq %rax
-L23496:	pushq %rax
-L23497:	movq 16(%rsp), %rax
-L23498:	addq $24, %rsp
-L23499:	ret
-L23500:	ret
-L23501:	
+L23486:	subq $8, %rsp
+L23487:	pushq %rdi
+L23488:	pushq %rax
+L23489:	movq 8(%rsp), %rax
+L23490:	pushq %rax
+L23491:	movq 16(%rsp), %rax
+L23492:	pushq %rax
+L23493:	movq 16(%rsp), %rax
+L23494:	popq %rdi
+L23495:	popq %rdx
+L23496:	call L23318
+L23497:	movq %rax, 16(%rsp) 
+L23498:	popq %rax
+L23499:	pushq %rax
+L23500:	movq 16(%rsp), %rax
+L23501:	addq $24, %rsp
+L23502:	ret
+L23503:	ret
+L23504:	
   
   	/* N2str_f */
-L23502:	subq $64, %rsp
-L23503:	pushq %rdx
-L23504:	pushq %rdi
-L23505:	jmp L23508
-L23506:	jmp L23517
-L23507:	jmp L23568
-L23508:	pushq %rax
-L23509:	movq 8(%rsp), %rax
-L23510:	pushq %rax
-L23511:	movq $0, %rax
-L23512:	movq %rax, %rbx
-L23513:	popq %rdi
-L23514:	popq %rax
-L23515:	cmpq %rbx, %rdi ; je L23506
-L23516:	jmp L23507
-L23517:	jmp L23520
-L23518:	jmp L23529
-L23519:	jmp L23559
-L23520:	pushq %rax
-L23521:	movq 16(%rsp), %rax
-L23522:	pushq %rax
-L23523:	movq $10, %rax
-L23524:	movq %rax, %rbx
-L23525:	popq %rdi
-L23526:	popq %rax
-L23527:	cmpq %rbx, %rdi ; jb L23518
-L23528:	jmp L23519
-L23529:	pushq %rax
-L23530:	movq 16(%rsp), %rax
-L23531:	call L23259
-L23532:	movq %rax, 72(%rsp) 
-L23533:	popq %rax
-L23534:	pushq %rax
-L23535:	movq $48, %rax
-L23536:	pushq %rax
-L23537:	movq 80(%rsp), %rax
-L23538:	popq %rdi
-L23539:	call L23
-L23540:	movq %rax, 64(%rsp) 
-L23541:	popq %rax
-L23542:	pushq %rax
-L23543:	movq 64(%rsp), %rax
-L23544:	movq %rax, 56(%rsp) 
-L23545:	popq %rax
-L23546:	pushq %rax
-L23547:	movq 56(%rsp), %rax
-L23548:	pushq %rax
-L23549:	movq 8(%rsp), %rax
-L23550:	popq %rdi
-L23551:	call L97
-L23552:	movq %rax, 48(%rsp) 
-L23553:	popq %rax
-L23554:	pushq %rax
-L23555:	movq 48(%rsp), %rax
-L23556:	addq $88, %rsp
-L23557:	ret
-L23558:	jmp L23567
-L23559:	pushq %rax
-L23560:	movq $0, %rax
-L23561:	movq %rax, 64(%rsp) 
-L23562:	popq %rax
-L23563:	pushq %rax
-L23564:	movq 64(%rsp), %rax
-L23565:	addq $88, %rsp
-L23566:	ret
-L23567:	jmp L23668
-L23568:	pushq %rax
-L23569:	movq 8(%rsp), %rax
-L23570:	pushq %rax
-L23571:	movq $1, %rax
-L23572:	popq %rdi
-L23573:	call L67
-L23574:	movq %rax, 40(%rsp) 
-L23575:	popq %rax
-L23576:	jmp L23579
-L23577:	jmp L23588
-L23578:	jmp L23618
-L23579:	pushq %rax
-L23580:	movq 16(%rsp), %rax
-L23581:	pushq %rax
-L23582:	movq $10, %rax
-L23583:	movq %rax, %rbx
-L23584:	popq %rdi
-L23585:	popq %rax
-L23586:	cmpq %rbx, %rdi ; jb L23577
-L23587:	jmp L23578
-L23588:	pushq %rax
-L23589:	movq 16(%rsp), %rax
-L23590:	call L23259
-L23591:	movq %rax, 72(%rsp) 
-L23592:	popq %rax
-L23593:	pushq %rax
-L23594:	movq $48, %rax
-L23595:	pushq %rax
-L23596:	movq 80(%rsp), %rax
-L23597:	popq %rdi
-L23598:	call L23
-L23599:	movq %rax, 64(%rsp) 
-L23600:	popq %rax
-L23601:	pushq %rax
-L23602:	movq 64(%rsp), %rax
-L23603:	movq %rax, 56(%rsp) 
-L23604:	popq %rax
-L23605:	pushq %rax
-L23606:	movq 56(%rsp), %rax
-L23607:	pushq %rax
-L23608:	movq 8(%rsp), %rax
-L23609:	popq %rdi
-L23610:	call L97
-L23611:	movq %rax, 48(%rsp) 
-L23612:	popq %rax
-L23613:	pushq %rax
-L23614:	movq 48(%rsp), %rax
-L23615:	addq $88, %rsp
-L23616:	ret
-L23617:	jmp L23668
-L23618:	pushq %rax
-L23619:	movq 16(%rsp), %rax
-L23620:	call L23259
-L23621:	movq %rax, 72(%rsp) 
-L23622:	popq %rax
-L23623:	pushq %rax
-L23624:	movq $48, %rax
-L23625:	pushq %rax
-L23626:	movq 80(%rsp), %rax
-L23627:	popq %rdi
-L23628:	call L23
-L23629:	movq %rax, 64(%rsp) 
-L23630:	popq %rax
-L23631:	pushq %rax
-L23632:	movq 64(%rsp), %rax
-L23633:	movq %rax, 56(%rsp) 
-L23634:	popq %rax
-L23635:	pushq %rax
-L23636:	movq 16(%rsp), %rax
-L23637:	pushq %rax
-L23638:	movq $10, %rax
-L23639:	movq %rax, %rdi
-L23640:	popq %rax
-L23641:	movq $0, %rdx
-L23642:	divq %rdi
-L23643:	movq %rax, 48(%rsp) 
-L23644:	popq %rax
-L23645:	pushq %rax
-L23646:	movq 56(%rsp), %rax
-L23647:	pushq %rax
-L23648:	movq 8(%rsp), %rax
-L23649:	popq %rdi
-L23650:	call L97
-L23651:	movq %rax, 32(%rsp) 
-L23652:	popq %rax
-L23653:	pushq %rax
-L23654:	movq 48(%rsp), %rax
-L23655:	pushq %rax
-L23656:	movq 48(%rsp), %rax
-L23657:	pushq %rax
-L23658:	movq 48(%rsp), %rax
-L23659:	popq %rdi
-L23660:	popq %rdx
-L23661:	call L23502
-L23662:	movq %rax, 24(%rsp) 
-L23663:	popq %rax
-L23664:	pushq %rax
-L23665:	movq 24(%rsp), %rax
-L23666:	addq $88, %rsp
-L23667:	ret
-L23668:	ret
-L23669:	
+L23505:	subq $64, %rsp
+L23506:	pushq %rdx
+L23507:	pushq %rdi
+L23508:	jmp L23511
+L23509:	jmp L23520
+L23510:	jmp L23571
+L23511:	pushq %rax
+L23512:	movq 8(%rsp), %rax
+L23513:	pushq %rax
+L23514:	movq $0, %rax
+L23515:	movq %rax, %rbx
+L23516:	popq %rdi
+L23517:	popq %rax
+L23518:	cmpq %rbx, %rdi ; je L23509
+L23519:	jmp L23510
+L23520:	jmp L23523
+L23521:	jmp L23532
+L23522:	jmp L23562
+L23523:	pushq %rax
+L23524:	movq 16(%rsp), %rax
+L23525:	pushq %rax
+L23526:	movq $10, %rax
+L23527:	movq %rax, %rbx
+L23528:	popq %rdi
+L23529:	popq %rax
+L23530:	cmpq %rbx, %rdi ; jb L23521
+L23531:	jmp L23522
+L23532:	pushq %rax
+L23533:	movq 16(%rsp), %rax
+L23534:	call L23262
+L23535:	movq %rax, 72(%rsp) 
+L23536:	popq %rax
+L23537:	pushq %rax
+L23538:	movq $48, %rax
+L23539:	pushq %rax
+L23540:	movq 80(%rsp), %rax
+L23541:	popq %rdi
+L23542:	call L23
+L23543:	movq %rax, 64(%rsp) 
+L23544:	popq %rax
+L23545:	pushq %rax
+L23546:	movq 64(%rsp), %rax
+L23547:	movq %rax, 56(%rsp) 
+L23548:	popq %rax
+L23549:	pushq %rax
+L23550:	movq 56(%rsp), %rax
+L23551:	pushq %rax
+L23552:	movq 8(%rsp), %rax
+L23553:	popq %rdi
+L23554:	call L97
+L23555:	movq %rax, 48(%rsp) 
+L23556:	popq %rax
+L23557:	pushq %rax
+L23558:	movq 48(%rsp), %rax
+L23559:	addq $88, %rsp
+L23560:	ret
+L23561:	jmp L23570
+L23562:	pushq %rax
+L23563:	movq $0, %rax
+L23564:	movq %rax, 64(%rsp) 
+L23565:	popq %rax
+L23566:	pushq %rax
+L23567:	movq 64(%rsp), %rax
+L23568:	addq $88, %rsp
+L23569:	ret
+L23570:	jmp L23671
+L23571:	pushq %rax
+L23572:	movq 8(%rsp), %rax
+L23573:	pushq %rax
+L23574:	movq $1, %rax
+L23575:	popq %rdi
+L23576:	call L67
+L23577:	movq %rax, 40(%rsp) 
+L23578:	popq %rax
+L23579:	jmp L23582
+L23580:	jmp L23591
+L23581:	jmp L23621
+L23582:	pushq %rax
+L23583:	movq 16(%rsp), %rax
+L23584:	pushq %rax
+L23585:	movq $10, %rax
+L23586:	movq %rax, %rbx
+L23587:	popq %rdi
+L23588:	popq %rax
+L23589:	cmpq %rbx, %rdi ; jb L23580
+L23590:	jmp L23581
+L23591:	pushq %rax
+L23592:	movq 16(%rsp), %rax
+L23593:	call L23262
+L23594:	movq %rax, 72(%rsp) 
+L23595:	popq %rax
+L23596:	pushq %rax
+L23597:	movq $48, %rax
+L23598:	pushq %rax
+L23599:	movq 80(%rsp), %rax
+L23600:	popq %rdi
+L23601:	call L23
+L23602:	movq %rax, 64(%rsp) 
+L23603:	popq %rax
+L23604:	pushq %rax
+L23605:	movq 64(%rsp), %rax
+L23606:	movq %rax, 56(%rsp) 
+L23607:	popq %rax
+L23608:	pushq %rax
+L23609:	movq 56(%rsp), %rax
+L23610:	pushq %rax
+L23611:	movq 8(%rsp), %rax
+L23612:	popq %rdi
+L23613:	call L97
+L23614:	movq %rax, 48(%rsp) 
+L23615:	popq %rax
+L23616:	pushq %rax
+L23617:	movq 48(%rsp), %rax
+L23618:	addq $88, %rsp
+L23619:	ret
+L23620:	jmp L23671
+L23621:	pushq %rax
+L23622:	movq 16(%rsp), %rax
+L23623:	call L23262
+L23624:	movq %rax, 72(%rsp) 
+L23625:	popq %rax
+L23626:	pushq %rax
+L23627:	movq $48, %rax
+L23628:	pushq %rax
+L23629:	movq 80(%rsp), %rax
+L23630:	popq %rdi
+L23631:	call L23
+L23632:	movq %rax, 64(%rsp) 
+L23633:	popq %rax
+L23634:	pushq %rax
+L23635:	movq 64(%rsp), %rax
+L23636:	movq %rax, 56(%rsp) 
+L23637:	popq %rax
+L23638:	pushq %rax
+L23639:	movq 16(%rsp), %rax
+L23640:	pushq %rax
+L23641:	movq $10, %rax
+L23642:	movq %rax, %rdi
+L23643:	popq %rax
+L23644:	movq $0, %rdx
+L23645:	divq %rdi
+L23646:	movq %rax, 48(%rsp) 
+L23647:	popq %rax
+L23648:	pushq %rax
+L23649:	movq 56(%rsp), %rax
+L23650:	pushq %rax
+L23651:	movq 8(%rsp), %rax
+L23652:	popq %rdi
+L23653:	call L97
+L23654:	movq %rax, 32(%rsp) 
+L23655:	popq %rax
+L23656:	pushq %rax
+L23657:	movq 48(%rsp), %rax
+L23658:	pushq %rax
+L23659:	movq 48(%rsp), %rax
+L23660:	pushq %rax
+L23661:	movq 48(%rsp), %rax
+L23662:	popq %rdi
+L23663:	popq %rdx
+L23664:	call L23505
+L23665:	movq %rax, 24(%rsp) 
+L23666:	popq %rax
+L23667:	pushq %rax
+L23668:	movq 24(%rsp), %rax
+L23669:	addq $88, %rsp
+L23670:	ret
+L23671:	ret
+L23672:	
   
   	/* N2str */
-L23670:	subq $40, %rsp
-L23671:	pushq %rdi
-L23672:	pushq %rax
-L23673:	movq 8(%rsp), %rax
-L23674:	pushq %rax
-L23675:	movq $10, %rax
-L23676:	movq %rax, %rdi
-L23677:	popq %rax
-L23678:	movq $0, %rdx
-L23679:	divq %rdi
-L23680:	movq %rax, 40(%rsp) 
-L23681:	popq %rax
-L23682:	pushq %rax
-L23683:	movq 40(%rsp), %rax
-L23684:	pushq %rax
-L23685:	movq $1, %rax
-L23686:	popq %rdi
-L23687:	call L23
-L23688:	movq %rax, 32(%rsp) 
-L23689:	popq %rax
-L23690:	pushq %rax
-L23691:	movq 32(%rsp), %rax
-L23692:	movq %rax, 24(%rsp) 
-L23693:	popq %rax
-L23694:	pushq %rax
-L23695:	movq 8(%rsp), %rax
-L23696:	pushq %rax
-L23697:	movq 32(%rsp), %rax
-L23698:	pushq %rax
-L23699:	movq 16(%rsp), %rax
-L23700:	popq %rdi
-L23701:	popq %rdx
-L23702:	call L23502
-L23703:	movq %rax, 16(%rsp) 
-L23704:	popq %rax
-L23705:	pushq %rax
-L23706:	movq 16(%rsp), %rax
-L23707:	addq $56, %rsp
-L23708:	ret
-L23709:	ret
-L23710:	
+L23673:	subq $40, %rsp
+L23674:	pushq %rdi
+L23675:	pushq %rax
+L23676:	movq 8(%rsp), %rax
+L23677:	pushq %rax
+L23678:	movq $10, %rax
+L23679:	movq %rax, %rdi
+L23680:	popq %rax
+L23681:	movq $0, %rdx
+L23682:	divq %rdi
+L23683:	movq %rax, 40(%rsp) 
+L23684:	popq %rax
+L23685:	pushq %rax
+L23686:	movq 40(%rsp), %rax
+L23687:	pushq %rax
+L23688:	movq $1, %rax
+L23689:	popq %rdi
+L23690:	call L23
+L23691:	movq %rax, 32(%rsp) 
+L23692:	popq %rax
+L23693:	pushq %rax
+L23694:	movq 32(%rsp), %rax
+L23695:	movq %rax, 24(%rsp) 
+L23696:	popq %rax
+L23697:	pushq %rax
+L23698:	movq 8(%rsp), %rax
+L23699:	pushq %rax
+L23700:	movq 32(%rsp), %rax
+L23701:	pushq %rax
+L23702:	movq 16(%rsp), %rax
+L23703:	popq %rdi
+L23704:	popq %rdx
+L23705:	call L23505
+L23706:	movq %rax, 16(%rsp) 
+L23707:	popq %rax
+L23708:	pushq %rax
+L23709:	movq 16(%rsp), %rax
+L23710:	addq $56, %rsp
+L23711:	ret
+L23712:	ret
+L23713:	
   
   	/* list_len */
-L23711:	subq $32, %rsp
-L23712:	jmp L23715
-L23713:	jmp L23723
-L23714:	jmp L23728
-L23715:	pushq %rax
-L23716:	pushq %rax
-L23717:	movq $0, %rax
-L23718:	movq %rax, %rbx
-L23719:	popq %rdi
-L23720:	popq %rax
-L23721:	cmpq %rbx, %rdi ; je L23713
-L23722:	jmp L23714
-L23723:	pushq %rax
-L23724:	movq $0, %rax
-L23725:	addq $40, %rsp
-L23726:	ret
-L23727:	jmp L23761
-L23728:	pushq %rax
-L23729:	pushq %rax
-L23730:	movq $0, %rax
-L23731:	popq %rdi
-L23732:	addq %rax, %rdi
-L23733:	movq 0(%rdi), %rax
-L23734:	movq %rax, 32(%rsp) 
-L23735:	popq %rax
-L23736:	pushq %rax
-L23737:	pushq %rax
-L23738:	movq $8, %rax
-L23739:	popq %rdi
-L23740:	addq %rax, %rdi
-L23741:	movq 0(%rdi), %rax
-L23742:	movq %rax, 24(%rsp) 
-L23743:	popq %rax
-L23744:	pushq %rax
-L23745:	movq 24(%rsp), %rax
-L23746:	call L23711
-L23747:	movq %rax, 16(%rsp) 
-L23748:	popq %rax
-L23749:	pushq %rax
-L23750:	movq $1, %rax
-L23751:	pushq %rax
-L23752:	movq 24(%rsp), %rax
-L23753:	popq %rdi
-L23754:	call L23
-L23755:	movq %rax, 8(%rsp) 
-L23756:	popq %rax
-L23757:	pushq %rax
-L23758:	movq 8(%rsp), %rax
-L23759:	addq $40, %rsp
-L23760:	ret
-L23761:	ret
-L23762:	
+L23714:	subq $32, %rsp
+L23715:	jmp L23718
+L23716:	jmp L23726
+L23717:	jmp L23731
+L23718:	pushq %rax
+L23719:	pushq %rax
+L23720:	movq $0, %rax
+L23721:	movq %rax, %rbx
+L23722:	popq %rdi
+L23723:	popq %rax
+L23724:	cmpq %rbx, %rdi ; je L23716
+L23725:	jmp L23717
+L23726:	pushq %rax
+L23727:	movq $0, %rax
+L23728:	addq $40, %rsp
+L23729:	ret
+L23730:	jmp L23764
+L23731:	pushq %rax
+L23732:	pushq %rax
+L23733:	movq $0, %rax
+L23734:	popq %rdi
+L23735:	addq %rax, %rdi
+L23736:	movq 0(%rdi), %rax
+L23737:	movq %rax, 32(%rsp) 
+L23738:	popq %rax
+L23739:	pushq %rax
+L23740:	pushq %rax
+L23741:	movq $8, %rax
+L23742:	popq %rdi
+L23743:	addq %rax, %rdi
+L23744:	movq 0(%rdi), %rax
+L23745:	movq %rax, 24(%rsp) 
+L23746:	popq %rax
+L23747:	pushq %rax
+L23748:	movq 24(%rsp), %rax
+L23749:	call L23714
+L23750:	movq %rax, 16(%rsp) 
+L23751:	popq %rax
+L23752:	pushq %rax
+L23753:	movq $1, %rax
+L23754:	pushq %rax
+L23755:	movq 24(%rsp), %rax
+L23756:	popq %rdi
+L23757:	call L23
+L23758:	movq %rax, 8(%rsp) 
+L23759:	popq %rax
+L23760:	pushq %rax
+L23761:	movq 8(%rsp), %rax
+L23762:	addq $40, %rsp
+L23763:	ret
+L23764:	ret
+L23765:	
   
   	/* list_app */
-L23763:	subq $40, %rsp
-L23764:	pushq %rdi
-L23765:	jmp L23768
-L23766:	jmp L23777
-L23767:	jmp L23781
-L23768:	pushq %rax
-L23769:	movq 8(%rsp), %rax
-L23770:	pushq %rax
-L23771:	movq $0, %rax
-L23772:	movq %rax, %rbx
-L23773:	popq %rdi
-L23774:	popq %rax
-L23775:	cmpq %rbx, %rdi ; je L23766
-L23776:	jmp L23767
-L23777:	pushq %rax
-L23778:	addq $56, %rsp
-L23779:	ret
-L23780:	jmp L23819
-L23781:	pushq %rax
-L23782:	movq 8(%rsp), %rax
-L23783:	pushq %rax
-L23784:	movq $0, %rax
-L23785:	popq %rdi
-L23786:	addq %rax, %rdi
-L23787:	movq 0(%rdi), %rax
-L23788:	movq %rax, 40(%rsp) 
-L23789:	popq %rax
-L23790:	pushq %rax
-L23791:	movq 8(%rsp), %rax
-L23792:	pushq %rax
-L23793:	movq $8, %rax
-L23794:	popq %rdi
-L23795:	addq %rax, %rdi
-L23796:	movq 0(%rdi), %rax
-L23797:	movq %rax, 32(%rsp) 
-L23798:	popq %rax
-L23799:	pushq %rax
-L23800:	movq 32(%rsp), %rax
-L23801:	pushq %rax
-L23802:	movq 8(%rsp), %rax
-L23803:	popq %rdi
-L23804:	call L23763
-L23805:	movq %rax, 24(%rsp) 
-L23806:	popq %rax
-L23807:	pushq %rax
-L23808:	movq 40(%rsp), %rax
-L23809:	pushq %rax
-L23810:	movq 32(%rsp), %rax
-L23811:	popq %rdi
-L23812:	call L97
-L23813:	movq %rax, 16(%rsp) 
-L23814:	popq %rax
-L23815:	pushq %rax
-L23816:	movq 16(%rsp), %rax
-L23817:	addq $56, %rsp
-L23818:	ret
-L23819:	ret
-L23820:	
+L23766:	subq $40, %rsp
+L23767:	pushq %rdi
+L23768:	jmp L23771
+L23769:	jmp L23780
+L23770:	jmp L23784
+L23771:	pushq %rax
+L23772:	movq 8(%rsp), %rax
+L23773:	pushq %rax
+L23774:	movq $0, %rax
+L23775:	movq %rax, %rbx
+L23776:	popq %rdi
+L23777:	popq %rax
+L23778:	cmpq %rbx, %rdi ; je L23769
+L23779:	jmp L23770
+L23780:	pushq %rax
+L23781:	addq $56, %rsp
+L23782:	ret
+L23783:	jmp L23822
+L23784:	pushq %rax
+L23785:	movq 8(%rsp), %rax
+L23786:	pushq %rax
+L23787:	movq $0, %rax
+L23788:	popq %rdi
+L23789:	addq %rax, %rdi
+L23790:	movq 0(%rdi), %rax
+L23791:	movq %rax, 40(%rsp) 
+L23792:	popq %rax
+L23793:	pushq %rax
+L23794:	movq 8(%rsp), %rax
+L23795:	pushq %rax
+L23796:	movq $8, %rax
+L23797:	popq %rdi
+L23798:	addq %rax, %rdi
+L23799:	movq 0(%rdi), %rax
+L23800:	movq %rax, 32(%rsp) 
+L23801:	popq %rax
+L23802:	pushq %rax
+L23803:	movq 32(%rsp), %rax
+L23804:	pushq %rax
+L23805:	movq 8(%rsp), %rax
+L23806:	popq %rdi
+L23807:	call L23766
+L23808:	movq %rax, 24(%rsp) 
+L23809:	popq %rax
+L23810:	pushq %rax
+L23811:	movq 40(%rsp), %rax
+L23812:	pushq %rax
+L23813:	movq 32(%rsp), %rax
+L23814:	popq %rdi
+L23815:	call L97
+L23816:	movq %rax, 16(%rsp) 
+L23817:	popq %rax
+L23818:	pushq %rax
+L23819:	movq 16(%rsp), %rax
+L23820:	addq $56, %rsp
+L23821:	ret
+L23822:	ret
+L23823:	
   
   	/* flatten */
-L23821:	subq $48, %rsp
-L23822:	jmp L23825
-L23823:	jmp L23838
-L23824:	jmp L23856
-L23825:	pushq %rax
-L23826:	pushq %rax
-L23827:	movq $0, %rax
-L23828:	popq %rdi
-L23829:	addq %rax, %rdi
-L23830:	movq 0(%rdi), %rax
-L23831:	pushq %rax
-L23832:	movq $1281979252, %rax
-L23833:	movq %rax, %rbx
-L23834:	popq %rdi
-L23835:	popq %rax
-L23836:	cmpq %rbx, %rdi ; je L23823
-L23837:	jmp L23824
-L23838:	pushq %rax
-L23839:	pushq %rax
-L23840:	movq $8, %rax
-L23841:	popq %rdi
-L23842:	addq %rax, %rdi
-L23843:	movq 0(%rdi), %rax
-L23844:	pushq %rax
-L23845:	movq $0, %rax
-L23846:	popq %rdi
-L23847:	addq %rax, %rdi
-L23848:	movq 0(%rdi), %rax
-L23849:	movq %rax, 48(%rsp) 
-L23850:	popq %rax
-L23851:	pushq %rax
-L23852:	movq 48(%rsp), %rax
-L23853:	addq $56, %rsp
-L23854:	ret
-L23855:	jmp L23930
-L23856:	jmp L23859
-L23857:	jmp L23872
-L23858:	jmp L23926
-L23859:	pushq %rax
-L23860:	pushq %rax
-L23861:	movq $0, %rax
-L23862:	popq %rdi
-L23863:	addq %rax, %rdi
-L23864:	movq 0(%rdi), %rax
-L23865:	pushq %rax
-L23866:	movq $71951177838180, %rax
-L23867:	movq %rax, %rbx
-L23868:	popq %rdi
-L23869:	popq %rax
-L23870:	cmpq %rbx, %rdi ; je L23857
-L23871:	jmp L23858
-L23872:	pushq %rax
-L23873:	pushq %rax
-L23874:	movq $8, %rax
-L23875:	popq %rdi
-L23876:	addq %rax, %rdi
-L23877:	movq 0(%rdi), %rax
-L23878:	pushq %rax
-L23879:	movq $0, %rax
-L23880:	popq %rdi
-L23881:	addq %rax, %rdi
-L23882:	movq 0(%rdi), %rax
-L23883:	movq %rax, 40(%rsp) 
-L23884:	popq %rax
-L23885:	pushq %rax
-L23886:	pushq %rax
-L23887:	movq $8, %rax
-L23888:	popq %rdi
-L23889:	addq %rax, %rdi
-L23890:	movq 0(%rdi), %rax
-L23891:	pushq %rax
-L23892:	movq $8, %rax
-L23893:	popq %rdi
-L23894:	addq %rax, %rdi
-L23895:	movq 0(%rdi), %rax
-L23896:	pushq %rax
-L23897:	movq $0, %rax
-L23898:	popq %rdi
-L23899:	addq %rax, %rdi
-L23900:	movq 0(%rdi), %rax
-L23901:	movq %rax, 32(%rsp) 
-L23902:	popq %rax
-L23903:	pushq %rax
-L23904:	movq 40(%rsp), %rax
-L23905:	call L23821
-L23906:	movq %rax, 24(%rsp) 
-L23907:	popq %rax
-L23908:	pushq %rax
-L23909:	movq 32(%rsp), %rax
-L23910:	call L23821
-L23911:	movq %rax, 16(%rsp) 
-L23912:	popq %rax
-L23913:	pushq %rax
-L23914:	movq 24(%rsp), %rax
-L23915:	pushq %rax
-L23916:	movq 24(%rsp), %rax
-L23917:	popq %rdi
-L23918:	call L23763
-L23919:	movq %rax, 8(%rsp) 
-L23920:	popq %rax
-L23921:	pushq %rax
-L23922:	movq 8(%rsp), %rax
-L23923:	addq $56, %rsp
-L23924:	ret
-L23925:	jmp L23930
-L23926:	pushq %rax
-L23927:	movq $0, %rax
-L23928:	addq $56, %rsp
-L23929:	ret
-L23930:	ret
-L23931:	
+L23824:	subq $48, %rsp
+L23825:	jmp L23828
+L23826:	jmp L23841
+L23827:	jmp L23859
+L23828:	pushq %rax
+L23829:	pushq %rax
+L23830:	movq $0, %rax
+L23831:	popq %rdi
+L23832:	addq %rax, %rdi
+L23833:	movq 0(%rdi), %rax
+L23834:	pushq %rax
+L23835:	movq $1281979252, %rax
+L23836:	movq %rax, %rbx
+L23837:	popq %rdi
+L23838:	popq %rax
+L23839:	cmpq %rbx, %rdi ; je L23826
+L23840:	jmp L23827
+L23841:	pushq %rax
+L23842:	pushq %rax
+L23843:	movq $8, %rax
+L23844:	popq %rdi
+L23845:	addq %rax, %rdi
+L23846:	movq 0(%rdi), %rax
+L23847:	pushq %rax
+L23848:	movq $0, %rax
+L23849:	popq %rdi
+L23850:	addq %rax, %rdi
+L23851:	movq 0(%rdi), %rax
+L23852:	movq %rax, 48(%rsp) 
+L23853:	popq %rax
+L23854:	pushq %rax
+L23855:	movq 48(%rsp), %rax
+L23856:	addq $56, %rsp
+L23857:	ret
+L23858:	jmp L23933
+L23859:	jmp L23862
+L23860:	jmp L23875
+L23861:	jmp L23929
+L23862:	pushq %rax
+L23863:	pushq %rax
+L23864:	movq $0, %rax
+L23865:	popq %rdi
+L23866:	addq %rax, %rdi
+L23867:	movq 0(%rdi), %rax
+L23868:	pushq %rax
+L23869:	movq $71951177838180, %rax
+L23870:	movq %rax, %rbx
+L23871:	popq %rdi
+L23872:	popq %rax
+L23873:	cmpq %rbx, %rdi ; je L23860
+L23874:	jmp L23861
+L23875:	pushq %rax
+L23876:	pushq %rax
+L23877:	movq $8, %rax
+L23878:	popq %rdi
+L23879:	addq %rax, %rdi
+L23880:	movq 0(%rdi), %rax
+L23881:	pushq %rax
+L23882:	movq $0, %rax
+L23883:	popq %rdi
+L23884:	addq %rax, %rdi
+L23885:	movq 0(%rdi), %rax
+L23886:	movq %rax, 40(%rsp) 
+L23887:	popq %rax
+L23888:	pushq %rax
+L23889:	pushq %rax
+L23890:	movq $8, %rax
+L23891:	popq %rdi
+L23892:	addq %rax, %rdi
+L23893:	movq 0(%rdi), %rax
+L23894:	pushq %rax
+L23895:	movq $8, %rax
+L23896:	popq %rdi
+L23897:	addq %rax, %rdi
+L23898:	movq 0(%rdi), %rax
+L23899:	pushq %rax
+L23900:	movq $0, %rax
+L23901:	popq %rdi
+L23902:	addq %rax, %rdi
+L23903:	movq 0(%rdi), %rax
+L23904:	movq %rax, 32(%rsp) 
+L23905:	popq %rax
+L23906:	pushq %rax
+L23907:	movq 40(%rsp), %rax
+L23908:	call L23824
+L23909:	movq %rax, 24(%rsp) 
+L23910:	popq %rax
+L23911:	pushq %rax
+L23912:	movq 32(%rsp), %rax
+L23913:	call L23824
+L23914:	movq %rax, 16(%rsp) 
+L23915:	popq %rax
+L23916:	pushq %rax
+L23917:	movq 24(%rsp), %rax
+L23918:	pushq %rax
+L23919:	movq 24(%rsp), %rax
+L23920:	popq %rdi
+L23921:	call L23766
+L23922:	movq %rax, 8(%rsp) 
+L23923:	popq %rax
+L23924:	pushq %rax
+L23925:	movq 8(%rsp), %rax
+L23926:	addq $56, %rsp
+L23927:	ret
+L23928:	jmp L23933
+L23929:	pushq %rax
+L23930:	movq $0, %rax
+L23931:	addq $56, %rsp
+L23932:	ret
+L23933:	ret
+L23934:	
   
   	/* appl_len */
-L23932:	subq $48, %rsp
-L23933:	jmp L23936
-L23934:	jmp L23949
-L23935:	jmp L23972
-L23936:	pushq %rax
-L23937:	pushq %rax
-L23938:	movq $0, %rax
-L23939:	popq %rdi
-L23940:	addq %rax, %rdi
-L23941:	movq 0(%rdi), %rax
-L23942:	pushq %rax
-L23943:	movq $1281979252, %rax
-L23944:	movq %rax, %rbx
-L23945:	popq %rdi
-L23946:	popq %rax
-L23947:	cmpq %rbx, %rdi ; je L23934
-L23948:	jmp L23935
-L23949:	pushq %rax
-L23950:	pushq %rax
-L23951:	movq $8, %rax
-L23952:	popq %rdi
-L23953:	addq %rax, %rdi
-L23954:	movq 0(%rdi), %rax
-L23955:	pushq %rax
-L23956:	movq $0, %rax
-L23957:	popq %rdi
-L23958:	addq %rax, %rdi
-L23959:	movq 0(%rdi), %rax
-L23960:	movq %rax, 48(%rsp) 
-L23961:	popq %rax
-L23962:	pushq %rax
-L23963:	movq 48(%rsp), %rax
-L23964:	call L23711
-L23965:	movq %rax, 40(%rsp) 
-L23966:	popq %rax
-L23967:	pushq %rax
-L23968:	movq 40(%rsp), %rax
-L23969:	addq $56, %rsp
-L23970:	ret
-L23971:	jmp L24046
-L23972:	jmp L23975
-L23973:	jmp L23988
-L23974:	jmp L24042
-L23975:	pushq %rax
-L23976:	pushq %rax
-L23977:	movq $0, %rax
-L23978:	popq %rdi
-L23979:	addq %rax, %rdi
-L23980:	movq 0(%rdi), %rax
-L23981:	pushq %rax
-L23982:	movq $71951177838180, %rax
-L23983:	movq %rax, %rbx
-L23984:	popq %rdi
-L23985:	popq %rax
-L23986:	cmpq %rbx, %rdi ; je L23973
-L23987:	jmp L23974
-L23988:	pushq %rax
-L23989:	pushq %rax
-L23990:	movq $8, %rax
-L23991:	popq %rdi
-L23992:	addq %rax, %rdi
-L23993:	movq 0(%rdi), %rax
-L23994:	pushq %rax
-L23995:	movq $0, %rax
-L23996:	popq %rdi
-L23997:	addq %rax, %rdi
-L23998:	movq 0(%rdi), %rax
-L23999:	movq %rax, 40(%rsp) 
-L24000:	popq %rax
-L24001:	pushq %rax
-L24002:	pushq %rax
-L24003:	movq $8, %rax
-L24004:	popq %rdi
-L24005:	addq %rax, %rdi
-L24006:	movq 0(%rdi), %rax
-L24007:	pushq %rax
-L24008:	movq $8, %rax
-L24009:	popq %rdi
-L24010:	addq %rax, %rdi
-L24011:	movq 0(%rdi), %rax
-L24012:	pushq %rax
-L24013:	movq $0, %rax
-L24014:	popq %rdi
-L24015:	addq %rax, %rdi
-L24016:	movq 0(%rdi), %rax
-L24017:	movq %rax, 32(%rsp) 
-L24018:	popq %rax
-L24019:	pushq %rax
-L24020:	movq 40(%rsp), %rax
-L24021:	call L23932
-L24022:	movq %rax, 24(%rsp) 
-L24023:	popq %rax
-L24024:	pushq %rax
-L24025:	movq 32(%rsp), %rax
-L24026:	call L23932
-L24027:	movq %rax, 16(%rsp) 
-L24028:	popq %rax
-L24029:	pushq %rax
-L24030:	movq 24(%rsp), %rax
-L24031:	pushq %rax
-L24032:	movq 24(%rsp), %rax
-L24033:	popq %rdi
-L24034:	call L23
-L24035:	movq %rax, 8(%rsp) 
-L24036:	popq %rax
-L24037:	pushq %rax
-L24038:	movq 8(%rsp), %rax
-L24039:	addq $56, %rsp
-L24040:	ret
-L24041:	jmp L24046
-L24042:	pushq %rax
-L24043:	movq $0, %rax
-L24044:	addq $56, %rsp
-L24045:	ret
-L24046:	ret
-L24047:	
+L23935:	subq $48, %rsp
+L23936:	jmp L23939
+L23937:	jmp L23952
+L23938:	jmp L23975
+L23939:	pushq %rax
+L23940:	pushq %rax
+L23941:	movq $0, %rax
+L23942:	popq %rdi
+L23943:	addq %rax, %rdi
+L23944:	movq 0(%rdi), %rax
+L23945:	pushq %rax
+L23946:	movq $1281979252, %rax
+L23947:	movq %rax, %rbx
+L23948:	popq %rdi
+L23949:	popq %rax
+L23950:	cmpq %rbx, %rdi ; je L23937
+L23951:	jmp L23938
+L23952:	pushq %rax
+L23953:	pushq %rax
+L23954:	movq $8, %rax
+L23955:	popq %rdi
+L23956:	addq %rax, %rdi
+L23957:	movq 0(%rdi), %rax
+L23958:	pushq %rax
+L23959:	movq $0, %rax
+L23960:	popq %rdi
+L23961:	addq %rax, %rdi
+L23962:	movq 0(%rdi), %rax
+L23963:	movq %rax, 48(%rsp) 
+L23964:	popq %rax
+L23965:	pushq %rax
+L23966:	movq 48(%rsp), %rax
+L23967:	call L23714
+L23968:	movq %rax, 40(%rsp) 
+L23969:	popq %rax
+L23970:	pushq %rax
+L23971:	movq 40(%rsp), %rax
+L23972:	addq $56, %rsp
+L23973:	ret
+L23974:	jmp L24049
+L23975:	jmp L23978
+L23976:	jmp L23991
+L23977:	jmp L24045
+L23978:	pushq %rax
+L23979:	pushq %rax
+L23980:	movq $0, %rax
+L23981:	popq %rdi
+L23982:	addq %rax, %rdi
+L23983:	movq 0(%rdi), %rax
+L23984:	pushq %rax
+L23985:	movq $71951177838180, %rax
+L23986:	movq %rax, %rbx
+L23987:	popq %rdi
+L23988:	popq %rax
+L23989:	cmpq %rbx, %rdi ; je L23976
+L23990:	jmp L23977
+L23991:	pushq %rax
+L23992:	pushq %rax
+L23993:	movq $8, %rax
+L23994:	popq %rdi
+L23995:	addq %rax, %rdi
+L23996:	movq 0(%rdi), %rax
+L23997:	pushq %rax
+L23998:	movq $0, %rax
+L23999:	popq %rdi
+L24000:	addq %rax, %rdi
+L24001:	movq 0(%rdi), %rax
+L24002:	movq %rax, 40(%rsp) 
+L24003:	popq %rax
+L24004:	pushq %rax
+L24005:	pushq %rax
+L24006:	movq $8, %rax
+L24007:	popq %rdi
+L24008:	addq %rax, %rdi
+L24009:	movq 0(%rdi), %rax
+L24010:	pushq %rax
+L24011:	movq $8, %rax
+L24012:	popq %rdi
+L24013:	addq %rax, %rdi
+L24014:	movq 0(%rdi), %rax
+L24015:	pushq %rax
+L24016:	movq $0, %rax
+L24017:	popq %rdi
+L24018:	addq %rax, %rdi
+L24019:	movq 0(%rdi), %rax
+L24020:	movq %rax, 32(%rsp) 
+L24021:	popq %rax
+L24022:	pushq %rax
+L24023:	movq 40(%rsp), %rax
+L24024:	call L23935
+L24025:	movq %rax, 24(%rsp) 
+L24026:	popq %rax
+L24027:	pushq %rax
+L24028:	movq 32(%rsp), %rax
+L24029:	call L23935
+L24030:	movq %rax, 16(%rsp) 
+L24031:	popq %rax
+L24032:	pushq %rax
+L24033:	movq 24(%rsp), %rax
+L24034:	pushq %rax
+L24035:	movq 24(%rsp), %rax
+L24036:	popq %rdi
+L24037:	call L23
+L24038:	movq %rax, 8(%rsp) 
+L24039:	popq %rax
+L24040:	pushq %rax
+L24041:	movq 8(%rsp), %rax
+L24042:	addq $56, %rsp
+L24043:	ret
+L24044:	jmp L24049
+L24045:	pushq %rax
+L24046:	movq $0, %rax
+L24047:	addq $56, %rsp
+L24048:	ret
+L24049:	ret
+L24050:	
   
   	/* str_app */
-L24048:	subq $40, %rsp
-L24049:	pushq %rdi
-L24050:	jmp L24053
-L24051:	jmp L24062
-L24052:	jmp L24066
-L24053:	pushq %rax
-L24054:	movq 8(%rsp), %rax
-L24055:	pushq %rax
-L24056:	movq $0, %rax
-L24057:	movq %rax, %rbx
-L24058:	popq %rdi
-L24059:	popq %rax
-L24060:	cmpq %rbx, %rdi ; je L24051
-L24061:	jmp L24052
-L24062:	pushq %rax
-L24063:	addq $56, %rsp
-L24064:	ret
-L24065:	jmp L24104
-L24066:	pushq %rax
-L24067:	movq 8(%rsp), %rax
-L24068:	pushq %rax
-L24069:	movq $0, %rax
-L24070:	popq %rdi
-L24071:	addq %rax, %rdi
-L24072:	movq 0(%rdi), %rax
-L24073:	movq %rax, 40(%rsp) 
-L24074:	popq %rax
-L24075:	pushq %rax
-L24076:	movq 8(%rsp), %rax
-L24077:	pushq %rax
-L24078:	movq $8, %rax
-L24079:	popq %rdi
-L24080:	addq %rax, %rdi
-L24081:	movq 0(%rdi), %rax
-L24082:	movq %rax, 32(%rsp) 
-L24083:	popq %rax
-L24084:	pushq %rax
-L24085:	movq 32(%rsp), %rax
-L24086:	pushq %rax
-L24087:	movq 8(%rsp), %rax
-L24088:	popq %rdi
-L24089:	call L24048
-L24090:	movq %rax, 24(%rsp) 
-L24091:	popq %rax
-L24092:	pushq %rax
-L24093:	movq 40(%rsp), %rax
-L24094:	pushq %rax
-L24095:	movq 32(%rsp), %rax
-L24096:	popq %rdi
-L24097:	call L97
-L24098:	movq %rax, 16(%rsp) 
-L24099:	popq %rax
-L24100:	pushq %rax
-L24101:	movq 16(%rsp), %rax
-L24102:	addq $56, %rsp
-L24103:	ret
-L24104:	ret
-L24105:	
+L24051:	subq $40, %rsp
+L24052:	pushq %rdi
+L24053:	jmp L24056
+L24054:	jmp L24065
+L24055:	jmp L24069
+L24056:	pushq %rax
+L24057:	movq 8(%rsp), %rax
+L24058:	pushq %rax
+L24059:	movq $0, %rax
+L24060:	movq %rax, %rbx
+L24061:	popq %rdi
+L24062:	popq %rax
+L24063:	cmpq %rbx, %rdi ; je L24054
+L24064:	jmp L24055
+L24065:	pushq %rax
+L24066:	addq $56, %rsp
+L24067:	ret
+L24068:	jmp L24107
+L24069:	pushq %rax
+L24070:	movq 8(%rsp), %rax
+L24071:	pushq %rax
+L24072:	movq $0, %rax
+L24073:	popq %rdi
+L24074:	addq %rax, %rdi
+L24075:	movq 0(%rdi), %rax
+L24076:	movq %rax, 40(%rsp) 
+L24077:	popq %rax
+L24078:	pushq %rax
+L24079:	movq 8(%rsp), %rax
+L24080:	pushq %rax
+L24081:	movq $8, %rax
+L24082:	popq %rdi
+L24083:	addq %rax, %rdi
+L24084:	movq 0(%rdi), %rax
+L24085:	movq %rax, 32(%rsp) 
+L24086:	popq %rax
+L24087:	pushq %rax
+L24088:	movq 32(%rsp), %rax
+L24089:	pushq %rax
+L24090:	movq 8(%rsp), %rax
+L24091:	popq %rdi
+L24092:	call L24051
+L24093:	movq %rax, 24(%rsp) 
+L24094:	popq %rax
+L24095:	pushq %rax
+L24096:	movq 40(%rsp), %rax
+L24097:	pushq %rax
+L24098:	movq 32(%rsp), %rax
+L24099:	popq %rdi
+L24100:	call L97
+L24101:	movq %rax, 16(%rsp) 
+L24102:	popq %rax
+L24103:	pushq %rax
+L24104:	movq 16(%rsp), %rax
+L24105:	addq $56, %rsp
+L24106:	ret
+L24107:	ret
+L24108:	
   
   	/* N2asciif */
-L24106:	subq $88, %rsp
-L24107:	pushq %rdi
-L24108:	jmp L24111
-L24109:	jmp L24119
-L24110:	jmp L24270
-L24111:	pushq %rax
-L24112:	pushq %rax
-L24113:	movq $0, %rax
-L24114:	movq %rax, %rbx
-L24115:	popq %rdi
-L24116:	popq %rax
-L24117:	cmpq %rbx, %rdi ; je L24109
-L24118:	jmp L24110
-L24119:	jmp L24122
-L24120:	jmp L24131
-L24121:	jmp L24140
-L24122:	pushq %rax
-L24123:	movq 8(%rsp), %rax
-L24124:	pushq %rax
-L24125:	movq $0, %rax
-L24126:	movq %rax, %rbx
-L24127:	popq %rdi
-L24128:	popq %rax
-L24129:	cmpq %rbx, %rdi ; je L24120
-L24130:	jmp L24121
-L24131:	pushq %rax
-L24132:	movq $0, %rax
-L24133:	movq %rax, 96(%rsp) 
-L24134:	popq %rax
-L24135:	pushq %rax
-L24136:	movq 96(%rsp), %rax
-L24137:	addq $104, %rsp
-L24138:	ret
-L24139:	jmp L24269
-L24140:	pushq %rax
-L24141:	movq 8(%rsp), %rax
-L24142:	call L23287
-L24143:	movq %rax, 88(%rsp) 
-L24144:	popq %rax
-L24145:	jmp L24148
-L24146:	jmp L24157
-L24147:	jmp L24166
-L24148:	pushq %rax
-L24149:	movq 88(%rsp), %rax
-L24150:	pushq %rax
-L24151:	movq $42, %rax
-L24152:	movq %rax, %rbx
-L24153:	popq %rdi
-L24154:	popq %rax
-L24155:	cmpq %rbx, %rdi ; jb L24146
-L24156:	jmp L24147
-L24157:	pushq %rax
-L24158:	movq $0, %rax
-L24159:	movq %rax, 96(%rsp) 
-L24160:	popq %rax
-L24161:	pushq %rax
-L24162:	movq 96(%rsp), %rax
-L24163:	addq $104, %rsp
-L24164:	ret
-L24165:	jmp L24269
-L24166:	jmp L24169
-L24167:	jmp L24178
-L24168:	jmp L24187
-L24169:	pushq %rax
-L24170:	movq $122, %rax
-L24171:	pushq %rax
-L24172:	movq 96(%rsp), %rax
-L24173:	movq %rax, %rbx
-L24174:	popq %rdi
-L24175:	popq %rax
-L24176:	cmpq %rbx, %rdi ; jb L24167
-L24177:	jmp L24168
-L24178:	pushq %rax
-L24179:	movq $0, %rax
-L24180:	movq %rax, 96(%rsp) 
-L24181:	popq %rax
-L24182:	pushq %rax
-L24183:	movq 96(%rsp), %rax
-L24184:	addq $104, %rsp
-L24185:	ret
-L24186:	jmp L24269
-L24187:	jmp L24190
-L24188:	jmp L24199
-L24189:	jmp L24208
-L24190:	pushq %rax
-L24191:	movq 88(%rsp), %rax
-L24192:	pushq %rax
-L24193:	movq $46, %rax
-L24194:	movq %rax, %rbx
-L24195:	popq %rdi
-L24196:	popq %rax
-L24197:	cmpq %rbx, %rdi ; je L24188
-L24198:	jmp L24189
-L24199:	pushq %rax
-L24200:	movq $0, %rax
-L24201:	movq %rax, 96(%rsp) 
-L24202:	popq %rax
-L24203:	pushq %rax
-L24204:	movq 96(%rsp), %rax
-L24205:	addq $104, %rsp
-L24206:	ret
-L24207:	jmp L24269
-L24208:	jmp L24211
-L24209:	jmp L24220
-L24210:	jmp L24253
-L24211:	pushq %rax
-L24212:	movq 8(%rsp), %rax
-L24213:	pushq %rax
-L24214:	movq $256, %rax
-L24215:	movq %rax, %rbx
-L24216:	popq %rdi
-L24217:	popq %rax
-L24218:	cmpq %rbx, %rdi ; jb L24209
-L24219:	jmp L24210
-L24220:	pushq %rax
-L24221:	movq 88(%rsp), %rax
-L24222:	movq %rax, 96(%rsp) 
-L24223:	popq %rax
-L24224:	pushq %rax
-L24225:	movq $0, %rax
-L24226:	movq %rax, 80(%rsp) 
-L24227:	popq %rax
-L24228:	pushq %rax
-L24229:	movq 80(%rsp), %rax
-L24230:	movq %rax, 72(%rsp) 
-L24231:	popq %rax
-L24232:	pushq %rax
-L24233:	movq 96(%rsp), %rax
-L24234:	pushq %rax
-L24235:	movq 80(%rsp), %rax
-L24236:	popq %rdi
-L24237:	call L97
-L24238:	movq %rax, 64(%rsp) 
-L24239:	popq %rax
-L24240:	pushq %rax
-L24241:	movq 64(%rsp), %rax
-L24242:	pushq %rax
-L24243:	movq $0, %rax
-L24244:	popq %rdi
-L24245:	call L97
-L24246:	movq %rax, 56(%rsp) 
-L24247:	popq %rax
-L24248:	pushq %rax
-L24249:	movq 56(%rsp), %rax
-L24250:	addq $104, %rsp
-L24251:	ret
-L24252:	jmp L24269
-L24253:	pushq %rax
-L24254:	movq $0, %rax
-L24255:	movq %rax, 96(%rsp) 
-L24256:	popq %rax
-L24257:	pushq %rax
-L24258:	movq 96(%rsp), %rax
-L24259:	pushq %rax
-L24260:	movq $0, %rax
-L24261:	popq %rdi
-L24262:	call L97
-L24263:	movq %rax, 80(%rsp) 
-L24264:	popq %rax
-L24265:	pushq %rax
-L24266:	movq 80(%rsp), %rax
-L24267:	addq $104, %rsp
-L24268:	ret
-L24269:	jmp L24499
-L24270:	pushq %rax
-L24271:	pushq %rax
-L24272:	movq $1, %rax
-L24273:	popq %rdi
-L24274:	call L67
-L24275:	movq %rax, 48(%rsp) 
-L24276:	popq %rax
-L24277:	jmp L24280
-L24278:	jmp L24289
-L24279:	jmp L24298
-L24280:	pushq %rax
-L24281:	movq 8(%rsp), %rax
-L24282:	pushq %rax
-L24283:	movq $0, %rax
-L24284:	movq %rax, %rbx
-L24285:	popq %rdi
-L24286:	popq %rax
-L24287:	cmpq %rbx, %rdi ; je L24278
-L24288:	jmp L24279
-L24289:	pushq %rax
-L24290:	movq $0, %rax
-L24291:	movq %rax, 96(%rsp) 
-L24292:	popq %rax
-L24293:	pushq %rax
-L24294:	movq 96(%rsp), %rax
-L24295:	addq $104, %rsp
-L24296:	ret
-L24297:	jmp L24499
-L24298:	pushq %rax
-L24299:	movq 8(%rsp), %rax
-L24300:	call L23287
-L24301:	movq %rax, 88(%rsp) 
-L24302:	popq %rax
-L24303:	jmp L24306
-L24304:	jmp L24315
-L24305:	jmp L24324
-L24306:	pushq %rax
-L24307:	movq 88(%rsp), %rax
-L24308:	pushq %rax
-L24309:	movq $42, %rax
-L24310:	movq %rax, %rbx
-L24311:	popq %rdi
-L24312:	popq %rax
-L24313:	cmpq %rbx, %rdi ; jb L24304
-L24314:	jmp L24305
-L24315:	pushq %rax
-L24316:	movq $0, %rax
-L24317:	movq %rax, 96(%rsp) 
-L24318:	popq %rax
-L24319:	pushq %rax
-L24320:	movq 96(%rsp), %rax
-L24321:	addq $104, %rsp
-L24322:	ret
-L24323:	jmp L24499
-L24324:	jmp L24327
-L24325:	jmp L24336
-L24326:	jmp L24345
-L24327:	pushq %rax
-L24328:	movq $122, %rax
-L24329:	pushq %rax
-L24330:	movq 96(%rsp), %rax
-L24331:	movq %rax, %rbx
-L24332:	popq %rdi
-L24333:	popq %rax
-L24334:	cmpq %rbx, %rdi ; jb L24325
-L24335:	jmp L24326
-L24336:	pushq %rax
-L24337:	movq $0, %rax
-L24338:	movq %rax, 96(%rsp) 
-L24339:	popq %rax
-L24340:	pushq %rax
-L24341:	movq 96(%rsp), %rax
-L24342:	addq $104, %rsp
-L24343:	ret
-L24344:	jmp L24499
-L24345:	jmp L24348
-L24346:	jmp L24357
-L24347:	jmp L24366
-L24348:	pushq %rax
-L24349:	movq 88(%rsp), %rax
-L24350:	pushq %rax
-L24351:	movq $46, %rax
-L24352:	movq %rax, %rbx
-L24353:	popq %rdi
-L24354:	popq %rax
-L24355:	cmpq %rbx, %rdi ; je L24346
-L24356:	jmp L24347
-L24357:	pushq %rax
-L24358:	movq $0, %rax
-L24359:	movq %rax, 96(%rsp) 
-L24360:	popq %rax
-L24361:	pushq %rax
-L24362:	movq 96(%rsp), %rax
-L24363:	addq $104, %rsp
-L24364:	ret
-L24365:	jmp L24499
-L24366:	jmp L24369
-L24367:	jmp L24378
-L24368:	jmp L24411
-L24369:	pushq %rax
-L24370:	movq 8(%rsp), %rax
-L24371:	pushq %rax
-L24372:	movq $256, %rax
-L24373:	movq %rax, %rbx
-L24374:	popq %rdi
-L24375:	popq %rax
-L24376:	cmpq %rbx, %rdi ; jb L24367
-L24377:	jmp L24368
-L24378:	pushq %rax
-L24379:	movq 88(%rsp), %rax
-L24380:	movq %rax, 96(%rsp) 
-L24381:	popq %rax
-L24382:	pushq %rax
-L24383:	movq $0, %rax
-L24384:	movq %rax, 80(%rsp) 
-L24385:	popq %rax
-L24386:	pushq %rax
-L24387:	movq 80(%rsp), %rax
-L24388:	movq %rax, 72(%rsp) 
-L24389:	popq %rax
-L24390:	pushq %rax
-L24391:	movq 96(%rsp), %rax
-L24392:	pushq %rax
-L24393:	movq 80(%rsp), %rax
-L24394:	popq %rdi
-L24395:	call L97
-L24396:	movq %rax, 64(%rsp) 
-L24397:	popq %rax
-L24398:	pushq %rax
-L24399:	movq 64(%rsp), %rax
-L24400:	pushq %rax
-L24401:	movq $0, %rax
-L24402:	popq %rdi
-L24403:	call L97
-L24404:	movq %rax, 56(%rsp) 
-L24405:	popq %rax
-L24406:	pushq %rax
-L24407:	movq 56(%rsp), %rax
-L24408:	addq $104, %rsp
-L24409:	ret
-L24410:	jmp L24499
-L24411:	pushq %rax
-L24412:	movq 8(%rsp), %rax
-L24413:	pushq %rax
-L24414:	movq $256, %rax
-L24415:	movq %rax, %rdi
-L24416:	popq %rax
-L24417:	movq $0, %rdx
-L24418:	divq %rdi
-L24419:	movq %rax, 96(%rsp) 
-L24420:	popq %rax
-L24421:	pushq %rax
-L24422:	movq 96(%rsp), %rax
-L24423:	pushq %rax
-L24424:	movq 56(%rsp), %rax
-L24425:	popq %rdi
-L24426:	call L24106
-L24427:	movq %rax, 40(%rsp) 
-L24428:	popq %rax
-L24429:	jmp L24432
-L24430:	jmp L24441
-L24431:	jmp L24450
-L24432:	pushq %rax
-L24433:	movq 40(%rsp), %rax
-L24434:	pushq %rax
-L24435:	movq $0, %rax
-L24436:	movq %rax, %rbx
-L24437:	popq %rdi
-L24438:	popq %rax
-L24439:	cmpq %rbx, %rdi ; je L24430
-L24440:	jmp L24431
-L24441:	pushq %rax
-L24442:	movq $0, %rax
-L24443:	movq %rax, 80(%rsp) 
-L24444:	popq %rax
-L24445:	pushq %rax
-L24446:	movq 80(%rsp), %rax
-L24447:	addq $104, %rsp
-L24448:	ret
-L24449:	jmp L24499
-L24450:	pushq %rax
-L24451:	movq 40(%rsp), %rax
-L24452:	pushq %rax
-L24453:	movq $0, %rax
-L24454:	popq %rdi
-L24455:	addq %rax, %rdi
-L24456:	movq 0(%rdi), %rax
-L24457:	movq %rax, 32(%rsp) 
-L24458:	popq %rax
-L24459:	pushq %rax
-L24460:	movq 88(%rsp), %rax
-L24461:	movq %rax, 80(%rsp) 
-L24462:	popq %rax
-L24463:	pushq %rax
-L24464:	movq $0, %rax
-L24465:	movq %rax, 72(%rsp) 
-L24466:	popq %rax
-L24467:	pushq %rax
-L24468:	movq 72(%rsp), %rax
-L24469:	movq %rax, 64(%rsp) 
-L24470:	popq %rax
-L24471:	pushq %rax
-L24472:	movq 80(%rsp), %rax
-L24473:	pushq %rax
-L24474:	movq 72(%rsp), %rax
-L24475:	popq %rdi
-L24476:	call L97
-L24477:	movq %rax, 56(%rsp) 
-L24478:	popq %rax
-L24479:	pushq %rax
-L24480:	movq 32(%rsp), %rax
-L24481:	pushq %rax
-L24482:	movq 64(%rsp), %rax
-L24483:	popq %rdi
-L24484:	call L24048
-L24485:	movq %rax, 24(%rsp) 
-L24486:	popq %rax
-L24487:	pushq %rax
-L24488:	movq 24(%rsp), %rax
-L24489:	pushq %rax
-L24490:	movq $0, %rax
-L24491:	popq %rdi
-L24492:	call L97
-L24493:	movq %rax, 16(%rsp) 
-L24494:	popq %rax
-L24495:	pushq %rax
-L24496:	movq 16(%rsp), %rax
-L24497:	addq $104, %rsp
-L24498:	ret
-L24499:	ret
-L24500:	
+L24109:	subq $88, %rsp
+L24110:	pushq %rdi
+L24111:	jmp L24114
+L24112:	jmp L24122
+L24113:	jmp L24273
+L24114:	pushq %rax
+L24115:	pushq %rax
+L24116:	movq $0, %rax
+L24117:	movq %rax, %rbx
+L24118:	popq %rdi
+L24119:	popq %rax
+L24120:	cmpq %rbx, %rdi ; je L24112
+L24121:	jmp L24113
+L24122:	jmp L24125
+L24123:	jmp L24134
+L24124:	jmp L24143
+L24125:	pushq %rax
+L24126:	movq 8(%rsp), %rax
+L24127:	pushq %rax
+L24128:	movq $0, %rax
+L24129:	movq %rax, %rbx
+L24130:	popq %rdi
+L24131:	popq %rax
+L24132:	cmpq %rbx, %rdi ; je L24123
+L24133:	jmp L24124
+L24134:	pushq %rax
+L24135:	movq $0, %rax
+L24136:	movq %rax, 96(%rsp) 
+L24137:	popq %rax
+L24138:	pushq %rax
+L24139:	movq 96(%rsp), %rax
+L24140:	addq $104, %rsp
+L24141:	ret
+L24142:	jmp L24272
+L24143:	pushq %rax
+L24144:	movq 8(%rsp), %rax
+L24145:	call L23290
+L24146:	movq %rax, 88(%rsp) 
+L24147:	popq %rax
+L24148:	jmp L24151
+L24149:	jmp L24160
+L24150:	jmp L24169
+L24151:	pushq %rax
+L24152:	movq 88(%rsp), %rax
+L24153:	pushq %rax
+L24154:	movq $42, %rax
+L24155:	movq %rax, %rbx
+L24156:	popq %rdi
+L24157:	popq %rax
+L24158:	cmpq %rbx, %rdi ; jb L24149
+L24159:	jmp L24150
+L24160:	pushq %rax
+L24161:	movq $0, %rax
+L24162:	movq %rax, 96(%rsp) 
+L24163:	popq %rax
+L24164:	pushq %rax
+L24165:	movq 96(%rsp), %rax
+L24166:	addq $104, %rsp
+L24167:	ret
+L24168:	jmp L24272
+L24169:	jmp L24172
+L24170:	jmp L24181
+L24171:	jmp L24190
+L24172:	pushq %rax
+L24173:	movq $122, %rax
+L24174:	pushq %rax
+L24175:	movq 96(%rsp), %rax
+L24176:	movq %rax, %rbx
+L24177:	popq %rdi
+L24178:	popq %rax
+L24179:	cmpq %rbx, %rdi ; jb L24170
+L24180:	jmp L24171
+L24181:	pushq %rax
+L24182:	movq $0, %rax
+L24183:	movq %rax, 96(%rsp) 
+L24184:	popq %rax
+L24185:	pushq %rax
+L24186:	movq 96(%rsp), %rax
+L24187:	addq $104, %rsp
+L24188:	ret
+L24189:	jmp L24272
+L24190:	jmp L24193
+L24191:	jmp L24202
+L24192:	jmp L24211
+L24193:	pushq %rax
+L24194:	movq 88(%rsp), %rax
+L24195:	pushq %rax
+L24196:	movq $46, %rax
+L24197:	movq %rax, %rbx
+L24198:	popq %rdi
+L24199:	popq %rax
+L24200:	cmpq %rbx, %rdi ; je L24191
+L24201:	jmp L24192
+L24202:	pushq %rax
+L24203:	movq $0, %rax
+L24204:	movq %rax, 96(%rsp) 
+L24205:	popq %rax
+L24206:	pushq %rax
+L24207:	movq 96(%rsp), %rax
+L24208:	addq $104, %rsp
+L24209:	ret
+L24210:	jmp L24272
+L24211:	jmp L24214
+L24212:	jmp L24223
+L24213:	jmp L24256
+L24214:	pushq %rax
+L24215:	movq 8(%rsp), %rax
+L24216:	pushq %rax
+L24217:	movq $256, %rax
+L24218:	movq %rax, %rbx
+L24219:	popq %rdi
+L24220:	popq %rax
+L24221:	cmpq %rbx, %rdi ; jb L24212
+L24222:	jmp L24213
+L24223:	pushq %rax
+L24224:	movq 88(%rsp), %rax
+L24225:	movq %rax, 96(%rsp) 
+L24226:	popq %rax
+L24227:	pushq %rax
+L24228:	movq $0, %rax
+L24229:	movq %rax, 80(%rsp) 
+L24230:	popq %rax
+L24231:	pushq %rax
+L24232:	movq 80(%rsp), %rax
+L24233:	movq %rax, 72(%rsp) 
+L24234:	popq %rax
+L24235:	pushq %rax
+L24236:	movq 96(%rsp), %rax
+L24237:	pushq %rax
+L24238:	movq 80(%rsp), %rax
+L24239:	popq %rdi
+L24240:	call L97
+L24241:	movq %rax, 64(%rsp) 
+L24242:	popq %rax
+L24243:	pushq %rax
+L24244:	movq 64(%rsp), %rax
+L24245:	pushq %rax
+L24246:	movq $0, %rax
+L24247:	popq %rdi
+L24248:	call L97
+L24249:	movq %rax, 56(%rsp) 
+L24250:	popq %rax
+L24251:	pushq %rax
+L24252:	movq 56(%rsp), %rax
+L24253:	addq $104, %rsp
+L24254:	ret
+L24255:	jmp L24272
+L24256:	pushq %rax
+L24257:	movq $0, %rax
+L24258:	movq %rax, 96(%rsp) 
+L24259:	popq %rax
+L24260:	pushq %rax
+L24261:	movq 96(%rsp), %rax
+L24262:	pushq %rax
+L24263:	movq $0, %rax
+L24264:	popq %rdi
+L24265:	call L97
+L24266:	movq %rax, 80(%rsp) 
+L24267:	popq %rax
+L24268:	pushq %rax
+L24269:	movq 80(%rsp), %rax
+L24270:	addq $104, %rsp
+L24271:	ret
+L24272:	jmp L24502
+L24273:	pushq %rax
+L24274:	pushq %rax
+L24275:	movq $1, %rax
+L24276:	popq %rdi
+L24277:	call L67
+L24278:	movq %rax, 48(%rsp) 
+L24279:	popq %rax
+L24280:	jmp L24283
+L24281:	jmp L24292
+L24282:	jmp L24301
+L24283:	pushq %rax
+L24284:	movq 8(%rsp), %rax
+L24285:	pushq %rax
+L24286:	movq $0, %rax
+L24287:	movq %rax, %rbx
+L24288:	popq %rdi
+L24289:	popq %rax
+L24290:	cmpq %rbx, %rdi ; je L24281
+L24291:	jmp L24282
+L24292:	pushq %rax
+L24293:	movq $0, %rax
+L24294:	movq %rax, 96(%rsp) 
+L24295:	popq %rax
+L24296:	pushq %rax
+L24297:	movq 96(%rsp), %rax
+L24298:	addq $104, %rsp
+L24299:	ret
+L24300:	jmp L24502
+L24301:	pushq %rax
+L24302:	movq 8(%rsp), %rax
+L24303:	call L23290
+L24304:	movq %rax, 88(%rsp) 
+L24305:	popq %rax
+L24306:	jmp L24309
+L24307:	jmp L24318
+L24308:	jmp L24327
+L24309:	pushq %rax
+L24310:	movq 88(%rsp), %rax
+L24311:	pushq %rax
+L24312:	movq $42, %rax
+L24313:	movq %rax, %rbx
+L24314:	popq %rdi
+L24315:	popq %rax
+L24316:	cmpq %rbx, %rdi ; jb L24307
+L24317:	jmp L24308
+L24318:	pushq %rax
+L24319:	movq $0, %rax
+L24320:	movq %rax, 96(%rsp) 
+L24321:	popq %rax
+L24322:	pushq %rax
+L24323:	movq 96(%rsp), %rax
+L24324:	addq $104, %rsp
+L24325:	ret
+L24326:	jmp L24502
+L24327:	jmp L24330
+L24328:	jmp L24339
+L24329:	jmp L24348
+L24330:	pushq %rax
+L24331:	movq $122, %rax
+L24332:	pushq %rax
+L24333:	movq 96(%rsp), %rax
+L24334:	movq %rax, %rbx
+L24335:	popq %rdi
+L24336:	popq %rax
+L24337:	cmpq %rbx, %rdi ; jb L24328
+L24338:	jmp L24329
+L24339:	pushq %rax
+L24340:	movq $0, %rax
+L24341:	movq %rax, 96(%rsp) 
+L24342:	popq %rax
+L24343:	pushq %rax
+L24344:	movq 96(%rsp), %rax
+L24345:	addq $104, %rsp
+L24346:	ret
+L24347:	jmp L24502
+L24348:	jmp L24351
+L24349:	jmp L24360
+L24350:	jmp L24369
+L24351:	pushq %rax
+L24352:	movq 88(%rsp), %rax
+L24353:	pushq %rax
+L24354:	movq $46, %rax
+L24355:	movq %rax, %rbx
+L24356:	popq %rdi
+L24357:	popq %rax
+L24358:	cmpq %rbx, %rdi ; je L24349
+L24359:	jmp L24350
+L24360:	pushq %rax
+L24361:	movq $0, %rax
+L24362:	movq %rax, 96(%rsp) 
+L24363:	popq %rax
+L24364:	pushq %rax
+L24365:	movq 96(%rsp), %rax
+L24366:	addq $104, %rsp
+L24367:	ret
+L24368:	jmp L24502
+L24369:	jmp L24372
+L24370:	jmp L24381
+L24371:	jmp L24414
+L24372:	pushq %rax
+L24373:	movq 8(%rsp), %rax
+L24374:	pushq %rax
+L24375:	movq $256, %rax
+L24376:	movq %rax, %rbx
+L24377:	popq %rdi
+L24378:	popq %rax
+L24379:	cmpq %rbx, %rdi ; jb L24370
+L24380:	jmp L24371
+L24381:	pushq %rax
+L24382:	movq 88(%rsp), %rax
+L24383:	movq %rax, 96(%rsp) 
+L24384:	popq %rax
+L24385:	pushq %rax
+L24386:	movq $0, %rax
+L24387:	movq %rax, 80(%rsp) 
+L24388:	popq %rax
+L24389:	pushq %rax
+L24390:	movq 80(%rsp), %rax
+L24391:	movq %rax, 72(%rsp) 
+L24392:	popq %rax
+L24393:	pushq %rax
+L24394:	movq 96(%rsp), %rax
+L24395:	pushq %rax
+L24396:	movq 80(%rsp), %rax
+L24397:	popq %rdi
+L24398:	call L97
+L24399:	movq %rax, 64(%rsp) 
+L24400:	popq %rax
+L24401:	pushq %rax
+L24402:	movq 64(%rsp), %rax
+L24403:	pushq %rax
+L24404:	movq $0, %rax
+L24405:	popq %rdi
+L24406:	call L97
+L24407:	movq %rax, 56(%rsp) 
+L24408:	popq %rax
+L24409:	pushq %rax
+L24410:	movq 56(%rsp), %rax
+L24411:	addq $104, %rsp
+L24412:	ret
+L24413:	jmp L24502
+L24414:	pushq %rax
+L24415:	movq 8(%rsp), %rax
+L24416:	pushq %rax
+L24417:	movq $256, %rax
+L24418:	movq %rax, %rdi
+L24419:	popq %rax
+L24420:	movq $0, %rdx
+L24421:	divq %rdi
+L24422:	movq %rax, 96(%rsp) 
+L24423:	popq %rax
+L24424:	pushq %rax
+L24425:	movq 96(%rsp), %rax
+L24426:	pushq %rax
+L24427:	movq 56(%rsp), %rax
+L24428:	popq %rdi
+L24429:	call L24109
+L24430:	movq %rax, 40(%rsp) 
+L24431:	popq %rax
+L24432:	jmp L24435
+L24433:	jmp L24444
+L24434:	jmp L24453
+L24435:	pushq %rax
+L24436:	movq 40(%rsp), %rax
+L24437:	pushq %rax
+L24438:	movq $0, %rax
+L24439:	movq %rax, %rbx
+L24440:	popq %rdi
+L24441:	popq %rax
+L24442:	cmpq %rbx, %rdi ; je L24433
+L24443:	jmp L24434
+L24444:	pushq %rax
+L24445:	movq $0, %rax
+L24446:	movq %rax, 80(%rsp) 
+L24447:	popq %rax
+L24448:	pushq %rax
+L24449:	movq 80(%rsp), %rax
+L24450:	addq $104, %rsp
+L24451:	ret
+L24452:	jmp L24502
+L24453:	pushq %rax
+L24454:	movq 40(%rsp), %rax
+L24455:	pushq %rax
+L24456:	movq $0, %rax
+L24457:	popq %rdi
+L24458:	addq %rax, %rdi
+L24459:	movq 0(%rdi), %rax
+L24460:	movq %rax, 32(%rsp) 
+L24461:	popq %rax
+L24462:	pushq %rax
+L24463:	movq 88(%rsp), %rax
+L24464:	movq %rax, 80(%rsp) 
+L24465:	popq %rax
+L24466:	pushq %rax
+L24467:	movq $0, %rax
+L24468:	movq %rax, 72(%rsp) 
+L24469:	popq %rax
+L24470:	pushq %rax
+L24471:	movq 72(%rsp), %rax
+L24472:	movq %rax, 64(%rsp) 
+L24473:	popq %rax
+L24474:	pushq %rax
+L24475:	movq 80(%rsp), %rax
+L24476:	pushq %rax
+L24477:	movq 72(%rsp), %rax
+L24478:	popq %rdi
+L24479:	call L97
+L24480:	movq %rax, 56(%rsp) 
+L24481:	popq %rax
+L24482:	pushq %rax
+L24483:	movq 32(%rsp), %rax
+L24484:	pushq %rax
+L24485:	movq 64(%rsp), %rax
+L24486:	popq %rdi
+L24487:	call L24051
+L24488:	movq %rax, 24(%rsp) 
+L24489:	popq %rax
+L24490:	pushq %rax
+L24491:	movq 24(%rsp), %rax
+L24492:	pushq %rax
+L24493:	movq $0, %rax
+L24494:	popq %rdi
+L24495:	call L97
+L24496:	movq %rax, 16(%rsp) 
+L24497:	popq %rax
+L24498:	pushq %rax
+L24499:	movq 16(%rsp), %rax
+L24500:	addq $104, %rsp
+L24501:	ret
+L24502:	ret
+L24503:	
   
   	/* N2ascii */
-L24501:	subq $32, %rsp
-L24502:	pushq %rax
-L24503:	pushq %rax
-L24504:	movq $256, %rax
-L24505:	movq %rax, %rdi
-L24506:	popq %rax
-L24507:	movq $0, %rdx
-L24508:	divq %rdi
-L24509:	movq %rax, 32(%rsp) 
-L24510:	popq %rax
-L24511:	pushq %rax
-L24512:	movq 32(%rsp), %rax
-L24513:	pushq %rax
-L24514:	movq $1, %rax
-L24515:	popq %rdi
-L24516:	call L23
-L24517:	movq %rax, 24(%rsp) 
-L24518:	popq %rax
-L24519:	pushq %rax
-L24520:	movq 24(%rsp), %rax
-L24521:	movq %rax, 16(%rsp) 
-L24522:	popq %rax
-L24523:	pushq %rax
-L24524:	pushq %rax
-L24525:	movq 24(%rsp), %rax
-L24526:	popq %rdi
-L24527:	call L24106
-L24528:	movq %rax, 8(%rsp) 
-L24529:	popq %rax
-L24530:	pushq %rax
-L24531:	movq 8(%rsp), %rax
-L24532:	addq $40, %rsp
-L24533:	ret
-L24534:	ret
-L24535:	
+L24504:	subq $32, %rsp
+L24505:	pushq %rax
+L24506:	pushq %rax
+L24507:	movq $256, %rax
+L24508:	movq %rax, %rdi
+L24509:	popq %rax
+L24510:	movq $0, %rdx
+L24511:	divq %rdi
+L24512:	movq %rax, 32(%rsp) 
+L24513:	popq %rax
+L24514:	pushq %rax
+L24515:	movq 32(%rsp), %rax
+L24516:	pushq %rax
+L24517:	movq $1, %rax
+L24518:	popq %rdi
+L24519:	call L23
+L24520:	movq %rax, 24(%rsp) 
+L24521:	popq %rax
+L24522:	pushq %rax
+L24523:	movq 24(%rsp), %rax
+L24524:	movq %rax, 16(%rsp) 
+L24525:	popq %rax
+L24526:	pushq %rax
+L24527:	pushq %rax
+L24528:	movq 24(%rsp), %rax
+L24529:	popq %rdi
+L24530:	call L24109
+L24531:	movq %rax, 8(%rsp) 
+L24532:	popq %rax
+L24533:	pushq %rax
+L24534:	movq 8(%rsp), %rax
+L24535:	addq $40, %rsp
+L24536:	ret
+L24537:	ret
+L24538:	
   
   	/* N2asciid */
-L24536:	subq $32, %rsp
-L24537:	pushq %rax
-L24538:	call L24501
-L24539:	movq %rax, 24(%rsp) 
-L24540:	popq %rax
-L24541:	jmp L24544
-L24542:	jmp L24553
-L24543:	jmp L24562
-L24544:	pushq %rax
-L24545:	movq 24(%rsp), %rax
-L24546:	pushq %rax
-L24547:	movq $0, %rax
-L24548:	movq %rax, %rbx
-L24549:	popq %rdi
-L24550:	popq %rax
-L24551:	cmpq %rbx, %rdi ; je L24542
-L24552:	jmp L24543
-L24553:	pushq %rax
-L24554:	movq $0, %rax
-L24555:	movq %rax, 16(%rsp) 
-L24556:	popq %rax
-L24557:	pushq %rax
-L24558:	movq 16(%rsp), %rax
-L24559:	addq $40, %rsp
-L24560:	ret
-L24561:	jmp L24575
-L24562:	pushq %rax
-L24563:	movq 24(%rsp), %rax
-L24564:	pushq %rax
-L24565:	movq $0, %rax
-L24566:	popq %rdi
-L24567:	addq %rax, %rdi
-L24568:	movq 0(%rdi), %rax
-L24569:	movq %rax, 8(%rsp) 
-L24570:	popq %rax
-L24571:	pushq %rax
-L24572:	movq 8(%rsp), %rax
-L24573:	addq $40, %rsp
-L24574:	ret
-L24575:	ret
+L24539:	subq $32, %rsp
+L24540:	pushq %rax
+L24541:	call L24504
+L24542:	movq %rax, 24(%rsp) 
+L24543:	popq %rax
+L24544:	jmp L24547
+L24545:	jmp L24556
+L24546:	jmp L24565
+L24547:	pushq %rax
+L24548:	movq 24(%rsp), %rax
+L24549:	pushq %rax
+L24550:	movq $0, %rax
+L24551:	movq %rax, %rbx
+L24552:	popq %rdi
+L24553:	popq %rax
+L24554:	cmpq %rbx, %rdi ; je L24545
+L24555:	jmp L24546
+L24556:	pushq %rax
+L24557:	movq $0, %rax
+L24558:	movq %rax, 16(%rsp) 
+L24559:	popq %rax
+L24560:	pushq %rax
+L24561:	movq 16(%rsp), %rax
+L24562:	addq $40, %rsp
+L24563:	ret
+L24564:	jmp L24578
+L24565:	pushq %rax
+L24566:	movq 24(%rsp), %rax
+L24567:	pushq %rax
+L24568:	movq $0, %rax
+L24569:	popq %rdi
+L24570:	addq %rax, %rdi
+L24571:	movq 0(%rdi), %rax
+L24572:	movq %rax, 8(%rsp) 
+L24573:	popq %rax
+L24574:	pushq %rax
+L24575:	movq 8(%rsp), %rax
+L24576:	addq $40, %rsp
+L24577:	ret
+L24578:	ret

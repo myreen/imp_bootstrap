@@ -273,3 +273,7 @@ Definition get_name_def[simp]:
 End
 
 *)
+
+Definition str2imp_def:
+  str2imp (s:string) = ARB : prog
+End

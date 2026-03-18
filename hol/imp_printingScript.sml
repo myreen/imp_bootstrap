@@ -60,7 +60,7 @@ End
 (* Comparison and test to s-expression *)
 
 Definition cmp2str_def:
-  cmp2str Less  = "<" ∧
+  cmp2str imp_source_syntax$Less  = "<" ∧
   cmp2str Equal = "="
 End
 

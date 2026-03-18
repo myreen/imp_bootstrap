@@ -506,5 +506,5 @@ Definition codegen_def:
   let (_, fs, _) = c_fundefs funs init_l [] in
   let (asm1, _, _) = c_fundefs funs init_l fs in
   let main_l = lookup (name "main") fs in
-  flatten ((List (init main_l)) +++ asm1)
+  flatten ((List (init main_l)) +++ asm1) [] : asm
 End

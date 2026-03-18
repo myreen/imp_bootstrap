@@ -40,7 +40,7 @@ Definition imp_v2exp_def:
                    else if n = name "read" then Read (imp_v2exp v1) (imp_v2exp v2)
                    else imp_num2exp n
 Termination
-  WF_REL_TAC 'measure v_size' \\ simp [v_size_def]
+  WF_REL_TAC ‘measure v_size’ \\ simp [v_size_def]
 End
 
 (* ------------------------------------------------------------------ *)
@@ -48,7 +48,7 @@ End
 (* ------------------------------------------------------------------ *)
 
 Definition imp_v2cmp_def:
-  imp_v2cmp v = if getNum v = name "<" then Less else Equal
+  imp_v2cmp v = if getNum v = name "<" then imp_source_syntax$Less else Equal
 End
 
 Definition imp_v2test_def:
@@ -66,7 +66,7 @@ Definition imp_v2test_def:
                    else if n = name "or" then Or (imp_v2test v1) (imp_v2test v2)
                    else Test (imp_v2cmp v0) (imp_v2exp v1) (imp_v2exp v2)
 Termination
-  WF_REL_TAC 'measure v_size' \\ simp [v_size_def]
+  WF_REL_TAC ‘measure v_size’ \\ simp [v_size_def]
 End
 
 (* ------------------------------------------------------------------ *)
@@ -116,7 +116,7 @@ Definition imp_v2cmd_def:
                         Call (getNum v0) (getNum v1)
                              (MAP imp_v2exp (v2list (Pair v2 v3)))
 Termination
-  WF_REL_TAC 'measure v_size' \\ simp [v_size_def]
+  WF_REL_TAC ‘measure v_size’ \\ simp [v_size_def]
 End
 
 (* ------------------------------------------------------------------ *)

@@ -1,11 +1,11 @@
-Theory imp_compiler
+Theory imp_compiler_prog
 Ancestors
   arithmetic list pair finite_map string words
-  imp_to_asm imp_parsing
+  imp_compiler source_syntax
 
 (* Top-level IMP compiler:
    source text  →  IMP AST  →  x64 assembly  →  assembly string *)
 
-Definition compiler_def:
-  compiler inp = asm2str (imp_to_asm$codegen (str2imp inp))
+Definition compiler_prog_def:
+  compiler_prog = Program [] ARB : source_syntax$prog
 End

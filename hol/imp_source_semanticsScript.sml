@@ -95,7 +95,7 @@ Definition mem_load_def[simp]:
 End
 
 Definition eval_exp_def[simp]:
-  eval_exp (Const w)   = cont (Word w) ∧
+  eval_exp (Const w)   = ((cont (Word w) : state -> (v, v) outcome # state )) ∧
   eval_exp (Var n)     = lookup_var n ∧
   eval_exp (Add e1 e2) =
     (do v1 <- eval_exp e1 ;

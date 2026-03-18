@@ -1,1 +1,1 @@
-INCLUDES = $(HOLDIR)/examples/fun-op-sem/lprefix_lub functional
+INCLUDES = $(HOLDIR)/examples/pl-semantics/lprefix_lub functional

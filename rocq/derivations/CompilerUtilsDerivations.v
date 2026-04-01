@@ -1,11 +1,11 @@
 From impboot Require Import utils.Core.
 From impboot Require Import utils.AppList.
-Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.assembly.ASMToString.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.utils.AppList.
-Require Import impboot.imp2asm.ImpToASMCodegen.
-Require Import impboot.commons.CompilerUtils.
+From impboot Require Import assembly.ASMSyntax.
+From impboot Require Import assembly.ASMToString.
+From impboot Require Import imperative.ImpSyntax.
+From impboot Require Import utils.AppList.
+From impboot Require Import imp2asm.ImpToASMCodegen.
+From impboot Require Import commons.CompilerUtils.
 From impboot Require Import automation.Ltac2Utils.
 From impboot Require Import commons.CompilerUtils.
 From impboot Require Import functional.FunValues.
@@ -15,7 +15,7 @@ From impboot.automation.ltac2 Require Import UnfoldFix.
 From impboot.automation.ltac2 Require Import Stdlib2.
 From impboot Require Import fp2imp.FpToImpCodegen.
 Require Import coqutil.Word.Interface.
-Require Import ZArith.
+From Stdlib Require Import ZArith.
 From Stdlib Require Import FunInd.
 From Stdlib Require Import derive.Derive.
 From Stdlib Require Import Lia.

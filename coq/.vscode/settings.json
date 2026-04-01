@@ -1,9 +1,0 @@
-{
-  "files.exclude": {
-    "**/*.vok": true,
-    "**/*.vos": true,
-    "**/*.vo": true,
-    "**/*.aux": true,
-    "**/*.glob": true,
-  }
-}

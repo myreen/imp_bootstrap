@@ -1,0 +1,7 @@
+(include_subdirs qualified)
+
+(rocq.theory
+ (name impboot)
+ (package impboot)
+ ; (generate_project_file)
+ (theories Stdlib Ltac2 Patat coqutil))

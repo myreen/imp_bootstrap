@@ -1,2 +1,0 @@
-; Exclude local dependencies from dune processing - they are built separately
-(data_only_dirs coqutil patat)

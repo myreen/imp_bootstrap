@@ -1,4 +1,4 @@
-From impboot Require Import
+(* From impboot Require Import
   Core
   derivations.AsmToStringDerivations
   derivations.ParserDerivations
@@ -38,4 +38,4 @@ Time Eval lazy in compiler_program_asm.
 
 Definition compiler_asm_str := asm2str compiler_program_asm.
 
-Time Eval lazy in compiler_asm_str.
+Time Eval lazy in compiler_asm_str. *)

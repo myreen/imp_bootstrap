@@ -1,8 +1,0 @@
--Q coqutil/src/coqutil coqutil
-
--Q patat/theories Patat
--I patat/src
-
--Q theories impboot
-theories
--arg -w -arg -notation-overridden

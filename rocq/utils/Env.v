@@ -13,27 +13,27 @@ Module Type EnvT.
     insert (fst p, Some (snd p)) v.
   Parameter remove : name -> env -> env.
 
-  Axiom lookup_insert_eq : forall v x n,
+  Parameter lookup_insert_eq : forall v x n,
       lookup (insert (x, n) v) x = n.
 
-  Axiom lookup_insert_neq : forall v x1 x2 n,
+  Parameter lookup_insert_neq : forall v x1 x2 n,
       x1 <> x2 ->
       lookup (insert (x1, n) v) x2 = lookup v x2.
 
-  Axiom insert_insert_eq : forall v x n1 n2,
+  Parameter insert_insert_eq : forall v x n1 n2,
       insert (x, n1) (insert (x, n2) v) = insert (x, n1) v.
 
-  Axiom insert_insert_neq : forall v x1 x2 n1 n2,
+  Parameter insert_insert_neq : forall v x1 x2 n1 n2,
       x1 <> x2 ->
       insert (x1, n1) (insert (x2, n2) v) = insert (x2, n2) (insert (x1, n1) v).
 
-  Axiom insert_remove : forall v x n,
+  Parameter insert_remove : forall v x n,
       insert (x, n) (remove x v) = insert (x, n) v.
 
-  Axiom lookup_empty : forall x,
+  Parameter lookup_empty : forall x,
       lookup empty x = None.
 
-  Axiom insert_lookup_self : forall n env,
+  Parameter insert_lookup_self : forall n env,
     insert (n, lookup env n) env = env.
 End EnvT.
 

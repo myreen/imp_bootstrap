@@ -6,6 +6,13 @@ From impboot Require Import Ltac2Utils ltac2.Constrs ltac2.Stdlib2 ltac2.Message
 (* TODO: *)
 (* - Currently it throws No_value, if a non polymorphic reference to a polymorphic function is passed *)
 
+Ltac2 Type exn ::= [
+  UnfoldFixError (message)
+].
+
+Ltac2 reference_to_string (r : reference) : string option :=
+  Some (Ident.to_string (List.last (Env.path r))).
+
 Ltac2 unfold_fix_impl (fconstr: constr): unit :=
   let fref := reference_of_constr fconstr in
   let unfolded := Std.eval_unfold [(fref, AllOccurrences)] fconstr in

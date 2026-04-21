@@ -14,15 +14,12 @@ Open Scope N.
 Open Scope string.
 
 Definition ascii_name (n: N): option string :=
-  match N2ascii n with
-  | None => None
-  | Some s =>
-    match s with
-    | EmptyString => None
-    | String hd _ =>
-      let k := N_of_ascii hd in
-      if (N_of_ascii "0"%char <=? k)%N && (k <=? N_of_ascii "9"%char)%N then None else Some s
-    end
+  let/d s := N2ascii n in
+  match s return option string with
+  | EmptyString => None
+  | String hd _ =>
+    let k := N_of_ascii hd in
+    if (N_of_ascii "0"%char <=? k)%N && (k <=? N_of_ascii "9"%char)%N then None else Some s
   end.
 
 Definition name2str (n: N): string :=

@@ -9,6 +9,12 @@ Ltac2 is_sort (c: constr): bool :=
   | _ => false
   end.
 
+Ltac2 rec is_in_Prop (c: constr): bool :=
+  if is_sort c then
+    Constr.equal c constr:(Prop)
+  else
+    is_in_Prop (Constr.type c).
+
 Ltac2 rec struct_of_fix_impl (c: constr): int :=
   match Unsafe.kind c with
   | Fix structs _ _ _ =>

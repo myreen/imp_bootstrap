@@ -67,6 +67,7 @@ Makefile.conf
 
 # OCaml
 _build/
+_opam
 
 # MCP
 mcp.json

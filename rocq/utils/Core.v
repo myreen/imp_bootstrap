@@ -39,6 +39,14 @@ Notation
       body))
   (at level 200, body at level 200, only parsing).
 
+(* v/let *)
+
+Definition tlet {A B: Type} (val: A) (f: forall (a: A) (Ha: a  = val), B): B := f val eq_refl.
+
+Notation "'let/t' x := val 'in' body" :=
+  (tlet val (fun x _ => body))
+  (at level 200, x name, body at level 200).
+
 (* Word *)
 
 Require Import coqutil.Word.Interface. Import word.

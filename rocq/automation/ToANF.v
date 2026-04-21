@@ -53,6 +53,7 @@ Ltac2 is_list_literal (c: constr) :=
   end).
 
 Ltac2 rec is_allowed (c: constr): bool :=
+  Control.once (fun _ => Control.plus (fun _ =>
   match! c with
   | word.of_Z ?c1 => is_allowed c1
   | word.unsigned ?c1 => is_allowed c1
@@ -65,9 +66,10 @@ Ltac2 rec is_allowed (c: constr): bool :=
   | N_of_ascii ?c1 => is_allowed c1
   | _ =>
     Bool.or (proper_const c)
-      (Bool.or (is_var c)
-      (Constrs.is_sort (Constr.type c)))
-  end.
+    (Bool.or (is_var c)
+    (Bool.or (Constrs.is_sort (Constr.type c))
+    (is_in_Prop c)))
+  end) (fun _ => false)).
 
 Module ConstrMap.
   Ltac2 Type t := (constr * constr) list.
@@ -89,7 +91,7 @@ End ConstrMap.
 
 Ltac2 rec replace_with_lifts (e: constr) (lifts: ConstrMap.t): constr :=
   match ConstrMap.find_opt e lifts with
-  | Some lifted => 
+  | Some lifted =>
     lifted
   | None =>
     if is_allowed e then e else (
@@ -117,20 +119,25 @@ Ltac2 rec replace_with_lifts (e: constr) (lifts: ConstrMap.t): constr :=
     end)
   end.
 
+Ltac2 constr_type_with_fallback (c: constr) (fallback: constr): constr :=
+  Control.once (fun _ => Control.plus (fun _ => Constr.type c) (fun _ =>
+    (if debug_to_anf then printf "constr_type_with_fallback: Failed to get type of %t, using fallback %t" c fallback else ());
+    fallback
+  )).
+
 Ltac2 rec in_letd_definitions (dlet_rhss: constr list) (to_replace: constr list) (acc_lifts: ConstrMap.t) (continuation: (ConstrMap.t) -> constr) (): constr :=
   match dlet_rhss, to_replace with
   | ([], []) => continuation (acc_lifts)
   | (e :: dlet_rhss, re :: to_replace) =>
     let tmp_ident := Fresh.in_goal (Option.get (Ident.of_string "a")) in
-    let fn := Constr.in_context tmp_ident (Constr.type e) (fun _ =>
+    let fn := Constr.in_context tmp_ident (constr_type_with_fallback e constr:(string)) (fun _ =>
       let tmp_constr := Unsafe.make (Unsafe.Var tmp_ident) in
       let new_lifts := ConstrMap.add e tmp_constr acc_lifts in
       let new_lifts := ConstrMap.add re tmp_constr new_lifts in
       let to_lift_new := List.map (fun constr => replace_with_lifts constr new_lifts) dlet_rhss in
       let lifted := in_letd_definitions to_lift_new to_replace new_lifts continuation in
       Control.refine lifted
-    )
-    in
+    ) in
     constr:(dlet $e $fn)
   | _, _ =>
     continuation (acc_lifts)
@@ -145,11 +152,11 @@ Ltac2 rec to_anf_alt (level: int) (in_list: bool) (e: constr): (constr list * co
   match! e with
   | dlet ?e1 ?e2 =>
     let (e1_lifts, e1_anf) := to_anf_alt 0 false e1 in
-    let (_, e2_anf) := to_anf_alt 0 false e2 in
+    (* let (_, e2_anf) := to_anf_alt 0 false e2 in *)
     let all_lifts := e1_lifts in
     let lifted_anf := in_letd_definitions all_lifts all_lifts ConstrMap.empty (fun lifts =>
       let e1_anf_replaced := replace_with_lifts e1_anf lifts in
-      constr:(dlet $e1_anf_replaced $e2_anf)
+      constr:(dlet $e1_anf_replaced $e2)
     ) () in
     ([], lifted_anf)
   | _ =>
@@ -171,24 +178,27 @@ Ltac2 rec to_anf_alt (level: int) (in_list: bool) (e: constr): (constr list * co
     | Unsafe.Case _ _ _ _ _ => ([], e)
     | Unsafe.Lambda _ _ => ([], e)
     | Unsafe.Var _ => ([], e)
-    | _ => 
-      let new_lifts := [e] in
-      (new_lifts, e)
+    | _ => ([e], e)
     end
   end.
 
 Ltac2 to_anf_final (e: constr): constr :=
-  let (lift_exps, e_anf) := to_anf_alt 1 false e in
-  in_letd_definitions lift_exps lift_exps ConstrMap.empty (fun lifts =>
-    let result := replace_with_lifts e_anf lifts in
-    result
-  ) ().
+  Control.once (fun _ => Control.plus (
+    let (lift_exps, e_anf) := to_anf_alt 1 false e in
+    let res := in_letd_definitions lift_exps lift_exps ConstrMap.empty (fun lifts =>
+      (if debug_to_anf then printf "Final lifts: %m" (message_of_list (List.map (fun c => of_constr c) lift_exps)) else ());
+      (if debug_to_anf then ConstrMap.print lifts else ());
+      replace_with_lifts e_anf lifts
+    ) in
+    res
+  ) (fun _ => (if debug_to_anf then printf "to_anf_alt threw an exception, returning the original expression %t" e else ()); e)).
 
 Ltac2 try_to_anf_relcompile () :=
-  match! goal with
+  lazy_match! goal with
   | [ |- _ |-- (_, _) ---> ([encode ?c], _) ] =>
-    match! c with
+    lazy_match! c with
     | context _ctxt [ _ ] =>
+      (if debug_to_anf then printf "Trying to convert %t into ANF form" c else ());
       let anf := to_anf_final c in
       (if debug_to_anf then printf "ANF form: %t" anf else ());
       (* TODO: benchmark if rewrite is actually that much worse *)

@@ -56,7 +56,7 @@ Eval lazy in c_add_reparsed.
 Goal (forall fs, c_add_imp_prog = Some fs -> c_add_reparsed = Some (Program fs)).
 Proof.
   intros * H; inversion H; lazy.
-  repeat f_equal.
+  all: repeat f_equal.
 Qed.
 
 Compute (

@@ -1,10 +1,6 @@
-From Ltac2 Require Import Ltac2 Constr Std RedFlags Printf.
-From impboot Require Import utils.Core.
-From impboot Require Import utils.AppList.
-From coqutil Require Import dlet.
-From coqutil Require Import Word.Interface.
-From impboot Require Import commons.CompilerUtils.
-From impboot.functional Require Import FunSemantics FunValues.
+From Ltac2 Require Import Ltac2 Std.
+From impboot.utils Require Import Core.
+From impboot.commons Require Import CompilerUtils.
 
 Open Scope list_scope.
 Open Scope nat.
@@ -15,8 +11,15 @@ Proof.
   intros; reflexivity ().
 Qed.
 
-Ltac2 rewrite_lowerable (): unit :=
-  repeat (match! goal with
+Ltac2 xd () :=
+  match! goal with
+    | [ |- context ctx [ nat_mod ?e 10%nat ] ] =>
+    let inst := Pattern.instantiate ctx constr:(natmod10 $e) in
+    change $inst
+  end.
+
+Ltac2 rewrite_lowerable_step (): unit :=
+  match! goal with
   (* | [ |- context [ N.mul _ _ ] ] =>
     rewrite <- mulN_spec
   | [ |- context [ Nat.mul _ _ ] ] =>
@@ -38,7 +41,7 @@ Ltac2 rewrite_lowerable (): unit :=
   | [ |- context [ N.mul _ 256%N ] ] =>
     rewrite <- mulN_256_spec_r
   | [ |- context ctx [ N_modulo ?e 10%N ] ] =>
-    let inst := Pattern.instantiate ctx constr:(natmod10 $e) in
+    let inst := Pattern.instantiate ctx constr:(Nmod_10 $e) in
     change $inst
   | [ |- context ctx [ N_modulo ?e 256%N ] ] =>
     let inst := Pattern.instantiate ctx constr:(Nmod_256 $e) in
@@ -52,13 +55,13 @@ Ltac2 rewrite_lowerable (): unit :=
     rewrite <- list_app_spec
   | [ |- context [ List.length _ ] ] =>
     rewrite <- list_len_spec
-  | [ |- context c [ dlet (String ?c1 (String ?c2 (String ?c3 (String ?c4 (String ?c5 ?str))))) ?f ] ] =>
+  (* | [ |- context c [ dlet (String ?c1 (String ?c2 (String ?c3 (String ?c4 (String ?c5 ?str))))) ?f ] ] =>
     let new_constr := constr:(
       let/d sfx := String $c5 $str in
       dlet (String $c1 (String $c2 (String $c3 (String $c4 sfx)))) $f
     ) in
     let inst := Pattern.instantiate c new_constr in
-    change $inst
+    change $inst *)
   | [ |- context c [ dlet (?x1 :: ?x2 :: ?x3 :: ?x4 :: ?x5 :: ?rst) ?f ] ] =>
     let new_constr := constr:(
       let/d sfx := $x5 :: $rst in
@@ -66,7 +69,10 @@ Ltac2 rewrite_lowerable (): unit :=
     ) in
     let inst := Pattern.instantiate c new_constr in
     change $inst
-  end).
+  end.
+
+Ltac2 rewrite_lowerable (): unit :=
+  repeat (rewrite_lowerable_step ()).
 
 (* test *)
 
@@ -131,6 +137,11 @@ Goal forall (a: nat), (10 * a) = 0.
 Abort.
 
 Goal forall (a: nat), (nat_mod a 10) = 0.
+  intros.
+  rewrite_lowerable ().
+Abort.
+
+Goal forall (a: nat), (let/d a := (nat_mod a 10) in a) = 0.
   intros.
   rewrite_lowerable ().
 Abort.

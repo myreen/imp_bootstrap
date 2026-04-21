@@ -41,6 +41,7 @@ Derive reg2s_prog
   as reg2s_prog_proof.
 Proof.
   time relcompile.
+  all: ltac1:(timeout 5 ltac2:(Control.enter crush_FEnv_impossible)).
 Qed.
 Time Compute to_funs [reg2s_prog].
 Ltac2 Eval assert_Some constr:(to_funs [reg2s_prog]).
@@ -62,7 +63,7 @@ Proof.
 Qed.
 Time Compute to_funs [clean_prog].
 Ltac2 Eval assert_Some constr:(to_funs [clean_prog]).
-
+From Ltac2 Require Import Printf Message.
 Derive i2s_con_prog
   in ltac2:(relcompile_tpe 'i2s_con_prog 'i2s_con ['reg2s; 'str_app; 'N2str])
   as i2s_con_prog_proof.

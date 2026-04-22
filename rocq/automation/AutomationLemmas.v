@@ -1,19 +1,12 @@
-From coqutil Require Import Datatypes.List.
-From impboot.commons Require Import CompilerUtils. 
-Require Import impboot.parsing.ParserData.
-Require Import impboot.functional.FunSyntax.
-Require Import impboot.functional.FunSemantics.
-Require Import impboot.functional.FunProperties.
-Require Import impboot.functional.FunValues.
-Require impboot.assembly.ASMSyntax.
-Require impboot.imperative.ImpSyntax.
-From impboot Require Import utils.Core utils.Env.
-From coqutil Require Import dlet.
-Require Import impboot.utils.Words4Naive.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
-Require Import impboot.utils.AppList.
-Require Import Patat.Patat.
+From impboot.utils Require Import Core Env AppList Words4Naive.
+From impboot.commons Require Import CompilerUtils.
+From impboot.parsing Require Import ParserData.
+From impboot.functional Require Import FunSyntax FunSemantics FunProperties FunValues.
+From impboot.assembly Require ASMSyntax.
+From impboot.imperative Require ImpSyntax.
+From coqutil Require Import Datatypes.List dlet.
+From coqutil.Word Require Import Interface Properties.
+From Patat Require Import Patat.
 
 Create HintDb automation.
 

@@ -1,8 +1,5 @@
-From impboot Require Import utils.Core utils.Env.
-Require Import impboot.functional.FunSyntax.
-Require Import impboot.functional.FunSemantics.
-Require Import impboot.functional.FunValues.
-Require Import impboot.utils.Llist.
+From impboot.utils Require Import Core Env Llist.
+From impboot.functional Require Import FunSyntax FunSemantics FunValues.
 
 Lemma Eval_deterministic : forall e s env a1v a1s,
   env |-- (e, s) ---> (a1v, a1s) ->

@@ -1,16 +1,10 @@
-Require Import impboot.utils.Core.
-Require Import impboot.utils.Llist.
+From impboot.utils Require Import Core Llist Env AppList.
 Import Llist.
-Require Import impboot.utils.Env.
-Require Import impboot.utils.AppList.
-Require Import coqutil.Word.Interface.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.imperative.ImpSemantics.
-Require Import impboot.commons.ProofUtils.
-
-Require Import Stdlib.Program.Equality.
-
-Require Import Patat.Patat.
+From impboot.imperative Require Import ImpSyntax ImpSemantics.
+From coqutil.Word Require Import Interface.
+From impboot.commons Require Import ProofUtils.
+From Stdlib Require Import Program.Equality.
+From Patat Require Import Patat.
 
 Theorem eval_exp_not_stop: forall e s res s1 v,
   eval_exp e s = (res, s1) ->

@@ -1,22 +1,12 @@
-Require Import impboot.utils.Core.
-Require Import impboot.utils.Llist.
+From impboot.utils Require Import Core Llist Env AppList.
 Import Llist.
-Require Import impboot.utils.Env.
-Require Import impboot.utils.AppList.
-Require Import coqutil.Word.Interface.
-Require Import impboot.imp2asm.ImpToASMCodegen.
-Require Import impboot.commons.CompilerUtils.
-Require Import impboot.commons.ProofUtils.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.imperative.ImpSemantics.
-Require Import impboot.imperative.ImpProperties.
-Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.assembly.ASMSemantics.
-Require Import impboot.assembly.ASMProperties.
-
-Require Import Stdlib.Program.Equality.
-
-Require Import Patat.Patat.
+From impboot.imp2asm Require Import ImpToASMCodegen.
+From impboot.commons Require Import CompilerUtils ProofUtils.
+From impboot.imperative Require Import ImpSyntax ImpSemantics ImpProperties.
+From impboot.assembly Require Import ASMSyntax ASMSemantics ASMProperties.
+From coqutil.Word Require Import Interface.
+From Stdlib Require Import Program.Equality.
+From Patat Require Import Patat.
 
 (* Definitions of invariants and relations *)
 

@@ -1,12 +1,7 @@
-From impboot Require Import functional.FunSyntax functional.FunValues.
-From impboot Require Import imperative.ImpSyntax.
-From Stdlib Require Import NArith.
-From Stdlib Require Import ZArith.
-From Stdlib Require Import Lists.List.
-From Stdlib Require Import Bool.
-From Stdlib Require Import String.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
+From impboot.functional Require Import FunSyntax FunValues.
+From impboot.imperative Require Import ImpSyntax.
+From Stdlib Require Import NArith ZArith Lists.List Bool String.
+From coqutil.Word Require Import Interface Properties.
 Import ListNotations.
 
 (* definition of a very partial compilation from functional to imperative source *)

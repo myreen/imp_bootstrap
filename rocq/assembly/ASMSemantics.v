@@ -1,12 +1,8 @@
-From impboot Require Import
-  utils.Core
-  utils.Llist.
+From impboot.utils Require Import Core Llist.
 Import Llist.
-Require Import impboot.assembly.ASMSyntax.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
-From Stdlib Require Import Relations.Relation_Operators.
-From Stdlib Require Import Program.Equality.
+From impboot.assembly Require Import ASMSyntax.
+From coqutil.Word Require Import Interface Properties.
+From Stdlib Require Import Relations.Relation_Operators Program.Equality.
 
 Inductive word_or_ret :=
 | Word (w: word64)

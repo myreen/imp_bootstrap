@@ -1,4 +1,4 @@
-Require Import impboot.utils.Core.
+From impboot.utils Require Import Core.
 
 Inductive token :=
   | OPEN

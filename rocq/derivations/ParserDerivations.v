@@ -1,28 +1,18 @@
-From impboot Require Import utils.Core.
-From impboot Require Import utils.AppList.
-Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.assembly.ASMToString.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.utils.AppList.
-Require Import impboot.parsing.Parser.
-Require Import impboot.imp2asm.ImpToASMCodegen.
-From impboot Require Import automation.Ltac2Utils.
-From impboot Require Import automation.ltac2.Stdlib2.
-From impboot Require Import commons.CompilerUtils.
-From impboot Require Import functional.FunValues.
-From impboot Require Import functional.FunSemantics.
-Require Import impboot.automation.RelCompiler.
-Require Import impboot.automation.ltac2.UnfoldFix.
-Require Import impboot.automation.AutomationLemmas.
+From impboot.utils Require Import Core AppList.
+From impboot.assembly Require Import ASMSyntax ASMToString.
+From impboot.imperative Require Import ImpSyntax.
+From impboot.parsing Require Import Parser.
+From impboot.imp2asm Require Import ImpToASMCodegen.
+From impboot.automation Require Import Ltac2Utils RelCompiler AutomationLemmas.
+From impboot.automation.ltac2 Require Import UnfoldFix Stdlib2.
+From impboot.commons Require Import CompilerUtils.
+From impboot.functional Require Import FunValues FunSemantics.
 From impboot.fp2imp Require Import FpToImpCodegen.
-Require Import coqutil.Word.Interface.
-Require Import ZArith.
-From Stdlib Require Import FunInd.
-From Stdlib Require Import derive.Derive.
-From Stdlib Require Import Lia.
+From coqutil.Word Require Import Interface.
+From Stdlib Require Import ZArith FunInd derive.Derive Lia.
 From Ltac2 Require Import Ltac2.
 
-From impboot Require Import derivations.CompilerUtilsDerivations.
+From impboot.derivations Require Import CompilerUtilsDerivations.
 
 (* lexing *)
 

@@ -1,25 +1,15 @@
-From impboot Require Import utils.Core.
-From impboot Require Import utils.AppList.
-From coqutil Require Import dlet.
-From coqutil Require Import Word.Interface.
-Require Import impboot.commons.CompilerUtils.
-Require Import impboot.parsing.ParserData.
-Require Import impboot.parsing.Parser.
-Require Import impboot.functional.FunValues.
-Require Import impboot.functional.FunSemantics.
-Require Import impboot.automation.AutomationLemmas.
-Require Import impboot.utils.Llist.
-Require Import impboot.utils.Env.
+From impboot.utils Require Import Core AppList Llist Env.
+From impboot.commons Require Import CompilerUtils.
+From impboot.parsing Require Import ParserData Parser.
+From impboot.functional Require Import FunValues FunSemantics.
+From impboot.automation Require Import AutomationLemmas Ltac2Utils RelCompileUnfolding FunDeps ToLowerable ToANF RelCompilerCommons.
 From impboot.automation.ltac2 Require Import Messages Constrs Stdlib2 UnfoldFix.
-From impboot.automation Require Import Ltac2Utils RelCompileUnfolding FunDeps ToLowerable ToANF RelCompilerCommons.
+From coqutil Require Import dlet.
+From coqutil.Word Require Import Interface.
+From coqutil.Tactics Require Import reference_to_string ident_of_string ident_to_string.
+From Stdlib Require Import derive.Derive FunInd.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf Fresh.
 Import Ltac2.Constr.Unsafe.
-From coqutil Require Import
-  Tactics.reference_to_string
-  Tactics.ident_of_string
-  Tactics.ident_to_string.
-From Stdlib Require Import derive.Derive.
-From Stdlib Require Import FunInd.
 
 (* Important notes *)
 (* 1. every destruct has to have a `eqn:?` (Otherwise, we can get a bunch of

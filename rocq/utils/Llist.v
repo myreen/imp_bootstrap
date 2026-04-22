@@ -1,5 +1,5 @@
-Require Import String Ascii.
-From Coq.Unicode Require Import Utf8.
+From Stdlib Require Import Strings.String Strings.Ascii.
+From Stdlib.Unicode Require Import Utf8.
 
 Module Llist.
 

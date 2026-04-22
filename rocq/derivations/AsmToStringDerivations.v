@@ -1,20 +1,15 @@
-From impboot Require Import utils.Core.
-From impboot Require Import utils.AppList.
-Require Import impboot.assembly.ASMToString.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.utils.AppList.
+From impboot.utils Require Import Core AppList.
+From impboot.assembly Require Import ASMToString ASMSyntax.
+From impboot.imperative Require Import ImpSyntax.
 From impboot.automation Require Import Ltac2Utils ToLowerable ToANF RelCompiler RelCompilerCommons ltac2.UnfoldFix.
 From impboot.automation.ltac2 Require Import Stdlib2.
 From impboot.commons Require Import CompilerUtils.
 From impboot.functional Require Import FunValues FunSemantics.
-From impboot Require Import assembly.ASMSyntax.
-From impboot Require Import fp2imp.FpToImpCodegen.
-From Stdlib Require Import ZArith Lia.
-From Stdlib Require Import FunInd.
-From Stdlib Require Import derive.Derive.
+From impboot.fp2imp Require Import FpToImpCodegen.
+From Stdlib Require Import ZArith Lia FunInd derive.Derive.
 From Ltac2 Require Import Ltac2.
 
-From impboot Require Import derivations.CompilerUtilsDerivations.
+From impboot.derivations Require Import CompilerUtilsDerivations.
 
 Set Printing Goal Names.
 Set Printing Existential Instances.

@@ -1,6 +1,5 @@
-From impboot Require Import utils.Core.
-From Stdlib Require Import NArith.
-From Stdlib Require Import Lists.List.
+From impboot.utils Require Import Core.
+From Stdlib Require Import NArith Lists.List.
 Import ListNotations.
 
 Open Scope N.

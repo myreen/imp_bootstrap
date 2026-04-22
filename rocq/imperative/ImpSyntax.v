@@ -1,6 +1,5 @@
-From impboot Require Import utils.Core.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
+From impboot.utils Require Import Core.
+From coqutil.Word Require Import Interface Properties.
 
 Notation name := N (only parsing).
 

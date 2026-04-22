@@ -1,17 +1,11 @@
-Require Import impboot.utils.Core.
-Require Import impboot.functional.FunSyntax.
-Require Import impboot.functional.FunSemantics.
-Require Import impboot.functional.FunValues.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.imperative.ImpSemantics.
-Require Import impboot.imperative.ImpProperties.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
-Require Import impboot.fp2imp.FpToImpCodegen.
-Require Import impboot.commons.ProofUtils.
-Require Import Stdlib.Program.Equality.
-
-Require Import Patat.Patat.
+From impboot.utils Require Import Core.
+From impboot.functional Require Import FunSyntax FunSemantics FunValues.
+From impboot.imperative Require Import ImpSyntax ImpSemantics ImpProperties.
+From coqutil.Word Require Import Interface Properties.
+From impboot.fp2imp Require Import FpToImpCodegen.
+From impboot.commons Require Import ProofUtils.
+From Stdlib Require Import Program.Equality.
+From Patat Require Import Patat.
 
 Open Scope N.
 

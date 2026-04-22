@@ -1,7 +1,7 @@
-From impboot Require Import assembly.ASMSyntax.
-From impboot Require Import utils.Core.
-Require Import coqutil.Word.Interface.
-From impboot Require Import commons.CompilerUtils.
+From impboot.assembly Require Import ASMSyntax.
+From impboot.utils Require Import Core.
+From impboot.commons Require Import CompilerUtils.
+From coqutil.Word Require Import Interface.
 
 Open Scope string.
 

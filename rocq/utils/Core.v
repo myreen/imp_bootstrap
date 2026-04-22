@@ -1,17 +1,10 @@
-From Stdlib Require Export
-  Lists.List
-  Bool.Bool
-  Strings.Ascii
-  Strings.String
-  Numbers.DecimalString
-  Arith.PeanoNat.
+From Stdlib.Lists Require Export List.
 Export ListNotations.
-From Stdlib Require Export
-  Lia
-  String
-  Nat
-  Arith
-  ZArith.
+From Stdlib.Bool Require Export Bool.
+From Stdlib.Strings Require Export Ascii String.
+From Stdlib.Numbers Require Export DecimalString.
+From Stdlib.Arith Require Import PeanoNat.
+From Stdlib Require Export Lia String Nat Arith ZArith.
 From coqutil Require Export dlet.
 From Stdlib.Unicode Require Export Utf8.
 
@@ -50,10 +43,10 @@ Notation "'let/t' x := val 'in' body" :=
 
 (** Word *)
 
-Require Import coqutil.Word.Interface. Import word.
-Require Import coqutil.Word.Properties.
-Require coqutil.Word.Naive.
-Require impboot.utils.Words4Naive.
+From coqutil.Word Require Import Interface. Import word.
+From coqutil.Word Require Import Properties.
+From coqutil.Word Require Naive.
+From impboot.utils Require Words4Naive.
 
 Definition word64 := (@word.rep 64 Naive.word64).
 

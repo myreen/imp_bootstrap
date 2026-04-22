@@ -1,8 +1,8 @@
-Require Import impboot.utils.Core.
-Require Import impboot.parsing.Parser.
-Require Import impboot.imp2asm.ImpToASMCodegenProofs.
-Require Import impboot.commons.CompilerUtils.
-Require Import Patat.Patat.
+From impboot.utils Require Import Core.
+From impboot.parsing Require Import Parser.
+From impboot.imp2asm Require Import ImpToASMCodegenProofs.
+From impboot.commons Require Import CompilerUtils.
+From Patat Require Import Patat.
 
 Ltac cleanup :=
   repeat match goal with

@@ -1,8 +1,6 @@
-From impboot Require Import utils.Core.
-Require Export impboot.utils.Env.
-Require Import impboot.functional.FunSyntax.
-Require Import impboot.functional.FunValues.
-Require Import impboot.utils.Llist.
+From impboot.utils Require Import Core Llist.
+From impboot.utils Require Export Env.
+From impboot.functional Require Import FunSyntax FunValues.
 Import Llist.
 
 Hint Resolve FEnv.lookup_insert_eq : fenvDb.

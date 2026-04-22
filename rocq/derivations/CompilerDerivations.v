@@ -1,33 +1,18 @@
-From impboot Require Import utils.Core.
-From impboot Require Import utils.Llist.
+From impboot.utils Require Import Core Llist AppList.
 Import Llist.
-From impboot Require Import utils.AppList.
-From impboot Require Import commons.ProofUtils.
-Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.assembly.ASMToString.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.utils.AppList.
-Require Import impboot.parsing.Parser.
-Require Import impboot.imp2asm.ImpToASMCodegen.
-Require Import impboot.imp2asm.Compiler.
-From impboot Require Import automation.Ltac2Utils.
-From impboot Require Import commons.CompilerUtils.
-From impboot Require Import functional.FunValues.
-From impboot Require Import functional.FunSemantics.
-Require Import impboot.automation.RelCompiler.
-Require Import impboot.automation.ltac2.UnfoldFix.
-Require Import impboot.automation.AutomationLemmas.
-Require Import coqutil.Word.Interface.
-Require Import ZArith.
-From Stdlib Require Import FunInd.
-From Stdlib Require Import derive.Derive.
-From Stdlib Require Import Lia.
+From impboot.commons Require Import ProofUtils CompilerUtils.
+From impboot.assembly Require Import ASMSyntax ASMToString.
+From impboot.imperative Require Import ImpSyntax.
+From impboot.parsing Require Import Parser.
+From impboot.imp2asm Require Import ImpToASMCodegen Compiler.
+From impboot.automation Require Import Ltac2Utils RelCompiler AutomationLemmas.
+From impboot.automation.ltac2 Require Import UnfoldFix.
+From impboot.functional Require Import FunValues FunSemantics.
+From coqutil.Word Require Import Interface.
+From Stdlib Require Import ZArith FunInd derive.Derive Lia.
 From Ltac2 Require Import Ltac2.
 
-From impboot Require Import derivations.AsmToStringDerivations.
-From impboot Require Import derivations.ParserDerivations.
-From impboot Require Import derivations.ImpToASMCodegenDerivations.
-From impboot Require Import derivations.CompilerUtilsDerivations.
+From impboot.derivations Require Import AsmToStringDerivations ParserDerivations ImpToASMCodegenDerivations CompilerUtilsDerivations.
 
 Derive compiler_prog
   in ltac2:(relcompile_tpe 'compiler_prog 'compiler ['str2imp; 'codegen; 'asm2str])

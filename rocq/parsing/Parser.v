@@ -1,17 +1,13 @@
-From impboot Require Import
-  utils.Core
-  utils.Llist.
+From impboot.utils Require Import Core Llist.
 Import Llist.
-Require Import impboot.parsing.ParserData.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.functional.FunValues.
-Require Import impboot.commons.CompilerUtils.
-Require Import coqutil.Word.Interface.
-
-Require Import impboot.automation.ltac2.UnfoldFix.
+From impboot.parsing Require Import ParserData.
+From impboot.imperative Require Import ImpSyntax.
+From impboot.functional Require Import FunValues.
+From impboot.commons Require Import CompilerUtils.
+From coqutil.Word Require Import Interface.
+From impboot.automation.ltac2 Require Import UnfoldFix.
 From Ltac2 Require Import Ltac2.
-
-Require Import Patat.Patat.
+From Patat Require Import Patat.
 
 Open Scope N.
 Open Scope string.

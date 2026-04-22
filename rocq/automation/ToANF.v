@@ -186,8 +186,6 @@ Ltac2 to_anf_final (e: constr): constr :=
   Control.once (fun _ => Control.plus (
     let (lift_exps, e_anf) := to_anf_alt 1 false e in
     let res := in_letd_definitions lift_exps lift_exps ConstrMap.empty (fun lifts =>
-      (if debug_to_anf then printf "Final lifts: %m" (message_of_list (List.map (fun c => of_constr c) lift_exps)) else ());
-      (if debug_to_anf then ConstrMap.print lifts else ());
       replace_with_lifts e_anf lifts
     ) in
     res

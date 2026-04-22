@@ -360,7 +360,6 @@ Ltac2 rec compile () : unit :=
     let cenv := get_cenv_from_fenv_constr fenv in
     let names_in_cenv := List.concat (List.map opt_to_list (List.map (fun p => Option.bind (fst p) (fun c => Ident.of_string (string_of_constr_string c))) cenv)) in
     if debug_relcompile then printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_cenv cenv) cenv else ();
-    (* printf "Goal: %t" c; *)
     let try_lemmas () :=
       lazy_match! e with
       | (fun x => @?_f x) =>
@@ -390,7 +389,7 @@ Ltac2 rec compile () : unit :=
           (* eval f *) ltac2:(Control.enter (fun () => intro; intro; cbv beta; compile_with_prep ()))
           ))
       | tlet ?val ?body =>
-        (if debug_relcompile then printf "Compiling a dlet with value %t" val else ());
+        (if debug_relcompile then printf "Compiling a tlet with value %t" val else ());
         let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
         let let_n_constr := List.nth binders_of_body 0 in
         refine open_constr:(auto_tlet

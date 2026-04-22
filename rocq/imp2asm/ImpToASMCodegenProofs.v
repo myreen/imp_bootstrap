@@ -5599,7 +5599,7 @@ Proof.
     split; [reflexivity|].
     spat `c_fundef` at rewrite spat; simpl; unfold dlet; simpl.
     repeat rewrite list_app_spec in *.
-    assert (xs ++ Comment (N2asciid n1) :: flatten a0 ++ Ret :: flatten a1 = (xs ++ [Comment (N2asciid n1)]) ++ flatten a0 ++ Ret :: flatten a1) as ->.
+    assert (xs ++ Comment (N2ascii n1) :: flatten a0 ++ Ret :: flatten a1 = (xs ++ [Comment (N2ascii n1)]) ++ flatten a0 ++ Ret :: flatten a1) as ->.
     1: induction xs; simpl; try rewrite <- app_assoc; eauto.
     eapply code_in_append_left2.
     rewrite length_app; simpl.
@@ -5607,7 +5607,7 @@ Proof.
   }
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2asciid n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
+  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2ascii n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
   (* assert (Datatypes.length (flatten a0) + (Datatypes.length xs) = List.length (xs ++ flatten a0)) as Hrwlength. *)
   1: simpl; rewrite list_app_spec; repeat rewrite length_app; simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.

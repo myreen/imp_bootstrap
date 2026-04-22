@@ -41,7 +41,6 @@ Derive reg2s_prog
   as reg2s_prog_proof.
 Proof.
   time relcompile.
-  all: ltac1:(timeout 5 ltac2:(Control.enter crush_FEnv_impossible)).
 Qed.
 Time Compute to_funs [reg2s_prog].
 Ltac2 Eval assert_Some constr:(to_funs [reg2s_prog]).

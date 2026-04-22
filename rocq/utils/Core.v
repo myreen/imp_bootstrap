@@ -15,7 +15,7 @@ From Stdlib Require Export
 From coqutil Require Export dlet.
 From Stdlib.Unicode Require Export Utf8.
 
-(* d/let *)
+(** d/let *)
 
 Notation "'let/d' x := val 'in' body" :=
   (dlet val (fun x => body))
@@ -39,15 +39,16 @@ Notation
       body))
   (at level 200, body at level 200, only parsing).
 
-(* v/let *)
+(** t/let *)
 
+(** Similar to let/t but also passes the equality proof *)
 Definition tlet {A B: Type} (val: A) (f: forall (a: A) (Ha: a  = val), B): B := f val eq_refl.
 
 Notation "'let/t' x := val 'in' body" :=
   (tlet val (fun x _ => body))
   (at level 200, x name, body at level 200).
 
-(* Word *)
+(** Word *)
 
 Require Import coqutil.Word.Interface. Import word.
 Require Import coqutil.Word.Properties.
@@ -77,7 +78,7 @@ Definition w2n4 (w: word4): nat :=
   Z.to_nat (word.unsigned w).
 Open Scope word.
 
-(* List *)
+(** List *)
 
 Fixpoint list_update {A : Type} (n : nat) (x : A) (l : list A) : list A :=
   match n, l with

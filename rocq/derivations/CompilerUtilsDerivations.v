@@ -196,9 +196,6 @@ Proof.
   time relcompile.
   all: ltac1:(try lia).
   all: try (solve [subst; rewrite Nmod_256_spec in *; specialize N_modulo_lt with (n := n) (m := 256%N) as ?; ltac1:(try lia)]).
-  all: intros; unfold envn; simpl; eauto.
-  (* TODO: this vvvvvvv should work here *)
-  (* all: ltac1:(timeout 5 ltac2:(solve0 [crush_FEnv_impossible])). *)
 Qed.
 Time Compute to_funs [N2asciif_prog].
 Ltac2 Eval assert_Some constr:(to_funs [N2asciif_prog]).

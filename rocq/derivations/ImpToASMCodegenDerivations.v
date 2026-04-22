@@ -34,120 +34,11 @@ From impboot Require Import derivations.CompilerUtilsDerivations.
 (*       Derivations for Codegen Functions         *)
 (* *********************************************** *)
 
-Opaque encode.
-Opaque name_enc.
-
 Derive init_prog
   in ltac2:(relcompile_tpe 'init_prog 'init ['@list_app; 'str_app])
   as init_prog_proof.
 Proof.
   time relcompile.
-  1: {
-    clear H2.
-    intros; simpl make_env in *; unfold envn; ltac1:(with_strategy opaque [FEnv.insert_all] simpl).
-    match! goal with
-    | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-      rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-    | [ |- context [FEnv.insert_all [] _] ] =>
-      simpl FEnv.insert_all
-    | [ |- FEnv.lookup (FEnv.insert (?_n, _) _) ?_n = _ ] =>
-      rewrite FEnv.lookup_insert_eq
-    | [ |- FEnv.lookup (FEnv.insert_all ?entries _) ?n = _ ] =>
-      let entries_names := get_insert_all_names entries in
-      let fst_nm := List.nth entries_names 0 in
-      rewrite FEnv_insert_all_unfold_once;
-      destruct (N.eq_dec $n $fst_nm) eqn:?; subst
-    | [ |- FEnv.lookup (FEnv.insert (_, _) _) _ = _ ] =>
-      rewrite FEnv.lookup_insert_neq; try ltac1:(congruence); eauto
-    | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-      lazy in $h; simpl in $h;
-      repeat0 (fun () => match! goal with
-      | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-        rewrite FEnv.lookup_insert_neq in $h; try ltac1:(congruence); lazy; eauto
-      | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-        rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-      end); try ltac1:(congruence)
-    end.
-    1: match! goal with
-    | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-      rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-    | [ |- context [FEnv.insert_all [] _] ] =>
-      simpl FEnv.insert_all
-    | [ |- FEnv.lookup (FEnv.insert (?_n, _) _) ?_n = _ ] =>
-      rewrite FEnv.lookup_insert_eq
-    | [ |- FEnv.lookup (FEnv.insert_all ?entries _) ?n = _ ] =>
-      let entries_names := get_insert_all_names entries in
-      let fst_nm := List.nth entries_names 0 in
-      rewrite FEnv_insert_all_unfold_once;
-      destruct (N.eq_dec $n $fst_nm) eqn:?; subst
-    | [ |- FEnv.lookup (FEnv.insert (_, _) _) _ = _ ] =>
-      rewrite FEnv.lookup_insert_neq; try ltac1:(congruence); eauto
-    | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-      lazy in $h; simpl in $h;
-      repeat0 (fun () => match! goal with
-      | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-        rewrite FEnv.lookup_insert_neq in $h; try ltac1:(congruence); lazy; eauto
-      | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-        rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-      end; try ltac1:(solve [with_strategy transparent [name_enc] (unfold name_enc; simpl); congruence]))
-    end.
-    1: match! goal with
-    | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-      rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-    | [ |- context [FEnv.insert_all [] _] ] =>
-      simpl FEnv.insert_all
-    | [ |- FEnv.lookup (FEnv.insert (?_n, _) _) ?_n = _ ] =>
-      rewrite FEnv.lookup_insert_eq
-    | [ |- FEnv.lookup (FEnv.insert_all ?entries _) ?n = _ ] =>
-      let entries_names := get_insert_all_names entries in
-      let fst_nm := List.nth entries_names 0 in
-      rewrite FEnv_insert_all_unfold_once;
-      destruct (N.eq_dec $n $fst_nm) eqn:?; subst
-    | [ |- FEnv.lookup (FEnv.insert (_, _) _) _ = _ ] =>
-      rewrite FEnv.lookup_insert_neq; try ltac1:(congruence); eauto
-    | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-      (* lazy in $h; simpl in $h; *)
-      repeat0 (fun () => match! goal with
-      | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-        rewrite FEnv.lookup_insert_neq in $h; try ltac1:(congruence); lazy; eauto
-      | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-        rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-      end; try ltac1:(solve [with_strategy transparent [name_enc] (unfold name_enc; simpl); congruence]))
-    end.
-    1: match! goal with
-      | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-        rewrite FEnv.lookup_insert_neq in $h; try ltac1:(congruence); lazy; eauto
-      | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-        rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-      end; try ltac1:(solve [with_strategy transparent [name_enc] (unfold name_enc; simpl); congruence]).
-    2: ltac1:(with_strategy transparent [name_enc] (unfold name_enc; simpl); congruence).
-    1: match! goal with
-    | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-      rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-    | [ |- context [FEnv.insert_all [] _] ] =>
-      simpl FEnv.insert_all
-    | [ |- FEnv.lookup (FEnv.insert (?_n, _) _) ?_n = _ ] =>
-      rewrite FEnv.lookup_insert_eq
-    | [ |- FEnv.lookup (FEnv.insert_all ?entries _) ?n = _ ] =>
-      let entries_names := get_insert_all_names entries in
-      let fst_nm := List.nth entries_names 0 in
-      rewrite FEnv_insert_all_unfold_once;
-      destruct (N.eq_dec $n $fst_nm) eqn:?; subst
-    | [ |- FEnv.lookup (FEnv.insert (_, _) _) _ = _ ] =>
-      rewrite FEnv.lookup_insert_neq; try ltac1:(congruence); eauto
-    | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-      (* lazy in $h; simpl in $h; *)
-      repeat0 (fun () => match! goal with
-      | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-        rewrite FEnv.lookup_insert_neq in $h; try ltac1:(congruence); lazy; eauto
-      | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-        rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-      end); try ltac1:(congruence)
-    end.
-    1: crush_FEnv_impossible ().
-    crush_FEnv_impossible ().
-  }
-  1: 
 Qed.
 Time Compute to_funs [init_prog].
 (* TODO: I use eval_cbv in assert_Some and it doesn't terminate (eval_lazy also didn't work) *)
@@ -519,7 +410,7 @@ Time Compute to_funs [func_nm_prog].
 (* Ltac2 Eval assert_Some constr:(to_funs [func_nm_prog]). *)
 
 Derive c_fndefs_prog 
-  in ltac2:(relcompile_tpe 'c_fndefs_prog 'c_fndefs ['c_fundef; 'func_nm; 'N2asciid])
+  in ltac2:(relcompile_tpe 'c_fndefs_prog 'c_fndefs ['c_fundef; 'func_nm; 'N2ascii])
   as c_fndefs_prog_proof.
 Proof.
   time relcompile.

@@ -233,7 +233,6 @@ Proof.
   intros; subst; apply Nat.div_lt; lia.
 Qed.
 
-Opaque Nat.div.
 Fixpoint num2strf (n: nat) (ACC: Acc Nat.lt n) (str: string): string :=
   match lt_dec n 10 with
   | left _ =>
@@ -258,8 +257,22 @@ Proof.
   lia.
 Qed. *)
 
+Fixpoint unfold_Acc_n {A R} (len: nat) (n: A) (opaque_acc: Acc R n): Acc R n :=
+  match len with
+  | 0%nat => Acc_intro n (fun m mlt => Acc_inv opaque_acc m mlt)
+  | S len =>
+    Acc_intro n (fun m mlt =>
+      unfold_Acc_n len m (Acc_inv opaque_acc m mlt))
+  end.
+
+Definition log10 (n: nat): nat :=
+  match n with
+  | 0 => 0%nat
+  | _ => S (Nat.log2 n / 3)
+  end.
+
 Definition num2str (n: nat) (str: string): string :=
-  num2strf n (lt_wf n) str.
+  num2strf n (unfold_Acc_n (log10 n) _ (lt_wf n)) str.
 
 (* Theorem num2str_terminates: forall (n: nat) (str: string),
   num2str n str <> ""%string.
@@ -272,13 +285,14 @@ Lemma N2strf_oblig: forall (n: N) (a: N),
   ~ (n < 10)%N -> (a < n)%N.
 Proof.
   intros; subst; apply N.div_lt; lia.
-Defined.
+Qed.
 
-Lemma N_lt_dec: forall (n m: N), {(n < m)%N} + {~ (n < m)%N}.
+Lemma N_lt_dec : forall (n m: N), {(n < m)%N} + {~ (n < m)%N}.
 Proof.
-  intros; destruct (N.ltb n m) eqn:?.
-  1: left; apply N.ltb_lt; assumption.
-  right; apply N.ltb_nlt; assumption.
+  intros; destruct (N.compare n m) eqn:Heqe.
+  - right; congruence.
+  - left; congruence.
+  - right; congruence.
 Defined.
 
 Fixpoint N2str_f (n: N) (ACC: Acc N.lt n) (str: string): string :=
@@ -320,9 +334,15 @@ Qed. *)
   - (* n < y ∧ y < N.succ n -> False *)
     lia.
 Defined. *)
+Definition Nlog10 (n: N): nat :=
+  match n with
+  | 0%N => 0%nat
+  | _ => S (N.to_nat (N.log2 n / 3))
+  end.
 
+(* Transparent N.div N.add N.mul. *)
 Definition N2str (n: N) (str: string): string :=
-  N2str_f n (N.lt_wf_0 n) str.
+  N2str_f n (unfold_Acc_n (Nlog10 n) _ (N.lt_wf_0 n)) str.
 
 (* Theorem N2str_terminates: forall (n: N) str,
   N2str n str <> EmptyString.
@@ -429,8 +449,14 @@ Proof.
 Qed.
 Transparent N.add N.div N_modulo N_of_ascii. *)
 
+Definition Nlog256 (n: N): nat :=
+  match n with
+  | 0%N => 0%nat
+  | _ => S (N.to_nat (N.log2 n / 8))
+  end.
+
 Definition N2ascii (n: N): string :=
-  N2asciif n (N.lt_wf_0 n).
+  N2asciif n (unfold_Acc_n (Nlog256 n) _ (N.lt_wf_0 n)).
 
 (* Theorem N2ascii_terminates: forall (n: N),
   N2ascii n <> Some EmptyString.

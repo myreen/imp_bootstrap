@@ -1305,10 +1305,7 @@ Proof.
   intros; simpl; reflexivity ().
 Qed.
 
-Ltac2 crush_FEnv_impossible () :=
-  intros; simpl make_env in *; unfold envn; ltac1:(with_strategy opaque [FEnv.insert_all] simpl);
-  repeat0 (fun () =>
-  (* printf "crush_FEnv_impossible goal: = %t" (Control.goal ()); *)
+Ltac2 crush_FEnv_impossible_step () :=
   match! goal with
   | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
     rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
@@ -1324,22 +1321,21 @@ Ltac2 crush_FEnv_impossible () :=
   | [ |- FEnv.lookup (FEnv.insert (_, _) _) _ = _ ] =>
     rewrite FEnv.lookup_insert_neq; try ltac1:(congruence); eauto
   | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-    lazy in $h; simpl in $h;
-    repeat0 (fun () => match! goal with
-    | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
-      rewrite FEnv.lookup_insert_neq in $h; try ltac1:(congruence); lazy; eauto
-    | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
-      rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
-    end; try ltac1:(solve [with_strategy transparent [name_enc] (unfold name_enc; simpl); congruence]))
-  end).
+    cbv in $h; simpl in $h;
+    match! goal with
+    | [ _: None = Some _ |- _ ] => exfalso; congruence
+    end
+  end; eauto.
+
+Ltac2 crush_FEnv_impossible () :=
+  intros; simpl make_env in *; unfold envn; ltac1:(with_strategy opaque [FEnv.insert_all] simpl);
+  repeat0 crush_FEnv_impossible_step.
 
 Ltac2 crush_side_conditions () :=
   Control.enter (fun () =>
     match! goal with
     | [ |- forall _ _, FEnv.lookup _ _ = _ -> FEnv.lookup _ _ = _ ] =>
-      printf "Trying to solve FEnv side condition: %t" (Control.goal ());
-      (* solve0 [crush_FEnv_impossible] *)
-      ()
+      ltac1:(timeout 5 ltac2:(Control.enter crush_FEnv_impossible))
     | [ |- FEnv.lookup _ _ = _ ] => crush_FEnv ()
     | [ |- NoDup _ ] => crush_NoDup ()
     | [ |- (_ < _)%N ] => ltac1:(lia)

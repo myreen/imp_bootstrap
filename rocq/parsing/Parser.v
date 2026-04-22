@@ -287,7 +287,7 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
         end
     end
   end.
-Theorem v2exp_equation: ltac2:(unfold_fix_type '@v2exp).
+Theorem v2exp_equation: ltac:(with_strategy opaque [word.of_Z Z.of_N] ltac2:(unfold_fix_type '@v2exp)).
 Proof. unfold_fix_proof '@v2exp. Qed.
 
 Fixpoint vs2exps (v: list Value): list ImpSyntax.exp :=
@@ -355,7 +355,7 @@ Fixpoint v2test (v: Value): ImpSyntax.test :=
         end
     end
   end.
-Theorem v2test_equation: ltac2:(unfold_fix_type '@v2test).
+Theorem v2test_equation: ltac:(with_strategy opaque [word.of_Z Z.of_N] ltac2:(unfold_fix_type '@v2test)).
 Proof. unfold_fix_proof '@v2test. Qed.
 
 Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=

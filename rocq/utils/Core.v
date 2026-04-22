@@ -1,21 +1,14 @@
-From Stdlib Require Export
-  Lists.List
-  Bool.Bool
-  Strings.Ascii
-  Strings.String
-  Numbers.DecimalString
-  Arith.PeanoNat.
+From Stdlib.Lists Require Export List.
 Export ListNotations.
-From Stdlib Require Export
-  Lia
-  String
-  Nat
-  Arith
-  ZArith.
+From Stdlib.Bool Require Export Bool.
+From Stdlib.Strings Require Export Ascii String.
+From Stdlib.Numbers Require Export DecimalString.
+From Stdlib.Arith Require Import PeanoNat.
+From Stdlib Require Export Lia String Nat Arith ZArith.
 From coqutil Require Export dlet.
 From Stdlib.Unicode Require Export Utf8.
 
-(* d/let *)
+(** d/let *)
 
 Notation "'let/d' x := val 'in' body" :=
   (dlet val (fun x => body))
@@ -39,12 +32,21 @@ Notation
       body))
   (at level 200, body at level 200, only parsing).
 
-(* Word *)
+(** t/let *)
 
-Require Import coqutil.Word.Interface. Import word.
-Require Import coqutil.Word.Properties.
-Require coqutil.Word.Naive.
-Require impboot.utils.Words4Naive.
+(** Similar to let/t but also passes the equality proof *)
+Definition tlet {A B: Type} (val: A) (f: forall (a: A) (Ha: a  = val), B): B := f val eq_refl.
+
+Notation "'let/t' x := val 'in' body" :=
+  (tlet val (fun x _ => body))
+  (at level 200, x name, body at level 200).
+
+(** Word *)
+
+From coqutil.Word Require Import Interface. Import word.
+From coqutil.Word Require Import Properties.
+From coqutil.Word Require Naive.
+From impboot.utils Require Words4Naive.
 
 Definition word64 := (@word.rep 64 Naive.word64).
 
@@ -69,7 +71,7 @@ Definition w2n4 (w: word4): nat :=
   Z.to_nat (word.unsigned w).
 Open Scope word.
 
-(* List *)
+(** List *)
 
 Fixpoint list_update {A : Type} (n : nat) (x : A) (l : list A) : list A :=
   match n, l with

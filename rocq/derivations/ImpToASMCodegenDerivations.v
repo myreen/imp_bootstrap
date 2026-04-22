@@ -1,27 +1,16 @@
-From impboot Require Import utils.Core.
-From impboot Require Import utils.AppList.
-Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.assembly.ASMToString.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.utils.AppList.
-Require Import impboot.imp2asm.ImpToASMCodegen.
-Require Import impboot.commons.CompilerUtils.
-From impboot Require Import automation.Ltac2Utils.
-From impboot Require Import functional.FunValues.
-From impboot Require Import functional.FunSemantics.
-From impboot.automation Require Import RelCompiler Ltac2Utils AutomationLemmas ToANF RelCompilerCommons.
-Require Import impboot.automation.ltac2.UnfoldFix.
-Require Import impboot.automation.ltac2.Stdlib2.
-Require Import impboot.commons.CompilerUtils.
-From impboot Require Import fp2imp.FpToImpCodegen.
-Require Import coqutil.Word.Interface.
-Require Import ZArith.
-From Stdlib Require Import FunInd.
-From Stdlib Require Import derive.Derive.
-From Stdlib Require Import Lia.
+From impboot.utils Require Import Core AppList.
+From impboot.assembly Require Import ASMSyntax ASMToString.
+From impboot.imperative Require Import ImpSyntax.
+From impboot.imp2asm Require Import ImpToASMCodegen.
+From impboot.commons Require Import CompilerUtils.
+From impboot.automation Require Import Ltac2Utils RelCompiler AutomationLemmas ToANF RelCompilerCommons.
+From impboot.automation.ltac2 Require Import UnfoldFix Stdlib2.
+From impboot.functional Require Import FunValues FunSemantics.
+From impboot.fp2imp Require Import FpToImpCodegen.
+From coqutil.Word Require Import Interface.
+From Stdlib Require Import ZArith FunInd derive.Derive Lia.
 From Ltac2 Require Import Ltac2.
-
-Require Import Patat.Patat.
+From Patat Require Import Patat.
 
 Set Printing Goal Names.
 Set Printing Existential Instances.
@@ -34,11 +23,8 @@ From impboot Require Import derivations.CompilerUtilsDerivations.
 (*       Derivations for Codegen Functions         *)
 (* *********************************************** *)
 
-Opaque encode.
-Opaque name_enc.
-
 Derive init_prog
-  in ltac2:(relcompile_tpe 'init_prog 'init ['@list_app; 'str_app]) 
+  in ltac2:(relcompile_tpe 'init_prog 'init ['@list_app; 'str_app])
   as init_prog_proof.
 Proof.
   time relcompile.
@@ -413,7 +399,7 @@ Time Compute to_funs [func_nm_prog].
 (* Ltac2 Eval assert_Some constr:(to_funs [func_nm_prog]). *)
 
 Derive c_fndefs_prog 
-  in ltac2:(relcompile_tpe 'c_fndefs_prog 'c_fndefs ['c_fundef; 'func_nm; 'N2asciid])
+  in ltac2:(relcompile_tpe 'c_fndefs_prog 'c_fndefs ['c_fundef; 'func_nm; 'N2ascii])
   as c_fndefs_prog_proof.
 Proof.
   time relcompile.

@@ -1,11 +1,8 @@
-Require Import impboot.utils.Core.
-Require Import impboot.utils.Llist.
+From impboot.utils Require Import Core Llist Env.
 Import Llist.
-Require Import impboot.utils.Env.
 From Stdlib Require Import ListDec.
-Require Import impboot.imperative.ImpSyntax.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
+From impboot.imperative Require Import ImpSyntax.
+From coqutil.Word Require Import Interface Properties.
 
 Open Scope nat.
 

@@ -1,25 +1,15 @@
-From impboot Require Import utils.Core.
-From impboot Require Import utils.AppList.
-From impboot Require Import assembly.ASMSyntax.
-From impboot Require Import assembly.ASMToString.
-From impboot Require Import imperative.ImpSyntax.
-From impboot Require Import utils.AppList.
-From impboot Require Import imp2asm.ImpToASMCodegen.
-From impboot Require Import commons.CompilerUtils.
-From impboot Require Import automation.Ltac2Utils.
-From impboot Require Import commons.CompilerUtils.
-From impboot Require Import functional.FunValues.
-From impboot Require Import functional.FunSemantics.
-From impboot.automation Require Import RelCompiler RelCompilerCommons AutomationLemmas ToANF.
-From impboot.automation.ltac2 Require Import UnfoldFix.
-From impboot.automation.ltac2 Require Import Stdlib2.
-From impboot Require Import fp2imp.FpToImpCodegen.
-Require Import coqutil.Word.Interface.
-From Stdlib Require Import ZArith.
-From Stdlib Require Import FunInd.
-From Stdlib Require Import derive.Derive.
-From Stdlib Require Import Lia.
+From Stdlib Require Import ZArith FunInd derive.Derive Lia.
 From Ltac2 Require Import Ltac2.
+From impboot.utils Require Import Core AppList Words4Naive.
+From impboot.assembly Require Import ASMSyntax ASMToString.
+From impboot.commons Require Import CompilerUtils.
+From impboot.imperative Require Import ImpSyntax.
+From impboot.functional Require Import FunValues FunSemantics.
+From impboot.fp2imp Require Import FpToImpCodegen.
+From impboot.imp2asm Require Import ImpToASMCodegen.
+From impboot.automation Require Import RelCompiler RelCompilerCommons AutomationLemmas ToANF ToLowerable Ltac2Utils.
+From impboot.automation.ltac2 Require Import UnfoldFix Stdlib2.
+From coqutil.Word Require Import Interface.
 
 Derive natmod10_prog
   in ltac2:(relcompile_tpe 'natmod10_prog 'natmod10 ['mulnat10])
@@ -28,6 +18,7 @@ Proof.
   time relcompile.
   ltac1:(lia).
 Qed.
+Print natmod10_prog.
 Time Compute to_funs [natmod10_prog].
 Ltac2 Eval assert_Some constr:(to_funs [natmod10_prog]).
 
@@ -62,17 +53,20 @@ Qed.
 Time Compute to_funs [str_app_prog].
 Ltac2 Eval assert_Some constr:(to_funs [str_app_prog]).
 
-Theorem num2strf_equation: ltac2:(unfold_fix_type '@num2strf).
+Theorem num2strf_equation: ltac:(with_strategy opaque [nat_mod Nat.add Nat.div] ltac2:(unfold_fix_type '@num2strf)).
 Proof. unfold_fix_proof '@num2strf. Qed.
 
+(* TODO execute this file, and Imp2Asm next *)
 Derive num2strf_prog
   in ltac2:(relcompile_tpe 'num2strf_prog 'num2strf ['natmod10])
   as num2strf_prog_proof.
 Proof.
   time relcompile.
+  (* 2: ltac1:(timeout 5 ltac2:(crush_FEnv_impossible ())). *)
   all: ltac1:(try lia).
   all: subst; rewrite natmod10_spec in *; specialize nat_mod_le with (n := n) (m := 10); ltac1:(lia).
 Qed.
+Print num2strf_prog.
 Time Compute to_funs [num2strf_prog].
 Ltac2 Eval assert_Some constr:(to_funs [num2strf_prog]).
 
@@ -85,7 +79,7 @@ Qed.
 Time Compute to_funs [num2str_prog].
 Ltac2 Eval assert_Some constr:(to_funs [num2str_prog]).
 
-Theorem N2str_f_equation: ltac2:(unfold_fix_type '@N2str_f).
+Theorem N2str_f_equation: ltac:(with_strategy opaque [N_mod10 N.add] ltac2:(unfold_fix_type '@N2str_f)).
 Proof. unfold_fix_proof '@N2str_f. Qed.
 
 Derive N2str_f_prog
@@ -105,12 +99,11 @@ Derive N2str_prog
   as N2str_prog_proof.
 Proof.
   time relcompile.
-  ltac1:(try lia).
 Qed.
 Time Compute to_funs [N2str_prog].
 Ltac2 Eval assert_Some constr:(to_funs [N2str_prog]).
 
-Theorem list_len_equation: ltac2:(unfold_fix_type '@list_len).
+Theorem list_len_equation: ltac:(with_strategy opaque [Nat.add] ltac2:(unfold_fix_type '@list_len)).
 Proof. unfold_fix_proof '@list_len. Qed.
 
 Derive list_len_prog
@@ -202,7 +195,7 @@ Derive N2asciif_prog
 Proof.
   time relcompile.
   all: ltac1:(try lia).
-  all: subst; rewrite Nmod_256_spec in *; specialize N_modulo_lt with (n := n) (m := 256%N) as ?; ltac1:(try lia).
+  all: try (solve [subst; rewrite Nmod_256_spec in *; specialize N_modulo_lt with (n := n) (m := 256%N) as ?; ltac1:(try lia)]).
 Qed.
 Time Compute to_funs [N2asciif_prog].
 Ltac2 Eval assert_Some constr:(to_funs [N2asciif_prog]).
@@ -212,19 +205,9 @@ Derive N2ascii_prog
   as N2ascii_prog_proof.
 Proof.
   time relcompile.
-  ltac1:(try lia).
 Qed.
 Time Compute to_funs [N2ascii_prog].
 Ltac2 Eval assert_Some constr:(to_funs [N2ascii_prog]).
-
-Derive N2asciid_prog
-  in ltac2:(relcompile_tpe 'N2asciid_prog 'N2asciid ['N2ascii])
-  as N2asciid_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-Time Compute to_funs [N2asciid_prog].
-Ltac2 Eval assert_Some constr:(to_funs [N2asciid_prog]).
 
 Definition CompilerUtils_funs := [
   mulnat_8_prog;
@@ -244,8 +227,7 @@ Definition CompilerUtils_funs := [
   appl_len_prog;
   str_app_prog;
   N2asciif_prog;
-  N2ascii_prog;
-  N2asciid_prog
+  N2ascii_prog
 ].
 
 Ltac2 assert_eval_app (fname: constr) :=
@@ -281,5 +263,4 @@ Ltac2 assert_eval_app_compiler_utils (hlookup_constr: constr) :=
   assert_eval_app_by '@appl_len 'appl_len_prog_proof hlookup_constr 14;
   assert_eval_app_by 'str_app 'str_app_prog_proof hlookup_constr 15;
   assert_eval_app_by 'N2asciif 'N2asciif_prog_proof hlookup_constr 16;
-  assert_eval_app_by 'N2ascii 'N2ascii_prog_proof hlookup_constr 17;
-  assert_eval_app_by 'N2asciid 'N2asciid_prog_proof hlookup_constr 18.
+  assert_eval_app_by 'N2ascii 'N2ascii_prog_proof hlookup_constr 17.

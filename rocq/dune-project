@@ -5,6 +5,12 @@
 
 (name impboot)
 
+(homepage "https://github.com/myreen/imp_bootstrap")
+(authors "Kacper Korban" "Magnus Myreen" "Clément Pit-Claudel")
+(maintainers "Kacper Korban")
+(bug_reports "https://github.com/myreen/imp_bootstrap/issues")
+(license MIT)
+
 (package
  (name impboot)
  (synopsis "Minimal verified bootstrapped compiler for an imperative language")

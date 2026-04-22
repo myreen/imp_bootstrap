@@ -1,22 +1,12 @@
-Require Import impboot.utils.Core.
-Require Import impboot.utils.Llist.
+From impboot.utils Require Import Core Llist Env AppList.
 Import Llist.
-Require Import impboot.utils.Env.
-Require Import impboot.utils.AppList.
-Require Import coqutil.Word.Interface.
-Require Import impboot.imp2asm.ImpToASMCodegen.
-Require Import impboot.commons.CompilerUtils.
-Require Import impboot.commons.ProofUtils.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.imperative.ImpSemantics.
-Require Import impboot.imperative.ImpProperties.
-Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.assembly.ASMSemantics.
-Require Import impboot.assembly.ASMProperties.
-
-Require Import Stdlib.Program.Equality.
-
-Require Import Patat.Patat.
+From impboot.imp2asm Require Import ImpToASMCodegen.
+From impboot.commons Require Import CompilerUtils ProofUtils.
+From impboot.imperative Require Import ImpSyntax ImpSemantics ImpProperties.
+From impboot.assembly Require Import ASMSyntax ASMSemantics ASMProperties.
+From coqutil.Word Require Import Interface.
+From Stdlib Require Import Program.Equality.
+From Patat Require Import Patat.
 
 (* Definitions of invariants and relations *)
 
@@ -5599,7 +5589,7 @@ Proof.
     split; [reflexivity|].
     spat `c_fundef` at rewrite spat; simpl; unfold dlet; simpl.
     repeat rewrite list_app_spec in *.
-    assert (xs ++ Comment (N2asciid n1) :: flatten a0 ++ Ret :: flatten a1 = (xs ++ [Comment (N2asciid n1)]) ++ flatten a0 ++ Ret :: flatten a1) as ->.
+    assert (xs ++ Comment (N2ascii n1) :: flatten a0 ++ Ret :: flatten a1 = (xs ++ [Comment (N2ascii n1)]) ++ flatten a0 ++ Ret :: flatten a1) as ->.
     1: induction xs; simpl; try rewrite <- app_assoc; eauto.
     eapply code_in_append_left2.
     rewrite length_app; simpl.
@@ -5607,7 +5597,7 @@ Proof.
   }
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2asciid n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
+  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2ascii n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
   (* assert (Datatypes.length (flatten a0) + (Datatypes.length xs) = List.length (xs ++ flatten a0)) as Hrwlength. *)
   1: simpl; rewrite list_app_spec; repeat rewrite length_app; simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.

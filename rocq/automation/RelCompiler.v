@@ -1,25 +1,15 @@
-From impboot Require Import utils.Core.
-From impboot Require Import utils.AppList.
-From coqutil Require Import dlet.
-From coqutil Require Import Word.Interface.
-Require Import impboot.commons.CompilerUtils.
-Require Import impboot.parsing.ParserData.
-Require Import impboot.parsing.Parser.
-Require Import impboot.functional.FunValues.
-Require Import impboot.functional.FunSemantics.
-Require Import impboot.automation.AutomationLemmas.
-Require Import impboot.utils.Llist.
-Require Import impboot.utils.Env.
+From impboot.utils Require Import Core AppList Llist Env.
+From impboot.commons Require Import CompilerUtils.
+From impboot.parsing Require Import ParserData Parser.
+From impboot.functional Require Import FunValues FunSemantics.
+From impboot.automation Require Import AutomationLemmas Ltac2Utils RelCompileUnfolding FunDeps ToLowerable ToANF RelCompilerCommons.
 From impboot.automation.ltac2 Require Import Messages Constrs Stdlib2 UnfoldFix.
-From impboot.automation Require Import Ltac2Utils RelCompileUnfolding FunDeps ToLowerable ToANF RelCompilerCommons.
+From coqutil Require Import dlet.
+From coqutil.Word Require Import Interface.
+From coqutil.Tactics Require Import reference_to_string ident_of_string ident_to_string.
+From Stdlib Require Import derive.Derive FunInd.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf Fresh.
 Import Ltac2.Constr.Unsafe.
-From coqutil Require Import
-  Tactics.reference_to_string
-  Tactics.ident_of_string
-  Tactics.ident_to_string.
-From Stdlib Require Import derive.Derive.
-From Stdlib Require Import FunInd.
 
 (* Important notes *)
 (* 1. every destruct has to have a `eqn:?` (Otherwise, we can get a bunch of
@@ -370,7 +360,6 @@ Ltac2 rec compile () : unit :=
     let cenv := get_cenv_from_fenv_constr fenv in
     let names_in_cenv := List.concat (List.map opt_to_list (List.map (fun p => Option.bind (fst p) (fun c => Ident.of_string (string_of_constr_string c))) cenv)) in
     if debug_relcompile then printf "Compiling expression: %t with cenv %a" e (fun () cenv => message_of_cenv cenv) cenv else ();
-    (* printf "Goal: %t" c; *)
     let try_lemmas () :=
       lazy_match! e with
       | (fun x => @?_f x) =>
@@ -379,9 +368,31 @@ Ltac2 rec compile () : unit :=
           compile ()
         )
       | (dlet ?val ?body) =>
+        if Bool.and (Constr.equal (Constr.type val) constr:(string)) (proper_const val) then
+          (if debug_relcompile then printf "Compiling a dlet with a string literal with value %t" val else ());
+          let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
+          let let_n_constr := List.nth binders_of_body 0 in
+          app_lemma "auto_string_const_dlet" [("env", exactk fenv); ("name", exactk let_n_constr); ("k", exactk body); ("sz", exactk constr:(4)); ("str", exactk val)]
+            [exactk open_constr:(_); (fun () => intro; intro; cbv beta; compile_with_prep ())]
+        else (
+          (if debug_relcompile then printf "Compiling a dlet with value %t" val else ());
+          let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
+          let let_n_constr := List.nth binders_of_body 0 in
+          refine open_constr:(auto_let
+          (* env *) $fenv
+          (* x1 y1 *) _ _
+          (* s1 s2 s3 *) _ _ _
+          (* v1 *) $val
+          (* let_n *) $let_n_constr
+          (* f *) $body
+          (* eval v1 *) ltac2:(Control.enter compile)
+          (* eval f *) ltac2:(Control.enter (fun () => intro; intro; cbv beta; compile_with_prep ()))
+          ))
+      | tlet ?val ?body =>
+        (if debug_relcompile then printf "Compiling a tlet with value %t" val else ());
         let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
         let let_n_constr := List.nth binders_of_body 0 in
-        refine open_constr:(auto_let
+        refine open_constr:(auto_tlet
         (* env *) $fenv
         (* x1 y1 *) _ _
         (* s1 s2 s3 *) _ _ _
@@ -402,9 +413,15 @@ Ltac2 rec compile () : unit :=
         (* v1 *) $val
         (* let_n *) $let_n_constr
         (* f *) $body
-        (* eval v1 *) ltac2:(Control.enter compile)
-        (* eval f *) ltac2:(Control.enter (fun () => cbv beta; compile ()))
+        (* eval v1 *) ltac2:(Control.enter (fun () => rewrite_lowerable(); compile ()))
+        (* eval f *) ltac2:(Control.enter (fun () => intro; intro; cbv beta; compile ()))
         )
+      (* Acc *)
+      | (match ?acc with
+        | Acc_intro _ accv => @?f_intro accv
+        end) =>
+        app_lemma "auto_Acc_case" [("env", exactk fenv); ("ACC", exactk acc); ("f_intro", exactk f_intro)]
+          [(fun () => cbv beta; compile_with_prep ())]
       (* char *)
       | (ascii_of_nat ?x) =>
         app_lemma "auto_char_of_nat" [("env", exactk fenv); ("x", exactk x)] [compile; exactk open_constr:(_)]
@@ -490,10 +507,24 @@ Ltac2 rec compile () : unit :=
         app_lemma "auto_nat_if_less"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
           [compile; compile; compile_with_prep; compile_with_prep]
+      | (match lt_dec ?n1 ?n2 with
+        | left LT => @?t LT
+        | right GE => @?f GE
+        end) =>
+        app_lemma "auto_nat_if_lt_dec"
+          [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+          [compile; compile; (fun () => destruct (lt_dec $n1 $n2); (Control.enter compile_with_prep))]
       | (if N.ltb ?n1 ?n2 then ?t else ?f) =>
         app_lemma "auto_N_if_less"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
           [compile; compile; (fun () => intros; compile_with_prep ()); (fun () => intros; compile_with_prep ())]
+      | (match N_lt_dec ?n1 ?n2 with
+        | left LT => @?t LT
+        | right GE => @?f GE
+        end) =>
+        app_lemma "auto_N_if_lt_dec"
+          [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2); ("t", exactk t); ("f", exactk f)]
+          [compile; compile; (fun () => destruct (N_lt_dec $n1 $n2); (Control.enter compile_with_prep))]
       | (match ?v0 with | 0 => ?v1 | S n' => @?v2 n' end) =>
         let binders_of_v2 := binders_names_of_constr_lambda v2 names_in_cenv in
         let n_constr := List.nth binders_of_v2 0 in
@@ -1119,11 +1150,6 @@ Ltac2 rec compile () : unit :=
         end
       end
     in
-    let constr_comp_str (c1: constr) (c2: constr) :=
-      let s1 := Message.to_string (fprintf "%t" c1) in
-      let s2 := Message.to_string (fprintf "%t" c2) in
-      String.equal s1 s2
-    in
     match List.find_opt (fun p => Constr.equal e (snd p)) cenv with
     | Some (name_constr_opt, _) =>
       if Constr.is_var e then
@@ -1255,9 +1281,50 @@ Ltac2 crush_FEnv () :=
     end
   ).
 
+Ltac2 rec get_insert_all_names (c: constr): constr list :=
+  match! c with
+  | (?nm, _) :: ?rest => nm :: get_insert_all_names rest
+  | _ => []
+  end.
+
+Lemma FEnv_insert_all_unfold_once: forall (nm: N) (v: option FunValues.Value) (env: FEnv.env) (rest: list (N * option FunValues.Value)),
+  FEnv.insert_all ((nm, v) :: rest) env =
+  FEnv.insert (nm, v) (FEnv.insert_all rest env).
+Proof.
+  intros; simpl; reflexivity ().
+Qed.
+
+Ltac2 crush_FEnv_impossible_step () :=
+  match! goal with
+  | [ h: FEnv.lookup FEnv.empty _ = _ |- _ ] =>
+    rewrite FEnv.lookup_empty in $h; try ltac1:(congruence); lazy; eauto
+  | [ |- context [FEnv.insert_all [] _] ] =>
+    simpl FEnv.insert_all
+  | [ |- FEnv.lookup (FEnv.insert (?_n, _) _) ?_n = _ ] =>
+    rewrite FEnv.lookup_insert_eq
+  | [ |- FEnv.lookup (FEnv.insert_all ?entries _) ?n = _ ] =>
+    let entries_names := get_insert_all_names entries in
+    let fst_nm := List.nth entries_names 0 in
+    rewrite FEnv_insert_all_unfold_once;
+    destruct (N.eq_dec $n $fst_nm) eqn:?; subst
+  | [ |- FEnv.lookup (FEnv.insert (_, _) _) _ = _ ] =>
+    rewrite FEnv.lookup_insert_neq; try ltac1:(congruence); eauto
+  | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
+    cbv in $h; simpl in $h;
+    match! goal with
+    | [ _: None = Some _ |- _ ] => exfalso; congruence
+    end
+  end; eauto.
+
+Ltac2 crush_FEnv_impossible () :=
+  intros; simpl make_env in *; unfold envn; ltac1:(with_strategy opaque [FEnv.insert_all] simpl);
+  repeat0 crush_FEnv_impossible_step.
+
 Ltac2 crush_side_conditions () :=
   Control.enter (fun () =>
     match! goal with
+    | [ |- forall _ _, FEnv.lookup _ _ = _ -> FEnv.lookup _ _ = _ ] =>
+      ltac1:(timeout 5 ltac2:(Control.enter crush_FEnv_impossible))
     | [ |- FEnv.lookup _ _ = _ ] => crush_FEnv ()
     | [ |- NoDup _ ] => crush_NoDup ()
     | [ |- (_ < _)%N ] => ltac1:(lia)
@@ -1429,6 +1496,23 @@ Proof.
 Qed.
 Show Ltac Profile. *)
 
+(* Set Ltac2 Backtrace. *)
+
+Definition has_strings: string :=
+  (* let/d s1 := "abc" in *)
+  (* let/d s2 := "def" in *)
+  "hello world! this is a long string"(*  ++ s1 ++ s2 *).
+
+(* Ltac2 Set debug_relcompile := true. *)
+
+Derive has_strings_prog
+  in ltac2:(relcompile_tpe 'has_strings_prog 'has_strings ['str_app])
+  as has_strings_prog_proof.
+Proof.
+  time relcompile.
+  all: Control.enter crush_FEnv_impossible.
+Qed.
+
 Definition nat_mod1 (n1 n2: nat): nat :=
   match n2 with
   | 0%nat => 0
@@ -1477,7 +1561,7 @@ Fixpoint polylength {A: Type} (l: list A) :=
   | _ :: l => 1 + polylength l
   end.
 About polylength.
-Lemma polylength_equation: ltac2:(unfold_fix_type '@polylength).
+Lemma polylength_equation: ltac:(with_strategy opaque [Nat.add] ltac2:(unfold_fix_type '@polylength)).
 Proof. unfold_fix_proof '@polylength. Qed.
 
 Derive polylength_prog
@@ -1522,7 +1606,7 @@ Fixpoint sum_n (n : nat) : nat :=
   | 0 => 0
   | S n1 => (sum_n n1) + (1 + n1)
   end.
-Lemma sum_n_equation : ltac2:(unfold_fix_type 'sum_n).
+Lemma sum_n_equation: ltac:(with_strategy opaque [Nat.add] ltac2:(unfold_fix_type 'sum_n)).
 Proof. unfold_fix_proof 'sum_n. Qed.
 
 Derive sum_n_prog in ltac2:(relcompile_tpe 'sum_n_prog 'sum_n []) as sum_n_prog_proof.
@@ -1553,7 +1637,7 @@ Definition has_cases (n : nat) : nat :=
 Derive has_cases_prog in ltac2:(relcompile_tpe 'has_cases_prog 'has_cases ['str_app; '@list_len]) as has_cases_proof.
 Proof.
   relcompile.
-Qed.
+Abort.
 
 Definition has_cases_list (l : list nat) : nat :=
   match l with

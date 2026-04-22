@@ -1,28 +1,21 @@
-From impboot Require Import
-  utils.Core
-  utils.Llist.
+From impboot.utils Require Import Core Llist.
 Import Llist.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.functional.FunValues.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
-Require Import impboot.commons.CompilerUtils.
-
-Require Import Patat.Patat.
+From impboot.imperative Require Import ImpSyntax.
+From impboot.functional Require Import FunValues.
+From coqutil.Word Require Import Interface Properties.
+From impboot.commons Require Import CompilerUtils.
+From Patat Require Import Patat.
 
 Open Scope N.
 Open Scope string.
 
 Definition ascii_name (n: N): option string :=
-  match N2ascii n with
-  | None => None
-  | Some s =>
-    match s with
-    | EmptyString => None
-    | String hd _ =>
-      let k := N_of_ascii hd in
-      if (N_of_ascii "0"%char <=? k)%N && (k <=? N_of_ascii "9"%char)%N then None else Some s
-    end
+  let/d s := N2ascii n in
+  match s return option string with
+  | EmptyString => None
+  | String hd _ =>
+    let k := N_of_ascii hd in
+    if (N_of_ascii "0"%char <=? k)%N && (k <=? N_of_ascii "9"%char)%N then None else Some s
   end.
 
 Definition name2str (n: N): string :=

@@ -1,9 +1,8 @@
-Require Import impboot.utils.Core.
-Require Import impboot.imp2asm.ImpToASMCodegen.
-Require Import impboot.imperative.Printing.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.parsing.Parser.
-Require Import impboot.assembly.ASMToString.
+From impboot.utils Require Import Core.
+From impboot.imp2asm Require Import ImpToASMCodegen.
+From impboot.imperative Require Import Printing ImpSyntax.
+From impboot.parsing Require Import Parser.
+From impboot.assembly Require Import ASMToString.
 
 Definition compiler (inp: list ascii): string :=
   let/d p := str2imp inp in

@@ -1,17 +1,13 @@
-From impboot Require Import
-  utils.Core
-  utils.Llist.
+From impboot.utils Require Import Core Llist.
 Import Llist.
-Require Import impboot.parsing.ParserData.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.functional.FunValues.
-Require Import impboot.commons.CompilerUtils.
-Require Import coqutil.Word.Interface.
-
-Require Import impboot.automation.ltac2.UnfoldFix.
+From impboot.parsing Require Import ParserData.
+From impboot.imperative Require Import ImpSyntax.
+From impboot.functional Require Import FunValues.
+From impboot.commons Require Import CompilerUtils.
+From coqutil.Word Require Import Interface.
+From impboot.automation.ltac2 Require Import UnfoldFix.
 From Ltac2 Require Import Ltac2.
-
-Require Import Patat.Patat.
+From Patat Require Import Patat.
 
 Open Scope N.
 Open Scope string.
@@ -287,7 +283,7 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
         end
     end
   end.
-Theorem v2exp_equation: ltac2:(unfold_fix_type '@v2exp).
+Theorem v2exp_equation: ltac:(with_strategy opaque [word.of_Z Z.of_N] ltac2:(unfold_fix_type '@v2exp)).
 Proof. unfold_fix_proof '@v2exp. Qed.
 
 Fixpoint vs2exps (v: list Value): list ImpSyntax.exp :=
@@ -355,7 +351,7 @@ Fixpoint v2test (v: Value): ImpSyntax.test :=
         end
     end
   end.
-Theorem v2test_equation: ltac2:(unfold_fix_type '@v2test).
+Theorem v2test_equation: ltac:(with_strategy opaque [word.of_Z Z.of_N] ltac2:(unfold_fix_type '@v2test)).
 Proof. unfold_fix_proof '@v2test. Qed.
 
 Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=

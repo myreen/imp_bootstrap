@@ -1,8 +1,5 @@
 From Stdlib Require Import ZArith.BinInt.
-Require Import coqutil.Z.Lia.
-Require Import coqutil.Word.Naive.
-Require Import coqutil.Word.Properties.
-Require Import coqutil.Word.Bitwidth.
+From coqutil Require Import Z.Lia Word.Naive Word.Properties Word.Bitwidth.
 
 Local Open Scope Z_scope.
 

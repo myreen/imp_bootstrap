@@ -37,8 +37,8 @@ Module Type EnvT.
     insert (n, lookup env n) env = env.
 End EnvT.
 
-Require impboot.functional.FunSyntax.
-Require impboot.functional.FunValues.
+From impboot.functional Require FunSyntax.
+From impboot.functional Require FunValues.
 
 Module FEnv <: EnvT.
   Definition name := FunSyntax.name.
@@ -115,9 +115,8 @@ Module FEnv <: EnvT.
   Qed.
 End FEnv.
 
-Require impboot.imperative.ImpSyntax.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
+From impboot.imperative Require ImpSyntax.
+From coqutil.Word Require Import Interface Properties.
 
 Module IEnv <: EnvT.
   Definition name := ImpSyntax.name.

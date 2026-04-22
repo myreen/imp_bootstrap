@@ -1,17 +1,11 @@
-From impboot Require Import utils.Core.
-Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.imperative.ImpSyntax.
-Require Import impboot.utils.AppList.
-Require Import impboot.commons.CompilerUtils.
-Require Import coqutil.Word.Interface.
-Require Import ZArith.
-Require Import FunInd.
-Require Import Ascii.
-
-Require Import impboot.imperative.Printing.
-
-Require Import impboot.automation.ltac2.UnfoldFix.
-Require Import Ltac2.Ltac2.
+From impboot.utils Require Import Core AppList.
+From impboot.assembly Require Import ASMSyntax.
+From impboot.imperative Require Import ImpSyntax Printing.
+From impboot.commons Require Import CompilerUtils.
+From coqutil.Word Require Import Interface.
+From Stdlib Require Import ZArith FunInd Ascii.
+From impboot.automation.ltac2 Require Import UnfoldFix.
+From Ltac2 Require Import Ltac2.
 
 Open Scope app_list_scope.
 Open Scope nat.
@@ -555,7 +549,7 @@ Fixpoint c_fndefs (ds: list func) (l: nat) (fs: f_lookup): (asm_appl * list (nam
     let/d fname := func_nm d in
     let/d '(c1, l1) := c_fundef d (l + 1) fs in
     let/d '(c2, fs', l2) := c_fndefs ds' (l1 + 1) fs in
-    let/d comment := List [Comment (N2asciid fname)] in
+    let/d comment := List [Comment (N2ascii fname)] in
     (comment +++ c1 +++ List [Ret] +++ c2, (fname, (l + 1)) :: fs', l2)
   end.
 Theorem c_fndefs_equation: ltac2:(unfold_fix_type '@c_fndefs).

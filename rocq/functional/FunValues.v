@@ -1,7 +1,7 @@
-From impboot Require Import utils.Core.
-Require Import impboot.functional.FunSyntax.
-Require Import impboot.commons.CompilerUtils.
-Require Import FunInd.
+From impboot.utils Require Import Core.
+From impboot.functional Require Import FunSyntax.
+From impboot.commons Require Import CompilerUtils.
+From Stdlib Require Import FunInd.
 From coqutil Require Import dlet.
 
 Open Scope N.

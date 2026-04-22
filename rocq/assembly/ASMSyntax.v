@@ -1,7 +1,5 @@
-From impboot Require Import utils.Core.
-Require Import impboot.utils.Words4Naive.
-Require Import coqutil.Word.Interface.
-Require Import coqutil.Word.Properties.
+From impboot.utils Require Import Core Words4Naive.
+From coqutil.Word Require Import Interface Properties.
 
 Inductive reg :=
 | RAX (* ret val *)

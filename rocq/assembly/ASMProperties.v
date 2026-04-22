@@ -1,17 +1,10 @@
-Require Import impboot.utils.Core.
-Require Import impboot.utils.Llist.
+From impboot.utils Require Import Core Llist Env AppList.
 Import Llist.
-Require Import impboot.utils.Env.
-Require Import impboot.utils.AppList.
-Require Import coqutil.Word.Interface.
-Require Import impboot.assembly.ASMSyntax.
-Require Import impboot.assembly.ASMSemantics.
-Require Import impboot.commons.ProofUtils.
-From Stdlib Require Import Relations.Relation_Operators.
-
-Require Import Stdlib.Program.Equality.
-
-Require Import Patat.Patat.
+From impboot.assembly Require Import ASMSyntax ASMSemantics.
+From coqutil.Word Require Import Interface.
+From impboot.commons Require Import ProofUtils.
+From Stdlib Require Import Relations.Relation_Operators Program.Equality.
+From Patat Require Import Patat.
 
 Ltac cleanup :=
   repeat match goal with

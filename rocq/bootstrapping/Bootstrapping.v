@@ -1,4 +1,4 @@
-(* From impboot Require Import
+From impboot Require Import
   Core
   derivations.AsmToStringDerivations
   derivations.ParserDerivations
@@ -17,25 +17,25 @@ Theorem compiler_program_imp_exists: exists p,
   compiler_program_imp = Some p.
 Proof.
   eexists; unfold compiler_program_imp.
-  lazy; reflexivity.
+  vm_compute; reflexivity.
 Qed.
 
-Time Eval lazy in compiler_program_imp.
+Time Compute compiler_program_imp.
 
 Definition compiler_imp_str := match compiler_program_imp with
 | None => ""
 | Some p => imp2str p
 end.
 
-Eval lazy in compiler_imp_str.
+Compute compiler_imp_str.
 
 Definition compiler_program_asm := match compiler_program_imp with
 | None => []
 | Some p => codegen p
 end.
 
-Time Eval lazy in compiler_program_asm.
+Time Compute compiler_program_asm.
 
 Definition compiler_asm_str := asm2str compiler_program_asm.
 
-Time Eval lazy in compiler_asm_str. *)
+Time Compute compiler_asm_str.

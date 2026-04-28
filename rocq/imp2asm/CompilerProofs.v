@@ -1,4 +1,4 @@
-(* From impboot.utils Require Import Core Llist.
+From impboot.utils Require Import Core Llist.
 From impboot.imp2asm Require Import Compiler.
 From impboot.parsing Require Import Parser.
 From impboot.imperative Require Import Printing.
@@ -54,4 +54,4 @@ Proof.
   rewrite <- Hprint_parser_compiler_correct in *.
   reflexivity.
   Opaque FpToImpCodegen.to_imp ImpToASMCodegen.codegen.
-Qed. *)
+Qed.

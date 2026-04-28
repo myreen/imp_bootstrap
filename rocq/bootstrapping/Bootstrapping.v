@@ -1,10 +1,6 @@
+From impboot Require Import Core.
+From impboot.derivations Require Import AsmToStringDerivations ParserDerivations CompilerUtilsDerivations ImpToASMCodegenDerivations CompilerDerivations.
 From impboot Require Import
-  Core
-  derivations.AsmToStringDerivations
-  derivations.ParserDerivations
-  derivations.CompilerUtilsDerivations
-  derivations.ImpToASMCodegenDerivations
-  derivations.CompilerDerivations
   fp2imp.FpToImpCodegen
   imp2asm.ImpToASMCodegen
   assembly.ASMToString

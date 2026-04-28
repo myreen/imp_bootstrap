@@ -52,7 +52,7 @@ Time Eval lazy in (
   match c_add_imp with
   | Some [p] => Some (
     let asm := flatten (fst (c_fundef p 0 [])) in
-    instrs2str 0 asm
+    asm2str asm
   )
   | _ => None
   end

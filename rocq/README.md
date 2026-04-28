@@ -1,3 +1,13 @@
-## Bootstrapping
+## Setup
 
-When bootstrapping the compiler (both in-logic and running it as an assembly), increase the stack size before `ulimit -s 1048576`.
+Pin [`patat`](https://github.com/kacperFKorban/patat):
+
+```sh
+opam pin add patat.dev https://github.com/kacperFKorban/patat.git
+```
+
+Then, install the dependencies:
+
+```sh
+opam install . --deps-only
+```

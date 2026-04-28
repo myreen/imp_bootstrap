@@ -354,6 +354,8 @@ Ltac2 mutable relCompilerDB: ((unit -> unit) -> unit) :=
 (*   3.x: "normal" automation lemmas *)
 (*   3.last: constants *)
 Ltac2 rec compile () : unit :=
+  let compile := if relcompile_one_step then (fun () => Control.refine (fun () => open_constr:(_))) else compile in
+  let compile_with_prep := if relcompile_one_step then (fun () => Control.refine (fun () => open_constr:(_))) else compile_with_prep in
   let c := Control.goal () in
   lazy_match! c with
   | ?fenv |-- (_, _) ---> ([encode ?e], _) =>
@@ -1199,6 +1201,7 @@ Ltac2 rec has_make_env (c: constr): bool :=
 (* Handles expression evaluation and function evaluation as goals *)
 Ltac2 rec docompile () :=
   (* printf "docompile goal: = %t" (Control.goal ()); *)
+  let compile_with_prep := if relcompile_one_step then (fun () => Control.refine (fun () => open_constr:(_))) else compile_with_prep in
   lazy_match! goal with
   | [ |- _ |-- (_, _) ---> ([encode _], _) ] =>
     compile_with_prep ()
@@ -1332,7 +1335,7 @@ Ltac2 crush_side_conditions () :=
     end
   ).
 
-Ltac2 relcompile_impl (): unit :=
+Ltac2 relcompile_setup (): unit :=
   intros;
   let prog_id :=
     match (List.nth (Control.hyps ()) 0) with
@@ -1342,7 +1345,10 @@ Ltac2 relcompile_impl (): unit :=
   ltac1:(match goal with
   | H: ?g = FunSyntax.Defun ?nm ?args ?body |- _ =>
     instantiate(1 := FunSyntax.Defun nm args _) in H; inversion H; clear H; subst body
-  end);
+  end).
+
+Ltac2 relcompile_impl (): unit :=
+  relcompile_setup ();
   unshelve (docompile ());
   crush_NoDup ();
   crush_side_conditions ().

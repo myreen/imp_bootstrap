@@ -3,7 +3,7 @@ Ancestors
   arithmetic list pair finite_map string words
   source_values source_syntax x64asm_syntax
   imp_source_syntax imp_source_semantics
-  imp_printing imp_sexp_parser imp_to_asm
+  imp_printing imp_parsing imp_to_asm
   source_to_imp imp_compiler_prog
 Libs
   wordsLib BasicProvers

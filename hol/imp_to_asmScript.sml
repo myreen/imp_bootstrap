@@ -24,27 +24,32 @@ Definition init_def:
     (*  5 *) Exit;
     (* alloc routine starts here: *)
     (*  6 *) Comment "malloc";
-    (*  7 *) Mov RDI RAX;
-    (*  8 *) Mov RAX R14;
-    (*  9 *) Add R14 RDI;
-    (* 10 *) Jump (Less R15 R14) 14;
-    (* 11 *) Comment "noop";
-    (* 12 *) Ret;
+    (*  7 *) Mov RAX R15;
+    (*  8 *) Sub RAX R14;
+    (*  9 *) Jump (Less R15 R14) 15;
+    (* 10 *) Jump (Less RAX RDI) 15;
+    (* 11 *) Mov RAX R14;
+    (* 12 *) Add R14 RDI;
+    (* 13 *) Ret;
     (* give up: *)
-    (* 13 *) Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
-    (* 14 *) Push R15; (* align stack *)
-    (* 15 *) Const RDI 4w;
-    (* 16 *) Exit;
+    (* 14 *) Comment "exit 4"; (* Internal error – OOM or compiler limitation *)
+    (* 15 *) Push R15; (* align stack *)
+    (* 16 *) Const RDI 4w;
+    (* 17 *) Exit;
     (* abort: *)
-    (* 17 *) Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
-    (* 18 *) Push R15; (* align stack *)
-    (* 19 *) Const RDI 1w;
-    (* 20 *) Exit
+    (* 18 *) Comment "exit 1"; (* Internal error – OOM or compiler limitation *)
+    (* 19 *) Push R15; (* align stack *)
+    (* 20 *) Const RDI 1w;
+    (* 21 *) Exit
   ]
 End
 
 Definition AllocLoc_def:
   AllocLoc = 7:num
+End
+
+Definition abortLoc_def:
+  abortLoc = 19:num
 End
 
 Definition even_len_def:
@@ -71,19 +76,12 @@ End
   b – does the stack need to be aligned
 *)
 Definition give_up_def:
-  give_up b = if b then 14 else 15 : num
-End
-
-(* abort
-  b – does the stack need to be aligned
-*)
-Definition abort_def:
-  abort b = if b then 18 else 19 : num
+  give_up b = if b then 15 else 16 : num
 End
 
 (* Compiles a constant value into assembly instructions *)
 Definition c_const_def:
-  c_const (n : word64) (l : num) (vs : v_stack) =
+  c_const (n : word64) (l : num) =
     (List [Push RAX; Const RAX n], l+2)
 End
 
@@ -98,39 +96,12 @@ Definition index_of_def:
     | SOME v => if v = n then k else index_of n (k+1) xs
 End
 
-Definition index_of_opt_def:
-  index_of_opt (n : name) (k : num) (vs : v_stack) =
-  case vs of
-  | [] => NONE
-  | (x :: xs) =>
-    case x of
-    | NONE => index_of_opt n (k+1) xs
-    | SOME v => if v = n then SOME k else index_of_opt n (k+1) xs
-End
-
 (* lookup variable with name `n`, based on stack `vs` *)
 Definition c_var_def:
   c_var (n : name) (l : num) (vs : v_stack) =
     let k = index_of n 0 vs in
       if k = 0 then (List [Push RAX], l+1)
       else (List [Push RAX; Load_RSP RAX k], l+2)
-End
-
-Definition c_declare_binders_rec_def:
-  c_declare_binders_rec (binders: name list) (l: num) (vs: v_stack) (acc_asm: asm_appl) =
-  case binders of
-  | [] => (acc_asm, l, vs)
-  | (binder_name :: binders) =>
-    c_declare_binders_rec binders
-                          (l + 1)
-                          ((SOME binder_name) :: vs)
-                          (Append acc_asm (List [Push RDI]))
-End
-
-Definition c_declare_binders_def:
-  c_declare_binders (binders: name list) (l: num) (vs: v_stack) =
-    let (asm1, l1, vs1) = c_declare_binders_rec binders (l + 1) vs (List []) in
-      (Append asm1 (List [Const RDI 0w]), l1, vs1)
 End
 
 (* assign variable with name `n`, based on stack *)
@@ -146,7 +117,7 @@ End
   RAX := RAX + top_of_stack
 *)
 Definition c_add_def:
-  c_add (vs : v_stack) =
+  c_add =
     List [Pop RDI; Add RAX RDI]
 End
 
@@ -154,7 +125,7 @@ End
   RAX := top_of_stack - RAX (or 0 if the result would be negative)
 *)
 Definition c_sub_def:
-  c_sub (l : num) =
+  c_sub =
     List [Pop RDI; Sub RDI RAX; Mov RAX RDI]
 End
 
@@ -169,21 +140,7 @@ End
 
 Definition c_alloc_def:
   c_alloc (vs : v_stack) =
-    if even_len vs (* stack must be aligned at call *)
-    then List [Load_RSP RDI 0; Call AllocLoc; Pop RDI]
-    else List [Pop RDI; Call AllocLoc]
-End
-
-(* Some aasmbly languages and architectures (including x86_64) require alignint
-the stack to 16-bytes before function calls. If `vs` is even – we have to push
-something to the stack before calling any function. (the first value from the stack is kept in RAX,
-so the actual stack size is odd then)
-*)
-Definition align_def:
-  align (needs_alignment : bool) (asm1 : asm_appl) =
-    if needs_alignment
-    then (Append (List [Push RAX])) $ Append asm1 (List [Pop RDI])
-    else asm1
+    List [Mov RDI RAX; Call AllocLoc]
 End
 
 Definition app_list_length_def:
@@ -194,14 +151,12 @@ End
 
 Definition c_read_def:
   c_read (vs : v_stack) (l : num) =
-    let asm1 = align (even_len vs) (List [Push RAX; GetChar]) in
-      (asm1, l + app_list_length asm1)
+    (List [Push RAX; GetChar], l + 2)
 End
 
 Definition c_write_def:
   c_write (vs : v_stack) (l : num) =
-    let asm1 = align (even_len vs) (List [Mov RDI RAX; PutChar; Const RAX 0w]) in
-      (asm1, l + app_list_length asm1)
+    (List [Mov RDI RAX; PutChar; Pop RAX], l + 3)
 End
 
 (*
@@ -219,32 +174,30 @@ End
   snd_top_of_stack[top_of_stack] := RAX
 *)
 Definition c_store_def:
-  c_store = List [Pop RDI; Pop RDX; Add RDI RDX; Store RAX RDI 0w]
+  c_store = List [Pop RDI; Pop RDX; Add RDI RDX; Store RAX RDI 0w; Pop RAX]
 End
 
 Definition c_exp_def:
   c_exp (e : exp) (l : num) (vs : v_stack) =
   case e of
   | Var n => c_var n l vs
-  | Const n => c_const n l vs
+  | Const n => c_const n l
   | Add e1 e2 =>
       let (asm1, l1) = c_exp e1 l vs in
       let (asm2, l2) = c_exp e2 l1 (NONE :: vs) in
-      let c_add_asm = c_add (NONE :: NONE :: vs) in
-        (Append asm1 $ Append asm2 c_add_asm, l2 + app_list_length c_add_asm)
+        (asm1 +++ asm2 +++ c_add, l2 + app_list_length c_add)
   | Sub e1 e2 =>
       let (asm1, l1) = c_exp e1 l vs in
       let (asm2, l2) = c_exp e2 l1 (NONE :: vs) in
-      let c_sub_asm = c_sub l2 in
-        (Append asm1 $ Append asm2 c_sub_asm, l2 + app_list_length c_sub_asm)
+        (asm1 +++ asm2 +++ c_sub, l2 + app_list_length c_sub)
   | Div e1 e2 =>
       let (asm1, l1) = c_exp e1 l vs in
       let (asm2, l2) = c_exp e2 l1 (NONE :: vs) in
-        (Append asm1 $ Append asm2 c_div, l2 + app_list_length c_div)
+        (asm1 +++ asm2 +++ c_div, l2 + app_list_length c_div)
   | Read e1 e2 =>
       let (asm1, l1) = c_exp e1 l vs in
       let (asm2, l2) = c_exp e2 l1 (NONE :: vs) in
-        (Append asm1 $ Append asm2 c_load, l2 + app_list_length c_load)
+        (asm1 +++ asm2 +++ c_load, l2 + app_list_length c_load)
 End
 
 Definition c_exps_def:
@@ -253,8 +206,8 @@ Definition c_exps_def:
   | [] => (List [], l)
   | (e :: es') =>
     let (asm1, l1) = c_exp e l vs in
-    let (asm2, l2) = c_exps es' l1 vs in
-      (Append asm1 asm2, l2)
+    let (asm2, l2) = c_exps es' l1 (NONE :: vs) in
+      (asm1 +++ asm2, l2)
 End
 
 (*
@@ -318,23 +271,28 @@ Definition c_pops_def:
   if k = 3 then List [Pop RDI; Pop RDX] else
   if k = 4 then List [Pop RDI; Pop RDX; Pop RBX] else
   if k = 5 then List [Pop RDI; Pop RDX; Pop RBX; Pop RBP] else
-    List [Jump Always (give_up ((~ (even_len xs)) ≠ (even_len vs)))]
+    List [Jump Always (give_up (even_len xs))]
 End
 
 (** Builds a stack representation for parameters of a function *)
 Definition call_v_stack_def:
-  call_v_stack (xs: name list) (acc: v_stack) =
+  call_v_stack (xs : name list) (acc : v_stack) =
   case xs of
   | [] => acc
   | (x :: xs') => call_v_stack xs' (SOME x :: acc)
 End
 
+Definition push_vs_def:
+  push_vs (v_names : name list) =
+    if LENGTH v_names = 0 then [NONE] else call_v_stack v_names []
+End
+
 (** Push a list of variables onto the stack *)
 Definition c_pushes_def:
-  c_pushes (v_names: name list) (l : num) =
+  c_pushes (v_names : name list) (l : num) =
   let k = LENGTH v_names in
-  let e = call_v_stack v_names [] in
-  if k = 0 then (List [], [NONE], l) else
+  let e = push_vs v_names in
+  if k = 0 then (List [], e, l) else
   if k = 1 then (List [], e, l) else
   if k = 2 then (List [Push RDI], e, l + 1) else
   if k = 3 then (List [Push RDX; Push RDI], e, l + 2) else
@@ -346,8 +304,9 @@ End
 Definition c_call_def:
   c_call (vs : v_stack) (target : num) (xs : exp list) (l : num) =
   let asm_pops = c_pops xs vs in
-  let asm1 = align (even_len vs) (List [Call target]) in
-  (asm_pops +++ asm1, l + app_list_length asm_pops + app_list_length asm1)
+  let asm_cmb = asm_pops +++ List [Call target] in
+  let len = app_list_length asm_pops + 1 in
+  (asm_cmb, l + len)
 End
 
 Definition c_cmd_def:
@@ -364,17 +323,17 @@ Definition c_cmd_def:
     (asm1 +++ asm2, l2)
   | Update a e e' =>
     let (asm1, l1) = c_exp a l vs in
-    let (asm2, l2) = c_exp e l1 vs in
-    let (asm3, l3) = c_exp e' l2 (NONE :: vs) in
+    let (asm2, l2) = c_exp e l1 (NONE :: vs) in
+    let (asm3, l3) = c_exp e' l2 (NONE :: NONE :: vs) in
     let asm4 = c_store in
     (asm1 +++ asm2 +++ asm3 +++ asm4, l3 + app_list_length asm4)
   | If t c1 c2 =>
     let (asm1, l1) = c_test_jump t (l + 1) (l + 2) (l + 3) vs in
     let (asm2, l2) = c_cmd c1 l1 fs vs in
     let (asm3, l3) = c_cmd c2 (l2 + 1) fs vs in
-    let jump_to_start = List[Jump Always (l + 3)] in
+    let jump_to_start = List [Jump Always (l + 3)] in
     let jump_to_c1 = List [Jump Always l1] in
-    let jump_to_c2 = List [Jump Always l2] in
+    let jump_to_c2 = List [Jump Always (l2 + 1)] in
     let jump_to_end = List [Jump Always l3] in
     let asmres = jump_to_start +++ jump_to_c1 +++ jump_to_c2 +++ asm1 +++ asm2 +++ jump_to_end +++ asm3 in
     (asmres, l3)
@@ -388,10 +347,9 @@ Definition c_cmd_def:
     let asmres = jump_to_tst +++ jump_to_body +++ jump_to_end +++ asm1 +++ asm2 +++ jump_to_beginning in
     (asmres, l2+1)
   | Call n f es =>
-    let target = lookup f fs in
     let (asms, l1) = c_exps es l vs in
-    let (asm1, l2) = c_call vs target es l1 in
-    let (asm2, l3) = c_var n l2 vs in
+    let (asm1, l2) = c_call vs (lookup f fs) es l1 in
+    let (asm2, l3) = c_assign n l2 vs in
     (asms +++ asm1 +++ asm2, l3)
   | Return e =>
     let (asm1, l1) = c_exp e l vs in
@@ -411,7 +369,7 @@ Definition c_cmd_def:
     let (asm2, l2) = c_write vs l1 in
     (asm1 +++ asm2, l2)
   | Abort =>
-    (List [Jump Always (abort (odd_len vs))], l+1)
+    (List [Jump Always abortLoc], l+1)
 End
 
 Definition all_binders_def:
@@ -458,31 +416,62 @@ Definition make_vs_from_binders_def:
   | (b :: binders) => (SOME b) :: make_vs_from_binders binders
 End
 
+(* Remove a single name from a list of names *)
+Definition fltr_nms_def:
+  fltr_nms (a: name) (l: name list) =
+  case l of
+  | [] => []
+  | (x :: xs) => if a = x then fltr_nms a xs else x :: fltr_nms a xs
+End
+
+(* Remove all names in l1 from l2 *)
+Definition rm_nms_def:
+  rm_nms (l1: name list) (l2: name list) =
+  case l1 of
+  | [] => l2
+  | (x :: xs) => rm_nms xs (fltr_nms x l2)
+End
+
+(* Pad the binder stack with an extra slot when alignment requires it *)
+Definition vs_bdrs_def:
+  vs_bdrs (vs_after: v_stack) (vs_bind: v_stack) =
+    if even_len vs_after then vs_bind ++ [NONE] else vs_bind
+End
+
+(* Reserve stack space for the (non-parameter) local binders of a function *)
+Definition c_bdrs_def:
+  c_bdrs (v_names: name list) (c: cmd) =
+    let vs_bind = make_vs_from_binders (rm_nms v_names (unique_binders c)) in
+    let vs_after = push_vs v_names ++ vs_bind in
+    let vs_bind1 = vs_bdrs vs_after vs_bind in
+      (List [Sub_RSP (LENGTH vs_bind1)], vs_bind1)
+End
+
 (** Compiles a single function definition into assembly code. *)
 Definition c_fundef_def:
   c_fundef (fundef: func) (l: num) (fs: f_lookup) =
   case fundef of
   | Func n v_names body =>
-    let (asm0, vs0, l0) = c_pushes v_names l in
-    let binders = unique_binders body in
-    let vs_binders = make_vs_from_binders binders in
-    let asm1 = List [Sub_RSP (LENGTH vs_binders)] in
-    let (asm2, l2) = c_cmd body (l0 + 1) fs (vs_binders ++ vs0) in
+    let (asm0, vs_bind1) = c_bdrs v_names body in
+    let l0 = l + app_list_length asm0 in
+    let (asm1, vs1, l1) = c_pushes v_names l0 in
+    let (asm2, l2) = c_cmd body l1 fs (vs1 ++ vs_bind1) in
     (asm0 +++ asm1 +++ asm2, l2)
 End
 
 (* Converts a numeric name to a string representation *)
-Definition name2str_def:
-  name2str (n : num) (acc : string) =
-  if n = 0 then
-    acc
-  else
-    name2str (n DIV 256) (CHR (n MOD 256) :: acc)
-End
-
-Definition fname2str_def:
-  fname2str (n : num) (acc : string) =
-    CHR (n MOD 256) :: acc
+Definition N2ascii_def:
+  N2ascii n =
+    if n = 0 then "" else
+      let k = n MOD 256 in
+        if k < ORD #"*" then "" else
+        if ORD #"z" < k then "" else
+        if k = ORD #"." then "" else
+        if n < 256 then [CHR k]
+        else N2ascii (n DIV 256) ++ [CHR k]
+Termination
+  WF_REL_TAC ‘measure (λn. n)’ \\ rw []
+  \\ irule DIV_LESS \\ fs []
 End
 
 (* Compiles a list of function declarations into assembly instructions *)
@@ -492,10 +481,10 @@ Definition c_fundefs_def:
   | [] => (List [], fs, l)
   | (d :: ds') =>
     let fname = get_name d in
-    let comment = List [Comment (fname2str fname "")] in
     let (c1, l1) = c_fundef d (l + 1) fs in
-    let (c2, fs', l2) = c_fundefs ds' l1 fs in
-    (comment +++ c1 +++ c2, (fname, l + 1) :: fs', l2)
+    let (c2, fs', l2) = c_fundefs ds' (l1 + 1) fs in
+    let comment = List [Comment (N2ascii fname)] in
+    (comment +++ c1 +++ List [Ret] +++ c2, (fname, l + 1) :: fs', l2)
 End
 
 (* Generates the complete assembly code for a given program *)

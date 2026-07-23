@@ -3,7 +3,8 @@ Ancestors
   arithmetic list pair finite_map string words
   source_values source_syntax x64asm_syntax
   imp_source_syntax imp_source_semantics
-  imp_printing imp_parsing imp_to_asm
+  x64asm_semantics
+  imp_printing imp_parsing imp_to_asm imp_compiler
   source_to_imp imp_compiler_prog
 Libs
   wordsLib BasicProvers
@@ -56,6 +57,40 @@ End
 
 Theorem compiler_program_imp_exists:
   ∃p. compiler_program_imp = SOME p
+Proof
+  cheat
+QED
+
+(* ------------------------------------------------------------------ *)
+(* Top-level bootstrapping results                                     *)
+(* Correspond to the final theorems in imp2asm/CompilerProofs.v        *)
+(* ------------------------------------------------------------------ *)
+
+(* compiler_correct: running the compiled compiler binary on any input *)
+(* produces exactly what the shallow compiler function computes.       *)
+Theorem compiler_correct:
+  ∀input output.
+    (input, compiler_program_asm) asm_terminates output ⇒
+    output = compiler input
+Proof
+  cheat
+QED
+
+(* print_parser_compiler_correct: printing the compiler's IMP program  *)
+(* and parsing it back is the identity (a print/parse round-trip).     *)
+Theorem print_parser_compiler_correct:
+  ∀p. compiler_program_imp = SOME p ⇒
+      p = str2imp (imp2str p)
+Proof
+  cheat
+QED
+
+(* compiler_asm_bootstrap: running the compiled compiler on its own    *)
+(* printed IMP source reproduces the compiler's assembly string.       *)
+Theorem compiler_asm_bootstrap:
+  ∀output.
+    (compiler_imp_str, compiler_program_asm) asm_terminates output ⇒
+    output = compiler_asm_str
 Proof
   cheat
 QED

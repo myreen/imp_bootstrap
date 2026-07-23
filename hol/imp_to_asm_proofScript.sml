@@ -514,37 +514,42 @@ Proof
   cheat
 QED
 
-(*
+(* Corresponds to codegen_terminates in ImpToASMCodegenProofs.v:
+   if the IMP program terminates (in the strong sense) with output1 and
+   the generated ASM terminates with output2, the outputs agree. *)
 Theorem codegen_terminates:
-  ∀fuel input prog output.
-    (input, prog) imp_weak_termination output ∧
-    imp_avoids_crash input prog ⇒
-    asm_terminates input (codegen prog) output
+  ∀input prog fuel output1 output2.
+    (∃s v. eval_from fuel input prog = (Cont v, s) ∧ output1 = s.output) ∧
+    (input, codegen prog) asm_terminates output2 ⇒
+    output1 = output2
 Proof
   cheat
 QED
 
+(* Corresponds to codegen_no_abort in ImpToASMCodegenProofs.v:
+   if the generated ASM terminates and the IMP program does not crash,
+   then the IMP program does not abort either. *)
 Theorem codegen_no_abort:
-  ∀input prog.
-    imp_avoids_crash input prog ⇒
-    ∀fuel output t.
-      ¬(steps (State <| pc := 0; regs := (λ_. NONE); stack := [];
-                         instructions := codegen prog; memory := (λ_. NONE);
-                         input := input; output := [] |>, fuel)
-              (Halt 1w output, 0))
+  ∀input prog fuel output outcome s1.
+    (input, codegen prog) asm_terminates output ∧
+    eval_from fuel input prog = (outcome, s1) ∧
+    outcome ≠ Stop Crash ⇒
+    outcome ≠ Stop Abort
 Proof
   cheat
 QED
 
+(* Corresponds to codegen_diverges in ImpToASMCodegenProofs.v:
+   if the IMP program never crashes and the generated ASM diverges with
+   some output, then the IMP program diverges with the same output. *)
 Theorem codegen_diverges:
   ∀input prog output.
-    (input, prog) imp_diverges output ⇒
-    ∃output2.
-      asm_terminates input (codegen prog) output2
+    imp_avoids_crash input prog ∧
+    (input, codegen prog) asm_diverges output ⇒
+    (input, prog) imp_diverges output
 Proof
   cheat
 QED
-*)
 
 (* ------------------------------------------------------------------ *)
 (* Correspondence between NRC step and steps relation                 *)

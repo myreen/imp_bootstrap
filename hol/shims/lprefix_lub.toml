@@ -1,0 +1,8 @@
+[holbuild]
+schema = 2
+
+[project]
+name = "lprefix_lub"
+
+[build]
+members = ["."]

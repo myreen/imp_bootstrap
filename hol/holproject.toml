@@ -1,0 +1,17 @@
+[holbuild]
+schema = 2
+
+[project]
+name = "imp_bootstrap"
+
+[dependencies.hol]
+git = "https://github.com/HOL-Theorem-Prover/HOL.git"
+rev = "9d7499d9bd45579524e6a8bb982571208b67a905"
+
+[dependencies.lprefix_lub]
+from = "hol"
+path = "examples/pl-semantics/lprefix_lub"
+manifest = "shims/lprefix_lub.toml"
+
+[build]
+members = ["."]

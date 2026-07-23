@@ -25,9 +25,9 @@ End
 
 Datatype:
   cmd = Skip                       (*  do nothing              *)
+      | Seq cmd cmd                (*  ... ; ...               *)
       | Assign name exp            (*  v := e                  *)
       | Update exp exp exp         (*  a[e] := e'              *)
-      | Seq cmd cmd                (*  ... ; ...               *)
       | If test cmd cmd            (*  if (test) ... else ...  *)
       | While test cmd             (*  while (test) ...        *)
       | Call name name (exp list)  (*  v := foo(e1,e2,e3,...)  *)

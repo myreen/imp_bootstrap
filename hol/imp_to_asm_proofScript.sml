@@ -519,7 +519,7 @@ QED
    the generated ASM terminates with output2, the outputs agree. *)
 Theorem codegen_terminates:
   ∀input prog fuel output1 output2.
-    (∃s v. eval_from fuel input prog = (Cont v, s) ∧ output1 = s.output) ∧
+    imp_terminates input prog fuel output1 ∧
     (input, codegen prog) asm_terminates output2 ⇒
     output1 = output2
 Proof

@@ -526,3 +526,9 @@ Definition imp_weak_termination_def:
     eval_from k input prog = (outcome, s) ∧
     (outcome ≠ Stop Abort ⇒ outcome = Cont () ∧ s.output = output)
 End
+
+(* strong termination: for the given fuel the program runs to completion *)
+Definition imp_terminates_def:
+  imp_terminates input prog k output ⇔
+    ∃s v. eval_from k input prog = (Cont v, s) ∧ s.output = output
+End

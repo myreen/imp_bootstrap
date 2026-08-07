@@ -6,32 +6,28 @@ From impboot Require Import
   assembly.ASMToString
   commons.CompilerUtils
   imperative.Printing.
+From Corelib Require Import Byte.
+
+Open Scope byte_string_scope.
+
+Print compiler_program_prog.
 
 Definition compiler_program_imp := to_imp compiler_program_prog.
-
-Theorem compiler_program_imp_exists: exists p,
-  compiler_program_imp = Some p.
-Proof.
-  eexists; unfold compiler_program_imp.
-  vm_compute; reflexivity.
-Qed.
 
 Time Compute compiler_program_imp.
 
 Definition compiler_imp_str := match compiler_program_imp with
-| None => ""
+| None => ""%string
 | Some p => imp2str p
 end.
 
-Compute compiler_imp_str.
+Time Compute compiler_imp_str.
 
 Definition compiler_program_asm := match compiler_program_imp with
 | None => []
 | Some p => codegen p
 end.
 
-Time Compute compiler_program_asm.
-
-Definition compiler_asm_str := asm2str compiler_program_asm.
+Definition compiler_asm_str := asm2bs compiler_program_asm.
 
 Time Compute compiler_asm_str.

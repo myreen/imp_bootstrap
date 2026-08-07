@@ -241,3 +241,8 @@ Definition asm2str (is: asm): string := ccat_str
     asm2strb
     ]%string
   ++ is2str 0 is.
+
+From Corelib Require Import Byte.
+
+Definition asm2bs (is: asm): list byte :=
+  map byte_of_ascii (list_ascii_of_string (asm2str is)).

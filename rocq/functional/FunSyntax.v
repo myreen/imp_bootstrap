@@ -27,6 +27,8 @@ Inductive exp : Type :=
 | Op (o: op) (args: list exp)                  (* primitive operations       *)
 | If (t: test) (conds: list exp) (e1 e2: exp)  (* if test .. then .. else .. *)
 | Let (n: name) (e1 e2: exp)                   (* let name = .. in ..        *)
+(* | Lambda (params: list name) (body: exp)       (* λparams, body              *)
+| CallLambda (f: exp) (args: list exp)         (* f(args)                    *) *)
 | Call (f: name) (args: list exp).             (* call a function            *)
 
 Inductive defun: Type :=

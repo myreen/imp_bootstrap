@@ -3,12 +3,14 @@ From impboot.functional Require Import FunSyntax.
 From impboot.commons Require Import CompilerUtils.
 From Stdlib Require Import FunInd.
 From coqutil Require Import dlet.
+From Corelib Require Import Byte.
 
 Open Scope N.
 
 Inductive Value :=
   | Pair (v1 v2: Value)
   | Num (n: N).
+  (* | Closure (params: list name) (body: FunSyntax.exp) (env: FEnv.t Value). *)
 
 Class Refinable (A: Type) :=
   { encode : A -> Value }.
@@ -37,7 +39,7 @@ Definition value_list_of_values (xs : list Value) : Value :=
 Global Instance Refinable_list {A: Type} `{Refinable A}: Refinable (list A) :=
   { encode l := value_list_of_values (List.map encode l) }.
 
-Definition enc_char(c: ascii): N :=
+Definition enc_char (c: ascii): N :=
   N_of_ascii c.
 
 Global Instance Refinable_char : Refinable ascii :=
@@ -61,6 +63,9 @@ Global Instance Refinable_option {A : Type} `{Refinable A} : Refinable (option A
 
 Global Instance Refinable_Prop {A: Prop}: Refinable A :=
   { encode _ := Num 0 }.
+
+Global Instance Refinable_byte: Refinable byte :=
+  { encode b := Num (enc_char (ascii_of_byte b)) }.
 
 (* helpers *)
 

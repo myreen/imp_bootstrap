@@ -374,7 +374,7 @@ Ltac2 rec compile () : unit :=
           (if debug_relcompile then printf "Compiling a dlet with a string literal with value %t" val else ());
           let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
           let let_n_constr := List.nth binders_of_body 0 in
-          app_lemma "auto_string_const_dlet" [("env", exactk fenv); ("name", exactk let_n_constr); ("k", exactk body); ("sz", exactk constr:(4)); ("str", exactk val)]
+          app_lemma "auto_string_const_dlet_chunked" [("env", exactk fenv); ("name", exactk let_n_constr); ("body", exactk body); ("chunk_size", exactk constr:(4)); ("str", exactk val)]
             [exactk open_constr:(_); (fun () => intro; intro; cbv beta; compile_with_prep ())]
         else (
           (if debug_relcompile then printf "Compiling a dlet with value %t" val else ());
@@ -1075,6 +1075,8 @@ Ltac2 rec compile () : unit :=
           [compile; (fun () => destruct $v0 eqn:? at 1; (Control.enter compile_with_prep)); (fun () => ())]
       | (list_ascii_of_string ?str) =>
         app_lemma "auto_string_to_list" [("env", exactk fenv); ("str", exactk str)] [compile]
+      | (map byte_of_ascii ?asciis) =>
+        app_lemma "auto_list_ascii_to_bytes" [("env", exactk fenv); ("asciis", exactk asciis)] [compile]
       (* bool *)
       | true =>
         app_lemma "auto_bool_T" [("env", exactk fenv)] []
@@ -1320,7 +1322,7 @@ Ltac2 crush_FEnv_impossible_step () :=
   end; eauto.
 
 Ltac2 crush_FEnv_impossible () :=
-  intros; simpl make_env in *; unfold envn; ltac1:(with_strategy opaque [FEnv.insert_all] simpl);
+  intros; simpl make_env in *; unfold chunk_env, chunk_var_name; ltac1:(with_strategy opaque [FEnv.insert_all] simpl);
   repeat0 crush_FEnv_impossible_step.
 
 Ltac2 crush_side_conditions () :=

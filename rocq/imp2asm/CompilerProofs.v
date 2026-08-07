@@ -9,6 +9,13 @@ From impboot.derivations Require Import CompilerDerivations.
 From impboot.imp2asm Require Import ImpToASMCodegenProofs.
 From impboot.fp2imp Require Import FpToImpCodegenProof.
 
+Theorem compiler_program_imp_exists: exists p,
+  compiler_program_imp = Some p.
+Proof.
+  eexists; unfold compiler_program_imp.
+  vm_compute; reflexivity.
+Qed.
+
 Theorem compiler_correct: forall input output,
   asm_terminates (Llist.of_list input) compiler_program_asm output ->
   output = compiler input.
@@ -18,15 +25,19 @@ Proof.
   specialize compiler_program_imp_exists as [compiler_imp Hcompiler_program_imp]; subst.
   unfold compiler_program_imp in *.
   Opaque compiler FpToImpCodegen.to_imp ImpToASMCodegen.codegen.
-  eapply to_imp_thm in Hfp_compiler_thm; eauto.
-  unfold ImpSemantics.imp_weak_termination in *; cleanup.
   unfold compiler_program_asm, compiler_program_imp in *; rewrite Hcompiler_program_imp in *.
+  assert(exists fuel, ImpSemantics.prog_terminates (Llist.of_list input) compiler_imp fuel (compiler input)).
+  1: {
+    eapply to_imp_thm in Hfp_compiler_thm; eauto.
+    unfold ImpSemantics.imp_weak_termination in *; cleanup.
+    eexists; unfold ImpSemantics.prog_terminates; do 2 eexists.
+    split; [eauto|].
+    eapply H1.
+    eapply codegen_no_abort; eauto.
+  }
+  destruct H as [fuel Hprog_terminates].
   symmetry; eapply codegen_terminates with (input := Llist.of_list input) (prog := compiler_imp).
-  split; [|eauto].
-  unfold ImpSemantics.prog_terminates; do 2 eexists.
-  split; [eauto|].
-  eapply H1.
-  eapply codegen_no_abort; eauto.
+  split; eauto.
 Qed.
 
 Transparent compiler FpToImpCodegen.to_imp ImpToASMCodegen.codegen.

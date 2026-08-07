@@ -32,11 +32,13 @@ Derive c_add_fp
 Proof.
   time relcompile.
 Qed.
+About c_add_prog_proof.
 Print c_add_fp.
 
 Example c_add_imp :=
   (to_funs [c_add_fp]).
 
+Check c_add_imp.
 Compute c_add_imp.
 
 Compute (
@@ -48,7 +50,7 @@ Compute (
   end
 ).
 
-Time Eval lazy in (
+Compute (
   match c_add_imp with
   | Some [p] => Some (
     let asm := flatten (fst (c_fundef p 0 [])) in
@@ -57,3 +59,19 @@ Time Eval lazy in (
   | _ => None
   end
 ).
+
+Definition e (y: nat): nat :=
+  let x := 5%nat in
+  x + y.
+
+Derive e_prog
+  in ltac2:(relcompile_tpe 'e_prog 'e [])
+  as e_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+
+
+
+
+

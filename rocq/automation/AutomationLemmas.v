@@ -825,93 +825,107 @@ Proof.
   assumption.
 Qed.
 
-Fixpoint reify_string (str: list ascii) (str_rest: FunSyntax.exp) :=
-  match str with
-  | [] => str_rest
-  | a :: str => FunSyntax.Op FunSyntax.Cons
-                [FunSyntax.Const (N_of_ascii a); reify_string str str_rest]
-  end.
+From Stdlib Require Import Logic.FunctionalExtensionality.
 
-(* Eval cbv -[N_of_ascii] in reify_string (list_ascii_of_string "movql") (FunSyntax.Const 0). *)
-
-Lemma reify_string_ok (l r : list ascii) (rexp: FunSyntax.exp):
-  ∀ (env : FEnv.env) (s : state),
-    env |-- ([rexp], s) ---> ([encode r], s) ->
-    env |-- ([reify_string l rexp], s) ---> ([encode (l ++ r)%list], s).
+Theorem auto_list_ascii_to_bytes: forall env s x1 asciis,
+  env |-- ([x1], s) ---> ([encode asciis], s) ->
+  env |-- ([x1], s) ---> ([encode (map byte_of_ascii asciis)], s).
 Proof.
-  induction l; simpl; repeat econstructor; eauto.
+  intros.
+  simpl in *.
+  rewrite map_map.
+  assert (map (fun x => Num (enc_char x)) = map (fun x => Num (enc_char (ascii_of_byte (byte_of_ascii x))))) as <-.
+  1: f_equal; eapply functional_extensionality; intros; now rewrite ascii_of_byte_of_ascii.
+  assumption.
 Qed.
 
-Definition ne (name: string) n := name_enc (name ++ (N2str n "")).
-
-Fixpoint reify_string_chunks (name: string) (n: N) (chunks: list (list ascii))
-    (k: FunSyntax.exp -> FunSyntax.exp) :=
-  match chunks with
-  | [] => k (FunSyntax.Const 0)
-  (* | [s] => reify_string s LATER: Save time when there's just one chunk *)
-  | s :: chunks =>
-      reify_string_chunks
-        name (n + 1) chunks
-        (fun v =>
-           let name' := ne name n in
-           FunSyntax.Let
-             name'
-             (reify_string s v)
-             (k (FunSyntax.Var name')))
+Fixpoint reify_ascii_list_with_tail (chars: list ascii) (tail_exp: FunSyntax.exp) :=
+  match chars with
+  | [] => tail_exp
+  | char :: chars => FunSyntax.Op FunSyntax.Cons
+                [FunSyntax.Const (N_of_ascii char); reify_ascii_list_with_tail chars tail_exp]
   end.
 
-Definition reify_chunked_k (name: string) (sz: nat) (str: list ascii)
-  (k: FunSyntax.exp -> FunSyntax.exp) :=
-  reify_string_chunks name 0 (chunk sz str) k.
+(* Eval cbv -[N_of_ascii] in reify_ascii_list_with_tail (list_ascii_of_string "movql") (FunSyntax.Const 0). *)
 
-(* Eval cbv -[N_of_ascii name_enc] in reify_chunked_k "f" 4 (list_ascii_of_string "fooxbarxbazxquuux"). *)
+Lemma reify_ascii_list_with_tail_ok (prefix suffix : list ascii) (suffix_exp: FunSyntax.exp):
+  ∀ (env : FEnv.env) (s : state),
+    env |-- ([suffix_exp], s) ---> ([encode suffix], s) ->
+    env |-- ([reify_ascii_list_with_tail prefix suffix_exp], s) ---> ([encode (prefix ++ suffix)%list], s).
+Proof.
+  induction prefix; simpl; repeat econstructor; eauto.
+Qed.
 
-Definition envn (name: string) (chunks: list (list ascii)) (n: N) (env: FEnv.env) :=
+Definition chunk_var_name (base_name: string) (chunk_index: N) := name_enc (base_name ++ (N2str chunk_index "")).
+
+Fixpoint reify_ascii_chunks_cont (base_name: string) (chunk_index: N) (chunks: list (list ascii))
+    (cont: FunSyntax.exp -> FunSyntax.exp) :=
+  match chunks with
+  | [] => cont (FunSyntax.Const 0)
+  (* | [chunk] => reify_ascii_list_with_tail chunk LATER: Save time when there's just one chunk *)
+  | chunk :: chunks =>
+      reify_ascii_chunks_cont
+        base_name (chunk_index + 1) chunks
+        (fun suffix_exp =>
+           let chunk_name := chunk_var_name base_name chunk_index in
+           FunSyntax.Let
+              chunk_name
+              (reify_ascii_list_with_tail chunk suffix_exp)
+              (cont (FunSyntax.Var chunk_name)))
+  end.
+
+Definition reify_chunked_ascii_list_cont (base_name: string) (chunk_size: nat) (chars: list ascii) (cont: FunSyntax.exp -> FunSyntax.exp) :=
+  reify_ascii_chunks_cont base_name 0 (chunk chunk_size chars) cont.
+
+(* Eval cbv -[N_of_ascii name_enc] in reify_chunked_ascii_list_cont "f" 4 (list_ascii_of_string "fooxbarxbazxquuux"). *)
+
+Definition chunk_env (base_name: string) (chunks: list (list ascii)) (chunk_index: N) (env: FEnv.env) :=
   FEnv.insert_all
-    (map (fun k => (name_enc (name ++ (N2str (N.of_nat k + n) "")),
-                  Some (encode (List.concat (skipn k chunks)))))
+    (map (fun offset => (chunk_var_name base_name (N.of_nat offset + chunk_index),
+                   Some (encode (List.concat (skipn offset chunks)))))
        (seq 0 (List.length chunks)))
     env.
 
-Lemma envn_step (name: string) s (chunks: list (list ascii)) (n: N) (env: FEnv.env) :
-  envn name (s :: chunks) n env =
-    FEnv.insert (ne name n, Some (encode (s ++ List.concat chunks)%list))
-      (envn name chunks (n + 1) env).
+Lemma chunk_env_cons (base_name: string) first_chunk (chunks: list (list ascii)) (chunk_index: N) (env: FEnv.env) :
+  chunk_env base_name (first_chunk :: chunks) chunk_index env =
+    FEnv.insert (chunk_var_name base_name chunk_index, Some (encode (first_chunk ++ List.concat chunks)%list))
+      (chunk_env base_name chunks (chunk_index + 1) env).
 Proof.
-  unfold envn; simpl; do 2 f_equal.
+  unfold chunk_env, chunk_var_name; simpl; do 2 f_equal.
   rewrite <- seq_shift, map_map.
   apply map_ext; intros. do 4 f_equal.
   lia.
 Qed.
 
-Lemma reify_string_chunks_ok (name: string) (chunks: list (list ascii)) :
-  let str := List.concat chunks in
-  forall (n: N) (k: FunSyntax.exp -> FunSyntax.exp) (v: Value),
+Lemma reify_ascii_chunks_cont_ok (base_name: string) (chunks: list (list ascii)) :
+  let chars := List.concat chunks in
+  forall (chunk_index: N) (cont: FunSyntax.exp -> FunSyntax.exp) (v: Value),
   ∀ (env : FEnv.env) (s : state),
-    (forall e,
-        let env' := envn name chunks n env in
-        env' |-- ([e], s) ---> ([encode str], s) ->
-        env' |-- ([k e], s) ---> ([v], s)) ->
-    env |-- ([reify_string_chunks name n chunks k], s) ---> ([v], s).
+    (forall chars_exp,
+        let env' := chunk_env base_name chunks chunk_index env in
+        env' |-- ([chars_exp], s) ---> ([encode chars], s) ->
+        env' |-- ([cont chars_exp], s) ---> ([v], s)) ->
+    env |-- ([reify_ascii_chunks_cont base_name chunk_index chunks cont], s) ---> ([v], s).
 Proof.
-  induction chunks; intros str; simpl.
-  - eauto using eval.
+  induction chunks; intros chars; simpl.
+  - intros * H. eapply H. econstructor; eauto.
   - intros * Hk.
     eapply IHchunks; intros * H.
     econstructor.
-    + apply reify_string_ok; eauto.
-    + rewrite !envn_step in Hk.
+    + apply reify_ascii_list_with_tail_ok; eauto.
+    + rewrite !chunk_env_cons in Hk.
       eapply Hk.
       eauto using eval, FEnv.lookup_insert_eq.
 Qed.
 
-Definition reify_chunked (name: string) (sz: nat) (str: list ascii) (k: FunSyntax.exp) :=
-  reify_chunked_k name sz str
-    (fun e => FunSyntax.Let (name_enc name) e k).
+Definition reify_chunked_ascii_list_let (name: string) (chunk_size: nat) (chars: list ascii) (body_exp: FunSyntax.exp) :=
+  reify_chunked_ascii_list_cont name chunk_size chars
+    (fun chars_exp => FunSyntax.Let (name_enc name) chars_exp body_exp).
 
-Theorem eval_env_ext1 x env0 env1 res s s1 :
+Theorem eval_exp_env_ext exp env0 env1 res s s1 :
     (forall n v, FEnv.lookup env0 n = Some v -> FEnv.lookup env1 n = Some v) ->
-    env0 |-- ([x], s) ---> (res, s1) -> env1 |-- ([x], s) ---> (res, s1).
+    env0 |-- ([exp], s) ---> (res, s1) ->
+    env1 |-- ([exp], s) ---> (res, s1).
 Proof.
   intros H Heval.
   generalize dependent env1.
@@ -923,18 +937,18 @@ Proof.
   apply Hext; assumption.
 Qed.
 
-Lemma auto_string_const_dlet: ∀ {A: Type} `{Refinable A} (env : FEnv.env) (s : state) name x (k: string -> A) sz (str: string),
+Lemma auto_string_const_dlet_chunked: ∀ {A: Type} `{Refinable A} (env : FEnv.env) (s : state) name body_exp (body: string -> A) chunk_size (str: string),
   (∀ n v0, FEnv.lookup env n = Some v0 ->
-    FEnv.lookup (envn name (chunk sz (list_ascii_of_string str)) 0 env) n = Some v0) ->
+    FEnv.lookup (chunk_env name (chunk chunk_size (list_ascii_of_string str)) 0 env) n = Some v0) ->
   (∀ strv, strv = str ->
-    FEnv.insert (name_enc name, Some (encode strv)) env |-- ([x], s) ---> ([encode (k strv)], s)) ->
-  env |-- ([reify_chunked name sz (list_ascii_of_string str) x], s) ---> ([encode (dlet str k)], s).
+    FEnv.insert (name_enc name, Some (encode strv)) env |-- ([body_exp], s) ---> ([encode (body strv)], s)) ->
+  env |-- ([reify_chunked_ascii_list_let name chunk_size (list_ascii_of_string str) body_exp], s) ---> ([encode (dlet str body)], s).
 Proof.
   intros * Henv Hk.
-  apply reify_string_chunks_ok; simpl.
+  apply reify_ascii_chunks_cont_ok; simpl; intros.
   rewrite concat_chunk in *.
   econstructor; eauto.
-  eapply eval_env_ext1.
+  eapply eval_exp_env_ext.
   2: now eapply Hk.
   intros.
   destruct (N.eq_dec (name_enc name) n); subst; rewrite ?FEnv.lookup_insert_eq, ?FEnv.lookup_insert_neq in * by congruence.

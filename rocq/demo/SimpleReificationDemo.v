@@ -26,23 +26,11 @@ Proof.
   all: relcompile_step (). *)
 
   relcompile_setup ().
-  unfold f1.
   eapply trans_app.
   3: eauto.
   2: reflexivity.
-  refine open_constr:(auto_let
-  (* env *) ltac2:(eauto)
-  (* x1 y1 *) _ _
-  (* s1 s2 s3 *) ltac2:(exact s) ltac2:(exact s) ltac2:(exact s)
-  (* v1 *) 2%nat
-  (* let_n *) "n"
-  (* f *) (fun n => n + 1)%nat
-  (* eval v1 *) _
-  (* eval f *) _
-  ).
-  1: typeclasses_eauto.
-  3,4: ltac1:(shelve).
-  (* eapply auto_let with (let_n := "n"). *)
+  unfold f1.
+  eapply auto_let with (let_n := "n").
   1: eapply auto_nat_const.
   intros; cbv beta.
   eapply auto_nat_add.

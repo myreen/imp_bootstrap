@@ -69,6 +69,14 @@ Qed.
 Time Compute to_funs [c_const_prog].
 (* Ltac2 Eval assert_Some constr:(to_funs [c_const_prog]). *)
 
+(* Derive negb_prog 
+  in ltac2:(relcompile_tpe 'negb_prog '@negb []) 
+  as negb_prog_proof.
+Proof.
+  time relcompile.
+Qed.
+Time Compute to_funs [negb_prog]. *)
+
 Derive even_len_prog 
   in ltac2:(relcompile_tpe 'even_len_prog '@even_len []) 
   as even_len_prog_proof.
@@ -79,7 +87,7 @@ Time Compute to_funs [even_len_prog].
 (* Ltac2 Eval assert_Some constr:(to_funs [even_len_prog]). *)
 
 Derive odd_len_prog 
-  in ltac2:(relcompile_tpe 'odd_len_prog '@odd_len []) 
+  in ltac2:(relcompile_tpe 'odd_len_prog '@odd_len [])
   as odd_len_prog_proof.
 Proof.
   time relcompile.
@@ -420,6 +428,7 @@ Definition ImpToASMCodegen_funs := [
   give_up_prog;
   abortLoc_prog;
   c_const_prog;
+  (* negb_prog; *)
   even_len_prog;
   odd_len_prog;
   index_of_prog;
@@ -535,7 +544,6 @@ Theorem codegen_thm:
 Proof.
   intros * Hlookup_fun_utils Hlookup_fun.
   assert_eval_app_compiler_utils 'Hlookup_fun_utils.
-
   assert_eval_app_by 'give_up 'give_up_prog_proof 'Hlookup_fun 0.
   assert_eval_app_by 'abortLoc 'abortLoc_prog_proof 'Hlookup_fun 1.
   assert_eval_app_by 'c_const 'c_const_prog_proof 'Hlookup_fun 2.

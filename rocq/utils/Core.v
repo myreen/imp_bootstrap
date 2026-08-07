@@ -4,7 +4,7 @@ From Stdlib.Bool Require Export Bool.
 From Stdlib.Strings Require Export Ascii String.
 From Stdlib.Numbers Require Export DecimalString.
 From Stdlib.Arith Require Import PeanoNat.
-From Stdlib Require Export Lia String Nat Arith ZArith.
+From Stdlib Require Export Lia String Nat Arith ZArith Init.Byte.
 From coqutil Require Export dlet.
 From Stdlib.Unicode Require Export Utf8.
 
@@ -79,3 +79,15 @@ Fixpoint list_update {A : Type} (n : nat) (x : A) (l : list A) : list A :=
   | S n, y :: xs => y :: list_update n x xs
   | _, [] => []
   end.
+
+(** byte_string notations *)
+
+Notation bytestring := (list byte).
+
+Definition of_byte_string : bytestring -> bytestring := id.
+Definition to_byte_string : bytestring -> bytestring := id.
+
+Declare Scope byte_string_scope.
+
+String Notation bytestring of_byte_string to_byte_string : byte_string_scope.
+Open Scope byte_string_scope.

@@ -1471,7 +1471,7 @@ Proof.
 Qed.
 
 Theorem to_imp_thm: forall input prog output imp_prog,
-  FunSemantics.prog_terminates input prog output → to_imp prog = Some imp_prog ->
+  FunSemantics.prog_terminates input prog output → to_imp prog = Some imp_prog →
   imp_weak_termination input imp_prog output.
 Proof.
   intros * Heval Hto_imp.

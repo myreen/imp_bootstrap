@@ -1089,8 +1089,10 @@ Ltac2 rec compile () : unit :=
       | (Bool.eqb ?bA ?bB) =>
         app_lemma "auto_bool_iff" [("env", exactk fenv); ("bA", exactk bA); ("bB", exactk bB)] [compile; compile]
       | (if ?b then ?t else ?f) =>
-        app_lemma "last_bool_if" [("env", exactk fenv); ("b", exactk b); ("t", exactk t); ("f", exactk f)]
-                                  [compile; compile_with_prep; compile_with_prep]
+        if Constr.equal (Constr.type b) constr:(bool) then
+          app_lemma "last_bool_if" [("env", exactk fenv); ("b", exactk b); ("t", exactk t); ("f", exactk f)]
+                                    [compile; compile_with_prep; compile_with_prep]
+        else relCompilerDB compile
       (* const *)
       | ?n =>
         Control.plus (fun () => relCompilerDB compile) (fun _ =>

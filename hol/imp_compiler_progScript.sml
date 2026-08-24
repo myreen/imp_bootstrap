@@ -9,7 +9,7 @@ Ancestors
 Libs
   mp_then wordsLib imp_automationLib
 
-val _ = temp_delsimps ["LT1_EQ0"]
+val _ = temp_delsimps ["LT1_EQ0"];
 
 val _ = show_assums := true;
 
@@ -61,38 +61,18 @@ val res = to_deep imp_to_asmTheory.c_div_def;
 val res = to_deep imp_to_asmTheory.c_load_def;
 
 Theorem pairlet_imp:
-  ((let (a,b) = f in x a b) = case f of (a,b) => x a b) ∧
-  ((let (a,b,c) = g in y a b c) = case g of (a,b,c) => y a b c)
+  ((let (a,b) = f in x a b) = let temp = f in case temp of (a,b) => x a b) ∧
+  ((let (a,b,c) = g in y a b c) = let temp = g in case temp of (a,b,c) => y a b c)
 Proof
   Cases_on ‘f’ \\ simp []
   \\ PairCases_on ‘g’ \\ simp []
 QED
 
 val res = to_deep (imp_to_asmTheory.c_exp_def |> SIMP_RULE std_ss [pairlet_imp]);
-
-val def = (imp_to_asmTheory.c_test_jump_def |> SIMP_RULE std_ss [pairlet_imp])
-val res = to_deep def; (* TODO *)
-
-Theorem c_test_jump_side:
-  c_test_jump_side t neg_label pos_label l vs
-Proof
-  cheat
-QED
-
-val _ = update_mem c_test_jump_side;
-
+val res = to_deep (imp_to_asmTheory.c_test_jump_def |> SIMP_RULE std_ss [pairlet_imp]);
 val res = to_deep (imp_to_asmTheory.c_exps_def |> SIMP_RULE std_ss [pairlet_imp]);
 val res = to_deep abortLoc_def;
 val res = to_deep (imp_to_asmTheory.c_cmd_def |> SIMP_RULE std_ss [pairlet_imp]);
-
-Theorem c_cmd_side:
-  c_cmd_side c l fs vs
-Proof
-  cheat
-QED
-
-val _ = update_mem c_cmd_side;
-
 val res = to_deep (imp_to_asmTheory.c_fundef_def |> SIMP_RULE std_ss [pairlet_imp]);
 
 Definition mul256_def:
@@ -169,7 +149,7 @@ val res = to_deep source_valuesTheory.el3_def;
 val res = to_deep imp_parsingTheory.v2list_def;
 val res = to_deep imp_parsingTheory.vs2args_def;
 val res = to_deep is_upper_def;
-val res = to_deep num2exp_def;
+val res = to_deep imp_parsingTheory.num2exp_def;
 
 Theorem num2exp_side[local]:
   num2exp_side n
@@ -180,7 +160,7 @@ QED
 val _ = update_mem num2exp_side;
 
 val res = to_deep (imp_parsingTheory.v2exp_def |> SRULE [name_def]);
-val res = to_deep (v2cmp_def |> SRULE [name_def]);
+val res = to_deep (imp_parsingTheory.v2cmp_def |> SRULE [name_def]);
 val res = to_deep (imp_parsingTheory.v2test_def |> SRULE [name_def]);
 val res = to_deep imp_parsingTheory.vs2exps_def;
 val res = to_deep (imp_parsingTheory.v2cmd_def |> SRULE [name_def]);
@@ -192,27 +172,6 @@ val res = to_deep (parse_def |> DefnBase.one_line_ify NONE |> Q.INST [‘v’|->
 val res = to_deep imp_parsingTheory.parser_def;
 
 (* lexer *)
-
-Definition mul256_def:
-  mul256 n =
-    let n = n + n in
-    let n = n + n in
-    let n = n + n in
-    let n = n + n in
-    let n = n + n in
-    let n = n + n in
-    let n = n + n in
-            n + n : num
-End
-
-val res = to_deep mul256_def;
-
-Theorem mul256_thm[simp]:
-  mul256_side n ∧
-  mul256 n = 256 * n
-Proof
-  fs [mul256_def,res]
-QED
 
 Definition mul10_def:
   mul10 n =

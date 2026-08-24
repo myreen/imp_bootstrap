@@ -481,38 +481,16 @@ fun to_deep def = let
         \\ pop_assum mp_tac
         \\ simp [Once side_def] \\ fs [name_def]
         \\ rpt strip_tac \\ res_tac \\ fs []
-        \\ TRY (Cases_on ‘t’ \\ Cases_on ‘z’ \\ fs [] \\ NO_TAC)
+        \\ rpt IF_CASES_TAC
+        \\ gvs [boolTheory.DISJ_EQ_IMP]
+        \\ rpt strip_tac
+        \\ rpt IF_CASES_TAC
+        \\ gvs []
         \\ metis_tac []
-      val careful_tac =
-        strip_tac
-        \\ match_mp_tac lemma
-        \\ rpt conj_tac \\ rpt gen_tac
-        \\ rpt (disch_then strip_assume_tac)
-        \\ rpt conj_tac \\ rpt gen_tac
-        \\ rpt (disch_then strip_assume_tac)
-        \\ FIRST tacs \\ full_simp_tac std_ss []
-        \\ pop_assum mp_tac
-        \\ simp_tac std_ss [Once side_def]
-        \\ rpt (pop_assum mp_tac)
-        \\ CONV_TAC (apply_at_conv (can (match_term name_pat)) EVAL)
-        \\ rpt strip_tac
-        \\ full_simp_tac std_ss []
-        \\ rpt strip_tac
-        \\ full_simp_tac std_ss []
-        \\ rpt (pop_assum mp_tac)
-        \\ CONV_TAC (apply_at_conv (can (match_term name_pat)) EVAL)
-        \\ rpt strip_tac
-        \\ full_simp_tac std_ss []
-     (* \\ fs [] *)
-        \\ TRY (Cases_on ‘t’ \\ Cases_on ‘z’ \\ fs [] \\ NO_TAC)
-        \\ metis_tac []
-      val careful = “v2exp”
 (*
 set_goal([],goal)
 *)
-      val thA = prove(goal, cheat (*
-        if can (find_term (aconv careful)) (def |> CONJUNCTS |> hd |> SPEC_ALL |> concl |> dest_eq |> fst)
-        then careful_tac else std_tac *))
+      val thA = prove(goal,std_tac)
       val thms = thA |> REWRITE_RULE [GSYM AND_IMP_INTRO] |> UNDISCH_ALL |> CONJUNCTS
       val thms = map2 (fn th => fn vs => SPECL vs th) thms vss
       in thms end

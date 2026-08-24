@@ -53,7 +53,6 @@ Definition state_rel_def:
     s.output = t.output ∧
     code_rel fs s.funs t.instructions ∧
     ∃r14 r15.
-      t.regs RAX  = NONE ∧   (* placeholder — actual register setup *)
       t.regs R12  = SOME 16w ∧
       t.regs R13  = SOME (n2w (2**63 - 1)) ∧
       t.regs R14  = SOME r14 ∧
@@ -240,6 +239,46 @@ Definition pmap_subsume_def:
 End
 
 (* ------------------------------------------------------------------ *)
+(* Further proof helpers (used inside the correctness proofs)          *)
+(* ------------------------------------------------------------------ *)
+
+(* mk_new_curr: the stack frame `curr` after assigning value x to     *)
+(* variable n; h is the value currently held on top of the frame.      *)
+Definition mk_new_curr_def:
+  mk_new_curr n x h curr vs =
+    case index_of n 0 vs of
+    | 0 => Word x :: curr
+    | SUC k => Word h :: LUPDATE (Word x) k curr
+End
+
+(* The registers used to pass arguments to a function call.            *)
+Definition ARGS_REGS_def:
+  ARGS_REGS = [RDI; RDX; RBX; RBP]
+End
+
+(* write_reg_map: update a register map (corresponds to Rocq's         *)
+(* write_reg; renamed to avoid the clash with x64asm's state-level     *)
+(* write_reg, which updates a whole ASM state).                        *)
+Definition write_reg_map_def:
+  write_reg_map r w rgs = (λr'. if r' = r then SOME w else rgs r')
+End
+
+(* write_regs: write a list of words into a list of registers.         *)
+Definition write_regs_def:
+  write_regs [] rs rgs = rgs ∧
+  write_regs (w::ws) [] rgs = rgs ∧
+  write_regs (w::ws) (r::rs) rgs = write_reg_map r w (write_regs ws rs rgs)
+End
+
+(* pops_regs: restore the argument registers popped off the stack.     *)
+Definition pops_regs_def:
+  pops_regs ws rgs =
+    case ws of
+    | [] => rgs
+    | _ => write_regs ws (REVERSE (TAKE (LENGTH ws - 1) ARGS_REGS)) rgs
+End
+
+(* ------------------------------------------------------------------ *)
 (* Goal statements (correctness specs for each compilation case)      *)
 (* ------------------------------------------------------------------ *)
 
@@ -295,13 +334,12 @@ Definition goal_exps_def:
             exps_res_rel res l1 (curr ++ rest) t1 s1 pmap
 End
 
-(*
 (* goal_test: compiled test is correct.                               *)
 Definition goal_test_def:
   goal_test tst ⇔
-    ∀s s1 fuel b t t1 vs fs asmc l1 ltrue lfalse curr rest pmap.
+    ∀s s1 fuel b t vs fs asmc l1 ltrue lfalse curr rest pmap.
       eval_test tst s = (Cont b, s1) ∧
-      c_test tst ltrue lfalse t.pc vs = (asmc, l1) ∧
+      c_test_jump tst ltrue lfalse t.pc vs = (asmc, l1) ∧
       state_rel fs s t ∧
       env_ok s.vars vs curr pmap ∧
       has_stack t (curr ++ rest) ∧
@@ -324,7 +362,6 @@ Definition goal_test_def:
             has_stack t1 (curr ++ rest) ∧
             t1.pc = (if b then ltrue else lfalse)
 End
-*)
 
 (* goal_cmd: compiled command is correct.                             *)
 (* The ASM machine runs for exactly as many steps as the IMP machine *)
@@ -478,38 +515,46 @@ QED
 (* Top-level correctness theorems for codegen                         *)
 (* ------------------------------------------------------------------ *)
 
-(*
-(* asm_terminates: the ASM program terminates with given output.      *)
-Definition asm_terminates_def:
-  asm_terminates _input _instructions _output = ARB (*
-    ∃fuel t.
-      steps ARB (* (State <| pc := 0; regs := K NONE; stack := [];
-                      instructions := instructions; memory := K NONE;
-                      input := input; output := [] |>, fuel) *)
-            (Halt 0w output, 0) *)
-End
-*)
-
+(* codegen_thm — THE main semantics-preservation theorem for the      *)
+(* whole-program code generator.  Corresponds to codegen_thm in        *)
+(* imp2asm/ImpToASMCodegenProofs.v.                                    *)
+(*                                                                     *)
+(* Running the `main` function of an IMP program from a fresh state    *)
+(* (empty variables and memory) is simulated by running the generated  *)
+(* x64 assembly from the initial machine state for the same number of  *)
+(* steps (measured by the drop in the IMP clock):                      *)
+(*   - if the machine is still running (State), the IMP program timed  *)
+(*     out and the outputs so far agree;                               *)
+(*   - if it halts with exit code 0, the IMP program returned a value  *)
+(*     and the outputs agree exactly;                                  *)
+(*   - if it halts with a non-zero code, the emitted output is a       *)
+(*     prefix of the IMP output (abort / internal error).              *)
 Theorem codegen_thm:
-  ∀main_c fuel s s1 res r14 r15 t funcs.
-    eval_cmd main_c s = (res, s1) ∧
+  ∀main_c s s1 res r14 r15 t funcs.
+    catch_return (eval_cmd main_c) s = (res, s1) ∧
     res ≠ Stop Crash ∧
+    s.vars = FEMPTY ∧
+    s.memory = [] ∧
     s.funs = funcs ∧
-    state_rel [] s t ∧
+    t.pc = 0 ∧
+    t.instructions = codegen (Program funcs) ∧
+    find_fun (name "main") funcs = SOME ([], main_c) ∧
+    t.stack = [] ∧
+    t.input = s.input ∧
+    t.output = s.output ∧
     t.regs R14 = SOME r14 ∧
     t.regs R15 = SOME r15 ∧
-    pmap_in_bounds (λ_. NONE) (SOME r14) ∧
-    ODD (LENGTH t.stack) ⇒
-    ∃outcome pmap.
+    memory_writable r14 r15 t.memory ⇒
+    ∃outcome.
       steps (State t, s.clock - s1.clock) outcome ∧
-      pmap_ok pmap ∧
       case outcome of
-      | (Halt ec output, ck) =>
-          isPREFIX output s1.output ∧ (ec = 1w ∨ ec = 4w)
       | (State t1, ck) =>
-          ck = 0 ∧
-          state_rel [] s1 t1 ∧
-          r14_mono (t.regs R14) (t1.regs R14)
+          t1.output = s1.output ∧ ck = 0 ∧ res = Stop TimeOut
+      | (Halt ec output, ck) =>
+          if ec = 0w then
+            output = s1.output ∧ ∃v. res = Cont v
+          else
+            isPREFIX output s1.output
 Proof
   cheat
 QED

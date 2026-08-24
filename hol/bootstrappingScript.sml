@@ -3,7 +3,7 @@ Ancestors
   arithmetic list pair finite_map string words
   source_values source_syntax x64asm_syntax
   imp_source_syntax imp_source_semantics
-  x64asm_semantics
+  x64asm_semantics imp_to_asm_proof
   imp_printing imp_parsing imp_to_asm imp_compiler
   source_to_imp imp_compiler_prog
 Libs
@@ -61,6 +61,19 @@ Proof
   cheat
 QED
 
+(* compiler_program_thm: the reflection theorem.  The compiler's IMP     *)
+(* program computes the shallow `compiler` function on every input.      *)
+(* Corresponds to compiler_program_thm in derivations/CompilerDerivations*)
+(* .v lifted through to_imp_thm to the imperative level (it is the       *)
+(* composition of the functional compiler_prog_correct with to_imp_thm). *)
+Theorem compiler_program_thm:
+  ∀input p.
+    compiler_program_imp = SOME p ⇒
+    (fromList input, p) imp_weak_termination (compiler input)
+Proof
+  cheat
+QED
+
 (* ------------------------------------------------------------------ *)
 (* Top-level bootstrapping results                                     *)
 (* Correspond to the final theorems in imp2asm/CompilerProofs.v        *)
@@ -73,7 +86,19 @@ Theorem compiler_correct:
     (input, compiler_program_asm) asm_terminates output ⇒
     output = compiler input
 Proof
-  cheat
+  cheat (*
+  rpt strip_tac
+  \\ ‘∃p. compiler_program_imp = SOME p’ by metis_tac [compiler_program_imp_exists]
+  \\ ‘(fromList input,p) imp_weak_termination (compiler input)’
+       by metis_tac [compiler_program_thm]
+  \\ ‘compiler_program_asm = codegen p’ by gvs [compiler_program_asm_def]
+  \\ gvs [imp_weak_termination_def]
+  \\ ‘outcome ≠ Stop Crash’ by (strip_tac \\ gvs [])
+  \\ ‘outcome ≠ Stop Abort’ by metis_tac [codegen_no_abort]
+  \\ gvs []
+  \\ ‘imp_terminates (fromList input) p k (compiler input)’
+       by (fs [imp_terminates_def] \\ metis_tac [])
+  \\ metis_tac [codegen_terminates] *)
 QED
 
 (* print_parser_compiler_correct: printing the compiler's IMP program  *)

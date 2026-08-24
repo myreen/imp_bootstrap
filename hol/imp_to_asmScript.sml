@@ -144,7 +144,6 @@ Definition c_alloc_def:
 End
 
 Definition app_list_length_def:
-  app_list_length Nil = 0 ∧
   app_list_length (List l) = LENGTH l ∧
   app_list_length (Append l1 l2) = app_list_length l1 + app_list_length l2
 End

@@ -11,6 +11,9 @@ Three no-output executables run the same `2000`/`2001` heap workload:
 The first two targets compile the same physical file:
 `shared/AdjustedBinomialHeap.v`.
 
+See [ADAPTATION.md](ADAPTATION.md) for the source changes needed by the IMPL
+reifier and their limitations.
+
 The CertiCoq-derived sources use the MIT terms in [NOTICE](NOTICE).
 
 ## Run

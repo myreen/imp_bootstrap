@@ -2,11 +2,12 @@
 
 ## Source Baseline
 
-[`CertiCoqBinomOriginal.v`](../../benchmarks/binomial_heap/certirocq/CertiCoqBinomOriginal.v)
+[`CertiCoqBinomOriginal.v`](certirocq/CertiCoqBinomOriginal.v)
 contains the source from CertiCoq commit
 `59f110359ed57550a746124441f20b993774af78` with its MIT notice. The adapted
-implementation is `BinomialHeap.v`; its reification support and generated
-definitions are in `BinomialHeapReification.v`.
+implementation is [`AdjustedBinomialHeap.v`](shared/AdjustedBinomialHeap.v);
+its reification support and generated definitions are in
+[`ReifyAdjusted.v`](impl/ReifyAdjusted.v).
 
 ## Source Code Changes
 
@@ -44,7 +45,7 @@ end
 **Adapted:**
 
 ```coq
-let/d mx := find_max q in
+dlet! mx := find_max q in
 match mx return option (key * priqueue) with
 | None => None
 | Some m => ...
@@ -59,7 +60,7 @@ arithmetic, but does not lift computations out of match and pair-destructuring
 scrutinees.
 
 **Limitation:** computed scrutinees remain slightly more verbose than in the
-original source, although `let/d` is definitionally an ordinary let.
+original source, although `dlet!` is definitionally an ordinary let.
 
 ### Explicit Match Result Types
 
@@ -97,13 +98,13 @@ Definition main := ...
 **Adapted:**
 
 ```coq
-Definition main_full := ...
+Definition benchmark_main := ...
 ```
 
 **Reason:** `to_imp` reserves `main` and synthesizes the executable entry point.
 
 **Limitation:** the source-level symbol differs and the generated entry point
-must call `main_full`.
+must call `benchmark_main`.
 
 ## Added Definitions and Proofs
 
@@ -204,21 +205,22 @@ benchmark's dependency graph.
 **Limitation:** the proofs establish correctness of the adapted definitions;
 they are not a cross-module equivalence proof with the preserved source file.
 
-### Program Lists and Compilation Checks
+### Program List and Compilation
 
 **Added:**
 
 ```coq
-Definition certicoq_main_funs : list FunSyntax.defun := [
+Definition adjusted_funs : list FunSyntax.defun := [
   smash_prog; carry_prog; insert_prog; join_prog; merge_prog;
   unzip_acc_prog; unzip_prog; heap_delete_max_prog;
   find_max'_prog; find_max_prog; delete_max_aux_prog; delete_max_prog;
-  insert_list_prog; make_list_prog; main_full_prog
+  insert_list_prog; make_list_prog; benchmark_main_prog
 ].
 ```
 
-The port also adds a `to_funs` success proof and a function-name `NoDup` proof
-for this exact dependency closure.
+`Program.v` supplies this exact dependency closure to `to_funs` and `to_imp`,
+then lowers the resulting imperative program to assembly. The benchmark build
+validates the generated executable.
 
 **Reason:** IMP code generation emits every supplied definition, so the
 comparison needs an explicit dependency closure and checks that it lowers
@@ -231,7 +233,7 @@ successfully without name collisions.
 **Added:**
 
 ```coq
-Lemma main_full_result : main_full = 2001.
+Lemma benchmark_main_result : benchmark_main = 2001.
 Proof. vm_compute. reflexivity. Qed.
 ```
 

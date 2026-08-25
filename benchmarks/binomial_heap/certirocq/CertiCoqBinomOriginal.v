@@ -3,8 +3,8 @@
 
     License terms: [../NOTICE].
 
-    The adapted and reified implementation is in
-    [rocq/binomial_heap/BinomialHeap.v]. *)
+    The adapted implementation is in [../shared/AdjustedBinomialHeap.v], with
+    reification support in [../impl/ReifyAdjusted.v]. *)
 
 Require Import Coq.Arith.Arith List.
 

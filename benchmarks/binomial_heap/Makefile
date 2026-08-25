@@ -43,7 +43,22 @@ benchmark: check
 project:
 	cd $(ROOT)/rocq && \
 		opam exec --switch=$(PROJECT_SWITCH) -- \
-		dune build binomial_heap/BinomialHeapReification.vo
+		dune build \
+			functional/FunSyntax.vo \
+			functional/FunValues.vo \
+			functional/FunSemantics.vo \
+			functional/FunProperties.vo \
+			imperative/ImpSyntax.vo \
+			automation/AutomationLemmas.vo \
+			automation/Ltac2Utils.vo \
+			automation/RelCompiler.vo \
+			automation/RelCompilerCommons.vo \
+			automation/ToANF.vo \
+			automation/ToLowerable.vo \
+			automation/ltac2/UnfoldFix.vo \
+			commons/CompilerUtils.vo \
+			fp2imp/FpToImpCodegen.vo \
+			utils/Core.vo
 
 $(IMPL_DIR) $(CERTI_ADJUSTED_DIR) $(CERTI_ORIGINAL_DIR):
 	mkdir -p $@

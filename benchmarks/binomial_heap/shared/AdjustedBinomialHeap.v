@@ -3,8 +3,7 @@
 
     License terms: [../NOTICE].
 
-    The adapted and reified implementation is in
-    [rocq/binomial_heap/BinomialHeap.v]. *)
+    Reification support is in [../impl/ReifyAdjusted.v]. *)
 
 Require Import Coq.Arith.Arith List.
 From coqutil Require Import dlet.

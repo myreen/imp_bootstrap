@@ -85,3 +85,12 @@ time-of-build-pretty.log
 
 # Deepwork state
 .slim/deepwork/
+
+# local files
+*.local.*
+
+# VsCode
+.vscode
+
+# asm
+*.s

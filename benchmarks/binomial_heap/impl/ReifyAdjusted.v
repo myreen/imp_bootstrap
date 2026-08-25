@@ -8,156 +8,11 @@ From impboot.utils Require Import Core.
 From Stdlib Require Import Arith Bool Derive Lia List NArith String ZArith.
 From coqutil Require Import Datatypes.List Word.Interface Word.Properties.
 From Ltac2 Require Import Ltac2.
+Require Import AdjustedBinomialHeap.
 
 Import ListNotations.
-Import Nat.
 Open Scope nat_scope.
 
-(** The executable core is adapted from CertiCoq's [tests/lib/Binom.v].
-    Higher-order code is converted to first-order form for reification. *)
-
-Definition key := nat.
-
-Inductive tree : Type :=
-|  Node: key -> tree -> tree -> tree
-|  Leaf : tree.
-
-Definition priqueue := list tree.
-
-Definition empty : priqueue := nil.
-
-Notation  "a >? b" := (Nat.ltb b a) (at level 70, only parsing) : nat_scope.
-
-Definition smash (t u:  tree) : tree :=
-  match t , u with
-  |  Node x t1 Leaf, Node y u1 Leaf =>
-                   if  x >? y then Node x (Node y u1 t1) Leaf
-                                else Node y (Node x t1 u1) Leaf
-  | _ , _ => Leaf  (* arbitrary bogus tree *)
-  end.
-
-Fixpoint carry (q: list tree) (t: tree) : list tree :=
-  match q, t with
-  | nil, Leaf        => nil
-  | nil, _            => t :: nil
-  | Leaf :: q', _  => t :: q'
-  | u :: q', Leaf  => u :: q'
-  | u :: q', _       => Leaf :: carry q' (smash t u)
- end.
-
-Definition insert (x: key) (q: priqueue) : priqueue :=
-     carry q (Node x Leaf Leaf).
-
-Fixpoint join (p q: priqueue) (c: tree) : priqueue :=
-  match p, q, c with
-  | [], _ , _            => carry q c
-  | _, [], _             => carry p c
-  | Leaf::p', Leaf::q', _              => c :: join p' q' Leaf
-  | Leaf::p', q1::q', Leaf            => q1 :: join p' q' Leaf
-  | Leaf::p', q1::q', Node _ _ _  => Leaf :: join p' q' (smash c q1)
-  | p1::p', Leaf::q', Leaf            => p1 :: join p' q' Leaf
-  | p1::p', Leaf::q',Node _ _ _   => Leaf :: join p' q' (smash c p1)
-  | p1::p', q1::q', _                   => c :: join p' q' (smash p1 q1)
-  end.
-
-(** First-order form of CertiCoq's continuation-based [unzip]. *)
-Fixpoint unzip_acc (t : tree) (acc : priqueue) : priqueue :=
-  match t with
-  | Leaf => acc
-  | Node x t1 t2 => unzip_acc t2 (Node x t1 Leaf :: acc)
-  end.
-
-Definition unzip (t : tree) : priqueue :=
-  unzip_acc t [].
-
-Definition heap_delete_max (t: tree) : priqueue :=
-  match t with
-    Node x t1 Leaf  => unzip t1
-  | _ => nil   (* bogus value for ill-formed or empty trees *)
-  end.
-
-Fixpoint find_max' (current: key) (q: priqueue) : key :=
-  match q with
-  |  []         => current
-  | Leaf::q' => find_max' current q'
-  | Node x _ _ :: q' =>
-    if x >? current then
-      find_max' x q'
-    else
-      find_max' current q'
-  end.
-
-Fixpoint find_max (q: priqueue) : option key :=
-  match q with
-  | [] => None
-  | Leaf::q' => find_max q'
-  | Node x _ _ :: q' => Some (find_max' x q')
- end.
-
-Fixpoint delete_max_aux (m: key) (p: priqueue) : priqueue * priqueue :=
-  match p with
-  | Leaf :: p'   =>
-    let/d tmp := delete_max_aux m p' in
-    let (j,k) := tmp in (Leaf::j, k)
-  | Node x t1 Leaf :: p' =>
-       if m >? x
-       then (let/d tmp := delete_max_aux m p' in
-            let (j,k) := tmp
-            in (Node x t1 Leaf::j,k))
-       else (Leaf::p', heap_delete_max (Node x t1 Leaf))
-  | _ => (nil, nil) (* Bogus value *)
-  end.
-
-Definition delete_max (q: priqueue) : option (key * priqueue) :=
-  let/d mx := find_max q in
-  match mx return option (key * priqueue) with
-  | None => None
-  | Some  m => let/d tmp := delete_max_aux m q in
-               let (p',q') := tmp
-                            in Some (m, join p' q' Leaf)
-  end.
-
-Definition merge (p q : priqueue) : priqueue := join p q Leaf.
-
-Definition main_easy: nat :=
- let/d a := insert 5 (insert 3 (insert 7 nil)) in
- let/d b := insert 3 (insert 6 (insert 9 nil)) in
- let/d c := merge a b in
- let/d c1 := delete_max c in
- match c1 return nat with
- | Some (k, _) => k
- | None => 0
- end.
-
-Fixpoint insert_list (l : list nat) (q : priqueue) :=
-    match l with
-    | [] => q
-    | x :: l => insert_list l (insert x q)
-    end.
-
-Fixpoint make_list (n : nat) (l : list nat) :=
-  match n with
-  | 0 => 0 :: l
-  | S 0 => 1 :: l
-  | S (S n) => make_list n (S (S n) :: l)
-  end.
-
-(** Adapted from CertiCoq's [main]; renamed to avoid the runtime [main]. *)
-Definition main_full : nat :=
-  let/d deleted := delete_max
-    (merge
-      (insert_list (make_list 2000 []) [])
-      (insert_list (make_list 2001 []) [])) in
-  match deleted return nat with
-  | Some answer => fst answer
-  | None => 0
-  end.
-
-Lemma main_full_result : main_full = 2001.
-Proof. vm_compute. reflexivity. Qed.
-
-(** Trees use an option-like representation: [Leaf] is zero and [Node]
-    stores its encoded payload in a pair ending in zero. *)
 Fixpoint encode_tree (t : tree) : FunValues.Value :=
   match t with
   | Leaf => FunValues.Num 0
@@ -316,7 +171,9 @@ Proof. unfold_fix_proof '@find_max'. Qed.
 Theorem find_max_equation : ltac2:(unfold_fix_type '@find_max).
 Proof. unfold_fix_proof '@find_max. Qed.
 
-Theorem delete_max_aux_equation : ltac:(with_strategy opaque [heap_delete_max] ltac2:(unfold_fix_type '@delete_max_aux)).
+Theorem delete_max_aux_equation :
+  ltac:(with_strategy opaque [heap_delete_max]
+    ltac2:(unfold_fix_type '@delete_max_aux)).
 Proof. unfold_fix_proof '@delete_max_aux. Qed.
 
 Theorem insert_list_equation : ltac2:(unfold_fix_type '@insert_list).
@@ -396,51 +253,8 @@ Derive make_list_prog
   as make_list_prog_correct.
 Proof. relcompile. Qed.
 
-Derive main_easy_prog
-  in ltac2:(relcompile_tpe 'main_easy_prog 'main_easy
-    ['insert; 'merge; 'delete_max])
-  as main_easy_prog_correct.
-Proof. relcompile. Qed.
-
-Derive main_full_prog
-  in ltac2:(relcompile_tpe 'main_full_prog 'main_full
+Derive benchmark_main_prog
+  in ltac2:(relcompile_tpe 'benchmark_main_prog 'benchmark_main
     ['make_list; 'insert_list; 'merge; 'delete_max])
-  as main_full_prog_correct.
+  as benchmark_main_prog_correct.
 Proof. relcompile. Qed.
-
-(** Exact dependency closure of CertiCoq's original [main] benchmark. *)
-Definition certicoq_main_funs : list FunSyntax.defun := [
-  smash_prog;
-  carry_prog;
-  insert_prog;
-  join_prog;
-  merge_prog;
-  unzip_acc_prog;
-  unzip_prog;
-  heap_delete_max_prog;
-  find_max'_prog;
-  find_max_prog;
-  delete_max_aux_prog;
-  delete_max_prog;
-  insert_list_prog;
-  make_list_prog;
-  main_full_prog
-].
-
-Definition binomial_imp_funs := to_funs certicoq_main_funs.
-
-Lemma binomial_imp_funs_ok :
-  exists fs, binomial_imp_funs = Some fs.
-Proof.
-  vm_compute.
-  eauto.
-Qed.
-
-Lemma certicoq_main_funs_no_dup :
-  NoDup (List.map (fun d =>
-    match d with FunSyntax.Defun name _ _ => name end) certicoq_main_funs).
-Proof.
-  vm_compute.
-  ltac1:(repeat (apply NoDup_cons; [vm_compute; intuition congruence |]);
-    apply NoDup_nil).
-Qed.

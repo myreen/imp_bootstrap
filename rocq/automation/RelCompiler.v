@@ -463,15 +463,13 @@ Ltac2 rec compile () : unit :=
       | (?n1 + ?n2)%N =>
         app_lemma "auto_N_add"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]
-      (* | S ?n%nat =>
-        if debug_relcompile then printf "S case detected: %t" e;
-        if Constr.is_var n then
+      | S ?n =>
+        if proper_const e then
+          app_lemma "auto_nat_const"
+            [("env", exactk fenv); ("n", exactk constr:(S $n))] []
+        else
           app_lemma "auto_nat_succ"
             [("env", exactk fenv); ("n", exactk n)] [compile]
-        else
-          app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk constr:(S $n))] [] *)
-      (* | S ?n%nat =>
-        app_lemma "auto_nat_succ"[("env", exactk fenv); ("n", exactk n)] [compile] *)
       | (?n1 - ?n2)%nat =>
         app_lemma "auto_nat_sub"
           [("env", exactk fenv); ("n1", exactk n1); ("n2", exactk n2)] [compile; compile]

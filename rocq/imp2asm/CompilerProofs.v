@@ -53,7 +53,7 @@ Qed.
 
 Theorem compiler_asm_bootstrap: forall output,
   asm_terminates (Llist.of_list (list_ascii_of_string compiler_imp_str)) compiler_program_asm output ->
-  output = compiler_asm_str.
+  output = string_of_list_byte (compiler_asm_str).
 Proof.
   intros * Hasm_terminates.
   unfold compiler_imp_str in *.
@@ -63,6 +63,12 @@ Proof.
   eapply compiler_correct in Hasm_terminates; eauto; rewrite Hasm_terminates.
   unfold compiler, dlet.
   rewrite <- Hprint_parser_compiler_correct in *.
+  unfold ASMToString.asm2bs.
+  match goal with
+  | |- context C [map byte_of_ascii (list_ascii_of_string ?s)] =>
+    change (map byte_of_ascii (list_ascii_of_string s)) with (list_byte_of_string s)
+  end.
+  rewrite string_of_list_byte_of_string.
   reflexivity.
   Opaque FpToImpCodegen.to_imp ImpToASMCodegen.codegen.
 Qed.

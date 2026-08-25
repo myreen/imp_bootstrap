@@ -13,6 +13,9 @@ Require Import AdjustedBinomialHeap.
 Import ListNotations.
 Open Scope nat_scope.
 
+Lemma benchmark_main_result : benchmark_main = 2001.
+Proof. vm_compute. reflexivity. Qed.
+
 Fixpoint encode_tree (t : tree) : FunValues.Value :=
   match t with
   | Leaf => FunValues.Num 0

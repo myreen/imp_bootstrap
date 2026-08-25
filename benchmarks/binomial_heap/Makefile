@@ -43,7 +43,7 @@ benchmark: check
 project:
 	cd $(ROOT)/rocq && \
 		opam exec --switch=$(PROJECT_SWITCH) -- \
-		dune build binomial_heap/BinomialHeap.vo
+		dune build binomial_heap/BinomialHeapReification.vo
 
 $(IMPL_DIR) $(CERTI_ADJUSTED_DIR) $(CERTI_ORIGINAL_DIR):
 	mkdir -p $@

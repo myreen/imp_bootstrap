@@ -5,7 +5,8 @@
 [`CertiCoqBinomOriginal.v`](../../benchmarks/binomial_heap/certirocq/CertiCoqBinomOriginal.v)
 contains the source from CertiCoq commit
 `59f110359ed57550a746124441f20b993774af78` with its MIT notice. The adapted
-and reified implementation is `BinomialHeap.v`.
+implementation is `BinomialHeap.v`; its reification support and generated
+definitions are in `BinomialHeapReification.v`.
 
 ## Source Code Changes
 

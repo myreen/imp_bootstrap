@@ -74,6 +74,7 @@ mcp.json
 .claude/
 
 # generated timing files
+rocq/timings/
 *.timing.diff
 *.v.after-timing
 *.v.before-timing

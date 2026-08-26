@@ -163,7 +163,7 @@ Inductive step:
     step (State s) (State (write_reg r w (inc s))))
   ∧
   (∀s r w offset.
-    fetch s = SOME (Store_RSP r offset) ∧
+    fetch s = SOME (StoreRSP r offset) ∧
     offset < LENGTH s.stack ∧
     s.regs r = SOME w ⇒
     step (State s) (State (set_stack (LUPDATE (Word w) offset s.stack) (inc s))))

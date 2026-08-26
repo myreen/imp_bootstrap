@@ -13,6 +13,10 @@ Libs
 (*        v2cmd / vs2args / v2func / v2funcs / vs2prog)                *)
 (* ------------------------------------------------------------------ *)
 
+Definition get_num_def:
+  get_num v = getNum v
+End
+
 Definition v2list_def:
   v2list v = if isNum v then [] else head v :: v2list (tail v)
 Termination
@@ -21,22 +25,23 @@ End
 
 Definition num2exp_def:
   num2exp n =
-    if is_upper n then
-      (if 18446744073709551615 < n then Const 0w else Const (n2w n))
-    else Var n
+    let b = is_upper n in
+      if b then
+        (if 18446744073709551615 < n then Const 0w else Const (n2w n))
+      else Var n
 End
 
 Definition v2exp_def:
   v2exp v =
     case v of
     | Num n => num2exp n
-    | Pair v0 (Num _) => num2exp (getNum v0)
+    | Pair v0 (Num _) => num2exp (get_num v0)
     | Pair v0 (Pair v1 v2) =>
-        let n = getNum v0 in
+        let n = get_num v0 in
           if n = name "'" then
-            (if 18446744073709551615 < getNum v1 then Const 0w
-             else Const (n2w (getNum v1)))
-          else if n = name "var" then Var (getNum v1)
+            (if 18446744073709551615 < get_num v1 then Const 0w
+             else Const (n2w (get_num v1)))
+          else if n = name "var" then Var (get_num v1)
           else case v2 of
                | Num _ => num2exp n
                | Pair v2 v3 =>
@@ -56,7 +61,7 @@ End
 
 Definition v2cmp_def:
   v2cmp v =
-    let n = getNum v in
+    let n = get_num v in
       if n = name "<" then imp_source_syntax$Less
       else if n = name "=" then Equal
       else imp_source_syntax$Less
@@ -68,7 +73,7 @@ Definition v2test_def:
     | Num _ => Test imp_source_syntax$Less (Const 0w) (Const 0w)
     | Pair v0 (Num _) => Test imp_source_syntax$Less (Const 0w) (Const 0w)
     | Pair v0 (Pair v1 v2) =>
-        let n = getNum v0 in
+        let n = get_num v0 in
           if n = name "not" then Not (v2test v1)
           else case v2 of
                | Num _ => Test imp_source_syntax$Less (Const 0w) (Const 0w)
@@ -85,52 +90,52 @@ Definition v2cmd_def:
     case v of
     | Num _ => Skip
     | Pair v0 v1 =>
-        if ~isNum v0 then
-          (if isNum v1 then v2cmd v0
-           else Seq (v2cmd v0) (v2cmd v1))
-        else
-          let n = getNum v0 in
+        if isNum v0 then
+          let n = get_num v0 in
           if n = name "abort" then Abort
           else case v1 of
           | Num _ => Skip
           | Pair v1 v2 =>
               if n = name "return" then Return (v2exp v1)
-              else if n = name "getchar" then GetChar (getNum v1)
+              else if n = name "getchar" then GetChar (get_num v1)
               else if n = name "putchar" then PutChar (v2exp v1)
               else case v2 of
               | Num _ => Skip
               | Pair v2 v3 =>
                   if n = name "assign" then
-                    Assign (getNum v1) (v2exp v2)
+                    Assign (get_num v1) (v2exp v2)
                   else if n = name "while" then
                     While (v2test v1) (v2cmd v2)
                   else if n = name "alloc" then
-                    Alloc (getNum v1) (v2exp v2)
+                    Alloc (get_num v1) (v2exp v2)
                   else case v3 of
                   | Num _ =>
-                      Call (getNum v0) (getNum v1) (vs2exps (v2list v2))
+                      Call (get_num v0) (get_num v1) (vs2exps (v2list v2))
                   | Pair v3 v4 =>
                       if n = name "update" then
                         Update (v2exp v1) (v2exp v2) (v2exp v3)
                       else if n = name "if" then
                         If (v2test v1) (v2cmd v2) (v2cmd v3)
                       else if n = name "call" then
-                        Call (getNum v1) (getNum v2) (vs2exps (v2list v3))
+                        Call (get_num v1) (get_num v2) (vs2exps (v2list v3))
                       else
-                        Call (getNum v0) (getNum v1)
+                        Call (get_num v0) (get_num v1)
                              (vs2exps (v2list (Pair v2 v3)))
+        else
+          (if isNum v1 then v2cmd v0
+           else Seq (v2cmd v0) (v2cmd v1))
 Termination
   WF_REL_TAC ‘measure v_size’ \\ simp [v_size_def]
 End
 
 Definition vs2args_def:
   vs2args [] = [] ∧
-  vs2args (v::vs) = getNum v :: vs2args vs
+  vs2args (v::vs) = get_num v :: vs2args vs
 End
 
 Definition v2func_def:
   v2func v =
-    let fname = getNum (el1 v) in
+    let fname = get_num (el1 v) in
     let args  = vs2args (v2list (el2 v)) in
     let body  = v2cmd (el3 v) in
       Func fname args body

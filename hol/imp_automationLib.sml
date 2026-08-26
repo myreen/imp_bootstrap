@@ -75,7 +75,20 @@ fun list_dest f tm =
 fun is_uppercase c = #"A" <= c andalso c <= #"Z"
 fun every p [] = true | every p (x::xs) = p x andalso every p xs;
 fun lowercase s = String.translate (fn c => implode [chr (ord c + 32)]) s
-fun fix_name s = if every is_uppercase (explode s) then lowercase s else s;
+
+val max_name_length = 8
+
+val special_names =
+  [("c_fundefs", "c_funs")];
+
+fun shorten s =
+  if String.size s <= max_name_length then s
+  else String.substring (s,0,max_name_length);
+
+fun fix_name s =
+  case Lib.assoc1 s special_names of
+    SOME (_,t) => t
+  | NONE => shorten (if every is_uppercase (explode s) then lowercase s else s);
 
 fun is_rec def = let
   val eqs = def |> SPEC_ALL |> CONJUNCTS |> map (concl o SPEC_ALL)
@@ -93,6 +106,14 @@ fun guess_ind_thm def =
 
 (* build a list of defun declarations *)
 
+(*
+fun check_defun defun = let
+  val tm = ``IS_SOME (source_to_imp$to_funs [^defun])``
+           |> EVAL |> concl |> dest_eq |> snd
+  in if aconv tm T then () else print "\nWARNING: fails to_funs!\n\n" end
+  handle HOL_ERR _ => print "\nWARNING: fails to_funs!\n\n";
+*)
+
 local
   val defuns = ref ([]:term list)
   val comments = ref ([]:term list)
@@ -107,6 +128,7 @@ in
     in next_comment := stringSyntax.fromMLstring (str ^ "\n") end
   fun add_defun defun = let
     val _ = print_defun defun
+(*  val _ = check_defun defun *)
     in (defuns := defun :: (!defuns);
         comments := (!next_comment) :: (!comments);
         next_comment := “""”; defun) end
@@ -328,8 +350,8 @@ fun apply_at_pat_conv pat = apply_at_conv (can (match_term pat));
 
 fun process_def def = let
   val def = def |> SPEC_ALL |> PURE_REWRITE_RULE [all_macro_defs]
-  val th = hol2deep (def |> concl |> rand)
-           |> MATCH_MP inline_let |> UNDISCH |> CONV_RULE (PATH_CONV "rlrrlr" EVAL)
+  val th = hol2deep (def |> concl |> rand) (*
+           |> MATCH_MP inline_let |> UNDISCH |> CONV_RULE (PATH_CONV "rlrrlr" EVAL) *)
   val parts = def |> concl |> rator |> rand |> list_dest dest_comb
   val c = hd parts
   val vs = tl parts
@@ -404,7 +426,7 @@ fun auto_name_bound_vars_conv vs tm =
 
 val list_case = “list_CASE (x:'a list) (nil_f:'b) cons_f”
 val pair_case = “pair_CASE x (the_case:'a -> 'b -> 'c)”
-val base_name = "variable_"
+val base_name = "v_"
 fun make_some_names_long_conv tm = let
   val next = ref 0
   fun get_var ty = let
@@ -424,6 +446,90 @@ fun make_some_names_long_conv tm = let
     if is_abs tm then (ABS_CONV pass) tm else ALL_CONV tm
   in pass tm end
 
+val cons4_chrs = ``CHR _ :: CHR _ :: CHR _ :: CHR _ :: _``
+
+fun flatten_primitive strict tm aux =
+  if is_var tm orelse
+     numSyntax.is_numeral tm orelse
+     (stringSyntax.is_chr tm andalso numSyntax.is_numeral (rand tm)) orelse
+     (wordsSyntax.is_n2w tm andalso numSyntax.is_numeral (rand tm))
+  then (tm, aux) else
+  if can (match_term cons4_chrs) tm then let
+    val (x1,tm) = dest_comb tm
+    val (x2,tm) = dest_comb tm
+    val (x3,tm) = dest_comb tm
+    val (x4,tm) = dest_comb tm
+    val new_v = genvar (type_of tm)
+    val (new_tm, aux) = flatten_primitive true tm aux
+    val new_tm = mk_comb(x1,mk_comb(x2,mk_comb(x3,mk_comb(x4,new_tm))))
+    val new_bind = (new_v, new_tm)
+    in if strict then (new_v, new_bind :: aux) else (new_tm, aux) end
+  else
+    let
+      val (op_tm, args) = strip_comb tm
+      val (args, aux) = list_flatten_primitive args aux
+      val new_v = genvar (type_of tm)
+      val new_tm = list_mk_comb(op_tm, args)
+      val new_bind = (new_v, new_tm)
+    in if strict then (new_v, new_bind :: aux) else (new_tm, aux) end
+and list_flatten_primitive [] aux = ([],aux)
+  | list_flatten_primitive (tm::tms) aux =  let
+      val (tm,aux) = flatten_primitive true tm aux
+      val (tms,aux) = list_flatten_primitive tms aux
+      in (tm::tms,aux) end
+
+fun list_mk_lets [] e = e
+  | list_mk_lets ((v,x)::xs) e =
+      pairSyntax.mk_anylet ([(v,x)],list_mk_lets xs e)
+
+fun tail_needs_let tm = let
+  val (op_tm, args) = strip_comb tm
+  in TypeBase.is_constructor op_tm orelse
+     numSyntax.is_plus tm orelse
+     numSyntax.is_minus tm orelse
+     numSyntax.is_div tm orelse
+     (is_const op_tm andalso
+      List.exists (same_const op_tm)
+        [boolSyntax.negation, boolSyntax.conjunction]) end
+  handle HOL_ERR _ => false
+
+fun to_anf_ish tm =
+  if TypeBase.is_case tm then let
+    val (case_tm, e, rows) = TypeBase.dest_case tm
+    val (e,e_lets) = flatten_primitive false e []
+    val rows = map (fn (p,tm) => (p, to_anf_ish tm)) rows
+    in list_mk_lets (rev e_lets) (TypeBase.mk_case (e, rows)) end
+  else if can dest_let tm then let
+    val (v_y,x) = dest_let tm
+    val (v,y) = dest_abs v_y
+    val (x,x_lets) = flatten_primitive false x []
+    val y_tm = to_anf_ish y
+    in list_mk_lets (rev x_lets @ [(v,x)]) y_tm end
+  else let
+    val (e,e_lets) = flatten_primitive (tail_needs_let tm) tm []
+    in list_mk_lets (rev e_lets) e end
+
+fun to_anf_conv tm = prove(mk_eq(tm, to_anf_ish tm), simp [LET_THM]);
+
+fun rename_bound_vars_rule prefix th = let
+  val i = ref 0
+  fun next_name orig = let
+    val n = (i:= !i+1; prefix ^ int_to_string (!i))
+    in n end
+  fun next_var v = let
+    val (name, ty) = dest_var v
+    in mk_var(next_name name, ty) end
+  fun next_alpha_conv tm = let
+    val (v,_) = dest_abs tm
+    val _ = not (String.isPrefix prefix (fst (dest_var v))) orelse fail()
+    in ALPHA_CONV (next_var v) tm end handle HOL_ERR _ => NO_CONV tm
+  in CONV_RULE (DEPTH_CONV next_alpha_conv) th end;
+
+fun anf def = let
+  fun f th = th |> CONV_RULE (RAND_CONV to_anf_conv)
+                |> rename_bound_vars_rule "v"
+  in def |> oneline |> CONJUNCTS |> map f |> LIST_CONJ end
+
 fun preprocess_def def = let
   val defs = def |> CONJUNCTS |> map SPEC_ALL
   fun nub [] = [] | nub (x::xs) = x :: nub (filter (not o aconv x) xs)
@@ -433,7 +539,8 @@ fun preprocess_def def = let
                   |> DefnBase.one_line_ify NONE |> GEN_ALL
                   |> CONV_RULE (auto_name_bound_vars_conv [])
                   |> CONV_RULE make_some_names_long_conv
-                  |> CONV_RULE (auto_name_bound_vars_conv []) |> SPEC_ALL) cs
+                  |> CONV_RULE (auto_name_bound_vars_conv []) |> SPEC_ALL
+                  |> anf) cs
  end
 
 fun to_deep def = let

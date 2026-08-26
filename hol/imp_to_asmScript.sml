@@ -44,13 +44,8 @@ Definition init_def:
   ]
 End
 
-Definition AllocLoc_def:
-  AllocLoc = 7:num
-End
-
-Definition abortLoc_def:
-  abortLoc = 19:num
-End
+Overload AllocLoc[inferior] = “7:num”
+Overload AbortLoc[inferior] = “19:num”
 
 Definition even_len_def:
   even_len xs =
@@ -110,7 +105,7 @@ Definition c_assign_def:
     let k = index_of n 0 vs in
       case k of
       | 0 => (List [Pop RDI], l+1)
-      | SUC _ => (List [Store_RSP RAX k; Pop RAX], l+2)
+      | SUC _ => (List [StoreRSP RAX k; Pop RAX], l+2)
 End
 
 (*
@@ -368,7 +363,7 @@ Definition c_cmd_def:
     let (asm2, l2) = c_write vs l1 in
     (asm1 +++ asm2, l2)
   | Abort =>
-    (List [Jump Always abortLoc], l+1)
+    (List [Jump Always AbortLoc], l+1)
 End
 
 Definition all_binders_def:
@@ -395,11 +390,17 @@ Definition names_contain_def:
   | (x :: l) => if x = a then T else names_contain l a
 End
 
+Definition add_name_def:
+  add_name (acc: name list) (x: name) =
+    let b = names_contain acc x in
+      if b then acc else x :: acc
+End
+
 Definition names_unique_def:
   names_unique (l: name list) (acc: name list) =
   case l of
   | [] => acc
-  | (x :: l) => names_unique l (if names_contain acc x then acc else (x :: acc))
+  | (x :: l) => names_unique l (add_name acc x)
 End
 
 Definition unique_binders_def:
@@ -434,7 +435,8 @@ End
 (* Pad the binder stack with an extra slot when alignment requires it *)
 Definition vs_bdrs_def:
   vs_bdrs (vs_after: v_stack) (vs_bind: v_stack) =
-    if even_len vs_after then vs_bind ++ [NONE] else vs_bind
+    let b = even_len vs_after in
+      if b then vs_bind ++ [NONE] else vs_bind
 End
 
 (* Reserve stack space for the (non-parameter) local binders of a function *)

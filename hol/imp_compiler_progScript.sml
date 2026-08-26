@@ -27,6 +27,7 @@ val res = to_deep imp_to_asmTheory.rm_nms_def;
 val res = to_deep imp_to_asmTheory.call_v_stack_def;
 val res = to_deep imp_to_asmTheory.push_vs_def;
 val res = to_deep names_contain_def;
+val res = to_deep imp_to_asmTheory.add_name_def;
 val res = to_deep names_unique_def;
 val res = to_deep all_binders_def;
 val res = to_deep unique_binders_def;
@@ -46,7 +47,7 @@ Proof
 QED
 
 val res = to_deep (imp_to_asmTheory.c_assign_def |> SIMP_RULE std_ss [num_case_rw]);
-val res = to_deep (imp_to_asmTheory.c_alloc_def |> SRULE [AllocLoc_def]);
+val res = to_deep imp_to_asmTheory.c_alloc_def;
 val res = to_deep imp_to_asmTheory.make_ret_def;
 val res = to_deep imp_to_asmTheory.give_up_def;
 val res = to_deep imp_to_asmTheory.c_pops_def;
@@ -71,7 +72,6 @@ QED
 val res = to_deep (imp_to_asmTheory.c_exp_def |> SIMP_RULE std_ss [pairlet_imp]);
 val res = to_deep (imp_to_asmTheory.c_test_jump_def |> SIMP_RULE std_ss [pairlet_imp]);
 val res = to_deep (imp_to_asmTheory.c_exps_def |> SIMP_RULE std_ss [pairlet_imp]);
-val res = to_deep abortLoc_def;
 val res = to_deep (imp_to_asmTheory.c_cmd_def |> SIMP_RULE std_ss [pairlet_imp]);
 val res = to_deep (imp_to_asmTheory.c_fundef_def |> SIMP_RULE std_ss [pairlet_imp]);
 
@@ -146,6 +146,7 @@ val t_code_def = define_code ‘
 val res = to_deep source_valuesTheory.el1_def;
 val res = to_deep source_valuesTheory.el2_def;
 val res = to_deep source_valuesTheory.el3_def;
+val res = to_deep imp_parsingTheory.get_num_def;
 val res = to_deep imp_parsingTheory.v2list_def;
 val res = to_deep imp_parsingTheory.vs2args_def;
 val res = to_deep is_upper_def;
@@ -194,21 +195,24 @@ val read_num_code_def = define_code ‘
   (defun read_num (acc next)
      (if (< next '58)
        (if (< next '48)
-         (cons acc next)
-         (read_num
-           (+ (mul10 acc) (- next '48))
-           (read)))
-       (cons acc next)))’
+         (let (res (cons acc next)) res)
+         (let (acc1 (mul10 acc))
+           (let (dig (- next '48))
+             (let (acc2 (+ acc1 dig))
+               (let (next1 (read))
+                 (read_num acc2 next1))))))
+       (let (res (cons acc next)) res)))’
 
 val read_str_code_def = define_code ‘
   (defun read_str (acc next)
      (if (< next '123)
        (if (< next '42)
-         (cons acc next)
-         (read_str
-           (+ (mul256 acc) next)
-           (read)))
-       (cons acc next)))’
+         (let (res (cons acc next)) res)
+         (let (acc1 (mul256 acc))
+           (let (acc2 (+ acc1 next))
+             (let (next1 (read))
+               (read_str acc2 next1)))))
+       (let (res (cons acc next)) res)))’
 
 val read_any_code_def = define_code ‘
   (defun read_any (next)
@@ -309,7 +313,9 @@ QED
 val end_line_code_def = define_code ‘
   (defun end_line (next)
      (if (< next '256)
-       (if (= next '10) (read) (end_line (read)))
+       (if (= next '10)
+         (let (next1 (read)) next1)
+         (let (next1 (read)) (end_line next1)))
        next))’
 
 Theorem end_line_thm:
@@ -349,25 +355,30 @@ val lex_code_def = define_code ‘
   (defun lex (q next acc)
      (if (< next '* )
        (let (n (read))
-         (if (= next '40) (lex '0 n (cons (OPEN) acc))
-           (if (= next '41) (lex '0 n (cons (CLOSE) acc))
+         (if (= next '40)
+           (let (tk (OPEN)) (let (acc1 (cons tk acc)) (lex '0 n acc1)))
+           (if (= next '41)
+             (let (tk (CLOSE)) (let (acc1 (cons tk acc)) (lex '0 n acc1)))
              (if (= next '39) (lex '1 n acc)
-               (if (= next '35) (lex '0 (end_line n) acc)
+               (if (= next '35)
+                 (let (m (end_line n)) (lex '0 m acc))
                  (lex '0 n acc))))))
        (if (= next '46)
-         (lex '0 (read) (cons (DOT) acc))
+         (let (n (read))
+           (let (tk (DOT)) (let (acc1 (cons tk acc)) (lex '0 n acc1))))
          (if (< 'z next)
            (if (< next '256)
-             (lex '0 (read) acc) acc)
+             (let (n (read)) (lex '0 n acc)) acc)
              (let (r (read_any next))
-               (lex '0 (tail r)
-                 (if (= q '0)
-                   (cons (NUM (head r)) acc)
-                   (cons (QUOTE (head r)) acc))))))))’
+               (let (h (head r))
+                 (let (u (tail r))
+                   (if (= q '0)
+                     (let (tk (NUM h)) (let (acc1 (cons tk acc)) (lex '0 u acc1)))
+                     (let (tk (QUOTE h)) (let (acc1 (cons tk acc)) (lex '0 u acc1)))))))))))’
 
 val lexer_code_def = define_code ‘
   (defun lexer ()
-     (lex '0 (read) '0))’
+     (let (next1 (read)) (lex '0 next1 '0)))’
 
 Triviality LTL_fromList_lemma[simp]:
   (case LTL (fromList t) of NONE => fromList t | SOME t => t) = fromList (TL t)
@@ -651,7 +662,11 @@ QED
 
 local
 val _ = max_print_depth := 15;
-val main_exp = parse_exp ‘(print (asm2str (codegen (parser (lexer)))))’;
+val main_exp = parse_exp ‘(let (toks (lexer))
+                               (prog (parser toks))
+                               (asm  (codegen prog))
+                               (str  (asm2str asm))
+                            (print str))’;
 val entire_program = get_program main_exp;
 in
 

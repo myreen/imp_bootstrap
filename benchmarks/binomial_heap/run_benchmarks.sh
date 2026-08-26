@@ -15,16 +15,53 @@ if [[ ! $batches =~ ^[1-9][0-9]*$ ]]; then
   exit 2
 fi
 
-labels=(impl-adjusted certirocq-adjusted certirocq-original)
+labels=(
+  impl-adjusted
+  certirocq-adjusted-o0
+  certirocq-adjusted-o1
+  certirocq-adjusted-o2
+  certirocq-adjusted-o3
+  impl-mynat
+  certirocq-mynat-o0
+  certirocq-mynat-o1
+  certirocq-mynat-o2
+  certirocq-mynat-o3
+  certirocq-original-o0
+  certirocq-original-o1
+  certirocq-original-o2
+  certirocq-original-o3
+)
 declare -A executables=(
   [impl-adjusted]="$script_dir/_build/impl-adjusted/impl-adjusted"
-  [certirocq-adjusted]="$script_dir/_build/certirocq-adjusted/certirocq-adjusted"
-  [certirocq-original]="$script_dir/_build/certirocq-original/certirocq-original"
+  [certirocq-adjusted-o0]="$script_dir/_build/certirocq-adjusted/certirocq-adjusted-o0"
+  [certirocq-adjusted-o1]="$script_dir/_build/certirocq-adjusted/certirocq-adjusted-o1"
+  [certirocq-adjusted-o2]="$script_dir/_build/certirocq-adjusted/certirocq-adjusted"
+  [certirocq-adjusted-o3]="$script_dir/_build/certirocq-adjusted/certirocq-adjusted-o3"
+  [impl-mynat]="$script_dir/_build/impl-mynat/impl-mynat"
+  [certirocq-mynat-o0]="$script_dir/_build/certirocq-mynat/certirocq-mynat-o0"
+  [certirocq-mynat-o1]="$script_dir/_build/certirocq-mynat/certirocq-mynat-o1"
+  [certirocq-mynat-o2]="$script_dir/_build/certirocq-mynat/certirocq-mynat"
+  [certirocq-mynat-o3]="$script_dir/_build/certirocq-mynat/certirocq-mynat-o3"
+  [certirocq-original-o0]="$script_dir/_build/certirocq-original/certirocq-original-o0"
+  [certirocq-original-o1]="$script_dir/_build/certirocq-original/certirocq-original-o1"
+  [certirocq-original-o2]="$script_dir/_build/certirocq-original/certirocq-original"
+  [certirocq-original-o3]="$script_dir/_build/certirocq-original/certirocq-original-o3"
 )
 declare -A total_ns=(
   [impl-adjusted]=0
-  [certirocq-adjusted]=0
-  [certirocq-original]=0
+  [certirocq-adjusted-o0]=0
+  [certirocq-adjusted-o1]=0
+  [certirocq-adjusted-o2]=0
+  [certirocq-adjusted-o3]=0
+  [impl-mynat]=0
+  [certirocq-mynat-o0]=0
+  [certirocq-mynat-o1]=0
+  [certirocq-mynat-o2]=0
+  [certirocq-mynat-o3]=0
+  [certirocq-original-o0]=0
+  [certirocq-original-o1]=0
+  [certirocq-original-o2]=0
+  [certirocq-original-o3]=0
 )
 
 ulimit -s 1048576

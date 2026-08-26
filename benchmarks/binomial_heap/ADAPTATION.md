@@ -9,6 +9,41 @@ implementation is [`AdjustedBinomialHeap.v`](shared/AdjustedBinomialHeap.v);
 its reification support and generated definitions are in
 [`ReifyAdjusted.v`](impl/ReifyAdjusted.v).
 
+The representation-matched variant is
+[`MyNatBinomialHeap.v`](shared/MyNatBinomialHeap.v), with IMPL support in
+[`ReifyMyNat.v`](impl/ReifyMyNat.v). Both IMPL and CertiRocq compile this same
+source file.
+
+## Unary `MyNat` Variant
+
+The representation-matched benchmark replaces every numeric key and the
+`make_list` counter with the usual unary type:
+
+```coq
+Inductive MyNat : Type :=
+| MyO : MyNat
+| MyS : MyNat -> MyNat.
+```
+
+Its `2000` and `2001` inputs are built at run time using only `MyNat`
+constructors, addition, and multiplication. No built-in `nat` value is
+converted as part of the timed workload.
+
+IMPL encodes `MyO` as zero and `MyS n` as one pair cell containing the encoding
+of `n`. The reifier supplies constructor, elimination, recursive-unfolding,
+and correctness rules for this encoding. This removes the previous numeric
+representation mismatch: IMPL no longer encodes these values as machine
+numbers while CertiRocq encodes them in unary.
+
+Calls to the recursive `MyNat` comparison are staged with `dlet`, and custom
+`MyNat` match branches are converted to administrative normal form before
+reification. These are lowering requirements of IMPL and are definitionally
+ordinary lets; both compilers receive the staged shared source.
+
+The remaining allocation layouts are compiler-specific, so this variant
+matches the asymptotic unary representation rather than claiming identical
+object headers or heap-cell layouts.
+
 ## Source Code Changes
 
 ### First-Order `unzip`

@@ -246,17 +246,6 @@ Fixpoint num2strf (n: nat) (ACC: Acc Nat.lt n) (str: string): string :=
     num2strf nrest (Acc_inv ACC (num2strf_oblig n nrest ltac:(abstract eauto) NLT)) (String a str)
   end.
 
-(* Theorem num2str_terminates_str: forall (n1: nat) (n: nat) (str: string),
-  n <= n1 -> num2strf n n1 str <> ""%string.
-Proof.
-  induction n1; intros; simpl; unfold dlet; simpl; [inversion H; simpl; congruence|].
-  destruct (n <? 10)%nat; [congruence|].
-  specialize Nat.divmod_spec with (x := n) (y := 9) (q := 0) (u := 9) as ?.
-  destruct Nat.divmod eqn:?; simpl.
-  eapply IHn1.
-  lia.
-Qed. *)
-
 Fixpoint unfold_Acc_n {A R} (len: nat) (n: A) (opaque_acc: Acc R n): Acc R n :=
   match len with
   | 0%nat => Acc_intro n (fun m mlt => Acc_inv opaque_acc m mlt)
@@ -273,12 +262,6 @@ Definition log10 (n: nat): nat :=
 
 Definition num2str (n: nat) (str: string): string :=
   num2strf n (unfold_Acc_n (log10 n) _ (lt_wf n)) str.
-
-(* Theorem num2str_terminates: forall (n: nat) (str: string),
-  num2str n str <> ""%string.
-Proof.
-  intros; eapply num2str_terminates_str; lia.
-Qed. *)
 
 Lemma N2strf_oblig: forall (n: N) (a: N),
   a = (n / 10)%N ->
@@ -308,51 +291,14 @@ Fixpoint N2str_f (n: N) (ACC: Acc N.lt n) (str: string): string :=
     N2str_f nrest (Acc_inv ACC (N2strf_oblig n nrest ltac:(abstract eauto) NLT)) (String a str)
   end.
 
-(* Theorem N2str_terminates_str: forall (n1: nat) (n: N) (str: string),
-  (n <= (N.of_nat n1 * 10) - 1)%N -> N2str_f n n1 str <> EmptyString.
-Proof.
-  Opaque N.add N.div N_modulo.
-  induction n1; intros; simpl; unfold dlet; simpl.
-  1: change (N.of_nat 0) with 0%N in H; destruct (n <? _)%N eqn:?; rewrite ?N.ltb_ge in *; try lia; congruence.
-  destruct (n <? 10)%N eqn:?; [congruence|]; rewrite N.ltb_ge in *.
-  eapply IHn1.
-  assert (N.of_nat (S n1) = 1 + (N.of_nat n1))%N as Htmp by lia; rewrite Htmp in *; clear Htmp.
-  assert (1 <= N.of_nat n1)%N by lia.
-  eapply N.Div0.div_le_mono with (c := 10%N) in H.
-  eapply N.le_trans; [eauto|].
-  eapply N.le_trans with (m := (1 + N.of_nat n1)%N).
-  1: apply N.Div0.div_le_upper_bound; lia.
-  apply (N2Z.inj_le); lia.
-Qed. *)
-
-(* Definition N_lt_wf_0: forall n, Acc N.lt n.
-  induction n using N.peano_ind; apply Acc_intro; intros.
-  1: destruct y; inversion H.
-  destruct (N.compare y n) eqn:?; rewrite ?N.compare_eq_iff, ?N.compare_lt_iff, ?N.compare_gt_iff in *; subst.
-  - assumption.
-  - apply Acc_inv with (x := n) (1 := IHn) (2 := Heqc).
-  - (* n < y ∧ y < N.succ n -> False *)
-    lia.
-Defined. *)
 Definition Nlog10 (n: N): nat :=
   match n with
   | 0%N => 0%nat
   | _ => S (N.to_nat (N.log2 n / 3))
   end.
 
-(* Transparent N.div N.add N.mul. *)
 Definition N2str (n: N) (str: string): string :=
   N2str_f n (unfold_Acc_n (Nlog10 n) _ (N.lt_wf_0 n)) str.
-
-(* Theorem N2str_terminates: forall (n: N) str,
-  N2str n str <> EmptyString.
-Proof.
-  intros; eapply N2str_terminates_str; rewrite Nnat.N2Nat.id.
-  rewrite (N.div_mod n 10) at 1 by discriminate.
-  rewrite N.mul_comm, N.mul_add_distr_r, N.mul_1_l.
-  assert (n mod 10 < 10)%N by (eapply N.mod_lt; lia).
-  destruct (n mod 10)%N eqn:?; rewrite ?N.eqb_eq, ?N.eqb_neq in *; subst; try lia.
-Qed. *)
 
 Fixpoint list_len {A: Type} (l: list A): nat :=
   match l with
@@ -433,22 +379,6 @@ Fixpoint N2asciif (n: N) (ACC: Acc N.lt n): string :=
     (r ++ String (ascii_of_N k) EmptyString)
   end.
 
-(* Theorem N2asciif_terminates: forall (n1: nat) (n: N),
-  (n <= ((N.of_nat n1 * 256) - 1))%N -> N2asciif n n1 <> Some EmptyString.
-Proof.
-  Opaque N.add N.div N_modulo N_of_ascii.
-  induction n1; intros; simpl; unfold dlet; simpl.
-  all: destruct (n =? 0)%N eqn:?; rewrite ?N.eqb_eq, ?N.eqb_neq in *; subst; try lia; try congruence.
-  set (k := N_modulo n 256).
-  destruct (_ <? _)%N eqn:?; try congruence.
-  destruct (_ <? k)%N eqn:?; try congruence.
-  destruct (_ =? _)%N eqn:?; try congruence.
-  destruct (n <? _)%N eqn:?; [congruence|]; rewrite N.ltb_ge in *.
-  destruct N2asciif; try congruence.
-  destruct s; simpl; try congruence.
-Qed.
-Transparent N.add N.div N_modulo N_of_ascii. *)
-
 Definition Nlog256 (n: N): nat :=
   match n with
   | 0%N => 0%nat
@@ -457,13 +387,3 @@ Definition Nlog256 (n: N): nat :=
 
 Definition N2ascii (n: N): string :=
   N2asciif n (unfold_Acc_n (Nlog256 n) _ (N.lt_wf_0 n)).
-
-(* Theorem N2ascii_terminates: forall (n: N),
-  N2ascii n <> Some EmptyString.
-Proof.
-  intros; eapply N2asciif_terminates; rewrite Nnat.N2Nat.id.
-  rewrite (N.div_mod n 256) at 1 by discriminate.
-  rewrite N.mul_comm, N.mul_add_distr_r, N.mul_1_l.
-  assert (n mod 256 < 256)%N by (eapply N.mod_lt; lia).
-  destruct (n mod 256)%N eqn:?; rewrite ?N.eqb_eq, ?N.eqb_neq in *; subst; try lia.
-Qed. *)

@@ -20,11 +20,6 @@ Derive f1_prog
   in ltac2:(relcompile_tpe 'f1_prog 'f1 [])
   as f1_prog_proof.
 Proof.
-  (* all: relcompile_start ().
-  all: relcompile_step ().
-  all: relcompile_step ().
-  all: relcompile_step (). *)
-
   relcompile_setup ().
   eapply trans_app.
   3: eauto.
@@ -37,5 +32,4 @@ Proof.
   1: eapply trans_Var; eauto with fenvDb.
   eapply auto_nat_const.
 
-  (* time relcompile. *)
 Qed.

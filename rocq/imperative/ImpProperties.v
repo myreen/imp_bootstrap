@@ -113,7 +113,6 @@ Proof.
   - destruct eval_test eqn:?; destruct o eqn:?; subst; cleanup.
     2: unfold not; intros; inversion H; subst; eapply IHt in Heqp; eauto.
     congruence.
-  (* TODO(kπ) Does this imply some sort of error? *)
   Unshelve.
   + exact Abort.
   + exact Abort.

@@ -188,22 +188,11 @@ Definition r14_mono (old_r14: option word64) (new_r14: option word64): Prop :=
   new_r14 = Some new_wr14 ->
     (word.ltu old_wr14 new_wr14 = true \/ word.eqb old_wr14 new_wr14 = true).
 
-Definition has_address (addr: word64) (base: word64) (length: nat): Prop :=
-  exists n,
-    n < length ∧ (word.add base (word.of_Z (Z.of_nat (n * 8)))) = addr.
-
 Definition pmap_ok (pmap: nat -> option (word64 * nat)): Prop :=
   forall p1 p2 base1 len1 base2 len2,
     pmap p1 = Some (base1, len1) -> pmap p2 = Some (base2, len2) ->
     forall n1 n2, n1 < len1 -> n2 < len2 ->
       (word.add base1 (word.of_Z (Z.of_nat (n1 * 8)))) = (word.add base2 (word.of_Z (Z.of_nat (n2 * 8)))) ->
-      (* TODO: also say that the offsets are the same? *)
-      (* has_address addr base1 len1 ∧
-      has_address addr base2 len2 → *)
-      (* (exists n, n < len1 ∧ (word.add base1 (word.of_Z (Z.of_nat (n * 8)))) = addr) ∧
-      (exists n, n < len2 ∧ (word.add base2 (word.of_Z (Z.of_nat (n * 8)))) = addr) → *)
-      (* List.existsb (word.eqb addr) (addresses_of base1 len1) = true /\
-      List.existsb (word.eqb addr) (addresses_of base2 len2) = true -> *)
       p1 = p2 /\ n1 = n2.
 
 Definition pmap_subsume (pmap: nat -> option (word64 * nat))
@@ -333,8 +322,6 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
       | (Halt ec output, ck) =>
         prefix output s1.(ImpSemantics.output) = true /\
         (ec = (word.of_Z 1) \/ ec = (word.of_Z 4))
-        (* TODO(kπ) do we need this? *)
-        (* ∧ res <> Stop TimeOut *)
       | (State t1, ck) =>
         ck = 0 /\
         state_rel fs s1 t1 /\
@@ -590,7 +577,6 @@ Ltac bound_crunch :=
   try rewrite word.unsigned_ltu in *;
   try rewrite word.unsigned_of_Z in *;
   try unfold word.wrap in *;
-  (* THIS IS HORRIBLY SLOW *)
   cbn in *;
   lia.
 
@@ -604,7 +590,6 @@ Theorem sub_lt_bound: forall (a b: Z),
 Proof.
   intros.
   rewrite Z.ltb_lt in *.
-  (* THIS IS HORRIBLY SLOW *)
   cbn in *.
   assert ((b - a) < Z.pow_pos 2 63)%Z.
   2: rewrite Z.mod_small; eauto; try lia.
@@ -622,7 +607,6 @@ Proof.
   rewrite word.unsigned_ltu in *.
   rewrite word.unsigned_of_Z in *.
   unfold word.wrap in *.
-  (* THIS IS HORRIBLY SLOW *)
   cbn in *.
   lia.
 Qed.
@@ -637,7 +621,6 @@ Proof.
   rewrite word.unsigned_ltu in *.
   rewrite word.unsigned_of_Z in *.
   unfold word.wrap in *.
-  (* THIS IS HORRIBLY SLOW *)
   cbn in *.
   lia.
 Qed.
@@ -988,8 +971,6 @@ Ltac crunch_give_up_even :=
   repeat match  goal with
   | |- (ImpToASMCodegen.give_up _) = (ImpToASMCodegen.give_up _) => f_equal
   | |- context[even_len _] => rewrite even_len_spec
-  (* TODO *)
-  (* | |- context[even_len _] => rewrite even_len_exp_spec *)
   | |- context[odd_len _] => rewrite odd_len_spec
   | [ H: (List.length ?vs = _) |- context[List.length ?vs] ] => rewrite H
   | |- context[List.length (_ ++ _)] => rewrite length_app
@@ -1658,7 +1639,6 @@ Proof.
   pat `match ?s with _ => _ end` at destruct s; cleanup; subst.
   unfold exp_res_rel in *; cleanup.
   spat `eval_exps` at rename spat into Heval.
-  (* assert ((pc t + List.length (flatten a0)) = pc (set_pc (pc t + List.length (flatten a0)) s2)) as Htmp by reflexivity; spat `c_exps` at rewrite Htmp in spat; clear Htmp. *)
   pat `goal_exps _` at unfold goal_exps in pat; eapply pat with (fuel := fuel) (curr := (Word x :: curr)) in Heval; cleanup; clear pat; eauto; try congruence; simpl.
   2: pat `pc s2 = _` at rewrite <- pat in *; eauto.
   2: eapply env_ok_add_None; eauto; eapply pmap_subsume_refl.
@@ -2055,8 +2035,6 @@ Proof.
     destruct v0 eqn:?; subst.
     - eexists; split. (* true && true *)
       1: pat `pc s = _` at rewrite <- pat in *.
-      (* all: pat `steps _ (State s0, _)` at specialize steps_instructions with (1 := pat) as Htmp; rewrite Htmp in H9; clear Htmp
-      all: specialize (steps_instructions _ _ _ _ H) as Htmp; simpl in Htmp; rewrite Htmp in H9; clear Htmp. *)
       1: {
         eapply steps_trans.
         1: eapply steps_step_same.
@@ -2490,7 +2468,6 @@ Definition mk_new_curr n x h curr vs :=
   | S _ => Word h :: (list_update (idx - 1) (Word x) curr)
   end.
 
-(* TODO: use this wherever possible *)
 Lemma c_assign_thm: forall n v l l1 fs s vs t x h curr rest fuel c pmap,
   c_assign n l vs = (c, l1) ->
   In (Some n) vs ->
@@ -3315,12 +3292,7 @@ Proof.
   rewrite Properties.word.unsigned_of_Z_0 in *.
   spat `r14_mono` at unfold r14_mono in spat; specialize spat with (old_wr14 := old_r14) (new_wr14 := r14) (1 := eq_refl) (2 := eq_refl).
   pat `_ < List.length l` at rename pat into Hlt.
-  (* destruct(nth_error l (Z.to_nat (word.unsigned w) / Z.to_nat 8)) eqn:Hnthl.
-  2: pat `nth_error l _ = None` at rewrite <- nth_error_Some in *; rewrite pat in *; congruence.
-  pat `forall off xopt, _` at eapply pat in Hnthl; clear pat; cleanup. *)
   assert ((Z.to_nat 8) = 8) as Htmp by lia; rewrite Htmp in *; clear Htmp.
-  (* rewrite mul_div_id in *; try lia. *)
-  (* rewrite Z2Nat.id in *; try lia. *)
   rewrite word.of_Z_unsigned in *.
   rewrite ?word.unsigned_eqb, ?word.unsigned_ltu, ?Z.eqb_eq, ?Z.eqb_neq, ?Z.ltb_lt in *.
   lia.
@@ -3699,10 +3671,6 @@ Proof.
   exact ImpSemantics.Abort.
 Qed.
 
-(* TODO: *)
-(* - I need to know that the new moved r14 address (new allocation start) doesn't overflow *)
-(*   I need (w2n r14) + (w2n off) < 2^64 *)
-(* - I also need to know that the offset is in bounds *)
 Lemma pmap_ok_impossible: forall p2 len2 base2 base1 off2 off1 pmap t s r14 l r15,
   pmap_in_bounds pmap (regs t R14) ->
   word.ltu (word.sub r15 base1) l = false ->
@@ -5005,10 +4973,8 @@ Proof.
   spat `IEnv.lookup _ _ = _ -> _` at specialize spat with (1 := Hlookup) as ?; cleanup.
   split; [eapply in_or_app; eauto|].
   eexists; split; eauto.
-  (* pat `In _ _ -> _` at clear pat. *)
   pat `In _ vs1` at rewrite <- index_of_In with (k := 0) in pat; rewrite Nat.add_0_l in pat.
   rewrite <- index_of_app; eauto.
-  (* pat `~ In _ vs1` at rewrite <- index_of_In with (k := 0) in pat; rewrite Nat.add_0_l in pat; rewrite Nat.nlt_ge in pat. *)
   rewrite nth_error_app1.
   2: pat `List.length vs1 = _` at rewrite <- pat; simpl; eauto.
   eauto.
@@ -5182,7 +5148,6 @@ Proof.
     all: pat `match ?s with _ => _ end = _` at destruct s; cleanup; subst; try congruence.
     all: pat `match ?v with _ => _ end = _` at destruct v; cleanup; try congruence.
   }
-  (* spat `c_cmd _ ?fl` at assert (fl = pc (set_pc fl x9)) as Htmp by (simpl; lia); rewrite Htmp in spat; clear Htmp. *)
   spat `eval_cmd` at rename spat into Heval_cmd.
   pat `has_stack x9 ?st` at remember st as x9_full_stack.
   specialize eval_cmd_steps_done_steps_up with (1 := Heval_cmd) as ?.
@@ -5372,20 +5337,6 @@ Proof.
   end.
 Qed.
 
-(* Definition init_state_ok_def (t: ASMSemantics.state) (input: llist ascii) (asm: asm) :=
-  ∃r14 r15,
-    t.(pc) = 0 ∧ t.(instructions) = asm ∧
-    t.(ASMSemantics.input) = input ∧ t.(output) = EmptyString ∧
-    t.(stack) = [] ∧
-    t.(regs) R14 = Some r14 ∧
-    t.(regs) R15 = Some r15 ∧
-    memory_writable r14 r15 t.(memory).
-
-Definition asm_terminates (input: llist ascii) (asm: asm) (fuel: nat) (output: string) :=
-  exists t fuel_left,
-    init_state_ok t input asm /\
-      steps (State t, fuel) (Halt (word.of_Z 0) output, fuel_left). *)
-
 Ltac destruct_pair :=
   pat `let (_, _) := ?x in _` at destruct x.
 
@@ -5566,7 +5517,7 @@ Lemma c_fndefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
   c_fndefs funcs (List.length xs) fs0 = (asm1, fs, l1) ->
   find_fun n funcs = Some (params, body) ->
   exists pos,
-    lookup fs n = pos ∧ (* No fail case here... (<> 0) ? *)
+    lookup fs n = pos ∧
     code_in pos (flatten (fst (c_fundef (Func n params body) pos fs0)))
       (xs ++ flatten asm1).
 Proof.
@@ -5598,7 +5549,6 @@ Proof.
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
   assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2ascii n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
-  (* assert (Datatypes.length (flatten a0) + (Datatypes.length xs) = List.length (xs ++ flatten a0)) as Hrwlength. *)
   1: simpl; rewrite list_app_spec; repeat rewrite length_app; simpl; repeat rewrite length_app; simpl; lia.
   rewrite Hrwlength in *.
   spat `c_fndefs` at eapply IHfuncs in spat; eauto; cleanup; simpl; unfold dlet in *; simpl in *.
@@ -5619,7 +5569,6 @@ Proof.
   eauto.
 Qed.
 
-(* TODO: use eval_from here? *)
 Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
   catch_return (eval_cmd main_c (EVAL_CMD fuel)) s = (res,s1) -> res ≠ Stop Crash ->
   s.(vars) = IEnv.empty ->
@@ -5639,7 +5588,7 @@ Theorem codegen_thm: forall main_c fuel s s1 res r14 r15 t funcs,
     match outcome with
     | (State t1, ck) =>
       t1.(output) = s1.(ImpSemantics.output) ∧
-      ck = 0 ∧ (* Is 0 correct here? *)
+      ck = 0 ∧
       res = Stop TimeOut
     | (Halt ec output, ck) =>
       if word.eqb ec (word.of_Z 0) then
@@ -6224,4 +6173,3 @@ Proof.
   rewrite get_prefix_correct with (s1 := ASMSemantics.output x6); eauto.
   eapply prefix_trans; eauto.
 Qed.
-

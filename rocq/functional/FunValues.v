@@ -10,7 +10,6 @@ Open Scope N.
 Inductive Value :=
   | Pair (v1 v2: Value)
   | Num (n: N).
-  (* | Closure (params: list name) (body: FunSyntax.exp) (env: FEnv.t Value). *)
 
 Class Refinable (A: Type) :=
   { encode : A -> Value }.
@@ -67,8 +66,6 @@ Global Instance Refinable_Prop {A: Prop}: Refinable A :=
 Global Instance Refinable_byte: Refinable byte :=
   { encode b := Num (enc_char (ascii_of_byte b)) }.
 
-(* helpers *)
-
 Definition vhead v :=
   match v with
   | Pair x y => x
@@ -89,7 +86,7 @@ Definition vcons (x y : Value) : Value :=
   let/d res := Pair x y in
   res.
 
-Function vlist (ls : list Value): Value :=
+Fixpoint vlist (ls : list Value): Value :=
   match ls with
   | [] =>
     let/d res := Num 0 in

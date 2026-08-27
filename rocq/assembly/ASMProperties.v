@@ -148,8 +148,6 @@ Proof.
   eapply RTC_step_determ; eauto.
 Qed.
 
-(* TODO: share the following with ImpToAsmCodegenProof  *)
-
 Theorem step_mono: forall s0 s1,
   step (State s0) (State s1) -> prefix s0.(output) s1.(output) = true.
 Proof.

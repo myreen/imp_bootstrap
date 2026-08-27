@@ -3,9 +3,6 @@ Import Ltac2.Constr.Unsafe.
 From coqutil Require Import Tactics.reference_to_string.
 From impboot Require Import Ltac2Utils ltac2.Constrs ltac2.Stdlib2 ltac2.Messages.
 
-(* TODO: *)
-(* - Currently it throws No_value, if a non polymorphic reference to a polymorphic function is passed *)
-
 Ltac2 Type exn ::= [
   CannotUnfold (constr)
 ].
@@ -20,8 +17,6 @@ Ltac2 rec apply_to_hyps (c: constr) (hyps: ident list): constr :=
     let hyp := Control.hyp h in
     apply_to_hyps open_constr:($c $hyp) hs
   end.
-
-(* Set Printing All. *)
 
 Ltac2 rec unfold_fix_go (fconstr: constr) (c: constr): unit :=
   match Unsafe.kind c with
@@ -82,7 +77,6 @@ Ltac2 unfold_fix_gen (fconstr: constr): unit :=
   Control.enter (fun () =>
     Control.enter (fun () =>
       Control.plus (fun () => (ltac1:(congruence))) (fun _ =>
-        (* TODO: simpl handles more cases here, but it's less predictable *)
         simpl;
         reflexivity ()
       )

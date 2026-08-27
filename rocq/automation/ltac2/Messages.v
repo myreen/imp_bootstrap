@@ -90,18 +90,3 @@ Ltac2 message_of_cenv (cenv: (constr option * constr) list): message :=
     )
     cenv
   ).
-
-Ltac2 print_full_goal () :=
-  let hyps := Control.hyps () in
-  List.iter (fun h =>
-    match h with
-    | (id, body, ty) =>
-      (match body with
-       | None => printf "%I : %t" id ty
-       | Some b => printf "%I := %t : %t" id b ty
-       end)
-    end
-  ) hyps;
-  printf "----------------------------------------";
-  let g := Control.goal () in
-  printf "|- %t" g.

@@ -22,7 +22,6 @@ Derive read_nmc_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [read_nmc_prog].
 Ltac2 Eval assert_Some constr:(to_funs [read_nmc_prog]).
 
 Derive read_alp_prog
@@ -31,7 +30,6 @@ Derive read_alp_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [read_alp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [read_alp_prog]).
 
 Derive end_line_prog
@@ -40,7 +38,6 @@ Derive end_line_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [end_line_prog].
 Ltac2 Eval assert_Some constr:(to_funs [end_line_prog]).
 
 Derive q_of_nat_prog
@@ -49,7 +46,6 @@ Derive q_of_nat_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [q_of_nat_prog].
 Ltac2 Eval assert_Some constr:(to_funs [q_of_nat_prog]).
 
 Derive lex_prog
@@ -58,7 +54,6 @@ Derive lex_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [lex_prog].
 Ltac2 Eval assert_Some constr:(to_funs [lex_prog]).
 
 Derive lexer_i_prog
@@ -67,7 +62,6 @@ Derive lexer_i_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [lexer_i_prog].
 Ltac2 Eval assert_Some constr:(to_funs [lexer_i_prog]).
 
 Derive lexer_prog
@@ -76,7 +70,6 @@ Derive lexer_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [lexer_prog].
 Ltac2 Eval assert_Some constr:(to_funs [lexer_prog]).
 
 (* FunValues *)
@@ -87,7 +80,6 @@ Derive vcons_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vcons_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vcons_prog]).
 
 Derive vhead_prog
@@ -96,7 +88,6 @@ Derive vhead_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vhead_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vhead_prog]).
 
 Theorem vlist_equation: ltac2:(unfold_fix_type '@vlist).
@@ -107,7 +98,6 @@ Derive vlist_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vlist_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vlist_prog]).
 
 Theorem vupper_f_equation: ltac2:(unfold_fix_type '@vupper_f).
@@ -119,7 +109,6 @@ Proof.
   time relcompile.
   ltac1:(lia).
 Qed.
-Time Compute to_funs [vupper_f_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vupper_f_prog]).
 
 Derive vupper_prog
@@ -128,7 +117,6 @@ Derive vupper_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vupper_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vupper_prog]).
 
 Derive vgetNum_prog
@@ -137,7 +125,6 @@ Derive vgetNum_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vgetNum_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vgetNum_prog]).
 
 Derive vel0_prog
@@ -146,7 +133,6 @@ Derive vel0_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vel0_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vel0_prog]).
 
 Derive vel1_prog
@@ -155,7 +141,6 @@ Derive vel1_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vel1_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vel1_prog]).
 
 Derive vel2_prog
@@ -164,7 +149,6 @@ Derive vel2_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vel2_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vel2_prog]).
 
 Derive vel3_prog
@@ -173,7 +157,6 @@ Derive vel3_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vel3_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vel3_prog]).
 
 Derive vtail_prog
@@ -182,7 +165,6 @@ Derive vtail_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vtail_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vtail_prog]).
 
 Derive visNum_prog
@@ -191,7 +173,6 @@ Derive visNum_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [visNum_prog].
 Ltac2 Eval assert_Some constr:(to_funs [visNum_prog]).
 
 Derive visPair_prog
@@ -200,7 +181,6 @@ Derive visPair_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [visPair_prog].
 Ltac2 Eval assert_Some constr:(to_funs [visPair_prog]).
 
 (* parsing *)
@@ -211,7 +191,6 @@ Derive quote_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [quote_prog].
 Ltac2 Eval assert_Some constr:(to_funs [quote_prog]).
 
 Derive parse_prog
@@ -220,7 +199,6 @@ Derive parse_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [parse_prog].
 Ltac2 Eval assert_Some constr:(to_funs [parse_prog]).
 
 (* converting from v to prog *)
@@ -231,7 +209,6 @@ Derive v2list_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [v2list_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2list_prog]).
 
 Derive num2exp_prog
@@ -241,7 +218,6 @@ Proof.
   time relcompile.
   rewrite N.ltb_ge in *; ltac1:(lia).
 Qed.
-Time Compute to_funs [num2exp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [num2exp_prog]).
 
 Derive v2exp_prog
@@ -251,7 +227,6 @@ Proof.
   time relcompile.
   rewrite N.ltb_ge in *; ltac1:(lia).
 Qed.
-Time Compute to_funs [v2exp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2exp_prog]).
 
 Derive vs2exps_prog
@@ -260,7 +235,6 @@ Derive vs2exps_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vs2exps_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vs2exps_prog]).
 
 Derive v2cmp_prog
@@ -269,7 +243,6 @@ Derive v2cmp_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [v2cmp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2cmp_prog]).
 
 Derive v2test_prog
@@ -278,7 +251,6 @@ Derive v2test_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [v2test_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2test_prog]).
 
 Derive v2cmd_prog
@@ -287,7 +259,6 @@ Derive v2cmd_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [v2cmd_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2cmd_prog]).
 
 Derive vs2args_prog
@@ -296,7 +267,6 @@ Derive vs2args_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vs2args_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vs2args_prog]).
 
 Derive v2func_prog
@@ -305,7 +275,6 @@ Derive v2func_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [v2func_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2func_prog]).
 
 Derive v2funcs_prog
@@ -314,7 +283,6 @@ Derive v2funcs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [v2funcs_prog].
 Ltac2 Eval assert_Some constr:(to_funs [v2funcs_prog]).
 
 Derive vs2prog_prog
@@ -323,7 +291,6 @@ Derive vs2prog_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vs2prog_prog].
 Ltac2 Eval assert_Some constr:(to_funs [vs2prog_prog]).
 
 (* entire parser *)
@@ -334,7 +301,6 @@ Derive parser_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [parser_prog].
 Ltac2 Eval assert_Some constr:(to_funs [parser_prog]).
 
 Derive str2imp_prog
@@ -343,7 +309,6 @@ Derive str2imp_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [str2imp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [str2imp_prog]).
 
 Definition ParserDerivations_funs := [

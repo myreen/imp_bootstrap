@@ -231,7 +231,7 @@ Definition num2exp (n: N): exp :=
   if is_up then
     (*  vvvvvvvvvvvvvvvvvvvv (2 ^ 64 - 1) *)
     if (18446744073709551615 <? n)%N then
-      ImpSyntax.Const (word.of_Z (Z.of_N 0)) (* fail? *)
+      ImpSyntax.Const (word.of_Z (Z.of_N 0))
     else
       ImpSyntax.Const (word.of_Z (Z.of_N n))
   else 
@@ -242,16 +242,16 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
   | Num n => 
     num2exp n
   | Pair v0 v1 =>
-    let/d n := vgetNum v0 in (* this can fail? *)
+    let/d n := vgetNum v0 in
     match v1 return ImpSyntax.exp with
     | Num _ => 
-      num2exp n (* fail? *)
+      num2exp n
     | Pair v1 v2 =>
       if N.eqb n (name_enc "'") then 
         let/d v1_n := vgetNum v1 in
         (*  vvvvvvvvvvvvvvvvvvvv (2 ^ 64 - 1) *)
         if (18446744073709551615 <? v1_n)%N then
-          ImpSyntax.Const (word.of_Z (Z.of_N 0)) (* fail? *)
+          ImpSyntax.Const (word.of_Z (Z.of_N 0))
         else
           ImpSyntax.Const (word.of_Z (Z.of_N v1_n))
       else if N.eqb n (name_enc "var") then 
@@ -260,7 +260,7 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
       else
         match v2 with
         | Num _ => 
-          num2exp n (* fail? *)
+          num2exp n
         | Pair v2 v3 =>
           if N.eqb n (name_enc "+") then 
             let/d v1_e := v2exp v1 in
@@ -279,7 +279,7 @@ Fixpoint v2exp (v: Value): ImpSyntax.exp :=
             let/d v2_e := v2exp v2 in
             Read v1_e v2_e
           else
-            num2exp n (* fail? *)
+            num2exp n
         end
     end
   end.
@@ -306,7 +306,7 @@ Definition v2cmp (v: Value): ImpSyntax.cmp :=
   else if N.eqb v_n (name_enc "=") then 
     Equal
   else
-    Less. (* fail? *)
+    Less.
 
 Fixpoint v2test (v: Value): ImpSyntax.test :=
   match v with
@@ -314,15 +314,15 @@ Fixpoint v2test (v: Value): ImpSyntax.test :=
     let/d zero_w := word.of_Z (Z.of_N 0) in
     let/d zero_c := Const zero_w in
     let/d less := Less in
-    Test less zero_c zero_c (* fail? *)
+    Test less zero_c zero_c
   | Pair v0 v1 =>
-    let/d n := vgetNum v0 in (* this can fail? *)
+    let/d n := vgetNum v0 in
     match v1 return ImpSyntax.test with
     | Num _ => 
       let/d zero_w := word.of_Z (Z.of_N 0) in
       let/d zero_c := Const zero_w in
       let/d less := Less in
-      Test less zero_c zero_c (* fail? *)
+      Test less zero_c zero_c
     | Pair v1 v2 =>
       if N.eqb n (name_enc "not") then 
         let/d v1_t := v2test v1 in
@@ -333,7 +333,7 @@ Fixpoint v2test (v: Value): ImpSyntax.test :=
           let/d zero_w := word.of_Z (Z.of_N 0) in
           let/d zero_c := Const zero_w in
           let/d less := Less in
-          Test less zero_c zero_c (* fail? *)
+          Test less zero_c zero_c
         | Pair v2 v3 =>
           if N.eqb n (name_enc "and") then 
             let/d v1_t := v2test v1 in
@@ -376,7 +376,7 @@ Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
         res
       else
         match v1 with
-        | Num _ => (* fail? *)
+        | Num _ =>
           let/d res := Skip in
           res
         | Pair v1 v2 =>
@@ -391,7 +391,7 @@ Fixpoint v2cmd (v: Value): ImpSyntax.cmd :=
             PutChar v1_e
           else
             match v2 with
-            | Num _ => (* fail? *)
+            | Num _ =>
               let/d res := Skip in
               res
             | Pair v2 v3 =>

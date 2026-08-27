@@ -276,7 +276,6 @@ Definition can_write_mem_at (m : word64 -> option (option word64)) (a : word64) 
   m a = Some None.
 
 Definition memory_writable (r14 r15 : word64) (m : word64 -> option (option word64)) : Prop :=
-  (* TODO: change to word.ltu r15 r14 = false *)
   (word.ltu r14 r15 = true \/ word.eqb r14 r15 = true) /\
   word.eqb (word.modu r14 (word.of_Z 8)) (word.of_Z 0) = true /\
   word.eqb (word.modu r15 (word.of_Z 8)) (word.of_Z 0) = true /\
@@ -302,15 +301,6 @@ Definition asm_terminates (input: llist ascii) (asm: asm) (output: string): Prop
     init_state_ok t input asm /\
     clos_refl_trans_1n s_or_h step (State t) (Halt (word.of_Z 0) output).
 
-(* Definition asm_diverges_def:
-  (input, asm) asm_diverges output =
-    ∃t. init_state_ok t input asm ∧
-      (* repeated application of step never halts or gets stuck: *)
-      (∀k. ∃t'. NRC step k (State t) (State t')) ∧
-      (* the output is the least upper bound of all reachable output *)
-      output = build_lprefix_lub { fromList t'.output | step꙳ (State t) (State t') }
-End *)
-
 Fixpoint NRC {A} (R: A -> A -> Prop) (n: nat) x y :=
   match n with
   | 0 => x = y
@@ -318,7 +308,6 @@ Fixpoint NRC {A} (R: A -> A -> Prop) (n: nat) x y :=
     exists z, R x z /\ NRC R n z y
   end.
 
-(* TODO: define as in IMP *)
 Definition output_ok_asm (t: state) (out: llist ascii): Prop :=
   ∀ i,
     (∃ k t1, NRC step k (State t) (State t1) ∧ String.get i t1.(output) <> None ∧ String.get i t1.(output) = Llist.nth i out) ∨
@@ -329,4 +318,3 @@ Definition asm_diverges (input: llist ascii) (asm: asm) (output: llist ascii) : 
     init_state_ok t input asm /\
     (forall k, exists t1, NRC step k (State t) (State t1)) /\
     output_ok_asm t output.
-    (* output = build_lprefix_lub (fun t' => exists t'', clos_refl_trans_1n step (State t) (State t') /\ t'.(output) = t''.(output)). *)

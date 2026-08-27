@@ -11,11 +11,8 @@ From Stdlib Require Import derive.Derive FunInd.
 From Ltac2 Require Import Ltac2 Std List Constr RedFlags Message Printf Fresh.
 Import Ltac2.Constr.Unsafe.
 
-(* Important notes *)
-(* 1. every destruct has to have a `eqn:?` (Otherwise, we can get a bunch of
-   goal that need to provide base case values for some types)
-   This might be an issue with fix unfolding, since it only happens when we have a fixpoint with a match *)
-(* 2. For polymorphic functions always provide them with @ e.g. @length *)
+(* Destructuring must retain equations so that generated base-case values can
+   be resolved. Polymorphic dependencies must be fully applied with `@`. *)
 
 Open Scope nat.
 
@@ -108,7 +105,6 @@ Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (named_conts: (ide
       match List.find_opt (fun n => Ident.equal (fst n) nm) named_conts with
       | Some (_, ext) =>
         let new_named_conts := List.filter (fun p => Bool.neg (Ident.equal (fst p) nm)) named_conts in
-        (* TODO: check the $extr                vvvvv *)
         assemble_lemma open_constr:($lemma_inst ltac2:(ext ())) lname new_named_conts conts
       | None =>
         assemble_lemma open_constr:($lemma_inst _) lname named_conts conts
@@ -124,7 +120,7 @@ Ltac2 rec assemble_lemma (lemma_inst: constr) (lname: string) (named_conts: (ide
     end
   end.
 
-(* Apply lemma named `lname`, use compilaiton funciton `compile_fn` to compile "eval" premises of the lemma *)
+(* Apply lemma `lname`, using `compile_fn` to compile its evaluation premises. *)
 (*   Fill in `extracted` terms for term premises *)
 (*   (Also make sure to update the `cenv` while recursing) *)
 Ltac2 app_lemma (lname: string) (named_conts: (string * (unit -> unit)) list)
@@ -132,8 +128,6 @@ Ltac2 app_lemma (lname: string) (named_conts: (string * (unit -> unit)) list)
   if debug_relcompile then printf "applying lemma: %s" lname else ();
   let lemma_ref: reference := List.hd (Env.expand (ident_of_fqn [lname])) in
   let lemma_inst: constr := Env.instantiate lemma_ref in
-  (* let lemma_tpe: constr := type lemma_inst in *)
-  (* let thm_parts := split_thm_args lemma_tpe in *)
   let named_conts_id :=
     List.flat_map (fun p =>
       match Ident.of_string (fst p) with
@@ -142,8 +136,8 @@ Ltac2 app_lemma (lname: string) (named_conts: (string * (unit -> unit)) list)
       end) named_conts in
   refine (assemble_lemma lemma_inst lname named_conts_id conts).
 
-(* Lookup the funciton `fname` in the `f_lookup` map *)
-Ltac2 is_in_loopkup (f_lookup : string list) (fname : string) : bool :=
+(* Look up `fname` in the `f_lookup` map. *)
+Ltac2 is_in_lookup (f_lookup : string list) (fname : string) : bool :=
   match List.find_opt (String.equal fname) f_lookup with
   | Some _ => true
   | None => false
@@ -152,7 +146,6 @@ Ltac2 is_in_loopkup (f_lookup : string list) (fname : string) : bool :=
 Ltac2 rec disallowed_var (c: constr): bool :=
   match Constr.Unsafe.kind c with
   | Var _ => true
-  (* TODO: probably should remove this (next) line – it allows too many undesirable things as consts *)
   | Constant _ _ => true
   | Constructor _ _ => true
   | App c cs => Bool.and (disallowed_var c) (Array.for_all disallowed_var cs)
@@ -162,8 +155,6 @@ Ltac2 rec disallowed_var (c: constr): bool :=
 (* Check if `c` is a "proper" constant – used for sanity checks when compiling constants *)
 Ltac2 rec proper_const_f (c: constr): bool :=
   match Constr.Unsafe.kind c with
-  (* | Var _ => true *)
-  (* TODO: probably should remove this (next) line – it allows too many undesirable things as consts *)
   | Constant _ _ => true
   | Constructor _ _ => true
   | App c cs => Bool.and (proper_const_f c) (Array.for_all proper_const_f cs)
@@ -224,7 +215,6 @@ Ltac2 name_enc_of_constr (c: constr): constr option :=
   | _ => None
   end.
 
-(* TODO: this may depend on name_enc being Opaque *)
 Ltac2 rec name_enc_constr_list_of_constr (c : constr) : constr option list :=
   match! c with
   | [] => []
@@ -267,7 +257,7 @@ Ltac2 get_f_lookup_from_context () : string list :=
 Ltac2 fname_if_in_f_lookup (f_lookup: string list) (f: constr): string option :=
   let f_name_r: reference option := reference_of_constr_opt f in
   let f_name_str := Option.bind f_name_r reference_to_string in
-  Option.bind f_name_str (fun n => if is_in_loopkup f_lookup n then Some n else None).
+  Option.bind f_name_str (fun n => if is_in_lookup f_lookup n then Some n else None).
 
 Ltac2 rec binders_names_of_constr_lambda (c: constr) (avoid: ident list): constr list :=
   match Unsafe.kind c with
@@ -283,7 +273,6 @@ Ltac2 rec binders_names_of_constr_lambda (c: constr) (avoid: ident list): constr
   | _ => []
   end.
 
-(* TODO: extract this magic pattern as a utility function *)
 Ltac2 rec collect_tpe_prod_binders_impl (c: constr) (magic: constr) (proj: binder -> constr option): constr :=
   match Unsafe.kind (Constr.type c) with
   | Prod b _ =>
@@ -405,7 +394,6 @@ Ltac2 rec compile () : unit :=
         (* eval f *) ltac2:(Control.enter (fun () => intro; intro; cbv beta; compile_with_prep ()))
         )
       | (let x := ?val in @?body x) =>
-        (* might work, but normal `let`s get inlined before (maybe because of the "cbv beta" after unfolding) *)
         let binders_of_body := binders_names_of_constr_lambda body names_in_cenv in
         let let_n_constr := List.nth binders_of_body 0 in
         refine open_constr:(auto_let
@@ -1101,8 +1089,6 @@ Ltac2 rec compile () : unit :=
               app_lemma "auto_nat_const" [("env", exactk fenv); ("n", exactk n)] []
             else if Constr.equal (Constr.type n) constr:(N) then
               app_lemma "auto_N_const" [("env", exactk fenv); ("n", exactk n)] []
-            (* else if Constr.equal (Constr.type n) constr:(string) then
-              app_lemma "auto_string_const" [("env", exactk fenv); ("str", exactk n)] [(fun () => simpl list_ascii_of_string; compile ())] *)
             else if Constr.equal (Constr.type n) constr:(ascii) then
               app_lemma "auto_char_const" [("env", exactk fenv); ("chr", exactk n)] []
             else
@@ -1187,7 +1173,7 @@ Ltac2 rec compile () : unit :=
     Control.throw (Oopsie (fprintf "Error: Malformed input to compile, namely %t" c))
   end
 with compile_with_prep (): unit :=
-  rewrite_lowerable (); (* have to try twice if a potential rewrite gets hidden under a binder (Maybe we should try this step every time?) *)
+  rewrite_lowerable (); (* A second pass exposes rewrites hidden under binders. *)
   try_to_anf_relcompile ();
   rewrite_lowerable ();
   compile ().
@@ -1258,8 +1244,6 @@ Ltac2 rec docompile () :=
     Control.throw (Oopsie (fprintf "Error: Don't know how to compile %t" x))
   end.
 
-(* TODO: this computes the exact names (number representations) -> might be slow *)
-(*       - would be nice to prove name_enc_inj *)
 Ltac2 crush_NoDup () :=
   ltac1:(
     try match goal with
@@ -1317,7 +1301,7 @@ Ltac2 crush_FEnv_impossible_step () :=
   | [ h: FEnv.lookup (FEnv.insert (_, _) _) _ = _ |- _ ] =>
     cbv in $h; simpl in $h;
     match! goal with
-    | [ _: None = Some _ |- _ ] => exfalso; congruence
+    | [ _: None = Some _ |- _ ] => exfalso (); ltac1:(congruence)
     end
   end; eauto.
 
@@ -1367,15 +1351,10 @@ Ltac2 rec mk_constr_list (args: constr list): constr :=
   end.
 
 Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: constr) (): constr :=
-  (* printf "gen_eval_app_impl f.type: %t fpargs: %a f_constr_name: %t f: %t"
-    (Constr.type f)
-    (fun () x => message_of_list (List.map Message.of_constr x)) fpargs
-    f_constr_name
-    f; *)
   match Unsafe.kind (Constr.type f) with
   | Prod b _ =>
     let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
-    (* Same as with in_contexts, should ideally be (Binder.type b), but it breaks with dependent types *)
+    (* Using Binder.type b here breaks dependent types. *)
     lambda_to_prod (Constr.in_context name open_constr:(_) (fun () =>
       let b_hyp := Control.hyp name in
       Control.refine (fun () =>
@@ -1386,7 +1365,6 @@ Ltac2 rec gen_eval_app_impl (fpargs: constr list) (f_constr_name: constr) (f: co
               gen_eval_app_impl fpargs f_constr_name open_constr:($f $b_hyp) ()
             )
           ))
-        (* TODO: for proper Prop erasure *)
         else if Constr.equal constr:(Prop) (Constr.type (Binder.type b)) then
           gen_eval_app_impl fpargs f_constr_name open_constr:($f $b_hyp) ()
         else gen_eval_app_impl (List.append fpargs [b_hyp]) f_constr_name open_constr:($f $b_hyp) ()
@@ -1416,9 +1394,6 @@ Ltac2 rec mk_refine_impls (args: (unit -> constr) list) (res: unit -> constr) ()
     res ()
   end.
 
-(* TODO:
-- assume the names of _prog? (Whould be less typing)
-*)
 Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
   let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
   let f_constr_name_c := constr_string_of_string f_constr_name in
@@ -1440,273 +1415,4 @@ Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
     )
   ).
 
-(* TODO:
-- automation for intros + subst *_prog?
-- automation for writing Derivation statements?
-- The debugs should be configurable by a (global) variable? (or maybe just an argument?)
-- Do Free.in_goal on state/quantified arguments of a function (we cannot name arguments `s` right now)
-*)
-
-(* TODO(kπ): lookups might grow Qed time. Might want to rewrite them to multi-inserts *)
-
-(* *********************************************** *)
-(*                Examples/Tests                   *)
-(* *********************************************** *)
-
-(* TODO: for some reason, need this for generated derivation statement proofs *)
 Opaque encode.
-
-(* Definition has_many_definitions (n: nat): nat :=
-  let/d x := 1 in
-  let/d y := 2 in
-  let/d z := 3 in
-  let/d a := n + x in
-  let/d b := a * 2 in
-  let/d c := b + y in
-  let/d d := c - z in
-  let/d e := d * 3 in
-  let/d f := e + a in
-  let/d g := f * b in
-  let/d h := g + c in
-  let/d i := h - d in
-  let/d j := i + e in
-  let/d k := j * f in
-  let/d l := k + g in
-  let/d m := l - h in
-  let/d o := m + i in
-  let/d p := o * j in
-  let/d q := p + k in
-  let/d r := q - l in
-  let/d s := r + m in
-  let/d t := s * o in
-  let/d u := t + p in
-  a + b + c + d + e + f + g + h + i + j + k + l + m + o + p + q + r + s + t + u.
-
-Derive has_many_definitions_prog
-  in ltac2:(relcompile_tpe 'has_many_definitions_prog 'has_many_definitions ['mulnat])
-  as has_many_definitions_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Definition uses_long_strings (str: string): string :=
-  "asdsfsdfsdfsdfjnsdfkljsndf".
-
-Set Ltac2 In Ltac1 Profiling.
-Set Ltac Profiling.
-Reset Ltac Profile.
-
-Derive uses_long_strings_prog
-  in ltac2:(relcompile_tpe 'uses_long_strings_prog 'uses_long_strings ['str_app])
-  as uses_long_strings_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-Show Ltac Profile. *)
-
-(* Set Ltac2 Backtrace. *)
-
-Definition has_strings: string :=
-  (* let/d s1 := "abc" in *)
-  (* let/d s2 := "def" in *)
-  "hello world! this is a long string"(*  ++ s1 ++ s2 *).
-
-(* Ltac2 Set debug_relcompile := true. *)
-
-Derive has_strings_prog
-  in ltac2:(relcompile_tpe 'has_strings_prog 'has_strings ['str_app])
-  as has_strings_prog_proof.
-Proof.
-  time relcompile.
-  all: Control.enter crush_FEnv_impossible.
-Qed.
-
-Definition nat_mod1 (n1 n2: nat): nat :=
-  match n2 with
-  | 0%nat => 0
-  | S _ => n1 - n2 * (n1 / n2)
-  end.
-
-Remark gcd_oblig:
-  forall (a b: nat) (NE: b <> 0), nat_mod1 a b < b.
-Proof.
-  intros a b NE.
-  unfold nat_mod1.
-  destruct b.
-  1: ltac1:(congruence).
-  rewrite <- Nat.Div0.mod_eq.
-  now apply Nat.mod_upper_bound.
-Qed.
-
-Function gcd_rec (a b: nat) (ACC: Acc lt b) {struct ACC}: nat :=
-  match Nat.eq_dec b 0 with
-  | left EQ => a
-  | right NE =>
-    gcd_rec b (nat_mod1 a b) (Acc_inv ACC (gcd_oblig a b NE))
-  end.
-
-(* Derive gcd_rec_prog
-  in ltac2:(relcompile_tpe 'gcd_rec_prog 'gcd_rec ['nat_mod1])
-  as gcd_rec_prog_proof.
-Proof.
-  time relcompile.
-Qed. *)
-
-(* Set Printing Implicit. *)
-
-Definition idd {A: Type} (a: list A): list A := a.
-
-Derive idd_prog
-  in ltac2:(relcompile_tpe 'idd_prog '@idd [])
-  as idd_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Fixpoint polylength {A: Type} (l: list A) :=
-  match l with
-  | [] => 0
-  | _ :: l => 1 + polylength l
-  end.
-About polylength.
-Lemma polylength_equation: ltac:(with_strategy opaque [Nat.add] ltac2:(unfold_fix_type '@polylength)).
-Proof. unfold_fix_proof '@polylength. Qed.
-
-Derive polylength_prog
-  in ltac2:(relcompile_tpe 'polylength_prog '@polylength [])
-  as polylength_prog_proof.
-Proof.
-  relcompile.
-Qed.
-
-Definition double_polylength (l: list nat) : nat :=
-  2 + polylength l.
-
-Derive double_polylength_prog
-  in ltac2:(relcompile_tpe 'double_polylength_prog 'double_polylength ['@polylength])
-  as double_polylength_prog_proof.
-Proof.
-  relcompile.
-Qed.
-
-Function has_match (l: list nat) : nat :=
-  1 +
-  match l with
-  | nil => 0
-  | cons h t => h + 100
-  end.
-
-Derive has_match_prog in ltac2:(relcompile_tpe 'has_match_prog 'has_match []) as has_match_proof.
-Proof.
-  relcompile.
-Qed.
-
-(* Fixpoint sum_n (n : nat) : nat :=
-  match n with
-  | 0 => 0
-  | S n1 => (sum_n n1) + n
-  end.
-Lemma sum_n_equation : ltac2:(unfold_fix_type 'sum_n).
-Proof. unfold_fix_proof 'sum_n. Qed. *)
-
-Fixpoint sum_n (n : nat) : nat :=
-  match n with
-  | 0 => 0
-  | S n1 => (sum_n n1) + (1 + n1)
-  end.
-Lemma sum_n_equation: ltac:(with_strategy opaque [Nat.add] ltac2:(unfold_fix_type 'sum_n)).
-Proof. unfold_fix_proof 'sum_n. Qed.
-
-Derive sum_n_prog in ltac2:(relcompile_tpe 'sum_n_prog 'sum_n []) as sum_n_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Definition bool_ops (b: bool): bool :=
-  b && true.
-
-Derive bool_ops_prog in ltac2:(relcompile_tpe 'bool_ops_prog 'bool_ops []) as bool_ops_prog_proof.
-Proof.
-  relcompile.
-Qed.
-
-Definition has_cases (n : nat) : nat :=
-  match n with
-  | 0 => 0
-  | S n1 =>
-    match n1 with
-    | 0 =>
-      let/d s := "ab" ++ "cd" in
-      List.length (list_ascii_of_string s)
-    | S n2 => n1 + n2
-    end
-  end.
-
-Derive has_cases_prog in ltac2:(relcompile_tpe 'has_cases_prog 'has_cases ['str_app; '@list_len]) as has_cases_proof.
-Proof.
-  relcompile.
-Abort.
-
-Definition has_cases_list (l : list nat) : nat :=
-  match l with
-  | nil => 0
-  | cons hd tl =>
-    match tl with
-    | nil => 1
-    | cons hdtl tltl => hd + hdtl
-    end
-  end.
-
-Derive has_cases_list_prog in ltac2:(relcompile_tpe 'has_cases_list_prog 'has_cases_list []) as has_cases_list_proof.
-Proof.
-  relcompile.
-Qed.
-
-Definition foo (n : nat) : nat :=
-  let/d x := 1 in
-  let/d y := n + x in
-  y.
-
-Derive foo_prog in ltac2:(relcompile_tpe 'foo_prog 'foo []) as foo_prog_proof.
-Proof.
-  relcompile.
-Qed.
-
-Definition bar (n : nat) : nat :=
-  foo (n + 1).
-
-Derive bar_prog in ltac2:(relcompile_tpe 'bar_prog 'bar ['foo]) as bar_prog_proof.
-Proof.
-  relcompile.
-Qed.
-
-Definition baz (n m : nat) : nat :=
-  let/d z := n + m in
-  z.
-
-Derive baz_prog in ltac2:(relcompile_tpe 'baz_prog 'baz []) as baz_prog_proof.
-Proof.
-  relcompile.
-Qed.
-
-Definition baz2 (n : nat) : nat :=
-  let/d m := baz (n + 1) n in
-  m.
-
-Derive baz2_prog in ltac2:(relcompile_tpe 'baz2_prog 'baz2 ['baz]) as baz2_prog_proof.
-Proof.
-  relcompile.
-Qed.
-
-Function sum_acc (xs: list nat) (acc: nat) :=
-  match xs with
-  | [] => acc
-  | x :: xs => sum_acc xs (x + acc)
-  end.
-
-Derive sum_acc_prog
-  in ltac2:(relcompile_tpe 'sum_acc_prog 'sum_acc [])
-  as sum_acc_prog_proof.
-Proof.
-  relcompile.
-Qed.

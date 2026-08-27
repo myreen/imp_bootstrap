@@ -3,11 +3,7 @@ Import Ltac2.Constr.Unsafe.
 From coqutil Require Import Tactics.reference_to_string.
 From impboot Require Import Ltac2Utils ltac2.Constrs ltac2.Stdlib2 ltac2.Messages.
 
-(* The problem with automatically detecting dependencies is: how do I know which are the "real" rependencies? *)
-(*   i.e. why is "add" not a dependency? *)
-(*   Actually, maybe just black-list some built-in functions? *)
 Ltac2 rec collect_deps (bs: ident list) (c: constr): constr list :=
-  Message.print (Messages.message_of_list (List.map Message.of_ident bs));
   match kind c with
   | Var i =>
     if List.exist (fun b => Ident.equal i b) bs then []
@@ -36,11 +32,9 @@ Ltac2 rec collect_deps (bs: ident list) (c: constr): constr list :=
     collect_deps bs c
   | Fix _ _ tl bl =>
     let new_bs := (List.append (List.flat_map (fun b => opt_to_list (Binder.name b)) (Array.to_list tl)) bs) in
-    (* TODO: is this correct? vvvvvvvvvvvvvvvvvvvvvv *)
     List.concat (List.map (collect_deps new_bs) (Array.to_list bl))
   | CoFix _ tl bl =>
     let new_bs := (List.append (List.flat_map (fun b => opt_to_list (Binder.name b)) (Array.to_list tl)) bs) in
-    (* TODO: is this correct? vvvvvvvvvvvvvvvvvvvvvv *)
     List.concat (List.map (collect_deps new_bs) (Array.to_list bl))
   | Array _u t def _ty =>
     List.append (List.concat (List.map (collect_deps bs) (Array.to_list t))) (collect_deps bs def)

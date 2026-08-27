@@ -18,8 +18,6 @@ Proof.
   time relcompile.
   ltac1:(lia).
 Qed.
-Print natmod10_prog.
-Time Compute to_funs [natmod10_prog].
 Ltac2 Eval assert_Some constr:(to_funs [natmod10_prog]).
 
 Derive Nmod_10_prog
@@ -29,7 +27,6 @@ Proof.
   time relcompile.
   ltac1:(lia).
 Qed.
-Time Compute to_funs [Nmod_10_prog].
 Ltac2 Eval assert_Some constr:(to_funs [Nmod_10_prog]).
 
 Derive Nmod_256_prog
@@ -39,7 +36,6 @@ Proof.
   time relcompile.
   ltac1:(lia).
 Qed.
-Time Compute to_funs [Nmod_256_prog].
 Ltac2 Eval assert_Some constr:(to_funs [Nmod_256_prog]).
 
 Theorem str_app_equation: ltac2:(unfold_fix_type '@str_app).
@@ -50,24 +46,19 @@ Derive str_app_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [str_app_prog].
 Ltac2 Eval assert_Some constr:(to_funs [str_app_prog]).
 
 Theorem num2strf_equation: ltac:(with_strategy opaque [nat_mod Nat.add Nat.div] ltac2:(unfold_fix_type '@num2strf)).
 Proof. unfold_fix_proof '@num2strf. Qed.
 
-(* TODO execute this file, and Imp2Asm next *)
 Derive num2strf_prog
   in ltac2:(relcompile_tpe 'num2strf_prog 'num2strf ['natmod10])
   as num2strf_prog_proof.
 Proof.
   time relcompile.
-  (* 2: ltac1:(timeout 5 ltac2:(crush_FEnv_impossible ())). *)
   all: ltac1:(try lia).
   all: subst; rewrite natmod10_spec in *; specialize nat_mod_le with (n := n) (m := 10); ltac1:(lia).
 Qed.
-Print num2strf_prog.
-Time Compute to_funs [num2strf_prog].
 Ltac2 Eval assert_Some constr:(to_funs [num2strf_prog]).
 
 Derive num2str_prog
@@ -76,7 +67,6 @@ Derive num2str_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [num2str_prog].
 Ltac2 Eval assert_Some constr:(to_funs [num2str_prog]).
 
 Theorem N2str_f_equation: ltac:(with_strategy opaque [N_mod10 N.add] ltac2:(unfold_fix_type '@N2str_f)).
@@ -91,7 +81,6 @@ Proof.
   all: rewrite ?N.ltb_lt in *; ltac1:(try lia).
   all: subst; rewrite Nmod_10_spec in *; specialize N_modulo_le with (n := n) (m := 10%N) as ?; ltac1:(try lia).
 Qed.
-Time Compute to_funs [N2str_f_prog].
 Ltac2 Eval assert_Some constr:(to_funs [N2str_f_prog]).
 
 Derive N2str_prog
@@ -100,7 +89,6 @@ Derive N2str_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [N2str_prog].
 Ltac2 Eval assert_Some constr:(to_funs [N2str_prog]).
 
 Theorem list_len_equation: ltac:(with_strategy opaque [Nat.add] ltac2:(unfold_fix_type '@list_len)).
@@ -112,7 +100,6 @@ Derive list_len_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [list_len_prog].
 Ltac2 Eval assert_Some constr:(to_funs [list_len_prog]).
 
 Theorem list_app_equation: ltac2:(unfold_fix_type '@list_app).
@@ -124,7 +111,6 @@ Derive list_app_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [list_app_prog].
 Ltac2 Eval assert_Some constr:(to_funs [list_app_prog]).
 
 Theorem flatten_equation: ltac2:(unfold_fix_type '@flatten).
@@ -136,7 +122,6 @@ Derive flatten_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [flatten_prog].
 Ltac2 Eval assert_Some constr:(to_funs [flatten_prog]).
 
 Theorem appl_len_equation: ltac2:(unfold_fix_type '@appl_len).
@@ -148,7 +133,6 @@ Derive appl_len_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [appl_len_prog].
 Ltac2 Eval assert_Some constr:(to_funs [appl_len_prog]).
 
 Derive mulN_10_prog
@@ -157,7 +141,6 @@ Derive mulN_10_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [mulN_10_prog].
 Ltac2 Eval assert_Some constr:(to_funs [mulN_10_prog]).
 
 Derive mulN_256_prog
@@ -166,7 +149,6 @@ Derive mulN_256_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [mulN_256_prog].
 Ltac2 Eval assert_Some constr:(to_funs [mulN_256_prog]).
 
 Derive mulnat_8_prog
@@ -175,7 +157,6 @@ Derive mulnat_8_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [mulnat_8_prog].
 Ltac2 Eval assert_Some constr:(to_funs [mulnat_8_prog]).
 
 Derive mulnat10_prog
@@ -184,7 +165,6 @@ Derive mulnat10_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [mulnat10_prog].
 Ltac2 Eval assert_Some constr:(to_funs [mulnat10_prog]).
 
 Theorem N2asciif_equation: ltac2:(unfold_fix_type '@N2asciif).
@@ -197,7 +177,6 @@ Proof.
   all: ltac1:(try lia).
   all: try (solve [subst; rewrite Nmod_256_spec in *; specialize N_modulo_lt with (n := n) (m := 256%N) as ?; ltac1:(try lia)]).
 Qed.
-Time Compute to_funs [N2asciif_prog].
 Ltac2 Eval assert_Some constr:(to_funs [N2asciif_prog]).
 
 Derive N2ascii_prog
@@ -206,7 +185,6 @@ Derive N2ascii_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [N2ascii_prog].
 Ltac2 Eval assert_Some constr:(to_funs [N2ascii_prog]).
 
 Definition CompilerUtils_funs := [

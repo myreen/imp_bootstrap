@@ -562,4 +562,4 @@ Definition codegen (prog : prog) : asm :=
   (*                        vvv (name_of_string ("main"%string)) *)
   let/d main_l := lookup fs 1835100526%N in
   let/d asm0 := List (init main_l) in
-  flatten (asm0 +++ asm1).
+  flatten asm0 (flatten asm1 nil).

@@ -325,13 +325,6 @@ Proof.
   intros; f_equal; eauto.
 Qed.
 
-Fixpoint flatten {A: Type} (xs: app_list A): list A :=
-  match xs with
-  | List l => l
-  | Append l1 l2 =>
-    list_app (flatten l1) (flatten l2)
-  end.
-
 Fixpoint appl_len {A: Type} (xs: app_list A): nat :=
   match xs with
   | List l => list_len l

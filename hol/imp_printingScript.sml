@@ -1,6 +1,7 @@
 Theory imp_printing
 Ancestors
   arithmetic list pair finite_map string words
+  codegen (* for app_list *)
   imp_source_syntax printing
 
 (* Pretty printer for imperative (IMP) programs.
@@ -32,11 +33,6 @@ End
 Definition ternary_sexpr_def:
   ternary_sexpr op v1 v2 v3 =
     SBlock (SPair (SStr op) (SPair (SPair v1 v2) v3))
-End
-
-Definition quaternary_sexpr_def:
-  quaternary_sexpr op v1 v2 v3 v4 =
-    SBlock (SPair (SStr op) (SPair (SPair (SPair v1 v2) v3) v4))
 End
 
 Definition name_sexpr_def:
@@ -145,32 +141,18 @@ End
 (* Flattening an s-expression to a string via an append list          *)
 (* ------------------------------------------------------------------ *)
 
-Datatype:
-  str_app_list = StrList (char list)
-               | StrAppend str_app_list str_app_list
-End
-
 Definition sexpr2str_def:
-  sexpr2str (SNum n)      = StrAppend (StrList "'") (StrList (num2str n)) ∧
-  sexpr2str (SStr s)      = StrList s ∧
-  sexpr2str (SPair s1 s2) =
-    StrAppend (sexpr2str s1) (StrAppend (StrList " ") (sexpr2str s2)) ∧
-  sexpr2str SEmpty        = StrList "" ∧
-  sexpr2str (SBlock s)    =
-    StrAppend (StrList "(") (StrAppend (sexpr2str s) (StrList ")"))
+  sexpr2str (SNum n)      = Append (List "'") (List (num2str n)) ∧
+  sexpr2str (SStr s)      = List s ∧
+  sexpr2str (SPair s1 s2) = Append (sexpr2str s1) (Append (List " ") (sexpr2str s2)) ∧
+  sexpr2str SEmpty        = List "" ∧
+  sexpr2str (SBlock s)    = Append (List "(") (Append (sexpr2str s) (List ")"))
 End
-
-Definition flatten_str_app_list_def:
-  flatten_str_app_list (StrList s)       = s ∧
-  flatten_str_app_list (StrAppend s1 s2) =
-    flatten_str_app_list s1 ++ flatten_str_app_list s2
-End
-
 
 (* ------------------------------------------------------------------ *)
 (* Top-level: IMP program to string                                   *)
 (* ------------------------------------------------------------------ *)
 
 Definition imp2str_def:
-  imp2str p = flatten_str_app_list (sexpr2str (prog2s p))
+  imp2str p = flatten (sexpr2str (prog2s p)) []
 End

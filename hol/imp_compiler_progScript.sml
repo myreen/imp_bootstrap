@@ -52,6 +52,8 @@ val res = to_deep imp_to_asmTheory.make_ret_def;
 val res = to_deep imp_to_asmTheory.give_up_def;
 val res = to_deep imp_to_asmTheory.c_pops_def;
 val res = to_deep imp_to_asmTheory.c_call_def;
+val res = to_deep imp_to_asmTheory.dest_tail_call_def;
+val res = to_deep imp_to_asmTheory.c_tail_call_def;
 val res = to_deep imp_to_asmTheory.c_cmp_def;
 val res = to_deep imp_to_asmTheory.c_store_def;
 val res = to_deep imp_to_asmTheory.c_var_def;
@@ -380,7 +382,7 @@ val lexer_code_def = define_code ‘
   (defun lexer ()
      (let (next1 (read)) (lex '0 next1 '0)))’
 
-Triviality LTL_fromList_lemma[simp]:
+Theorem LTL_fromList_lemma[local,simp]:
   (case LTL (fromList t) of NONE => fromList t | SOME t => t) = fromList (TL t)
 Proof
   Cases_on ‘t’ \\ fs []
@@ -586,7 +588,7 @@ Theorem num_ind = num_temp_ind
 
 val res = to_deep num_thm
 
-Triviality num_side:
+Theorem num_side[local]:
   ∀n s. num_side n s ⇔ T
 Proof
   completeInduct_on ‘n’ \\ fs []
@@ -626,11 +628,14 @@ val res = to_deep (asm2str_def |> SIMP_RULE std_ss [lemma])
 
 (* print *)
 
+(* the dummy binder is called "ret" on purpose: to_cmd names the result of a
+   call "ret" too, so the two share a stack slot and print's frame is half the
+   size it would otherwise be (see c_bdrs_def / unique_binders_def) *)
 val print_code_def = define_code ‘
   (defun print (s)
      (if (= s '0) '0
        (let
-         (a (write (head s)))
+         (ret (write (head s)))
          (print (tail s)))))’
 
 Theorem print_thm:
@@ -676,10 +681,6 @@ End
 
 Theorem compiler_prog_thm[local] =
         compiler_prog_def |> CONV_RULE (RAND_CONV EVAL);
-
-Definition coms_def:
-  coms = ^(get_comments ())
-End
 
 end
 

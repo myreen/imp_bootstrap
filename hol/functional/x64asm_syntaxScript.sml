@@ -100,7 +100,7 @@ val inst_tm = (rand o concl o REWRITE_CONV [APPEND])
   inst (Pop r) s = "popq " ++ reg r s ∧
   inst (Push r) s = "pushq " ++ reg r s ∧
   inst (Load_RSP r n) s = "movq " ++ num (8 * n) ("(%rsp), " ++ reg r s) ∧
-  inst (StoreRSP r n) s = "movq " ++ reg r s ++ ", " ++ num (8 * n) ("(%rsp)") ∧
+  inst (StoreRSP r n) s = "movq " ++ reg r (", " ++ num (8 * n) ("(%rsp)" ++ s)) ∧
   inst (Add_RSP n) s = "addq $" ++ num (8 * n) (", %rsp" ++ s) ∧
   inst (Sub_RSP n) s = "subq $" ++ num (8 * n) (", %rsp" ++ s) ∧
   inst (Store src a w) s =
@@ -126,7 +126,7 @@ Definition asm2str_def:
     ["\t.bss\n";
      "\t.p2align 3          /* 8-byte align        */\n";
      "heapS:\n";
-     "\t.space 8*1024*1024  /* bytes of heap space */\n";
+     "\t.space 256*1024*1024  /* bytes of heap space */\n";
      "\t.p2align 3          /* 8-byte align        */\n";
      "heapE:\n\n";
      "\t.text\n";

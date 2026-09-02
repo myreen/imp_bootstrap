@@ -24,13 +24,8 @@ Datatype:
      |>
 End
 
-Definition lookup_def:
-  lookup n [] = NONE ∧
-  lookup n (x::xs) = if n = 0 then SOME x else lookup (n-1) xs
-End
-
 Definition fetch_def:
-  fetch s = lookup s.pc s.instructions
+  fetch s = oEL s.pc s.instructions
 End
 
 Definition inc_def:
@@ -41,7 +36,7 @@ Definition write_reg_def:
   write_reg r w s = s with regs := s.regs⦇r ↦ SOME w⦈
 End
 
-Definition unset_reg_def:
+Definition unset_regs_def:
   unset_regs [] s = s ∧
   unset_regs (r::rs) s = unset_regs rs (s with regs := s.regs⦇r ↦ NONE⦈)
 End
@@ -57,10 +52,14 @@ Definition read_mem_def:
     | SOME opt => opt
 End
 
+(* A Store may write any cell that is part of the machine's memory, whether or
+   not it has been written before.  (This matches write_mem in the Rocq model,
+   rocq/assembly/ASMSemantics.v; IMP's Update assigns the same array slot more
+   than once, which a write-once rule cannot express.) *)
 Definition write_mem_def:
   write_mem a w s =
     case s.memory a of
-    | SOME NONE => SOME (s with memory := ((a =+ SOME (SOME w)) s.memory))
+    | SOME _ => SOME (s with memory := ((a =+ SOME (SOME w)) s.memory))
     | _ => NONE
 End
 
@@ -214,7 +213,7 @@ Inductive step:
     step (State s) (Halt exit_code s.output))
 End
 
-Definition can_write_mem_def:
+Definition can_write_mem_at_def:
   can_write_mem_at m a <=> m a = SOME NONE
 End
 

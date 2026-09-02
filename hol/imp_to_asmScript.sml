@@ -57,16 +57,6 @@ Definition even_len_def:
       | (_ :: zs) => even_len zs
 End
 
-Definition odd_len_def:
-  odd_len xs =
-    case xs of
-    | [] => F
-    | (_ :: ys) =>
-      case ys of
-      | [] => T
-      | (_ :: zs) => odd_len zs
-End
-
 (* jump label for failure cases
   b – does the stack need to be aligned
 *)
@@ -215,29 +205,29 @@ Definition c_cmp_def:
 End
 
 Definition c_test_jump_def:
-  c_test_jump (t : test) (pos_label : num) (neg_label : num) (l : num) (vs : v_stack) =
+  c_test_jump (t : test) (pos_lab : num) (neg_lab : num) (l : num) (vs : v_stack) =
   case t of
   | Test c e1 e2 =>
     let (asm1, l1) = c_exp e1 l vs in
     let (asm2, l2) = c_exp e2 l1 (NONE :: vs) in
     let c_cmp_asm = List [Mov RBX RAX; Pop RDI; Pop RAX;
-      Jump (c_cmp c) pos_label;
-      Jump Always neg_label] in
+      Jump (c_cmp c) pos_lab;
+      Jump Always neg_lab] in
     (asm1 +++ asm2 +++ c_cmp_asm, l2 + app_list_length c_cmp_asm)
   | And t1 t2 =>
-    let (asm1, l1) = c_test_jump t1 (l + 1) neg_label (l + 2) vs in
-    let (asm2, l2) = c_test_jump t2 pos_label neg_label l1 vs in
+    let (asm1, l1) = c_test_jump t1 (l + 1) neg_lab (l + 2) vs in
+    let (asm2, l2) = c_test_jump t2 pos_lab neg_lab l1 vs in
     let jump_to_start = List [Jump Always (l + 2)] in
     let jump_to_t2 = List [Jump Always l1] in (* l1 is the start of t2*)
     (jump_to_start +++ jump_to_t2 +++ asm1 +++ asm2, l2)
   | Or t1 t2 =>
-    let (asm1, l1) = c_test_jump t1 pos_label (l + 1) (l + 2) vs in
-    let (asm2, l2) = c_test_jump t2 pos_label neg_label l1 vs in
+    let (asm1, l1) = c_test_jump t1 pos_lab (l + 1) (l + 2) vs in
+    let (asm2, l2) = c_test_jump t2 pos_lab neg_lab l1 vs in
     let jump_to_start = List [Jump Always (l + 2)] in
     let jump_to_t2 = List [Jump Always l1] in (* l1 is the start of t2*)
     (jump_to_start +++ jump_to_t2 +++ asm1 +++ asm2, l2)
   | Not t' =>
-    c_test_jump t' neg_label pos_label l vs
+    c_test_jump t' neg_lab pos_lab l vs
 End
 
 (* Looks up a function name in a list of function addresses *)
@@ -294,6 +284,31 @@ Definition c_pushes_def:
   (List [Push RBP; Push RBX; Push RDX; Push RDI], e, l + 4)
 End
 
+(* Recognises a call in tail position: to_cmd (source_to_impScript) compiles
+   every call that is the value of a function body into exactly this shape. *)
+Definition dest_tail_call_def:
+  dest_tail_call (c1 : cmd) (c2 : cmd) =
+    case c1 of
+    | Call n f es =>
+        (case c2 of
+         | Return (Var m) => if n = m then SOME (f,es) else NONE
+         | _ => NONE)
+    | _ => NONE
+End
+
+(* A call in tail position.  The arguments are set up exactly as for an
+   ordinary call, but instead of pushing a new return address we drop this
+   frame -- leaving RSP on our own return address, i.e. the state the callee
+   would see after a Call -- and jump.  The callee then returns directly to
+   our caller, so a chain of tail calls runs in constant stack space. *)
+Definition c_tail_call_def:
+  c_tail_call (vs : v_stack) (target : num) (xs : exp list) (l : num) =
+  let asm_pops = c_pops xs vs in
+  let asm_cmb = asm_pops +++ List [Add_RSP (LENGTH vs); Jump Always target] in
+  let len = app_list_length asm_pops + 2 in
+  (asm_cmb, l + len)
+End
+
 (* Call the given function, passing the arguments in registers*)
 Definition c_call_def:
   c_call (vs : v_stack) (target : num) (xs : exp list) (l : num) =
@@ -308,9 +323,18 @@ Definition c_cmd_def:
   case c of
   | Skip => (List [], l)
   | Seq c1 c2 =>
-    let (asm1, l1) = c_cmd c1 l fs vs in
-    let (asm2, l2) = c_cmd c2 l1 fs vs in
-    (asm1 +++ asm2, l2)
+    (* the result is bound to a variable so that to_imp sees a simple
+       expression in the test it compiles this case into *)
+    (let tl = dest_tail_call c1 c2 in
+     case tl of
+     | SOME (f, es) =>
+       let (asms, l1) = c_exps es l vs in
+       let (asm1, l2) = c_tail_call vs (lookup f fs) es l1 in
+       (asms +++ asm1, l2)
+     | NONE =>
+       let (asm1, l1) = c_cmd c1 l fs vs in
+       let (asm2, l2) = c_cmd c2 l1 fs vs in
+       (asm1 +++ asm2, l2))
   | Assign n e =>
     let (asm1, l1) = c_exp e l vs in
     let (asm2, l2) = c_assign n l1 vs in

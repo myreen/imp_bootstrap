@@ -90,6 +90,14 @@ fun fix_name s =
     SOME (_,t) => t
   | NONE => shorten (if every is_uppercase (explode s) then lowercase s else s);
 
+(* Variable names are not shortened: two distinct variables could collide and
+   silently change the meaning of the generated program. Names must fit in one
+   64-bit word, so we insist that the HOL definition uses a short enough name. *)
+fun check_var_name s =
+  if String.size s <= max_name_length then s
+  else failwith ("variable name too long (max " ^ Int.toString max_name_length ^
+                 " chars, names must fit in one 64-bit word): " ^ s);
+
 fun is_rec def = let
   val eqs = def |> SPEC_ALL |> CONJUNCTS |> map (concl o SPEC_ALL)
   val consts = map (repeat rator o fst o dest_eq) eqs
@@ -248,7 +256,8 @@ fun prove_goal hol2deep gg = let
     val inv_v = x2 |> rand |> rator
     val vname = x2 |> rand |> rand
     val (s,i) = match_term inv_v (ty2inv (type_of vname))
-    val s2 = (name |-> stringSyntax.fromMLstring (dest_var vname |> fst)) :: s
+    val s2 = (name |-> stringSyntax.fromMLstring
+                          (check_var_name (dest_var vname |> fst))) :: s
     in s2 end
   val s = flatten (map get_substs ups)
   val t3 = INST s t2
@@ -356,10 +365,10 @@ fun process_def def = let
   val c = hd parts
   val vs = tl parts
   fun v_to_str v = let
-    val s = v |> dest_var |> fst |> stringSyntax.fromMLstring
+    val s = v |> dest_var |> fst
             handle HOL_ERR _ =>
-            v |> dest_const |> fst |> stringSyntax.fromMLstring
-    in mk_comb (“name”, s) end
+            v |> dest_const |> fst
+    in mk_comb (“name”, stringSyntax.fromMLstring (check_var_name s)) end
   val params = listSyntax.mk_list(map v_to_str vs,“:num”)
   val args = listSyntax.mk_list(map add_inv vs,“:v”)
   val lemma = trans_app
@@ -511,23 +520,81 @@ fun to_anf_ish tm =
 
 fun to_anf_conv tm = prove(mk_eq(tm, to_anf_ish tm), simp [LET_THM]);
 
-fun rename_bound_vars_rule prefix th = let
-  val i = ref 0
-  fun next_name orig = let
-    val n = (i:= !i+1; prefix ^ int_to_string (!i))
-    in n end
-  fun next_var v = let
-    val (name, ty) = dest_var v
-    in mk_var(next_name name, ty) end
-  fun next_alpha_conv tm = let
-    val (v,_) = dest_abs tm
-    val _ = not (String.isPrefix prefix (fst (dest_var v))) orelse fail()
-    in ALPHA_CONV (next_var v) tm end handle HOL_ERR _ => NO_CONV tm
-  in CONV_RULE (DEPTH_CONV next_alpha_conv) th end;
+(* Bound variables are given names from the pool v1, v2, ... and a name is
+   reused as soon as its previous holder is dead.  The generated code gives
+   every distinct binder name in a function body its own stack slot (see
+   c_bdrs_def / unique_binders_def in imp_to_asmScript), so this keeps a stack
+   frame proportional to the number of simultaneously live values rather than
+   to the total number of bindings.
+
+   Free variables -- in particular the parameters of the function being
+   translated -- are never renamed, and their names are never reused.
+
+   The binders of a case row need care: the case lemmas bind one pattern
+   variable per read of the scrutinee (case_lets_def, auto_pair_case,
+   auto_list_case, auto_v_case), so each carries an ALL_DISTINCT side
+   condition requiring the pattern variables to differ from each other and
+   from the variables of the scrutinee.  We enforce that for every pattern
+   variable; the lemmas for list-like types would in fact permit the last one
+   to be reused, but the extra name costs nothing worth having. *)
+
+local
+  val pool_prefix = "v"
+  fun lookup_new env v =
+    case List.find (fn (a,_) => aconv a v) env of
+      SOME (_,w) => w
+    | NONE => v
+  (* the pool names that are live in tm, i.e. that must not be reused here *)
+  fun live_names env tm = map (fst o dest_var o lookup_new env) (free_vars tm)
+  fun pick avoid ty = let
+    fun loop i = let val n = pool_prefix ^ int_to_string i in
+                   if mem n avoid then loop (i+1) else mk_var(n,ty) end
+    in loop 1 end
+  (* a saturated case application: the case constant, the scrutinee, and the
+     row functions paired with the arity of the constructor they belong to *)
+  fun dest_case_app tm = let
+    val (f,args) = strip_comb tm
+    val _ = is_const f andalso not (null args) orelse fail()
+    val ty = type_of (hd args)
+    val _ = same_const f (TypeBase.case_const_of ty) orelse fail()
+    val arities = TypeBase.constructors_of ty
+                  |> map (length o fst o strip_fun o type_of)
+    val rows = tl args
+    val _ = length arities = length rows orelse fail()
+    in (f, hd args, zip arities rows) end
+in
+  fun reuse_names_conv tm = let
+    fun ren env tm =
+      if is_var tm then lookup_new env tm else
+      if is_const tm then tm else
+      case total dest_case_app tm of
+        SOME (case_c,e,rows) => let
+          val scrutinee = live_names env e
+          fun row (arity,f) = let
+            fun binders 0 ws env f = (rev ws, env, f)
+              | binders n ws env f =
+                  if not (is_abs f) then (rev ws, env, f) else let
+                    val (v,body) = dest_abs f
+                    val avoid = live_names env body @
+                                map (fst o dest_var) ws @ scrutinee
+                    val w = pick avoid (type_of v)
+                    in binders (n-1) (w::ws) ((v,w)::env) body end
+            val (ws,env1,body) = binders arity [] env f
+            in List.foldr mk_abs (ren env1 body) ws end
+          in list_mk_comb(case_c, ren env e :: map row rows) end
+      | NONE =>
+        if is_comb tm then let val (f,x) = dest_comb tm
+                           in mk_comb(ren env f, ren env x) end
+        else let
+          val (v,body) = dest_abs tm
+          val w = pick (live_names env body) (type_of v)
+          in mk_abs(w, ren ((v,w)::env) body) end
+    in ALPHA tm (ren [] tm) end
+end
 
 fun anf def = let
   fun f th = th |> CONV_RULE (RAND_CONV to_anf_conv)
-                |> rename_bound_vars_rule "v"
+                |> CONV_RULE (RAND_CONV reuse_names_conv)
   in def |> oneline |> CONJUNCTS |> map f |> LIST_CONJ end
 
 fun preprocess_def def = let
@@ -664,11 +731,16 @@ fun define_code q = let
   val v = mk_var(c ^ "_code", dec |> rand |> type_of)
   in new_definition(c ^ "_code_def", mk_eq(v, dec |> rand)) end
 
-fun write_hol_string_to_file filename tm = let
+fun write_string_to_file filename str_tm = let
+  val tm = str_tm |> rand
+  fun dest_num_list acc tm =
+    if cvSyntax.is_cv_num tm then implode (rev acc) else let
+    val (x,y) = cvSyntax.dest_cv_pair tm
+    val c = cvSyntax.dest_cv_num x |> numSyntax.int_of_term |> chr
+    in dest_num_list (c::acc) y end
   val f = TextIO.openOut filename
-  val s = tm |> stringSyntax.fromHOLstring
-  val _ = TextIO.output (f,s)
-  val _ = TextIO.closeOut f
-  in () end
+  val _ = TextIO.output(f,dest_num_list [] tm)
+  val f = TextIO.closeOut f
+  in () end;
 
 end

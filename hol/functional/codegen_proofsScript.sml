@@ -16,7 +16,7 @@ val _ = augment_srw_ss [rewrites [SNOC_APPEND]];
 Definition code_in_def:
   code_in n [] code = T ∧
   code_in n (x::xs) code =
-    (lookup n code = SOME x ∧ code_in (n+1) xs code)
+    (oEL n code = SOME x ∧ code_in (n+1) xs code)
 End
 
 Definition init_code_in_def:
@@ -85,7 +85,7 @@ val goal =
           case outcome of
           | (Halt ec output, ck) => output ≼ s1.output ∧ ec = 1w
           | (State t1, ck) =>
-              state_rel fs s1 t1 ∧ ck = s1.clock ∧
+              state_rel fs s1 t1 ∧ ck = s1.clock ∧ mem_frame t t1 ∧
               ∀v. res = Res v ==>
                   ∃w. v_inv t1 v w ∧
                      if tail' then
@@ -106,7 +106,7 @@ val goals =
           case outcome of
           | (Halt ec output,ck) => output ≼ s1.output ∧ ec = 1w
           | (State t1,ck) =>
-              state_rel fs s1 t1 ∧ ck = s1.clock ∧
+              state_rel fs s1 t1 ∧ ck = s1.clock ∧ mem_frame t t1 ∧
               ∀vs. res = Res vs ==>
                    ∃ws. LIST_REL (v_inv t1) vs ws ∧
                         has_stack t1 (MAP Word (REVERSE ws) ++ curr ++ rest) ∧
@@ -132,12 +132,16 @@ Proof
   Induct \\ fs [even_len_def,ODD,EVEN_ODD]
 QED
 
-Theorem steps_v_inv:
-  steps (State t0,n) (State t1,m) ∧ v_inv t0 a w ⇒ v_inv t1 a w
+(* v_inv reads memory, so it survives only a run that preserves reads: a
+   Store may now overwrite an initialised cell (see write_mem_def), so
+   ‘steps’ alone is not enough.  The compiled code writes each heap cell
+   exactly once, which is what discharges mem_frame at every use. *)
+Theorem mem_frame_v_inv:
+  mem_frame t0 t1 ∧ v_inv t0 a w ⇒ v_inv t1 a w
 Proof
   rw [] \\ pop_assum mp_tac
-  \\ qid_spec_tac ‘w’ \\ Induct_on ‘a’ \\ fs [v_inv_def]
-  \\ imp_res_tac steps_consts \\ fs [] \\ metis_tac []
+  \\ qid_spec_tac ‘w’ \\ Induct_on ‘a’ \\ fs [v_inv_def, mem_frame_def]
+  \\ metis_tac []
 QED
 
 Theorem flatten_acc:
@@ -196,6 +200,23 @@ Proof
   \\ decide_tac
 QED
 
+(* mem_frame only looks at memory, so it is blind to the register/stack/pc
+   updates that make up most of a step. *)
+Theorem mem_frame_ignore[simp]:
+  (mem_frame t0 (t1 with stack := sk) ⇔ mem_frame t0 t1) ∧
+  (mem_frame t0 (t1 with pc := p) ⇔ mem_frame t0 t1) ∧
+  (mem_frame t0 (t1 with regs := r) ⇔ mem_frame t0 t1) ∧
+  (mem_frame t0 (t1 with input := i) ⇔ mem_frame t0 t1) ∧
+  (mem_frame t0 (t1 with output := o') ⇔ mem_frame t0 t1) ∧
+  (mem_frame (t0 with stack := sk) t1 ⇔ mem_frame t0 t1) ∧
+  (mem_frame (t0 with pc := p) t1 ⇔ mem_frame t0 t1) ∧
+  (mem_frame (t0 with regs := r) t1 ⇔ mem_frame t0 t1) ∧
+  (mem_frame (t0 with input := i) t1 ⇔ mem_frame t0 t1) ∧
+  (mem_frame (t0 with output := o') t1 ⇔ mem_frame t0 t1)
+Proof
+  fs [mem_frame_def, read_mem_def]
+QED
+
 Theorem v_inv_ignore[simp]:
   v_inv (t with stack := s) a w = v_inv t a w ∧
   v_inv (t with pc := p) a w = v_inv t a w ∧
@@ -238,7 +259,7 @@ Proof
     \\ fs [WORD_LO] \\ qexists_tac ‘2 * d + 1’ \\ fs [])
   THEN1 (qexists_tac ‘d + 1’ \\ fs [])
   \\ fs [PULL_EXISTS]
-  \\ fs [can_write_mem_def,APPLY_UPDATE_THM]
+  \\ fs [can_write_mem_at_def,APPLY_UPDATE_THM]
   \\ Cases_on ‘a’ \\ fs []
 QED
 
@@ -254,7 +275,22 @@ Proof
   \\ rw [] \\ fs [] \\ rw [] \\ fs []
 QED
 
-Triviality blast_lemma = blastLib.BBLAST_PROVE “w ≠ w + 8w:word64”;
+(* The two Stores that build a Cons cell write the two words the allocator
+   has just handed out, both still uninitialised, so every earlier read
+   survives them. *)
+Theorem mem_frame_update:
+  ∀t0 t a b x y.
+    mem_frame t0 t ∧ t.memory a = SOME NONE ∧ t.memory b = SOME NONE ⇒
+    mem_frame t0 (t with memory := (b =+ y) ((a =+ x) t.memory))
+Proof
+  rw []
+  \\ irule mem_frame_trans
+  \\ qexists_tac ‘t’ \\ fs []
+  \\ irule mem_frame_write_fresh
+  \\ rw [combinTheory.APPLY_UPDATE_THM] \\ gvs []
+QED
+
+Theorem blast_lemma[local] = blastLib.BBLAST_PROVE “w ≠ w + 8w:word64”;
 
 val step_tac =
   ho_match_mp_tac IMP_step \\ fs []
@@ -262,7 +298,7 @@ val step_tac =
   \\ simp [take_branch_cases,APPLY_UPDATE_THM,PULL_EXISTS,set_pc_def]
   \\ fs [write_reg_def,has_stack_def,inc_def,set_pc_def,set_stack_def,
          EVEN,APPLY_UPDATE_THM,ODD,ODD_ADD,blast_lemma,write_mem_def,
-         EVEN_ODD,ODD,take_branch_cases,unset_reg_def];
+         EVEN_ODD,ODD,take_branch_cases,unset_regs_def];
 
 Theorem give_up:
   code_rel fs ds t.instructions ∧
@@ -480,10 +516,13 @@ Proof
     \\ IF_CASES_TAC \\ rw []
     THEN1 (ntac 3 step_tac \\ ho_match_mp_tac IMP_start \\ fs [])
     \\ drule memory_writable_new \\ fs [] \\ strip_tac
-    \\ fs [can_write_mem_def]
+    \\ fs [can_write_mem_at_def]
     \\ ntac 6 step_tac
     \\ ho_match_mp_tac IMP_start \\ fs [APPLY_UPDATE_THM]
     \\ fs [v_inv_def,read_mem_def,APPLY_UPDATE_THM,blast_lemma]
+    \\ rw []
+    \\ TRY (match_mp_tac mem_frame_update \\ fs [] \\ NO_TAC)
+    \\ fs [v_inv_def, read_mem_def, combinTheory.APPLY_UPDATE_THM, blast_lemma]
     \\ rw [] \\ match_mp_tac v_inv_update \\ fs [])
   THEN1
    (ho_match_mp_tac IMP_step \\ fs []
@@ -494,10 +533,13 @@ Proof
     \\ IF_CASES_TAC \\ rw []
     THEN1 (ntac 3 step_tac \\ ho_match_mp_tac IMP_start \\ fs [])
     \\ drule memory_writable_new \\ fs [] \\ strip_tac
-    \\ fs [can_write_mem_def]
+    \\ fs [can_write_mem_at_def]
     \\ ntac 5 step_tac
     \\ ho_match_mp_tac IMP_start \\ fs [APPLY_UPDATE_THM]
     \\ fs [v_inv_def,read_mem_def,APPLY_UPDATE_THM,blast_lemma]
+    \\ rw []
+    \\ TRY (match_mp_tac mem_frame_update \\ fs [] \\ NO_TAC)
+    \\ fs [v_inv_def, read_mem_def, combinTheory.APPLY_UPDATE_THM, blast_lemma]
     \\ rw [] \\ match_mp_tac v_inv_update \\ fs [])
 QED
 
@@ -638,7 +680,7 @@ Proof
     \\ pop_assum mp_tac
     \\ asm_rewrite_tac [LENGTH,EVEN]
     \\ simp [LENGTH,EVEN,ODD_EVEN] \\ rw []
-    \\ fs [unset_reg_def,put_char_def]
+    \\ fs [unset_regs_def,put_char_def]
     \\ ntac 2 step_tac
     \\ ho_match_mp_tac IMP_start \\ fs []
     \\ fs [state_rel_def,APPLY_UPDATE_THM])
@@ -651,7 +693,7 @@ Proof
     \\ pop_assum mp_tac
     \\ asm_rewrite_tac [LENGTH,EVEN]
     \\ simp [LENGTH,EVEN,ODD_EVEN] \\ rw []
-    \\ fs [unset_reg_def,put_char_def]
+    \\ fs [unset_regs_def,put_char_def]
     \\ step_tac
     \\ ho_match_mp_tac IMP_start \\ fs []
     \\ fs [state_rel_def,APPLY_UPDATE_THM])
@@ -714,7 +756,7 @@ Theorem c_test_thm:
   code_in t.pc (c_test test l4) t.instructions ⇒
   ∃t1.
     steps (State t,s.clock) (State t1,s.clock) ∧
-    state_rel fs s t1 ∧ has_stack t1 rest ∧
+    state_rel fs s t1 ∧ has_stack t1 rest ∧ mem_frame t t1 ∧
     t1.pc = if b then l4 else t.pc + 4
 Proof
   Cases_on ‘test’ \\ fs []
@@ -789,10 +831,14 @@ Proof
   THEN1
    (first_x_assum drule \\ fs []
     \\ disch_then (qspecl_then [‘curr’,‘rest’] mp_tac)
-    \\ reverse impl_tac THEN1 (metis_tac [])
+    \\ reverse impl_tac
+    THEN1 (strip_tac
+           \\ goal_assum (first_assum o mp_then Any mp_tac)
+           \\ rpt TOP_CASE_TAC \\ fs []
+           \\ metis_tac [mem_frame_trans])
     \\ fs [] \\ imp_res_tac steps_inst \\ fs []
     \\ fs [env_ok_def] \\ rw [] \\ res_tac \\ fs []
-    \\ imp_res_tac steps_v_inv \\ fs []
+    \\ imp_res_tac mem_frame_v_inv \\ fs []
     \\ Cases_on ‘tail'’ \\ fs [])
   \\ qpat_x_assum ‘_ = t5.pc’ (assume_tac o GSYM) \\ fs []
   \\ first_x_assum drule \\ fs []
@@ -800,7 +846,7 @@ Proof
   \\ impl_tac THEN1
    (fs [] \\ imp_res_tac steps_inst \\ fs []
     \\ fs [env_ok_def] \\ rw [] \\ res_tac \\ fs []
-    \\ imp_res_tac steps_v_inv \\ fs [])
+    \\ imp_res_tac mem_frame_v_inv \\ fs [])
   \\ strip_tac
   \\ ho_match_mp_tac IMP_steps \\ fs []
   \\ goal_assum (first_assum o mp_then Any mp_tac)
@@ -808,14 +854,17 @@ Proof
   \\ reverse (Cases_on ‘outcome0’) \\ fs []
   THEN1 (ho_match_mp_tac IMP_start \\ fs [])
   \\ reverse (Cases_on ‘res’) \\ fs []
-  THEN1 (ho_match_mp_tac IMP_start \\ fs [])
+  THEN1 (ho_match_mp_tac IMP_start \\ fs []
+         \\ metis_tac [mem_frame_trans])
   \\ rename [‘COND taill’] \\ Cases_on ‘taill’ \\ fs []
-  THEN1 (ho_match_mp_tac IMP_start \\ fs [] \\ fs [has_stack_def])
+  THEN1 (ho_match_mp_tac IMP_start \\ fs [] \\ fs [has_stack_def]
+         \\ metis_tac [mem_frame_trans])
   \\ imp_res_tac steps_inst
   \\ fs [has_stack_def,code_in_def]
   \\ step_tac
   \\ ho_match_mp_tac IMP_start \\ fs []
   \\ fs [state_rel_def]
+  \\ metis_tac [mem_frame_trans]
 QED
 
 Theorem c_exp_Let:
@@ -854,7 +903,7 @@ Proof
     \\ rw [] \\ fs [find_def] \\ rw []
     \\ once_rewrite_tac [find_acc] \\ fs [ADD1]
     \\ fs [GSYM ADD1,APPLY_UPDATE_THM]
-    \\ imp_res_tac steps_v_inv \\ fs [] \\ res_tac \\ fs [])
+    \\ imp_res_tac mem_frame_v_inv \\ fs [] \\ res_tac \\ fs [])
   \\ strip_tac
   \\ Cases_on ‘tail'’
   THEN1
@@ -865,7 +914,8 @@ Proof
     \\ Cases_on ‘q’ \\ fs []
     \\ imp_res_tac eval_mono
     \\ imp_res_tac rich_listTheory.IS_PREFIX_TRANS \\ fs [PULL_EXISTS]
-    \\ rw [] \\ rpt (goal_assum (first_assum o mp_then Any mp_tac)))
+    \\ rw [] \\ rpt (goal_assum (first_assum o mp_then Any mp_tac))
+    \\ metis_tac [mem_frame_trans])
   \\ fs []
   \\ Cases_on ‘outcome’ \\ fs []
   \\ reverse (Cases_on ‘q’) \\ fs []
@@ -876,11 +926,14 @@ Proof
   \\ reverse (Cases_on ‘res’) \\ fs []
   THEN1
    (qexists_tac ‘State s'',s3.clock’ \\ fs []
-    \\ imp_res_tac steps_rules \\ fs [])
+    \\ imp_res_tac steps_rules \\ fs []
+    \\ metis_tac [mem_frame_trans])
   \\ rename [‘steps (State t7,s2.clock) (State t8,s3.clock)’] \\ rw []
   \\ qexists_tac ‘(State (t8 with <| pc := t8.pc+1; stack := TL t8.stack |>), s3.clock)’
   \\ fs [] \\ rpt strip_tac
   \\ TRY (fs [state_rel_def] \\ NO_TAC)
+  \\ TRY (irule mem_frame_trans \\ fs []
+          \\ goal_assum (first_assum o mp_then Any mp_tac) \\ fs [] \\ NO_TAC)
   THEN1
    (match_mp_tac (steps_rules |> CONJUNCTS |> last)
     \\ goal_assum (first_assum o mp_then Any mp_tac)
@@ -898,7 +951,7 @@ Proof
     \\ qpat_x_assum ‘_ = t8.stack’ (assume_tac o GSYM) \\ fs [])
   \\ goal_assum (first_assum o mp_then Any mp_tac)
   \\ fs [has_stack_def] \\ rfs []
-  \\ metis_tac [TL]
+  \\ metis_tac [TL, mem_frame_trans]
 QED
 
 val Call_init_tac = rw [] \\ rpt (pop_assum mp_tac) \\ Cases_on ‘tail'’
@@ -1016,7 +1069,7 @@ Theorem c_pushes_thm:
     l1 = pos + LENGTH (flatten c []) ∧
     has_stack t5 (new_curr ++ rest) ∧
     env_ok (make_env params args empty_env) vs1 new_curr t5 ∧
-    state_rel fs r t5 ∧
+    state_rel fs r t5 ∧ mem_frame t t5 ∧
     t5.instructions = t.instructions
 Proof
   rw []
@@ -1247,9 +1300,13 @@ Proof
   \\ goal_assum (first_assum o mp_then Any mp_tac) \\ fs [Abbr‘t3’]
   \\ qpat_x_assum ‘t5.pc = _’ (assume_tac o GSYM)  \\ fs []
   \\ first_x_assum drule \\ fs []
-  \\ disch_then match_mp_tac \\ fs []
-  \\ goal_assum (first_assum o mp_then Any mp_tac) \\ fs []
-  \\ fs [state_rel_def]
+  \\ disch_then (qspecl_then [‘new_curr’,‘rest’] mp_tac)
+  \\ impl_tac
+  THEN1 (fs [] \\ fs [state_rel_def])
+  \\ strip_tac
+  \\ goal_assum (first_assum o mp_then Any mp_tac)
+  \\ rpt TOP_CASE_TAC \\ fs []
+  \\ metis_tac [mem_frame_trans]
 QED
 
 Theorem c_exp_Call_not_tail:
@@ -1361,14 +1418,16 @@ Proof
     \\ reverse (Cases_on ‘outcome0’) \\ fs [] \\ rw []
     THEN1 (goal_assum (first_assum o mp_then Any mp_tac) \\ fs [])
     \\ reverse (Cases_on ‘res’) \\ fs []
-    THEN1 (goal_assum (first_assum o mp_then Any mp_tac) \\ fs [])
+    THEN1 (goal_assum (first_assum o mp_then Any mp_tac) \\ fs []
+           \\ metis_tac [mem_frame_trans])
     \\ ho_match_mp_tac IMP_steps
     \\ goal_assum (first_assum o mp_then Any mp_tac) \\ fs []
     \\ step_tac
     \\ fs [PULL_EXISTS,has_stack_def]
     \\ qpat_x_assum ‘_ = _.stack’ (assume_tac o GSYM) \\ fs []
     \\ ho_match_mp_tac IMP_start \\ fs []
-    \\ fs [state_rel_def])
+    \\ fs [state_rel_def]
+    \\ metis_tac [mem_frame_trans])
   THEN1
    (Cases_on ‘r.clock’ \\ fs []
     \\ ho_match_mp_tac IMP_step \\ fs []
@@ -1424,7 +1483,8 @@ Proof
     \\ reverse (Cases_on ‘outcome0’) \\ fs [] \\ rw []
     THEN1 (goal_assum (first_assum o mp_then Any mp_tac) \\ fs [])
     \\ reverse (Cases_on ‘res’) \\ fs []
-    THEN1 (goal_assum (first_assum o mp_then Any mp_tac) \\ fs [])
+    THEN1 (goal_assum (first_assum o mp_then Any mp_tac) \\ fs []
+           \\ metis_tac [mem_frame_trans])
     \\ ho_match_mp_tac IMP_steps
     \\ goal_assum (first_assum o mp_then Any mp_tac) \\ fs []
     \\ step_tac
@@ -1433,7 +1493,8 @@ Proof
     \\ imp_res_tac steps_inst \\ fs []
     \\ step_tac
     \\ ho_match_mp_tac IMP_start \\ fs []
-    \\ fs [state_rel_def,APPLY_UPDATE_THM])
+    \\ fs [state_rel_def,APPLY_UPDATE_THM]
+    \\ metis_tac [mem_frame_trans])
 QED
 
 Theorem c_exp_Call:
@@ -1488,7 +1549,7 @@ Proof
     \\ rw [] \\ fs [find_def]
     \\ once_rewrite_tac [find_acc] \\ fs [ADD1]
     \\ fs [GSYM ADD1]
-    \\ imp_res_tac steps_v_inv \\ fs [])
+    \\ imp_res_tac mem_frame_v_inv \\ fs [])
   \\ strip_tac
   \\ qexists_tac ‘outcome’
   \\ conj_tac THEN1 (Cases_on ‘outcome’ \\ imp_res_tac steps_rules \\ fs [])
@@ -1499,7 +1560,8 @@ Proof
   \\ imp_res_tac rich_listTheory.IS_PREFIX_TRANS \\ fs [PULL_EXISTS]
   \\ full_simp_tac std_ss [GSYM APPEND_ASSOC,APPEND]
   \\ rpt (goal_assum (first_assum o mp_then Any mp_tac))
-  \\ imp_res_tac steps_v_inv \\ fs []
+  \\ imp_res_tac mem_frame_v_inv \\ fs []
+  \\ metis_tac [mem_frame_trans]
 QED
 
 
@@ -1547,7 +1609,7 @@ QED
 
 (* compilation of enitre program *)
 
-Triviality FST_SND:
+Theorem FST_SND[local]:
   FST = (λ(x,y). x) ∧ SND = (λ(x,y). y)
 Proof
   fs [FUN_EQ_THM,FORALL_PROD]
@@ -1651,16 +1713,16 @@ Proof
   \\ once_rewrite_tac [flatten_acc] \\ fs []
 QED
 
-Theorem lookup_LENGTH:
-  ∀xs h ys. lookup (LENGTH xs) (xs ⧺ h::ys) = SOME h
+Theorem oEL_LENGTH_APPEND:
+  ∀xs h ys. oEL (LENGTH xs) (xs ⧺ h::ys) = SOME h
 Proof
-  Induct \\ fs [x64asm_semanticsTheory.lookup_def]
+  Induct \\ fs [oEL_def]
 QED
 
 Theorem IMP_code_in_append:
   ∀xs ys k. k = LENGTH xs ⇒ code_in k ys (xs ++ ys)
 Proof
-  Induct_on ‘ys’ \\ fs [code_in_def,lookup_LENGTH] \\ rw []
+  Induct_on ‘ys’ \\ fs [code_in_def,oEL_LENGTH_APPEND] \\ rw []
   \\ first_x_assum (qspec_then ‘xs ++ [h]’ mp_tac)
   \\ fs [] \\ full_simp_tac std_ss [GSYM APPEND_ASSOC,APPEND] \\ fs []
 QED
@@ -1668,10 +1730,10 @@ QED
 Theorem IMP_code_in_append2:
   ∀xs ys zs k. k = LENGTH xs ⇒ code_in k ys (xs ++ ys ++ zs)
 Proof
-  Induct_on ‘ys’ \\ fs [code_in_def,lookup_LENGTH] \\ rw []
+  Induct_on ‘ys’ \\ fs [code_in_def,oEL_LENGTH_APPEND] \\ rw []
   \\ first_x_assum (qspec_then ‘xs ++ [h]’ mp_tac)
   \\ fs [] \\ full_simp_tac std_ss [GSYM APPEND_ASSOC,APPEND]
-  \\ fs [lookup_LENGTH]
+  \\ fs [oEL_LENGTH_APPEND]
 QED
 
 Theorem c_decs_code_in:
@@ -1735,7 +1797,7 @@ Proof
   \\ rw [] \\ fs []
   \\ ntac 4 (ho_match_mp_tac IMP_step \\ fs []
              \\ once_rewrite_tac [step_cases]
-             \\ simp [fetch_def,init_def,x64asm_semanticsTheory.lookup_def]
+             \\ simp [fetch_def,init_def,oEL_def]
              \\ fs [write_reg_def,inc_def,APPLY_UPDATE_THM,
                     set_pc_def,set_stack_def,LENGTH_EQ_NUM_compute])
   \\ qmatch_goalsub_abbrev_tac ‘State t2’
@@ -1785,13 +1847,13 @@ Proof
   \\ fs [fetch_def,has_stack_def]
   \\ ho_match_mp_tac IMP_step \\ fs []
   \\ once_rewrite_tac [step_cases]
-  \\ simp [fetch_def,init_def,x64asm_semanticsTheory.lookup_def]
+  \\ simp [fetch_def,init_def,oEL_def]
   \\ fs [write_reg_def,inc_def,APPLY_UPDATE_THM,
          set_pc_def,set_stack_def,LENGTH_EQ_NUM_compute,PULL_EXISTS]
   \\ imp_res_tac steps_inst \\ fs [Abbr‘t2’]
   \\ ntac 2 (ho_match_mp_tac IMP_step \\ fs []
              \\ once_rewrite_tac [step_cases]
-             \\ simp [fetch_def,init_def,x64asm_semanticsTheory.lookup_def]
+             \\ simp [fetch_def,init_def,oEL_def]
              \\ fs [write_reg_def,inc_def,APPLY_UPDATE_THM,
                     set_pc_def,set_stack_def,LENGTH_EQ_NUM_compute])
   \\ ho_match_mp_tac IMP_start \\ fs []

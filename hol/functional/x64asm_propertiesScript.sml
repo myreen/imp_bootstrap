@@ -20,15 +20,61 @@ Inductive steps:
     steps (s2,n2) (s3,n3) ⇒ steps (s1,n1) (s3,n3))
 End
 
+(* A step preserves the instruction list and the domain of memory.  It does
+   not preserve memory *contents*: Store may overwrite an initialised cell
+   (see write_mem_def).  step_memory below says exactly what a step can do to
+   memory, and mem_frame is the condition under which reads survive. *)
 Theorem step_consts:
   step (State t0) (State t1) ⇒
   t1.instructions = t0.instructions ∧
-  ∀w x. read_mem w t0 = SOME x ⇒ read_mem w t1 = SOME x
+  ∀w x. read_mem w t0 = SOME x ⇒ ∃y. read_mem w t1 = SOME y
 Proof
   fs [step_cases] \\ rw [] \\ fs []
   \\ EVAL_TAC
   \\ gvs[APPLY_UPDATE_THM,write_mem_def,AllCaseEqs(),read_mem_def]
-  \\ metis_tac[optionTheory.NOT_NONE_SOME, optionTheory.SOME_11]
+  \\ rw [] \\ gvs [] \\ metis_tac []
+QED
+
+(* A step either leaves memory alone or writes one cell that was already part
+   of the machine's memory. *)
+Theorem step_memory:
+  step (State t0) (State t1) ⇒
+  t1.memory = t0.memory ∨
+  ∃a w v. t0.memory a = SOME v ∧ t1.memory = (a =+ SOME (SOME w)) t0.memory
+Proof
+  fs [step_cases] \\ rw [] \\ fs []
+  \\ EVAL_TAC
+  \\ gvs [write_mem_def, AllCaseEqs()]
+  \\ metis_tac []
+QED
+
+(* mem_frame t0 t1: every successful read at t0 still succeeds, with the same
+   value, at t1.  This is what v_inv needs in order to be carried forward. *)
+Definition mem_frame_def:
+  mem_frame t0 t1 ⇔ ∀a x. read_mem a t0 = SOME x ⇒ read_mem a t1 = SOME x
+End
+
+Theorem mem_frame_refl[simp]:
+  mem_frame t t
+Proof
+  fs [mem_frame_def]
+QED
+
+Theorem mem_frame_trans:
+  mem_frame t0 t1 ∧ mem_frame t1 t2 ⇒ mem_frame t0 t2
+Proof
+  fs [mem_frame_def]
+QED
+
+(* Writing only cells that were still uninitialised keeps every read intact --
+   this is how the functional code generator, which writes each heap cell
+   exactly once, discharges mem_frame. *)
+Theorem mem_frame_write_fresh:
+  (∀a. t1.memory a ≠ t0.memory a ⇒ t0.memory a = SOME NONE) ⇒ mem_frame t0 t1
+Proof
+  rw [mem_frame_def, read_mem_def]
+  \\ Cases_on ‘t1.memory a = t0.memory a’ \\ gvs []
+  \\ res_tac \\ gvs []
 QED
 
 Theorem steps_consts:
@@ -38,11 +84,12 @@ Theorem steps_consts:
     ∀t0 n t1 m.
       x = (State t0,n) ∧ y = (State t1,m) ⇒
       t1.instructions = t0.instructions ∧
-      ∀w x. read_mem w t0 = SOME x ⇒ read_mem w t1 = SOME x
+      ∀w x. read_mem w t0 = SOME x ⇒ ∃y. read_mem w t1 = SOME y
 Proof
   Induct_on ‘steps’ \\ rw [] \\ gvs[]
   \\ imp_res_tac step_consts \\ gvs[]
   \\ gs[Once step_cases]
+  \\ res_tac \\ res_tac \\ metis_tac []
 QED
 
 Theorem steps_inst:
@@ -164,7 +211,7 @@ Proof
   \\ imp_res_tac step_determ \\ rw [] \\ res_tac
 QED
 
-Triviality steps_NRC:
+Theorem steps_NRC[local]:
   ∀s1 n1 s2 n2.
     steps (s1,n1) (s2,n2) ⇒ ∃k. NRC step (n1 - n2 + k) s1 s2 ∧ n2 ≤ n1
 Proof
@@ -182,7 +229,7 @@ Theorem step_mono:
 Proof
   rw [step_cases] \\
   gvs [write_reg_def,inc_def,set_pc_def,set_stack_def,write_mem_def,
-       AllCaseEqs(),unset_reg_def,put_char_def]
+       AllCaseEqs(),unset_regs_def,put_char_def]
 QED
 
 Theorem NRC_step_mono:

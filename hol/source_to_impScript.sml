@@ -2,6 +2,7 @@ Theory source_to_imp
 Ancestors
   arithmetic list pair finite_map string pred_set combin
   source_syntax imp_source_syntax source_semantics imp_source_semantics
+  imp_source_properties
 Libs
   wordsLib
 
@@ -274,7 +275,7 @@ Proof
   \\ first_x_assum drule_all \\ strip_tac \\ gvs []
 QED
 
-Triviality with_clock[simp]:
+Theorem with_clock[local,simp]:
   ((t:imp_source_semantics$state) with clock := t.clock) = t
 Proof
   fs [imp_source_semanticsTheory.state_component_equality]
@@ -298,7 +299,7 @@ Proof
   \\ rw [] \\ res_tac \\ fs []
 QED
 
-Triviality oEL_isPREFIX:
+Theorem oEL_isPREFIX[local]:
   ∀xs ys n y. xs ≼ ys ∧ oEL n xs = SOME y ⇒ oEL n ys = SOME y
 Proof
   Induct \\ Cases_on ‘ys’ \\ fs [oEL_def] \\ rw []
@@ -319,79 +320,11 @@ Proof
   \\ drule_all v_rel_isPREFIX \\ fs []
 QED
 
-Theorem eval_exp_with_clock:
-  ∀e s v s1.
-    eval_exp e s = (v,s1) ⇒
-    eval_exp e (s with clock := s.clock + k) = (v,s1 with clock := s1.clock + k)
-Proof
-  Induct
-  \\ fs [eval_exp_def,AllCaseEqs(),bind_def] \\ rw []
-  \\ res_tac \\ fs [combine_words_def |> DefnBase.one_line_ify NONE, AllCaseEqs()]
-  \\ rpt (CASE_TAC \\ gvs [])
-  \\ fs [AllCaseEqs(),bind_def,mem_load_def |> DefnBase.one_line_ify NONE] \\ rw []
-QED
-
-Theorem eval_exps_with_clock:
-  ∀e s v s1.
-    eval_exps e s = (v,s1) ⇒
-    eval_exps e (s with clock := s.clock + k) = (v,s1 with clock := s1.clock + k)
-Proof
-  Induct
-  \\ gvs [eval_exps_def,bind_def,AllCaseEqs()]
-  \\ rw [] \\ imp_res_tac eval_exp_with_clock
-  \\ res_tac \\ fs []
-QED
-
-Theorem eval_test_with_clock:
-  ∀e s v s1.
-    eval_test e s = (v,s1) ⇒
-    eval_test e (s with clock := s.clock + k) = (v,s1 with clock := s1.clock + k)
-Proof
-  Induct
-  \\ gvs [eval_test_def,bind_def,AllCaseEqs()]
-  \\ rw [] \\ imp_res_tac eval_exp_with_clock
-  \\ res_tac \\ fs []
-  \\ gvs [eval_cmp_def |> DefnBase.one_line_ify NONE, AllCaseEqs()]
-  \\ rpt (CASE_TAC \\ gvs [])
-QED
-
-Theorem eval_cmd_add_clock:
-  ∀cs s res s1.
-    eval_cmd cs s = (res,s1) ∧ res ≠ Stop TimeOut ⇒
-    ∀k. eval_cmd cs (s with clock := s.clock + k) = (res,s1 with clock := s1.clock + k)
-Proof
-  ho_match_mp_tac eval_cmd_ind \\ rw []
-  >- gvs [eval_cmd_def,AllCaseEqs(),bind_def]
-  >- gvs [eval_cmd_def,AllCaseEqs(),bind_def]
-  >- (gvs [eval_cmd_def,bind_def,eval_exp_with_clock,CaseEq"prod"]
-      \\ imp_res_tac eval_exp_with_clock \\ fs [] \\ gvs [AllCaseEqs()])
-  >- gvs [eval_cmd_def,AllCaseEqs(),bind_def]
-  >- (gvs [eval_cmd_def,bind_def,eval_exp_with_clock,CaseEq"prod"]
-      \\ imp_res_tac eval_exp_with_clock \\ fs []
-      \\ gvs [AllCaseEqs(),put_char_def |> DefnBase.one_line_ify NONE])
-  >- gvs [eval_cmd_def,AllCaseEqs(),bind_def,get_char_def]
-  >- (gvs [eval_cmd_def,bind_def,CaseEq"prod"]
-      \\ imp_res_tac eval_exp_with_clock \\ fs []
-      \\ gvs [AllCaseEqs(),alloc_def])
-  >- (gvs [eval_cmd_def,bind_def,CaseEq"prod"]
-      \\ imp_res_tac eval_exp_with_clock \\ fs []
-      \\ gvs [AllCaseEqs(),update_def |> DefnBase.one_line_ify NONE]
-      \\ imp_res_tac eval_exp_with_clock \\ fs [])
-  >- (gvs [eval_cmd_def,bind_def,CaseEq"prod"]
-      \\ imp_res_tac eval_test_with_clock \\ gvs []
-      \\ gvs [AllCaseEqs()])
-  >- (gvs [eval_cmd_def,bind_def,eval_exp_with_clock,CaseEq"prod"]
-      \\ imp_res_tac eval_exp_with_clock \\ fs []
-      \\ gvs [AllCaseEqs()])
-  >- (fs [eval_cmd_def,CaseEq"prod"]
-      \\ imp_res_tac eval_exps_with_clock \\ fs []
-      \\ gvs [AllCaseEqs(),tick_def])
-  \\ qpat_x_assum ‘eval_cmd _ _ = _’ mp_tac
-  \\ once_rewrite_tac [eval_cmd_def]
-  \\ gvs [bind_def,CaseEq"prod"] \\ rw []
-  \\ imp_res_tac eval_test_with_clock \\ gvs []
-  \\ gvs [AllCaseEqs(),tick_def]
-QED
+(* eval_exp/eval_exps/eval_test/eval_cmd_add_clock_variant are proved in
+   imp_source_propertiesScript.sml; here we only restate the clock lemma with
+   its antecedents conjoined, which is the form used below. *)
+Theorem eval_cmd_add_clock =
+  REWRITE_RULE [AND_IMP_INTRO] eval_cmd_add_clock_variant;
 
 Theorem env_rel_make_env:
   LIST_REL (v_rel m) rs ws ∧ LENGTH params = LENGTH ws ⇒

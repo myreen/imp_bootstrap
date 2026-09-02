@@ -77,7 +77,7 @@ Definition lookup_var_def[simp]:
      | NONE => stop Crash s
 End
 
-Definition combine_words_def[simp]:
+Definition combine_word_def[simp]:
   combine_word f (Word w1) (Word w2) = cont (Word (f w1 w2)) ∧
   combine_word f _ _ = stop Crash
 End
@@ -405,7 +405,7 @@ Proof
           dest_word_def |> DefnBase.one_line_ify NONE]
 QED
 
-Triviality fix_eval:
+Theorem fix_eval[local]:
   fix s (eval_cmd xs s) = eval_cmd xs s
 Proof
   Cases_on ‘eval_cmd xs s’ \\ imp_res_tac eval_cmd_clock \\ fs [fix_def]

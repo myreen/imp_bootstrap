@@ -30,14 +30,6 @@ Definition less_def[simp]:
   less (Num n) (Num m) <=> n < m
 End
 
-Definition plus_def[simp]:
-  plus (Num n) (Num m) = Num (n + m)
-End
-
-Definition minus_def[simp]:
-  minus (Num n) (Num m) = Num (n - m)
-End
-
 Definition div_def[simp]:
   div (Num n) (Num m) = Num (n DIV m)
 End

@@ -2,12 +2,20 @@ From impboot.utils Require Import Core.
 From impboot.functional Require Import FunSyntax FunSemantics FunValues.
 From impboot.imperative Require Import ImpSyntax ImpSemantics ImpProperties.
 From coqutil.Word Require Import Interface Properties.
+From coqutil.Word Require Naive.
+#[local] Existing Instance Naive.word64_ok.
 From impboot.fp2imp Require Import FpToImpCodegen.
 From impboot.commons Require Import ProofUtils.
 From Stdlib Require Import Program.Equality.
 From Patat Require Import Patat.
 
 Open Scope N.
+
+(* Rocq 9.1's simpl reduces the word.unsigned projection to Naive's record
+   field of the same name; fold it back so the word lemmas and the hypotheses
+   are in the same form. *)
+Ltac fold_unsigned :=
+  change (@Naive.unsigned 64) with (@word.unsigned 64 Naive.word64) in *.
 
 Fixpoint list_rel {A} {B} (R: A -> B -> Prop) (al: list A) (bl: list B): Prop :=
   match al, bl with
@@ -705,7 +713,7 @@ Proof.
   1: rewrite Properties.word.unsigned_of_Z_nowrap; eauto; lia.
   assert (word.unsigned (word.of_Z (Z.of_N narg2): word64) = (Z.of_N narg2)) as Harg2.
   1: rewrite Properties.word.unsigned_of_Z_nowrap; eauto; lia.
-  with_strategy transparent [word.unsigned] simpl word.unsigned in *.
+  fold_unsigned.
   rewrite Harg1, Harg2 in *.
   clear Harg1 Harg2.
   rewrite Z.ltb_ge in *.
@@ -1146,11 +1154,11 @@ Proof.
         rewrite N2Z.inj_div; eauto.
         with_strategy transparent [word.divu] simpl word.divu at 1.
         rewrite word.unsigned_eqb, word.unsigned_of_Z_0 in *.
-        with_strategy transparent [word.unsigned] simpl word.unsigned in Hneq.
+        fold_unsigned.
         rewrite Hneq.
         assert (word.unsigned (word.of_Z (Z.of_N narg1): word64) = Z.of_N narg1) as Harg1 by (rewrite Properties.word.unsigned_of_Z_nowrap; try lia).
         assert (word.unsigned (word.of_Z (Z.of_N narg2): word64) = Z.of_N narg2) as Harg2 by (rewrite Properties.word.unsigned_of_Z_nowrap; try lia).
-        with_strategy transparent [word.unsigned] simpl word.unsigned in Harg1, Harg2.
+        fold_unsigned.
         rewrite Harg1, Harg2.
         reflexivity.
       }

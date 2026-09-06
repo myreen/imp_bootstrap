@@ -28,6 +28,11 @@ Definition compiler_program_asm := match compiler_program_imp with
 | Some p => codegen p
 end.
 
-Definition compiler_asm_str := asm2bs compiler_program_asm.
+(* compiler_asm_str is the specification -- the same ascii string the shallow
+   ‘compiler’ produces (it uses asm2str), which is what CompilerProofs relates
+   the machine's output to.  compiler_asm_bs is the bytestring used for
+   printing, which is much faster to Compute. *)
+Definition compiler_asm_str := asm2str compiler_program_asm.
+Definition compiler_asm_bs := asm2bs compiler_program_asm.
 
-Time Compute compiler_asm_str.
+Time Compute compiler_asm_bs.

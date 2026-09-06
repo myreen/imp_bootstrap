@@ -5,8 +5,15 @@ From impboot.commons Require Import CompilerUtils ProofUtils.
 From impboot.imperative Require Import ImpSyntax ImpSemantics ImpProperties.
 From impboot.assembly Require Import ASMSyntax ASMSemantics ASMProperties.
 From coqutil.Word Require Import Interface.
+From coqutil.Word Require Naive.
+#[local] Existing Instance Naive.word64_ok.
 From Stdlib Require Import Program.Equality.
 From Patat Require Import Patat.
+
+(* cbn/simpl reduces the word.unsigned projection to Naive's record field of
+   the same name; fold it back so both forms are one atom again. *)
+Ltac fold_unsigned :=
+  change (@Naive.unsigned 64) with (@word.unsigned 64 Naive.word64) in *.
 
 (* Definitions of invariants and relations *)
 
@@ -639,6 +646,7 @@ Proof.
   unfold word.wrap in *.
   (* THIS IS HORRIBLY SLOW *)
   cbn in *.
+  fold_unsigned.
   lia.
 Qed.
 
@@ -1432,6 +1440,7 @@ Proof.
   2: contradiction.
   unfold value_eqb in *.
   rewrite word.unsigned_eqb in *; rewrite word.unsigned_of_Z in *; simpl word.unsigned in *; unfold word.wrap in *; rewrite Z.mod_0_l in *; [|lia].
+  fold_unsigned.
   rewrite Heqb in *.
   destruct (c_exp e1 (pc t) vs) eqn:?; simpl in *; unfold dlet in *; simpl in *.
   destruct (c_exp e2 n (None :: vs)) eqn:?; simpl in *; unfold dlet in *; simpl in *.
@@ -1492,6 +1501,7 @@ Proof.
       eapply steps_refl.
     }
     crunch_side_conditions.
+    fold_unsigned.
     rewrite Heqb; reflexivity.
   }
   all: eauto.

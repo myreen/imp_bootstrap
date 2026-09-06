@@ -37,7 +37,7 @@ Definition code_rel (fs : f_lookup) (ds : list func) (instructions : list instr)
     find_fun n ds = Some (params, body) ->
     exists pos,
       lookup fs n = pos /\
-      code_in pos (flatten (fst (c_fundef (Func n params body) pos fs))) instructions.
+      code_in pos (flatten (fst (c_fundef (Func n params body) pos fs)) []) instructions.
 
 (* Establishes a relation between an imperative state and an ASM state, including code alignment and register setup. *)
 Definition state_rel (fs : f_lookup) (s : ImpSemantics.state) (t : ASMSemantics.state) : Prop :=
@@ -220,7 +220,7 @@ Definition goal_exp (e : exp): Prop :=
     pmap_in_memory pmap s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
     odd (List.length rest) = true ->
-    code_in t.(pc) (flatten asmc) t.(instructions) ->
+    code_in t.(pc) (flatten asmc []) t.(instructions) ->
     exists outcome,
       steps (State t, fuel) outcome /\
       match outcome with
@@ -249,7 +249,7 @@ Definition goal_exps (es: list exp): Prop :=
     pmap_in_memory pmap s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
     odd (List.length rest) = true ->
-    code_in t.(pc) (flatten asmc) t.(instructions) ->
+    code_in t.(pc) (flatten asmc []) t.(instructions) ->
     exists outcome,
       steps (State t, fuel) outcome /\
       match outcome with
@@ -278,7 +278,7 @@ Definition goal_test (tst: test): Prop :=
     pmap_in_memory pmap s.(ImpSemantics.memory) ->
     pmap_ok pmap ->
     odd (List.length rest) = true ->
-    code_in t.(pc) (flatten asmc) t.(instructions) ->
+    code_in t.(pc) (flatten asmc []) t.(instructions) ->
     exists outcome,
       steps (State t, fuel) outcome /\
       match outcome with
@@ -313,7 +313,7 @@ Definition goal_cmd (c : cmd) (fuel: nat): Prop :=
     pmap_in_bounds pmap (t.(regs) R14) ->
     odd (List.length rest) = true ->
     odd (List.length curr) = true ->
-    code_in t.(pc) (flatten asmc) t.(instructions) ->
+    code_in t.(pc) (flatten asmc []) t.(instructions) ->
     exists outcome pmap1,
       steps (State t, s1.(steps_done) - s.(steps_done)) outcome /\
       pmap_ok pmap1 /\
@@ -625,8 +625,40 @@ Proof.
   lia.
 Qed.
 
+Lemma flatten_acc: forall {A: Type} (a: app_list A) b,
+  flatten a b = List.app (flatten a []) b.
+Proof.
+  induction a; simpl; intros.
+  - now rewrite app_nil_r.
+  - now rewrite IHa1, IHa2, IHa1 with (b := flatten a2 []), app_assoc.
+Qed.
+
+Ltac normalize_flatten :=
+  repeat match goal with
+  | H : context[flatten ?a (flatten ?b ?acc)] |- _ =>
+      rewrite (flatten_acc a (flatten b acc)) in H
+  | H : context[flatten ?a (List.app ?xs ?ys)] |- _ =>
+      rewrite (flatten_acc a (List.app xs ys)) in H
+  | H : context[flatten ?a (?x :: ?xs)] |- _ =>
+      rewrite (flatten_acc a (x :: xs)) in H
+  | |- context[flatten ?a (flatten ?b ?acc)] =>
+      rewrite (flatten_acc a (flatten b acc))
+  | |- context[flatten ?a (List.app ?xs ?ys)] =>
+      rewrite (flatten_acc a (List.app xs ys))
+  | |- context[flatten ?a (?x :: ?xs)] =>
+      rewrite (flatten_acc a (x :: xs))
+  end.
+
+Lemma length_flatten: forall {A: Type} (a: app_list A) b,
+  List.length (flatten a b) = List.length (flatten a nil) + (List.length b).
+Proof.
+  induction a; simpl; intros.
+  - now rewrite length_app, app_nil_r.
+  - now rewrite IHa1, IHa2, IHa1 with (b := flatten a2 nil), Nat.add_assoc.
+Qed.
+
 Theorem c_exp_length: forall e l vs c l1,
-  c_exp e l vs = (c, l1) -> l1 = l + List.length (flatten c).
+  c_exp e l vs = (c, l1) -> l1 = l + List.length (flatten c []).
 Proof.
   induction e.
   all: intros.
@@ -638,6 +670,8 @@ Proof.
   | [ |- context[ fst ?x ] ] => destruct x eqn:?; simpl in *
   | [ H : c_exp _ _ (None :: _) = (_, _) |- _ ] => eapply IHe2 in H; subst
   | [ H : c_exp _ _ ?_l = (_, _) |- _ ] => eapply IHe1 in H; subst
+  | [ |- context[ List.length (flatten _ (?h :: ?t)) ] ] => rewrite length_flatten with (b := h :: t)
+  | [ |- context[ List.length (flatten _ (flatten ?l ?acc)) ] ] => rewrite length_flatten with (b := flatten l acc)
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
@@ -647,7 +681,7 @@ Proof.
 Qed.
 
 Theorem c_exps_length: forall e l vs c l1,
-  c_exps e l vs = (c, l1) -> l1 = l + List.length (flatten c).
+  c_exps e l vs = (c, l1) -> l1 = l + List.length (flatten c []).
 Proof.
   induction e.
   all: intros.
@@ -658,6 +692,7 @@ Proof.
   | [ H : c_exps _ _ _ = (_, _) |- _ ] => eapply IHe in H; subst
   | [ H : c_exp _ _ _ = (_, _) |- _ ] =>
     eapply c_exp_length in H; subst
+  | [ |- context[ List.length (flatten _ (flatten ?l ?acc)) ] ] => rewrite length_flatten with (b := flatten l acc)
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
@@ -667,7 +702,7 @@ Proof.
 Qed.
 
 Theorem c_test_length: forall tst lt lf l vs c l1,
-  c_test tst lt lf l vs = (c, l1) -> l1 = l + List.length (flatten c).
+  c_test tst lt lf l vs = (c, l1) -> l1 = l + List.length (flatten c []).
 Proof.
   induction tst.
   all: intros.
@@ -682,6 +717,8 @@ Proof.
   | [ H : c_test _ _ _ _ _ = (_, _) |- _ ] => eapply IHtst in H; subst
   | [ H: c_exp _ _ _ = (_, _) |- _ ] =>
     eapply c_exp_length in H; subst
+  | [ |- context[ List.length (flatten _ (?h :: ?t)) ] ] => rewrite length_flatten with (b := h :: t)
+  | [ |- context[ List.length (flatten _ (flatten ?l ?acc)) ] ] => rewrite length_flatten with (b := flatten l acc)
   | _ => progress unfold c_var, c_const, dlet in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
@@ -691,17 +728,15 @@ Proof.
 Qed.
 
 Theorem appl_len_spec: forall {A} (l: app_list A),
-  appl_len l = List.length (flatten l).
+  appl_len l = List.length (flatten l []).
 Proof.
-  induction l; simpl; unfold dlet; [rewrite list_len_spec|]; eauto.
-  rewrite IHl1; rewrite IHl2.
-  rewrite list_app_spec.
-  rewrite length_app.
+  induction l; simpl; unfold dlet; [rewrite list_len_spec, app_nil_r|]; eauto.
+  rewrite IHl1, IHl2, length_flatten with (b := flatten _ _).
   reflexivity.
 Qed.
 
 Theorem c_cmd_length: forall c l fs vs l1 asm1,
-  c_cmd c l fs vs = (asm1, l1) -> l1 = l + List.length (flatten asm1).
+  c_cmd c l fs vs = (asm1, l1) -> l1 = l + List.length (flatten asm1 []).
 Proof.
   induction c.
   all: intros.
@@ -722,6 +757,8 @@ Proof.
     eapply c_exps_length in H; subst
   | [ H: c_test _ _ _ _ _ = (_, _) |- _ ] =>
     eapply c_test_length in H; subst
+  | [ |- context[ List.length (flatten _ (?h :: ?t)) ] ] => rewrite length_flatten with (b := h :: t)
+  | [ |- context[ List.length (flatten _ (flatten ?a ?acc)) ] ] => rewrite length_flatten with (b := flatten a acc)
   | _ => progress unfold dlet, c_alloc, c_assign, c_var in *
   | _ => progress simpl in *
   | _ => progress rewrite length_app
@@ -1262,6 +1299,7 @@ Proof.
   unfold goal_exp in H; eapply H in Heqp; clear H; eauto.
   all: repeat rewrite list_app_spec in *.
   all: simpl flatten in *.
+  all: normalize_flatten.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -1337,6 +1375,7 @@ Proof.
   unfold goal_exp in H; eapply H with (fuel := fuel) in Heqp; clear H; eauto.
   all: repeat rewrite list_app_spec in *.
   all: simpl flatten in *.
+  all: normalize_flatten.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -1422,6 +1461,7 @@ Proof.
   unfold goal_exp in H; eapply H with (fuel := fuel) in Heqp; clear H; eauto.
   all: repeat rewrite list_app_spec in *.
   all: simpl flatten in *.
+  all: normalize_flatten.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -1520,6 +1560,7 @@ Proof.
   intros; subst.
   unfold goal_exp in H; eapply H with (fuel := fuel) in Heqp; clear H; eauto.
   all: repeat rewrite list_app_spec in *.
+  all: normalize_flatten.
   all: repeat rewrite code_in_append in *; cleanup.
   all: try congruence.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -1631,7 +1672,7 @@ Proof.
   2: eval_exp_contr_stop_tac.
   pat `match ?o with _ => _ end = _` at destruct o; cleanup.
   2: eval_exps_contr_stop_tac.
-  rewrite list_app_spec in *; rewrite code_in_append in *.
+  repeat rewrite list_app_spec in *; normalize_flatten; repeat rewrite code_in_append in *.
   spat `eval_exp` at specialize eval_exp_pure with (1 := spat) as Htmp; rewrite Htmp in *; clear Htmp.
   spat `c_exp` at specialize c_exp_length with (1 := spat) as Htmp; rewrite Htmp in *; clear Htmp.
   spat `eval_exp` at specialize c_exp_correct as Htmp; unfold goal_exp in Htmp; eapply Htmp with (fuel := fuel) in spat; clear Htmp; cleanup; eauto; try congruence.
@@ -1746,6 +1787,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   repeat rewrite list_app_spec in *.
+  normalize_flatten.
   repeat rewrite code_in_append in *; cleanup.
   eval_exp_correct_tac.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -1855,6 +1897,7 @@ Proof.
   specialize (eval_exp_pure e2 _ _ _ Heqp0).
   intros; subst.
   repeat rewrite list_app_spec in *.
+  normalize_flatten.
   repeat rewrite code_in_append in *; cleanup.
   eval_exp_correct_tac.
   rwr ltac:(specialize (c_exp_length e1 _ _ _ _ Heqp1)).
@@ -2017,6 +2060,7 @@ Proof.
   specialize (eval_test_pure tst2 _ _ _ Heqp0).
   intros; subst.
   repeat rewrite list_app_spec in *.
+  normalize_flatten.
   repeat rewrite code_in_append in *; cleanup.
   assert (pc t + 1 + 1 = pc t + 2) as Htmp; [lia|]; rewrite Htmp in *; clear Htmp.
   rwr ltac:(specialize (c_test_length tst1 _ _ _ _ _ _ Heqp1)).
@@ -2111,6 +2155,7 @@ Proof.
   specialize (eval_test_pure tst2 _ _ _ Heqp0).
   intros; subst.
   repeat rewrite list_app_spec in *.
+  normalize_flatten.
   repeat rewrite code_in_append in *; cleanup.
   assert (pc t + 1 + 1 = pc t + 2) as Htmp; [lia|]; rewrite Htmp in *; clear Htmp.
   rwr ltac:(specialize (c_test_length tst1 _ _ _ _ _ _ Heqp1)).
@@ -2284,7 +2329,8 @@ Proof.
   simpl flatten in *; unfold dlet in *; simpl in *; cleanup.
   repeat rewrite list_len_spec in *.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?; cleanup; subst.
-  simpl flatten in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; repeat rewrite list_app_spec in *; normalize_flatten.
+  repeat rewrite code_in_append in *; cleanup.
   simpl code_in in *; cleanup.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `eval_exp e _ = (?r, _)` at
@@ -2473,14 +2519,14 @@ Lemma c_assign_thm: forall n v l l1 fs s vs t x h curr rest fuel c pmap,
   In (Some n) vs ->
   v_inv pmap v x ->
   env_ok s.(vars) vs (Word h :: curr) pmap ->
-  code_in t.(pc) (flatten c) t.(instructions) ->
+  code_in t.(pc) (flatten c []) t.(instructions) ->
   has_stack t (Word x :: Word h :: (curr ++ rest)) ->
   state_rel fs s t ->
   ∃ t1,
     steps (State t, fuel) (State t1, fuel) ∧
     has_stack t1 ((mk_new_curr n x h curr vs) ++ rest) ∧
-    t1.(pc) = t.(pc) + List.length (flatten c) ∧
-    l1 = l + List.length (flatten c) ∧
+    t1.(pc) = t.(pc) + List.length (flatten c []) ∧
+    l1 = l + List.length (flatten c []) ∧
     env_ok (IEnv.insert (n, Some v) s.(vars)) vs (mk_new_curr n x h curr vs) pmap ∧
     state_rel fs s t1 ∧ regs t1 R14 = regs t R14 ∧
     t1.(instructions) = t.(instructions) ∧
@@ -2535,6 +2581,7 @@ Proof.
   destruct c_exp eqn:?; cleanup.
   simpl flatten in *; unfold dlet in *; simpl in *; cleanup.
   repeat rewrite list_app_spec in *.
+  normalize_flatten.
   repeat rewrite code_in_append in *; cleanup.
   destruct o; unfold_outcome; cleanup.
   2: eval_exp_contr_stop_tac.
@@ -2640,7 +2687,8 @@ Proof.
   destruct (c_cmd c1 _ _ _) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c2 _ _ _) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
   repeat rewrite list_app_spec in *.
-  simpl flatten in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; normalize_flatten.
+  repeat rewrite code_in_append in *; cleanup.
   pat `c_cmd c1 _ _ _ = _` at rwr ltac:(specialize (c_cmd_length c1 _ _ _ _ _ pat)).
   pat `c_cmd c2 _ _ _ = _` at specialize (c_cmd_length c2 _ _ _ _ _ pat) as ?; subst.
   destruct (eval_cmd c1 _) eqn:?; simpl in *; cleanup.
@@ -2703,7 +2751,8 @@ Proof.
   destruct (c_test _ _ _ _ _) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c _ _ _) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
   repeat rewrite list_app_spec in *.
-  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
+  simpl flatten in *; normalize_flatten.
+  repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
   spat `c_test` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
   spat `c_cmd c` at specialize (c_cmd_length c _ _ _ _ _ spat) as ?; subst.
   destruct eval_test eqn:?; cleanup.
@@ -2713,7 +2762,7 @@ Proof.
   spat `c_test` at
     assert (pc t0 + 3 = pc (set_pc (pc t0 + 3) t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
   spat `c_cmd` at
-    assert (pc t0 + 3 + Datatypes.length (flatten a) = pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
+    assert (pc t0 + 3 + Datatypes.length (flatten a []) = pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a [])) t0)) as Htmp by reflexivity; rewrite Htmp in spat; clear Htmp.
   spat `eval_test` at specialize (eval_test_pure t _ _ _ spat) as ?; subst.
   destruct v eqn:?; cleanup; subst.
   2: { (* test = false *)
@@ -2761,7 +2810,7 @@ Proof.
     2: unfold state_rel in *; cleanup; pat `regs _ R14 = _` at rewrite pat in *; eauto.
     all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
     destruct x eqn:?; destruct s eqn:?; cleanup; subst.
-    assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
+    assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a [])) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a [])) s2))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
     spat `eval_cmd c` at unfold goal_cmd in spat; eapply H in spat; eapply spat in H2; clear spat; cleanup; eauto.
     2: unfold state_rel in *; cleanup; simpl in *; eapply r14_mono_IMP_pmap_in_bounds; eauto.
     2: simpl; assert (pc t0 + 3 = S ( S ( S (pc t0)))) as -> by lia;
@@ -2804,7 +2853,7 @@ Proof.
   2: unfold state_rel in *; cleanup; pat `regs _ R14 = _` at rewrite pat in *; eauto.
   all: rewrite Nat.add_comm; simpl; repeat rewrite Nat.add_1_r in *; eauto; cleanup.
   destruct x eqn:?; destruct s2 eqn:?; cleanup; subst.
-  assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a)) s3))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
+  assert ((pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a [])) t0)) = (pc (set_pc (pc t0 + 3 + Datatypes.length (flatten a [])) s3))) as Htmp by reflexivity; rewrite Htmp in *; clear Htmp.
   assert (Cont v <> Stop Crash) by congruence.
   assert (s0.(steps_done) <= s.(steps_done)).
   1: pat `eval_cmd _ _ _ = _` at eapply eval_cmd_steps_done_steps_up in pat; lia.
@@ -2886,7 +2935,8 @@ Proof.
   all: simpl; eauto.
   2: eapply env_ok_IMP_odd_curr1 with (curr := curr); eauto.
   2: {
-    simpl; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append; cleanup; repeat split.
+    simpl; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; normalize_flatten.
+    repeat rewrite code_in_append; cleanup; repeat split.
     all: pat `steps (_, _) (State s2, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: pat `steps (_, _) (State s3, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
     all: repeat rewrite Nat.add_1_r; eauto; pat `pc s3 = _` at try rewrite <- pat; eauto.
@@ -2922,7 +2972,7 @@ Proof.
       pat `steps (_, _) (State s3, _)` at rwr ltac:(specialize (steps_instructions _ _ _ _ pat)); simpl.
       pat `pc s2 = _` at rewrite pat; eauto.
       pat `pc s3 = _` at rewrite pat in *; eauto.
-      assert (pc t0 + 3 + List.length (flatten a) = S (S (S (pc t0 + List.length (flatten a))))) as -> by lia; eauto.
+      assert (pc t0 + 3 + List.length (flatten a []) = S (S (S (pc t0 + List.length (flatten a []))))) as -> by lia; eauto.
     }
     1: econstructor.
     simpl.
@@ -2936,8 +2986,8 @@ Proof.
   1: { (* steps (body) ~~> State *)
     simpl in *; cleanup.
     crunch_side_conditions.
-    assert ( (S (pc t0 + 3 + Datatypes.length (flatten a) + Datatypes.length (flatten a0))) =
-      (S (Datatypes.length (flatten a0) + (pc t0 + 3 + Datatypes.length (flatten a))))) as <- by lia.
+    assert ( (S (pc t0 + 3 + Datatypes.length (flatten a []) + Datatypes.length (flatten a0 []))) =
+      (S (Datatypes.length (flatten a0 []) + (pc t0 + 3 + Datatypes.length (flatten a []))))) as <- by lia.
     eauto.
   }
   (* steps (body) ~~> Halt *)
@@ -2983,7 +3033,8 @@ Proof.
   destruct (c_cmd c1) eqn:?; simpl in *; subst; cleanup.
   destruct (c_cmd c2) eqn:?; simpl in *; subst; cleanup; unfold dlet in *; simpl in *.
   repeat rewrite list_app_spec in *.
-  simpl flatten in *; repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
+  simpl flatten in *; normalize_flatten.
+  repeat rewrite code_in_append in *; cleanup; simpl code_in in *.
   spat `c_test` at rw ltac:(specialize (c_test_length _ _ _ _ _ _ _ spat)).
   spat `c_cmd c1` at specialize c_cmd_length with (1 := spat) as ?; subst.
   spat `c_cmd c2` at specialize c_cmd_length with (1 := spat) as ?; subst.
@@ -3330,7 +3381,8 @@ Proof.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   pat `eval_exp e' _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; normalize_flatten.
+  repeat rewrite code_in_append in *; cleanup.
   pat `c_exp a _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `c_exp e' _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
@@ -3440,7 +3492,7 @@ Proof.
   destruct c_assign eqn:?; simpl in *; cleanup.
   unfold c_assign, dlet, c_read, dlet in *.
   simpl in *; unfold dlet in *; simpl in *; cleanup.
-  simpl flatten in *; rewrite list_app_spec in *.
+  simpl flatten in *; repeat rewrite list_app_spec in *; normalize_flatten.
   repeat rewrite code_in_append in *; cleanup.
   spat `env_ok` at pose proof spat as Henv_ok; unfold env_ok in spat; cleanup.
   unfold has_stack in *|-; cleanup.
@@ -3473,8 +3525,6 @@ Proof.
       simpl; unfold write_reg; simpl.
       eapply steps_step_same.
       eapply step_pop; simpl; eauto.
-      simpl; unfold write_reg; simpl.
-      assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
     }
     unfold write_reg, set_stack; simpl.
     unfold state_rel in *; cleanup.
@@ -3506,8 +3556,6 @@ Proof.
       simpl; unfold write_reg; simpl.
       eapply steps_step_same.
       eapply step_pop; simpl; eauto.
-      simpl; unfold write_reg; simpl.
-      assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
     }
     unfold write_reg, set_stack; simpl.
     unfold state_rel in *; cleanup.
@@ -3537,7 +3585,7 @@ Proof.
       1: rewrite Nat.even_succ; rewrite Nat.odd_add; rewrite Nat.even_succ in *; rewrite <- Nat.negb_even in *; pat `negb (Nat.even (List.length rest)) = _` at rewrite Nat.negb_even in pat.
       1: spat `Nat.even (List.length curr)` at rewrite spat; spat `Nat.odd (List.length rest)` at rewrite spat; simpl; eauto.
       simpl; unfold write_reg; simpl.
-      assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
+      assert (pc t + 1 + 1 = pc t + 2) as Htmp by lia; rewrite Htmp in *; clear Htmp.
       eapply steps_trans.
       1: eapply steps_step_same.
       1: eapply step_storersp; simpl; eauto.
@@ -3583,7 +3631,7 @@ Proof.
     1: rewrite Nat.even_succ; rewrite Nat.odd_add; rewrite Nat.even_succ in *; rewrite <- Nat.negb_even in *; pat `negb (Nat.even (List.length rest)) = _` at rewrite Nat.negb_even in pat.
     1: spat `Nat.even (List.length curr)` at rewrite spat; spat `Nat.odd (List.length rest)` at rewrite spat; simpl; eauto.
     simpl; unfold write_reg; simpl.
-    assert (pc t + 1 + 1 = pc t + 2) as -> by lia; eauto.
+    assert (pc t + 1 + 1 = pc t + 2) as Htmp by lia; rewrite Htmp in *; clear Htmp.
     eapply steps_trans.
     1: eapply steps_step_same.
     1: eapply step_storersp; simpl; eauto.
@@ -3631,7 +3679,8 @@ Proof.
   destruct (_ <? _) eqn:?; cleanup; [|congruence].
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; normalize_flatten.
+  repeat rewrite code_in_append in *; cleanup.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `eval_exp e _ = (?r, _)` at
     assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
@@ -3977,7 +4026,8 @@ Proof.
   unfold assign in *; unfold_outcome; cleanup.
   pat `eval_exp e _ = _` at specialize eval_exp_pure with (1 := pat) as ?.
   cleanup; subst.
-  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; repeat rewrite code_in_append in *; cleanup.
+  simpl flatten in *; unfold dlet in *; simpl in *; repeat rewrite list_app_spec in *; normalize_flatten.
+  repeat rewrite code_in_append in *; cleanup.
   pat `c_exp e _ _ = _` at specialize c_exp_length with (1 := pat) as Htmp; rewrite <- Htmp in *; clear Htmp.
   pat `eval_exp e _ = (?r, _)` at
     assert (r <> Stop Crash) as ? by congruence; specialize c_exp_correct as Htmp1; unfold goal_exp in Htmp1; eapply Htmp1 with (fuel := 0) in pat; unfold exp_res_rel in pat; eauto; clear Htmp1; cleanup.
@@ -4512,7 +4562,7 @@ Definition pops_regs ws rgs :=
 
 Lemma pops_thm: forall t fs ds ws rest r15 (xs: list exp) (vs: v_stack) fuel,
   has_stack t (map Word (rev ws) ++ rest) ->
-  code_in t.(pc) (flatten (c_pops xs vs)) t.(instructions) ->
+  code_in t.(pc) (flatten (c_pops xs vs) []) t.(instructions) ->
   code_rel fs ds t.(instructions) ->
   t.(regs) R15 = Some r15 ->
   List.length xs = List.length ws ->
@@ -4523,7 +4573,7 @@ Lemma pops_thm: forall t fs ds ws rest r15 (xs: list exp) (vs: v_stack) fuel,
     | (Halt ec out, _) => t.(output) = out ∧ ec = (word.of_Z 4)
     | (State t1, fuel1) =>
       fuel1 = fuel ∧ List.length ws ≤ 5 ∧
-      t1 = set_pc (t.(pc) + List.length (flatten (c_pops xs vs))) (
+      t1 = set_pc (t.(pc) + List.length (flatten (c_pops xs vs) [])) (
         set_stack rest (
           set_regs (pops_regs ws t.(regs)) t
         )
@@ -4736,7 +4786,7 @@ Ltac crunch_ienv :=
 
 Lemma pushes_thm: forall t fs s fuel params args ws rest pos c vs1 l1 w rgs pmap, 
   c_pushes params pos = (c, vs1, l1) ->
-  code_in t.(pc) (flatten c) t.(instructions) ->
+  code_in t.(pc) (flatten c []) t.(instructions) ->
   t.(regs) = pops_regs ws rgs ->
   t.(stack) = rest -> List.length params ≤ 5 ->
   t.(regs) RAX = Some w ->
@@ -4746,8 +4796,8 @@ Lemma pushes_thm: forall t fs s fuel params args ws rest pos c vs1 l1 w rgs pmap
   state_rel fs s t ->
   ∃ new_curr t5,
     steps (State t, fuel) (State t5, fuel) ∧
-    t5.(pc) = t.(pc) + List.length (flatten c) ∧
-    l1 = pos + List.length (flatten c) ∧
+    t5.(pc) = t.(pc) + List.length (flatten c []) ∧
+    l1 = pos + List.length (flatten c []) ∧
     has_stack t5 (new_curr ++ rest) ∧
     env_ok (make_env params args IEnv.empty) vs1 new_curr pmap ∧
     state_rel fs s t5 ∧
@@ -5043,6 +5093,7 @@ Proof.
   unfold set_varsM in *; unfold_outcome; cleanup.
   repeat (rewrite ?list_app_spec, ?appl_len_spec in * ).
   pat `eval_exps _ _ = _` at specialize eval_exps_pure with (1 := pat) as ?; subst.
+  normalize_flatten.
   repeat (rewrite code_in_append in * ); cleanup.
   spat `eval_exps` at specialize eval_exps_length with (1 := spat) as ?.
   pat `eval_exps es _ = (?r, _)` at
@@ -5093,18 +5144,25 @@ Proof.
   simpl in *; unfold dlet in *; simpl in *.
   repeat (rewrite ?list_app_spec, ?appl_len_spec, ?list_len_spec, ?length_app in * ).
   destruct c_cmd eqn:?.
+  normalize_flatten.
   repeat (rewrite code_in_append in * ); cleanup; simpl in *; cleanup.
   unfold has_stack in *; cleanup.
   specialize pops_regs_rw with (ws := x) (rgs := regs s) as ?; cleanup.
   spat `c_pushes` at pose proof spat as Htmp; eapply pushes_thm with 
-    (t := (set_pc _ (set_stack (map (λ _ : option N, Uninit) vs_body ++ (RetAddr (pc s + Datatypes.length (flatten (c_pops es vs)) + 1) :: curr ++ rest)) (set_regs (pops_regs x s.(regs)) s))))
+    (t := (set_pc _ (set_stack (map (λ _ : option N, Uninit) vs_body ++ (RetAddr (pc s + Datatypes.length (flatten (c_pops es vs) []) + 1) :: curr ++ rest)) (set_regs (pops_regs x s.(regs)) s))))
     (fuel := s1.(steps_done) - s0.(steps_done) - 1) in Htmp; simpl; cleanup.
   6: pat `regs s RAX = _` at rewrite <- pat in *; cleanup; eauto.
   all: eauto; try lia.
   2: {
     intros.
     destruct (rev x) eqn:?; simpl in *; try congruence.
-    1: destruct x; simpl in *; cleanup; try congruence; pat `_ ++ _ = []` at eapply app_eq_nil in pat; cleanup; congruence.
+    1: {
+      pat `rev x = []` at pose proof pat as Hrev.
+      assert (List.length x = 0) as Hlen by
+        (rewrite <- length_rev, Hrev; reflexivity).
+      apply length_zero_iff_nil in Hlen; subst.
+      contradiction.
+    }
     pat `Word _ :: _ = Word _ :: _` at inversion pat; subst; simpl; eauto.
     rewrite last_eq_head_rev; pat `rev _ = _` at rewrite pat; simpl; eauto.
   }
@@ -5272,13 +5330,15 @@ Proof.
   destruct curr as [|h curr1] eqn:?; simpl in *; rewrite ?Nat.odd_0 in *; [congruence|].
   pat `h :: _ ++ _ = _ :: _` at inversion pat; simpl in *; subst.
   spat `c_assign` at eapply c_assign_thm with
-    (t := (set_pc (pc s + Datatypes.length (flatten (c_pops es vs)) + 1) (set_stack (_ ++ rest) s4)))
+    (t := (set_pc (pc s + Datatypes.length (flatten (c_pops es vs) []) + 1) (set_stack (_ ++ rest) s4)))
     (h := x6) (curr := curr1) (rest := rest) (s := set_vars _ _) (fuel := 0)
     in spat; simpl; eauto; cleanup.
   3: { (* code_in *)
     pat `_ = instructions s4` at rewrite <- pat.
     pat `instructions x9 = instructions s` at rewrite pat.
-    rewrite <- Nat.add_assoc; eauto.
+    replace (pc s + (Datatypes.length (flatten (c_pops es vs) []) + 1))
+      with (pc s + Datatypes.length (flatten (c_pops es vs) []) + 1) by lia.
+    exact c0.
   }
   2: eapply env_ok_pmap_subsume; eauto.
   2: { (* has_stack *)
@@ -5348,7 +5408,7 @@ Proof.
 Qed.
 
 Lemma c_pushes_length: forall ps l asm1 vs1 l1,
-  c_pushes ps l = (asm1, vs1, l1) -> l1 = List.length (flatten asm1) + l.
+  c_pushes ps l = (asm1, vs1, l1) -> l1 = List.length (flatten asm1 []) + l.
 Proof.
   intros.
   unfold c_pushes, dlet in *; simpl in *.
@@ -5357,7 +5417,7 @@ Proof.
 Qed.
 
 Lemma c_fundef_length: forall f l fs c1 l1,
-  c_fundef f l fs = (c1, l1) -> l1 = List.length (flatten c1) + l.
+  c_fundef f l fs = (c1, l1) -> l1 = List.length (flatten c1 []) + l.
 Proof.
   intros.
   unfold c_fundef, dlet in *.
@@ -5370,6 +5430,7 @@ Proof.
   simpl in *; cleanup.
   simpl; unfold dlet in *; simpl in *.
   all: repeat rewrite list_app_spec in *.
+  normalize_flatten.
   repeat (rewrite length_app; simpl).
   lia.
 Qed.
@@ -5518,8 +5579,8 @@ Lemma c_fndefs_code_in: forall funcs fs0 fs asm1 l1 n params body xs,
   find_fun n funcs = Some (params, body) ->
   exists pos,
     lookup fs n = pos ∧
-    code_in pos (flatten (fst (c_fundef (Func n params body) pos fs0)))
-      (xs ++ flatten asm1).
+    code_in pos (flatten (fst (c_fundef (Func n params body) pos fs0)) [])
+      (xs ++ flatten asm1 []).
 Proof.
   Opaque c_fundef.
   induction funcs; intros; simpl in *|-; cleanup.
@@ -5540,7 +5601,8 @@ Proof.
     split; [reflexivity|].
     spat `c_fundef` at rewrite spat; simpl; unfold dlet; simpl.
     repeat rewrite list_app_spec in *.
-    assert (xs ++ Comment (N2ascii n1) :: flatten a0 ++ Ret :: flatten a1 = (xs ++ [Comment (N2ascii n1)]) ++ flatten a0 ++ Ret :: flatten a1) as ->.
+    normalize_flatten.
+    assert (xs ++ Comment (N2ascii n1) :: flatten a0 [] ++ Ret :: flatten a1 [] = (xs ++ [Comment (N2ascii n1)]) ++ flatten a0 [] ++ Ret :: flatten a1 []) as ->.
     1: induction xs; simpl; try rewrite <- app_assoc; eauto.
     eapply code_in_append_left2.
     rewrite length_app; simpl.
@@ -5548,8 +5610,12 @@ Proof.
   }
   subst Sasm1 Sfs.
   pat `c_fundef _ _ _ = _` at eapply c_fundef_length in pat; subst.
-  assert (Datatypes.length (flatten a0) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2ascii n1)] +++ a0 +++ List [Ret]))) as Hrwlength.
-  1: simpl; rewrite list_app_spec; repeat rewrite length_app; simpl; repeat rewrite length_app; simpl; lia.
+  assert (Datatypes.length (flatten a0 []) + (Datatypes.length xs + 1) + 1 = List.length (xs ++ flatten (List [Comment (N2ascii n1)] +++ a0 +++ List [Ret]) [])) as Hrwlength.
+  1: {
+    simpl; repeat rewrite list_app_spec; normalize_flatten.
+    repeat rewrite length_app; simpl.
+    rewrite length_app; simpl; lia.
+  }
   rewrite Hrwlength in *.
   spat `c_fndefs` at eapply IHfuncs in spat; eauto; cleanup; simpl; unfold dlet in *; simpl in *.
   eexists; split; simpl.
@@ -5560,10 +5626,11 @@ Proof.
   }
   simpl in *; unfold dlet in *; simpl in *.
   repeat rewrite list_app_spec in *.
+  normalize_flatten.
   rewrite app_comm_cons.
   rewrite app_assoc.
-  assert (Ret :: flatten a1 = [Ret] ++ flatten a1) as -> by (simpl; reflexivity).
-  rewrite app_assoc with (n := flatten a1).
+  assert (Ret :: flatten a1 [] = [Ret] ++ flatten a1 []) as -> by (simpl; reflexivity).
+  rewrite app_assoc with (n := flatten a1 []).
   rewrite <- app_assoc with (n := [Ret]).
   rewrite <- app_comm_cons.
   eauto.
@@ -5609,6 +5676,7 @@ Proof.
   repeat rewrite list_app_spec in *.
   repeat rewrite list_len_spec in *.
   simpl in *.
+  rewrite app_nil_r in *.
   unfold catch_return in *.
   spat `let (_, _) := ?x in _` at destruct x eqn:?; unfold_outcome.
   destruct (c_fndefs funcs _ _) eqn:Heqcfuns0.

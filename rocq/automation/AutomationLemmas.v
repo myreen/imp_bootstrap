@@ -6,8 +6,6 @@ From impboot.assembly Require ASMSyntax.
 From impboot.imperative Require ImpSyntax.
 From coqutil Require Import Datatypes.List dlet.
 From coqutil.Word Require Import Interface Properties.
-From coqutil.Word Require Naive.
-#[local] Existing Instance Naive.word64_ok.
 From Patat Require Import Patat.
 
 Create HintDb automation.

@@ -74,6 +74,9 @@ Fixpoint odd_len {A: Type} (xs: list A) : bool :=
 Theorem odd_len_equation: ltac2:(unfold_fix_type '@odd_len).
 Proof. unfold_fix_proof '@odd_len. Qed.
 
+(* jump label for failure cases
+  b – does the stack need to be aligned
+*)
 Definition give_up (b: bool): nat := 
   if b then 15 else 16.
 

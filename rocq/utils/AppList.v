@@ -6,10 +6,10 @@ Arguments app_list: clear implicits.
 Declare Scope app_list_scope.
 Notation "xs +++ ys" := (Append xs ys) (right associativity, at level 60): app_list_scope.
 
-Fixpoint flatten {A: Type} (xs: app_list A): list A :=
+Fixpoint flatten {A: Type} (xs: app_list A) (acc: list A): list A :=
   match xs with
-  | List l => l
-  | Append l1 l2 => flatten l1 ++ flatten l2
+  | List l => l ++ acc
+  | Append l1 l2 => flatten l1 (flatten l2 acc)
   end.
 
 Fixpoint appl_len {A: Type} (xs: app_list A): nat :=

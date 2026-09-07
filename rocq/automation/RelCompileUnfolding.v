@@ -32,7 +32,6 @@ Ltac2 rewrite_with_equation (fconstr: constr): unit :=
   let f_str: string option := Option.bind fref reference_to_string in
   let f_equation_str: string option := Option.map (fun n => String.app n "_equation") f_str in
   let f_equation_ident: ident list option := Option.map (fun s => ident_of_fqn [s]) f_equation_str in
-  (* print (messsage_of_option (Option.map (fun l => messsage_of_list (List.map Message.of_ident l)) f_equation_ident)); *)
   let f_equation_ref: reference list := List.flat_map (fun id => Env.expand id) (opt_to_list f_equation_ident) in
   match f_equation_ref with
   | [ref] =>
@@ -71,45 +70,3 @@ Ltac2 unfold_once (fconstr: constr) (fargs: constr list): unit :=
     rewrite_with_equation fconstr
   else
     unfold_ref_everywhere cname_ref.
-
-(* TESTS: *)
-
-(* Definition has_match (l: list nat) : nat :=
-  1 +
-  match l with
-  | nil => 0
-  | cons h t => h + 100
-  end.
-
-Lemma has_match_equation : ltac:(unfold_tpe has_match).
-Proof. ltac1:(unfold_proof). Qed.
-
-About has_match_equation.
-
-Fixpoint sum_n (n : nat) : nat :=
-  match n with
-  | 0 => 1 + 1
-  | S n1 => (sum_n n1)(*  + n *)
-  end.
-
-Lemma sum_n_equation : ltac:(unfold_tpe sum_n).
-Proof. ltac1:(unfold_proof). Qed.
-
-About sum_n_equation.
-
-Goal forall n, sum_n n = 1.
-Proof.
-  intros.
-  rewrite_with_equation constr:(sum_n).
-  (* unfold_once constr:(sum_n) constr:(forall n, sum_n n = 1). *)
-  (* rewrite sum_n_equation. *)
-  (* ltac1:(unfold_fix sum_n). *)
-Abort.
-
-Goal forall l, has_match l = 1.
-Proof.
-  intros.
-  (* rewrite has_match_equation. *)
-  (* unfolded_def constr:(has_match). *)
-  (* ltac1:(unfold_fix has_match). *)
-Abort. *)

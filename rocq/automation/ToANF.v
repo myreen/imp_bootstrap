@@ -13,9 +13,6 @@ Ltac2 mutable debug_to_anf := false.
 
 Ltac2 rec proper_const_f (c: constr): bool :=
   match Constr.Unsafe.kind c with
-  (* | Var _ => true *)
-  (* TODO: probably should remove this (next) line – it allows too many undesirable things as consts *)
-  (* | Unsafe.Constant _ _ => true *)
   | Unsafe.Constructor _ _ => true
   | Unsafe.App c cs => Bool.and (proper_const_f c) (Array.for_all proper_const_f cs)
   | _ => false
@@ -81,12 +78,6 @@ Module ConstrMap.
     | (k', v) :: m =>
       if Constr.equal k k' then Some v else find_opt k m
     end.
-  Ltac2 print (m: t): unit :=
-    printf "ConstrMap contents:";
-    List.iter (fun (kv: constr * constr) =>
-      let (k, v) := kv in
-      printf "  %t -> %t" k v
-    ) m.
 End ConstrMap.
 
 Ltac2 rec replace_with_lifts (e: constr) (lifts: ConstrMap.t): constr :=
@@ -143,7 +134,6 @@ Ltac2 rec in_letd_definitions (dlet_rhss: constr list) (to_replace: constr list)
     continuation (acc_lifts)
   end.
 
-(* might want to run dedup on constrs to lift (but a different equality than Constr.equal might be nice – it is too precise) *)
 Ltac2 rec to_anf_alt (level: int) (in_list: bool) (e: constr): (constr list * constr) :=
   if is_allowed e then
     if is_list_like_const e then ([e], e)
@@ -152,7 +142,6 @@ Ltac2 rec to_anf_alt (level: int) (in_list: bool) (e: constr): (constr list * co
   match! e with
   | dlet ?e1 ?e2 =>
     let (e1_lifts, e1_anf) := to_anf_alt 0 false e1 in
-    (* let (_, e2_anf) := to_anf_alt 0 false e2 in *)
     let all_lifts := e1_lifts in
     let lifted_anf := in_letd_definitions all_lifts all_lifts ConstrMap.empty (fun lifts =>
       let e1_anf_replaced := replace_with_lifts e1_anf lifts in
@@ -199,98 +188,6 @@ Ltac2 try_to_anf_relcompile () :=
       (if debug_to_anf then printf "Trying to convert %t into ANF form" c else ());
       let anf := to_anf_final c in
       (if debug_to_anf then printf "ANF form: %t" anf else ());
-      (* TODO: benchmark if rewrite is actually that much worse *)
-      (* try (assert ( $c = $anf) as -> by (reflexivity ())) *)
-      (* let inst := Pattern.instantiate ctxt anf in *)
-      (* printf "Replacing %t with its ANF form %t in the goal" c anf; *)
-      (* TODO: this doesn't work :/ *)
-      (* try (change $inst) *)
-      (* Control.plus (fun _ => change $inst) (fun _ =>
-        printf "Failed to change %t with %t, trying rewrite instead" c anf;
-        Control.plus (fun _ => assert ($c = $anf) as -> by (reflexivity ())) (fun _ =>
-          (* can I throw something outside of a match? the match consumes the error *)
-          printf "Failed to change %t into ANF form %t, even with rewrite" c anf;
-          ()
-        )
-      ) *)
-       (* TODO: this also sometimes doesn't work (e.g. for `[]` -> `let/d l := [] in l` ) *)
       try (ltac1:(c anf |- change c with anf) (Ltac1.of_constr c) (Ltac1.of_constr anf))
     end
   end.
-
-(* TEST *)
-
-Inductive Animal := Dog | Cat | Fish.
-
-Definition foo1 (x y : nat) (l: list Animal): nat :=
-  x + y.
-
-Ltac2 toANF () :=
-  Control.enter (fun () =>
-    match! goal with
-    | [ |- ?c = _ ] =>
-      let anf := to_anf_final c in
-      printf "ANF form: %t" anf;
-      try (assert ( $c = $anf) as -> by (reflexivity ()))
-    end
-  ).
-
-Goal forall x y, match x with
-  | 0 => y
-  | S x1 => foo1 x (y + (x * 2)) [Dog; Cat]
-  end = 1.
-  intros.
-  destruct x.
-  all: toANF ().
-  Show Proof.
-  (* ltac1:(replace (foo1 x (y + 1)) with (let/d a := x in
-                             let/d b := y + 1 in
-                             let/d c := foo1 a b in
-                             c) by reflexivity). *)
-Abort.
-
-Open Scope string_scope.
-
-(* Ltac2 Set debug_to_anf := true. *)
-
-Goal (let/d s := "ab" ++ "cd" in
-      List.length (list_ascii_of_string (s ++ ""))) = 8.
-  toANF ().
-Abort.
-
-Definition l1: list nat := [1].
-Definition l2: list nat := [2].
-Definition l3: list nat := [3].
-Definition l4: list nat := [4].
-Definition l5: list nat := [5].
-Definition l6: list nat := [6].
-Definition l7: list nat := [7].
-
-Goal forall f is (is2str: nat -> nat -> string),
-  (f [l1; l2; l3; l4; l5; l6; l7] ++ is2str 0 is)%string = "".
-  intros.
-  toANF ().
-Abort.
-
-From impboot.assembly Require Import ASMSyntax.
-
-Goal forall k (l: nat -> list instr),
-  (([
-    (*  0 *) ASMSyntax.Const RAX (word.of_Z (Z.of_nat 0));
-    (*  1 *) ASMSyntax.Const R12 (word.of_Z (Z.of_nat 16));
-    (*  2 *) ASMSyntax.Const R13 (word.of_Z (Z.of_N (9223372036854775807%N)));
-    (* jump to main function *)
-    (*  3 *) ASMSyntax.Call k;
-    (* return to exit 0 *)
-    (*  4 *) ASMSyntax.Const RDI (word.of_Z (Z.of_nat 0));
-    (*  5 *) ASMSyntax.Exit
-  ]%string ++ (l 1))%list = []).
-  intros.
-  toANF ().
-Abort.
-
-Goal forall x,
-  (let/d s := (name_enc "x") + (x + 1) in s)%N = 2%N.
-  intros.
-  toANF ().
-Abort.

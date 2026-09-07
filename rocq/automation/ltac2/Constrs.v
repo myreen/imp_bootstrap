@@ -33,11 +33,9 @@ Ltac2 rec in_contexts (bs: binder list) (c: unit -> constr) (): constr :=
   match bs with
   | [] => c ()
   | b :: bs =>
-    (* let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in *)
     let name := Option.get (Binder.name b) in
-    (* it should ideally be (Binder.type b) instead of open_constr:(_), but it breaks the current procedure for dependent types *)
+    (* Using Binder.type b here breaks the current procedure for dependent types. *)
     Constr.in_context name open_constr:(_) (fun () =>
-      (* let b_hyp := Control.hyp name in *)
       let r := in_contexts bs c in
       Control.refine r
     )

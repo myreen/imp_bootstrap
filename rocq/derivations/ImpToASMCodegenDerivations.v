@@ -12,9 +12,6 @@ From Stdlib Require Import ZArith FunInd derive.Derive Lia.
 From Ltac2 Require Import Ltac2.
 From Patat Require Import Patat.
 
-Set Printing Goal Names.
-Set Printing Existential Instances.
-
 Open Scope app_list_scope.
 
 From impboot Require Import derivations.CompilerUtilsDerivations.
@@ -29,9 +26,6 @@ Derive init_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [init_prog].
-(* TODO: I use eval_cbv in assert_Some and it doesn't terminate (eval_lazy also didn't work) *)
-(* Ltac2 Eval assert_Some constr:(to_funs [init_prog]). *)
 
 Derive c_assign_prog 
   in ltac2:(relcompile_tpe 'c_assign_prog 'c_assign ['index_of]) 
@@ -39,8 +33,6 @@ Derive c_assign_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_assign_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_assign_prog]). *)
 
 Derive give_up_prog 
   in ltac2:(relcompile_tpe 'give_up_prog 'give_up []) 
@@ -48,8 +40,6 @@ Derive give_up_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [give_up_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [give_up_prog]). *)
 
 Derive abortLoc_prog
   in ltac2:(relcompile_tpe 'abortLoc_prog 'abortLoc []) 
@@ -57,8 +47,6 @@ Derive abortLoc_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [abortLoc_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [abortLoc_prog]). *)
 
 Derive c_const_prog
   in ltac2:(relcompile_tpe 'c_const_prog 'c_const []) 
@@ -66,16 +54,6 @@ Derive c_const_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_const_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_const_prog]). *)
-
-(* Derive negb_prog 
-  in ltac2:(relcompile_tpe 'negb_prog '@negb []) 
-  as negb_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-Time Compute to_funs [negb_prog]. *)
 
 Derive even_len_prog 
   in ltac2:(relcompile_tpe 'even_len_prog '@even_len []) 
@@ -83,8 +61,6 @@ Derive even_len_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [even_len_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [even_len_prog]). *)
 
 Derive odd_len_prog 
   in ltac2:(relcompile_tpe 'odd_len_prog '@odd_len [])
@@ -92,8 +68,6 @@ Derive odd_len_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [odd_len_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [odd_len_prog]). *)
 
 Derive index_of_prog 
   in ltac2:(relcompile_tpe 'index_of_prog 'index_of []) 
@@ -101,8 +75,6 @@ Derive index_of_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [index_of_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [index_of_prog]). *)
 
 Derive c_var_prog 
   in ltac2:(relcompile_tpe 'c_var_prog 'c_var ['index_of]) 
@@ -110,8 +82,6 @@ Derive c_var_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_var_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_var_prog]). *)
 
 Derive all_bdrs_prog 
   in ltac2:(relcompile_tpe 'all_bdrs_prog 'all_bdrs ['@list_app]) 
@@ -119,8 +89,6 @@ Derive all_bdrs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [all_bdrs_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [all_bdrs_prog]). *)
 
 Derive names_in_prog 
   in ltac2:(relcompile_tpe 'names_in_prog 'names_in []) 
@@ -128,8 +96,6 @@ Derive names_in_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [names_in_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [names_in_prog]). *)
 
 Derive nms_uniq_prog 
   in ltac2:(relcompile_tpe 'nms_uniq_prog 'nms_uniq ['names_in]) 
@@ -137,8 +103,6 @@ Derive nms_uniq_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [nms_uniq_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [nms_uniq_prog]). *)
 
 Derive bdrs_unq_prog 
   in ltac2:(relcompile_tpe 'bdrs_unq_prog 'bdrs_unq ['all_bdrs; 'nms_uniq]) 
@@ -146,8 +110,6 @@ Derive bdrs_unq_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [bdrs_unq_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [bdrs_unq_prog]). *)
 
 Derive bdrs_vs_prog 
   in ltac2:(relcompile_tpe 'bdrs_vs_prog 'bdrs_vs []) 
@@ -155,8 +117,6 @@ Derive bdrs_vs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [bdrs_vs_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [bdrs_vs_prog]). *)
 
 Derive fltr_nms_prog 
   in ltac2:(relcompile_tpe 'fltr_nms_prog 'fltr_nms []) 
@@ -164,8 +124,6 @@ Derive fltr_nms_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [fltr_nms_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [fltr_nms_prog]). *)
 
 Derive rm_nms_prog 
   in ltac2:(relcompile_tpe 'rm_nms_prog 'rm_nms ['fltr_nms]) 
@@ -173,8 +131,6 @@ Derive rm_nms_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [rm_nms_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [rm_nms_prog]). *)
 
 Derive call_vs_prog 
   in ltac2:(relcompile_tpe 'call_vs_prog 'call_vs []) 
@@ -182,8 +138,6 @@ Derive call_vs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [call_vs_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [call_vs_prog]). *)
 
 Derive push_vs_prog 
   in ltac2:(relcompile_tpe 'push_vs_prog 'push_vs ['@list_len; 'call_vs]) 
@@ -191,8 +145,6 @@ Derive push_vs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [push_vs_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [push_vs_prog]). *)
 
 Derive vs_bdrs_prog
   in ltac2:(relcompile_tpe 'vs_bdrs_prog 'vs_bdrs ['@even_len; '@list_app])
@@ -200,8 +152,6 @@ Derive vs_bdrs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [vs_bdrs_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [vs_bdrs_prog]). *)
 
 Derive c_bdrs_prog 
   in ltac2:(relcompile_tpe 'c_bdrs_prog 'c_bdrs
@@ -210,8 +160,6 @@ Derive c_bdrs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_bdrs_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_bdrs_prog]). *)
 
 Derive c_add_prog 
   in ltac2:(relcompile_tpe 'c_add_prog 'c_add []) 
@@ -219,8 +167,6 @@ Derive c_add_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_add_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_add_prog]). *)
 
 Derive c_sub_prog 
   in ltac2:(relcompile_tpe 'c_sub_prog 'c_sub []) 
@@ -228,8 +174,6 @@ Derive c_sub_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_sub_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_sub_prog]). *)
 
 Derive c_div_prog 
   in ltac2:(relcompile_tpe 'c_div_prog 'c_div []) 
@@ -237,8 +181,6 @@ Derive c_div_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_div_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_div_prog]). *)
 
 Derive c_alloc_prog
   in ltac2:(relcompile_tpe 'c_alloc_prog 'c_alloc ['@even_len]) 
@@ -246,8 +188,6 @@ Derive c_alloc_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_alloc_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_alloc_prog]). *)
 
 Derive c_read_prog
   in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['@even_len; '@appl_len]) 
@@ -255,8 +195,6 @@ Derive c_read_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_read_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_read_prog]). *)
 
 Derive c_write_prog 
   in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['@even_len; '@appl_len]) 
@@ -264,8 +202,6 @@ Derive c_write_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_write_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_write_prog]). *)
 
 Derive c_load_prog 
   in ltac2:(relcompile_tpe 'c_load_prog 'c_load []) 
@@ -273,8 +209,6 @@ Derive c_load_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_load_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_load_prog]). *)
 
 Derive c_store_prog 
   in ltac2:(relcompile_tpe 'c_store_prog 'c_store ['@list_app])
@@ -282,8 +216,6 @@ Derive c_store_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_store_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_store_prog]). *)
 
 Derive c_exp_prog 
   in ltac2:(relcompile_tpe 'c_exp_prog 'c_exp ['c_var; 'c_const; 'c_add; 'c_sub; 'c_div; 'c_load; '@appl_len]) 
@@ -291,8 +223,6 @@ Derive c_exp_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_exp_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_exp_prog]). *)
 
 Derive c_exps_prog 
   in ltac2:(relcompile_tpe 'c_exps_prog 'c_exps ['c_exp]) 
@@ -300,8 +230,6 @@ Derive c_exps_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_exps_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_exps_prog]). *)
 
 Derive c_cmp_prog 
   in ltac2:(relcompile_tpe 'c_cmp_prog 'c_cmp []) 
@@ -309,8 +237,6 @@ Derive c_cmp_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_cmp_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_cmp_prog]). *)
 
 Derive c_test_prog 
   in ltac2:(relcompile_tpe 'c_test_prog 'c_test ['c_exp; 'c_cmp; '@appl_len; '@list_app]) 
@@ -318,8 +244,6 @@ Derive c_test_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_test_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_test_prog]). *)
 
 Derive lookup_prog 
   in ltac2:(relcompile_tpe 'lookup_prog 'lookup []) 
@@ -327,8 +251,6 @@ Derive lookup_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [lookup_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [lookup_prog]). *)
 
 Derive make_ret_prog 
   in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret ['@list_len]) 
@@ -336,8 +258,6 @@ Derive make_ret_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [make_ret_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [make_ret_prog]). *)
 
 Derive c_pops_prog 
   in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; '@even_len; '@list_len]) 
@@ -345,8 +265,6 @@ Derive c_pops_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_pops_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_pops_prog]). *)
 
 Derive c_pushes_prog 
   in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_vs; '@list_len; 'push_vs]) 
@@ -354,8 +272,6 @@ Derive c_pushes_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_pushes_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_pushes_prog]). *)
 
 Derive c_call_prog 
   in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; '@even_len; '@appl_len]) 
@@ -363,8 +279,6 @@ Derive c_call_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_call_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_call_prog]). *)
 
 Derive c_cmd_prog 
   in ltac2:(relcompile_tpe 'c_cmd_prog 'c_cmd 
@@ -375,8 +289,6 @@ Derive c_cmd_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_cmd_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_cmd_prog]). *)
 
 Derive c_fundef_prog 
   in ltac2:(relcompile_tpe 'c_fundef_prog 'c_fundef 
@@ -385,8 +297,6 @@ Derive c_fundef_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_fundef_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_fundef_prog]). *)
 
 Derive get_funs_prog 
   in ltac2:(relcompile_tpe 'get_funs_prog 'get_funs []) 
@@ -394,8 +304,6 @@ Derive get_funs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [get_funs_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [get_funs_prog]). *)
 
 Derive func_nm_prog 
   in ltac2:(relcompile_tpe 'func_nm_prog 'func_nm []) 
@@ -403,8 +311,6 @@ Derive func_nm_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [func_nm_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [func_nm_prog]). *)
 
 Derive c_fndefs_prog 
   in ltac2:(relcompile_tpe 'c_fndefs_prog 'c_fndefs ['c_fundef; 'func_nm; 'N2ascii])
@@ -412,8 +318,6 @@ Derive c_fndefs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [c_fndefs_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [c_fndefs_prog]). *)
 
 Derive codegen_prog 
   in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fndefs; 'lookup; 'init; 'get_funs; '@appl_len; '@flatten]) 
@@ -421,14 +325,11 @@ Derive codegen_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [codegen_prog].
-(* Ltac2 Eval assert_Some constr:(to_funs [codegen_prog]). *)
 
 Definition ImpToASMCodegen_funs := [
   give_up_prog;
   abortLoc_prog;
   c_const_prog;
-  (* negb_prog; *)
   even_len_prog;
   odd_len_prog;
   index_of_prog;
@@ -491,9 +392,7 @@ Ltac2 assert_eval_app_proof (prf: constr) (list_constr: constr) (n: int) :=
 Ltac2 assert_eval_app_by (fname: constr) (prf: constr) (list_constr_hyp: constr) (n: int) :=
   let tpe := gen_eval_app fname () in
   assert ($tpe) as ? by (
-    (* print_full_goal (); *)
     eapply $prf; eauto; try (reflexivity);
-    (* print_full_goal (); *)
     eapply $list_constr_hyp; do n (eapply in_cons); eapply in_eq
   ).
 

@@ -10,14 +10,6 @@ From Patat Require Import Patat.
 
 Create HintDb automation.
 
-(* TODO: Reconsider how we switch between nat and N everywhere *)
-(*       Can there be a conflict with with values vs names? *)
-(*       Can we use N everywhere? *)
-(*       Or can we just support both N and nat everywhere? or maybe Z? *)
-
-(* TODO: sometimes we use (name_enc n) in automation lemmas and sometimes just (n) *)
-(* This might be incorrect, when we pass the names explicitly in the automation *)
-
 Theorem trans_app: forall n params vs body s s1 v,
   let env := make_env params vs FEnv.empty in
     (env |-- ([body], s) ---> ([v], s1)) ->
@@ -106,16 +98,6 @@ Lemma auto_Acc_case: forall {A B} `{ra: Refinable A} env s x R v f_intro (ACC: @
 Proof.
   intros; destruct ACC; eauto.
 Qed.
-
-(* Theorem auto_let : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env x1 y1 s1 s2 s3 (v1: A) let_n f,
-  env |-- ([x1], s1) ---> ([ra.(encode) v1], s2) ->
-  (FEnv.insert ((name_enc let_n), Some (ra.(encode) v1)) env) |-- ([y1], s2) --->
-      ([rb.(encode) (f v1)], s3) ->
-  env |-- ([Let (name_enc let_n) x1 y1], s1) ---> ([rb.(encode) (dlet v1 f)], s3).
-Proof.
-  intros.
-  eapply Eval_Let; eauto.
-Qed. *)
 
 Theorem auto_let : forall {A B} `{ra: Refinable A} `{rb: Refinable B} env x1 y1 s1 s2 s3 (v1: A) let_n f,
   env |-- ([x1], s1) ---> ([ra.(encode) v1], s2) ->
@@ -289,9 +271,6 @@ Theorem auto_nat_div : forall env s0 s1 s2 x1 x2 (n1 n2: nat),
   env |-- ([x1], s0) ---> ([encode n1], s1) ->
   env |-- ([x2], s1) ---> ([encode n2], s2) ->
   (N.of_nat n2) <> 0 ->
-  (* Clement: It isn't ideal that we have the preconditions *)
-  (* TODO: can do this vvv and remove the precondition *)
-  (* env |-- ([If Equal [Const 0; x2] (Const 0) (Op FunSyntax.Div [x1; x2])], s0) ---> ([encode (n1 / n2)%nat], s2). *)
   env |-- ([Op FunSyntax.Div [x1; x2]], s0) ---> ([encode (n1 / n2)%nat], s2).
 Proof.
   intros.
@@ -473,17 +452,6 @@ Proof.
   all: lia.
 Qed.
 
-(* TODO: change "nat -> N" *)
-(*       does it work with fix? *)
-(*       use differnet induction lemma? *)
-
-(* match eq_dec v0 with ... *)
-
-(* for nat/N use strong induction instead of fix *)
-
-(* same precondition in the inductive principle vvvvvvvv *)
-(* destruct on `{v = 0} + {v = (pred v) + 1}` sort of like eq_dec *)
-
 Theorem auto_nat_case: forall {A} `{ra: Refinable A} env s x0 x1 x2 n (v0: nat) (v1: A) v2,
   env |-- ([x0], s) ---> ([encode v0], s) ->
   (match v0 with
@@ -501,20 +469,6 @@ Theorem auto_nat_case: forall {A} `{ra: Refinable A} env s x0 x1 x2 n (v0: nat) 
         | S n => v2 n
         end)], s).
 
-  (* env |-- ([x0], s) ---> ([encode v0], s) ->
-  (if (v0 =? 0)%nat then
-    env |-- ([x1], s) ---> ([encode v1], s)
-  else (∀v0', (v0' < v0)%nat ->
-    (FEnv.insert (name_enc n, Some (encode v0')) env) |-- ([x2], s) --->
-      ([encode (v2 v0')], s))) ->
-  env |-- ([If Equal [x0; Const 0] x1
-      (Let (name_enc n)
-        (Op Sub [x0; Const 1]) x2)], s) --->
-     ([encode (
-        match v0 with
-        | 0%nat => v1
-        | S n => v2 n
-        end)], s). *)
 Proof.
   intros.
   destruct v0 eqn:?.
@@ -692,7 +646,6 @@ Qed.
 
 (* char *)
 
-(* TODO: this + the same pattern in word is a crime *)
 Theorem auto_char_of_nat : forall env s x1 x,
   env |-- ([x1], s) ---> ([encode x], s) ->
   ((N_of_nat x) < 256) ->
@@ -846,8 +799,6 @@ Fixpoint reify_ascii_list_with_tail (chars: list ascii) (tail_exp: FunSyntax.exp
                 [FunSyntax.Const (N_of_ascii char); reify_ascii_list_with_tail chars tail_exp]
   end.
 
-(* Eval cbv -[N_of_ascii] in reify_ascii_list_with_tail (list_ascii_of_string "movql") (FunSyntax.Const 0). *)
-
 Lemma reify_ascii_list_with_tail_ok (prefix suffix : list ascii) (suffix_exp: FunSyntax.exp):
   ∀ (env : FEnv.env) (s : state),
     env |-- ([suffix_exp], s) ---> ([encode suffix], s) ->
@@ -862,7 +813,6 @@ Fixpoint reify_ascii_chunks_cont (base_name: string) (chunk_index: N) (chunks: l
     (cont: FunSyntax.exp -> FunSyntax.exp) :=
   match chunks with
   | [] => cont (FunSyntax.Const 0)
-  (* | [chunk] => reify_ascii_list_with_tail chunk LATER: Save time when there's just one chunk *)
   | chunk :: chunks =>
       reify_ascii_chunks_cont
         base_name (chunk_index + 1) chunks
@@ -876,8 +826,6 @@ Fixpoint reify_ascii_chunks_cont (base_name: string) (chunk_index: N) (chunks: l
 
 Definition reify_chunked_ascii_list_cont (base_name: string) (chunk_size: nat) (chars: list ascii) (cont: FunSyntax.exp -> FunSyntax.exp) :=
   reify_ascii_chunks_cont base_name 0 (chunk chunk_size chars) cont.
-
-(* Eval cbv -[N_of_ascii name_enc] in reify_chunked_ascii_list_cont "f" 4 (list_ascii_of_string "fooxbarxbazxquuux"). *)
 
 Definition chunk_env (base_name: string) (chunks: list (list ascii)) (chunk_index: N) (env: FEnv.env) :=
   FEnv.insert_all
@@ -996,8 +944,6 @@ Proof.
 Qed.
 
 Theorem auto_word64_n2w : forall env s x1 x,
-  (* TODO: can do this and remove the pre-condition *)
-  (* env |-- ([x1], s) ---> ([encode (Nat.modulo x (2 ^ 64))], s) -> *)
   env |-- ([x1], s) ---> ([encode x], s) ->
   ((N.of_nat x) < 2 ^ 64) ->
   env |-- ([x1], s) ---> ([encode ((word.of_Z (Z.of_nat x)) : word64)], s).
@@ -1010,11 +956,6 @@ Proof.
   assert ((Z.to_N (Z.of_nat x mod (2 ^ 64))) = (N.of_nat x)).
   2: cbn in H1; rewrite H1; eapply H.
   rewrite Z.mod_small; try lia.
-  (* split; try lia.
-  clear H.
-  replace (2 ^ 64 : Z) with (Z.of_nat (2 ^ 64)%nat).
-  - now apply Nat2Z.inj_lt.
-  - rewrite Nat2Z.inj_pow; simpl; reflexivity. *)
 Qed.
 
 Theorem auto_word4_w2N : forall env s x1 x,
@@ -1054,10 +995,6 @@ Proof.
   rewrite Z_nat_N.
   assumption.
 Qed.
-
-(* TODO(kπ) Skipped common definitions and some automation for cons and case *)
-
-(* TODO(kπ) Token *)
 
 (* cmp *)
 
@@ -2248,17 +2185,6 @@ Proof.
   all: repeat (rewrite remove_env_update; eauto; crunch_NoDup).
   all: simpl; try reflexivity.
 Qed.
-
-(* TODO(kπ) might need some more things for the parser *)
-
-(* 
-Inductive token :=
-  | OPEN
-  | CLOSE
-  | DOT
-  | NUM (n: N)
-  | QUOTE (s: N).
-*)
 
 Definition encode_token (t: token) : Value :=
   match t with

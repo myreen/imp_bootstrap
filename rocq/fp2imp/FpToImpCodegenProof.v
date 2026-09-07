@@ -335,8 +335,6 @@ Proof.
   - intros.
     simpl.
     destruct n; simpl in *; eauto; try lia.
-    (* rewrite <- IHxs1; try lia. *)
-    (* rewrite <- Nat.succ_le_mono in *. *)
     rewrite IHxs1; try lia.
     reflexivity.
 Qed.
@@ -494,8 +492,6 @@ Theorem Call_cons4:
   eval_exp e1 t = (Cont w, t) ->
   builtins_available t.(funs) ->
   exists m1 ptr,
-  (* let m1 := [[Some w; Some w'; Some w''; Some w''']] in
-  let ptr := Pointer (List.length t.(memory)) in *)
     (forall (fuel: nat) (c2: cmd),
       eval_cmd (Seq (Call n (name_of_string "cons4") [e1; e2; e3; e4]) c2) (EVAL_CMD (S (S (S fuel)))) t =
       eval_cmd c2 (EVAL_CMD (S (S (S fuel))))
@@ -588,8 +584,6 @@ Theorem Call_cons5:
   eval_exp e1 t = (Cont w, t) ->
   builtins_available t.(funs) ->
   exists m1 ptr,
-  (* let m1 := [[Some w; Some w'; Some w''; Some w'''; w'''']] in
-  let ptr := Pointer (List.length t.(memory)) in *)
     (forall (fuel: nat) (c2: cmd),
       eval_cmd (Seq (Call n (name_of_string "cons5") [e1; e2; e3; e4; e5]) c2) 
                (EVAL_CMD (S (S (S (S (S (S (S fuel)))))))) t =
@@ -1014,8 +1008,7 @@ Proof.
       spat ` (name_of_string "add", ?args, ?cs1)` at assert (find_fun (name_of_string "add") (funs t) = Some (args, cs1)) as Hfind_fun by (eapply Hbuiltin; eauto); clear Hbuiltin.
       rewrite Hfind_fun.
       simpl in *; unfold_monadic; unfold catch_return; simpl; unfold_outcome.
-      (* TODO(paper/post?): this is a pain point in Rocq *)
-      (* 1. Reconstruct the evaluation of add body with some enough fuel *)
+      (* Reconstruct the evaluation of the addition body with sufficient fuel. *)
       match goal with
       | |- context C [EVAL_CMD _ ?c ?s] => remember (EVAL_CMD 1 c s) as eval_cmd_add_fun
       end.
@@ -1046,13 +1039,13 @@ Proof.
         unfold res_rel; simpl; eauto.
       }
       clear Heqeval_cmd_add_fun.
-      (* 2. Use IH and use info from 1. to prove its premises -> get fuel_ih from this *)
+      (* Apply the induction hypothesis to obtain its required fuel. *)
       assert (narg1 + narg2 < 2 ^ 64) as Hno_overflow by (eapply no_overflow_addition; eauto).
       eapply IH with (t := set_vars _ (add_steps_done 1 _)) in Heval2; eauto; simpl in *; cleanup.
       2: eapply state_rel_set_vars; eapply state_rel_add_steps_done; eauto.
       2: eapply env_rel_update; eauto.
       2: econstructor; try lia.
-      (* 3. Instantiate fuel in goal with fuel_ih *)
+      (* Instantiate the goal with the fuel supplied by the induction hypothesis. *)
       exists (S x); do 2 eexists.
       with_strategy transparent [EVAL_CMD] simpl EVAL_CMD at 1.
       unfold_monadic; unfold_outcome; unfold set_vars, inc_steps_done, add_steps_done, set_steps_done in *; simpl in *.
@@ -1341,18 +1334,6 @@ Definition func_nm (f: ImpSyntax.func) : N :=
   match f with
   | Func n _ _ => n
   end.
-
-(* Lemma find_fun_app_no_conflicts: forall fname funs1 funs2 v,
-  (forall x, In x funs2 -> ¬ In (func_nm x) (map func_nm funs1)) ->
-  find_fun fname funs2 = Some v ->
-  find_fun fname (funs1 ++ funs2) = Some v.
-Proof.
-  intros * Hno_conflicts Hfind_fun.
-  induction funs1 as [|f funs1]; simpl; eauto; destruct f.
-  destruct (fname =? n)%N eqn:Hname_eq; rewrite ?N.eqb_eq in *; cleanup.
-  1: { (* conflict *)
-    exfalso; eapply Hno_conflicts with (x := Func n params body); simpl; eauto.
-  } *)
 
 Lemma list_uniqb_NoDup: forall {A} (EQ: A -> A -> bool) (EQ_REFL: forall (a: A), EQ a a = true) (l: list A),
   list_uniqb EQ l = true -> NoDup l.

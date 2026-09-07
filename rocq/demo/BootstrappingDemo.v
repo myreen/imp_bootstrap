@@ -1,5 +1,6 @@
 From impboot Require Import functional.FunSyntax functional.FunValues.
 From impboot Require Import imperative.ImpSyntax.
+From impboot Require Import utils.AppList.
 From Stdlib Require Import NArith.
 From Stdlib Require Import ZArith.
 From Stdlib Require Import Lists.List.
@@ -53,7 +54,7 @@ Compute (
 Compute (
   match c_add_imp with
   | Some [p] => Some (
-    let asm := flatten (fst (c_fundef p 0 [])) in
+    let asm := flatten (fst (c_fundef p 0 [])) nil in
     asm2str asm
   )
   | _ => None

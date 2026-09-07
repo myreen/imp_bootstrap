@@ -11,9 +11,6 @@ From Ltac2 Require Import Ltac2.
 
 From impboot.derivations Require Import CompilerUtilsDerivations.
 
-Set Printing Goal Names.
-Set Printing Existential Instances.
-
 Open Scope app_list_scope.
 
 (* *********************************************** *)
@@ -29,15 +26,12 @@ Proof. unfold_fix_proof 'clean. Qed.
 Theorem is2str_equation: ltac2:(unfold_fix_type 'is2str).
 Proof. unfold_fix_proof 'is2str. Qed.
 
-(* Set Printing Depth 100000. *)
-
 Derive reg2s_prog
   in ltac2:(relcompile_tpe 'reg2s_prog 'reg2s ['str_app])
   as reg2s_prog_proof.
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [reg2s_prog].
 Ltac2 Eval assert_Some constr:(to_funs [reg2s_prog]).
 
 Derive lab_prog
@@ -46,7 +40,6 @@ Derive lab_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [lab_prog].
 Ltac2 Eval assert_Some constr:(to_funs [lab_prog]).
 
 Derive clean_prog
@@ -55,7 +48,6 @@ Derive clean_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [clean_prog].
 Ltac2 Eval assert_Some constr:(to_funs [clean_prog]).
 From Ltac2 Require Import Printf Message.
 Derive i2s_con_prog
@@ -64,7 +56,6 @@ Derive i2s_con_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_con_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_con_prog]).
 
 Derive i2s_mov_prog
@@ -73,7 +64,6 @@ Derive i2s_mov_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_mov_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_mov_prog]).
 
 Derive i2s_add_prog
@@ -82,7 +72,6 @@ Derive i2s_add_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_add_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_add_prog]).
 
 Derive i2s_sub_prog
@@ -91,7 +80,6 @@ Derive i2s_sub_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_sub_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_sub_prog]).
 
 Derive i2s_div_prog
@@ -100,7 +88,6 @@ Derive i2s_div_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_div_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_div_prog]).
 
 Derive i2s_jump_prog
@@ -109,7 +96,6 @@ Derive i2s_jump_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_jump_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_jump_prog]).
 
 Derive i2s_call_prog
@@ -118,7 +104,6 @@ Derive i2s_call_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_call_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_call_prog]).
 
 Derive i2s_ret_prog
@@ -127,7 +112,6 @@ Derive i2s_ret_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_ret_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_ret_prog]).
 
 Derive i2s_pop_prog
@@ -136,7 +120,6 @@ Derive i2s_pop_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_pop_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_pop_prog]).
 
 Derive i2s_push_prog
@@ -145,7 +128,6 @@ Derive i2s_push_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_push_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_push_prog]).
 
 Derive i2s_lrsp_prog
@@ -154,8 +136,6 @@ Derive i2s_lrsp_prog
 Proof.
   time relcompile.
 Qed.
-Print i2s_lrsp_prog.
-Time Compute to_funs [i2s_lrsp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_lrsp_prog]).
 
 Derive i2s_srsp_prog
@@ -164,7 +144,6 @@ Derive i2s_srsp_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_srsp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_srsp_prog]).
 
 Derive i2s_arsp_prog
@@ -173,7 +152,6 @@ Derive i2s_arsp_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_arsp_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_arsp_prog]).
 
 Derive i2s_surs_prog
@@ -182,7 +160,6 @@ Derive i2s_surs_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_surs_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_surs_prog]).
 
 Derive i2s_stor_prog
@@ -191,7 +168,6 @@ Derive i2s_stor_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_stor_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_stor_prog]).
 
 Derive i2s_load_prog
@@ -200,7 +176,6 @@ Derive i2s_load_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_load_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_load_prog]).
 
 Derive i2s_gch_prog
@@ -209,7 +184,6 @@ Derive i2s_gch_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_gch_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_gch_prog]).
 
 Derive i2s_pch_prog
@@ -218,7 +192,6 @@ Derive i2s_pch_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_pch_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_pch_prog]).
 
 Derive i2s_exit_prog
@@ -227,7 +200,6 @@ Derive i2s_exit_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_exit_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_exit_prog]).
 
 Derive i2s_comm_prog
@@ -236,17 +208,14 @@ Derive i2s_comm_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [i2s_comm_prog].
 Ltac2 Eval assert_Some constr:(to_funs [i2s_comm_prog]).
 
 Derive inst2str_prog
   in ltac2:(relcompile_tpe 'inst2str_prog 'inst2str ['i2s_con; 'i2s_mov; 'i2s_add; 'i2s_sub; 'i2s_div; 'i2s_jump; 'i2s_call; 'i2s_ret; 'i2s_pop; 'i2s_push; 'i2s_lrsp; 'i2s_srsp; 'i2s_arsp; 'i2s_surs; 'i2s_stor; 'i2s_load; 'i2s_gch; 'i2s_pch; 'i2s_exit; 'i2s_comm])
   as inst2str_prog_proof.
 Proof.
-  (* ltac1:(timeout 28 ltac2:(relcompile)). *)
   time relcompile.
 Qed.
-Time Compute to_funs [inst2str_prog].
 Ltac2 Eval assert_Some constr:(to_funs [inst2str_prog]).
 
 Derive is2str_prog
@@ -255,7 +224,6 @@ Derive is2str_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [is2str_prog].
 Ltac2 Eval assert_Some constr:(to_funs [is2str_prog]).
 
 Theorem ccat_str_equation: ltac2:(unfold_fix_type '@ccat_str).
@@ -266,7 +234,6 @@ Derive ccat_str_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [ccat_str_prog].
 Ltac2 Eval assert_Some constr:(to_funs [ccat_str_prog]).
 
 Derive asm2str1_prog
@@ -275,7 +242,6 @@ Derive asm2str1_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str1_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str1_prog]).
 
 Derive asm2str2_prog
@@ -284,7 +250,6 @@ Derive asm2str2_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str2_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str2_prog]).
 
 Derive asm2str3_prog
@@ -293,7 +258,6 @@ Derive asm2str3_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str3_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str3_prog]).
 
 Derive asm2str4_prog
@@ -302,7 +266,6 @@ Derive asm2str4_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str4_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str4_prog]).
 
 Derive asm2str5_prog
@@ -311,7 +274,6 @@ Derive asm2str5_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str5_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str5_prog]).
 
 Derive asm2str6_prog
@@ -320,7 +282,6 @@ Derive asm2str6_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str6_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str6_prog]).
 
 Derive asm2str7_prog
@@ -329,7 +290,6 @@ Derive asm2str7_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str7_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str7_prog]).
 
 Derive asm2str8_prog
@@ -338,7 +298,6 @@ Derive asm2str8_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str8_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str8_prog]).
 
 Derive asm2str9_prog
@@ -347,7 +306,6 @@ Derive asm2str9_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str9_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str9_prog]).
 
 Derive asm2str0_prog
@@ -356,7 +314,6 @@ Derive asm2str0_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str0_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str0_prog]).
 
 Derive asm2stra_prog
@@ -365,7 +322,6 @@ Derive asm2stra_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2stra_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2stra_prog]).
 
 Derive asm2strb_prog
@@ -374,10 +330,8 @@ Derive asm2strb_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2strb_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2strb_prog]).
 
-(* TODO: ToANF lifts out list literals *)
 Derive asm2str_prog
   in ltac2:(relcompile_tpe 'asm2str_prog 'asm2str
     ['is2str; 'ccat_str; '@list_app; 'str_app;
@@ -386,7 +340,6 @@ Derive asm2str_prog
 Proof.
   time relcompile.
 Qed.
-Time Compute to_funs [asm2str_prog].
 Ltac2 Eval assert_Some constr:(to_funs [asm2str_prog]).
 
 Definition ASMToString_funs := [

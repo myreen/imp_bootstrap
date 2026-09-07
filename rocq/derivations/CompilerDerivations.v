@@ -100,14 +100,11 @@ Theorem printstr_thm:
 Proof.
   intros * Hfneq.
   induction str.
-  (* TODO: fix didn't work *)
-  (* ltac1:(fix IH 2). *)
   all: intros.
   all: eapply trans_app; eauto.
   2,4: reflexivity.
   all: inversion Hfneq; clear H1.
   all: unfold make_env.
-  (* destruct str; simpl. *)
   1: { (* empty string *)
     econstructor.
     1: repeat econstructor.
@@ -151,7 +148,6 @@ Proof.
   rewrite string_app_assoc.
   destruct s; simpl in *.
   eapply IHstr; eauto.
-  (* apply IH with (1 := Hstrlt) (2 := H0) (str := str) (s := s1). *)
 Qed.
 
 Theorem compiler_thm:

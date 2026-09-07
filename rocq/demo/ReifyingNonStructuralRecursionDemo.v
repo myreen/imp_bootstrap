@@ -32,10 +32,8 @@ Definition nat_modulo1 (n1 n2: nat): nat :=
   | S _ => n1 - n2 * (n1 / n2)
   end.
 
-Remark gcd_oblig:
+Parameter gcd_oblig:
   forall (a b: nat) (NE: b <> 0), nat_modulo1 a b < b.
-Proof.
-Admitted.
 
 Function gcd (a b: nat) (ACC: Acc lt b) {struct ACC}: nat :=
   match Nat.eq_dec b 0 with

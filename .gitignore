@@ -74,6 +74,7 @@ mcp.json
 .claude/
 
 # generated timing files
+rocq/timings/
 *.timing.diff
 *.v.after-timing
 *.v.before-timing
@@ -82,3 +83,15 @@ time-of-build-after.log
 time-of-build-before.log
 time-of-build-both.log
 time-of-build-pretty.log
+
+# Deepwork state
+.slim/deepwork/
+
+# local files
+*.local.*
+
+# VsCode
+.vscode
+
+# asm
+*.s

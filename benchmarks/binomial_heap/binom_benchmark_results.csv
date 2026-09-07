@@ -1,0 +1,15 @@
+timestamp,benchmark,source_variant,compiler,c_optimization,iterations,batches,mean_ms,throughput_runs_per_s
+2026-08-26T11:11:16+02:00,impl-adjusted,adjusted,IMPL,not_applicable,1,1,6.116725,163.49
+2026-08-26T11:11:16+02:00,certirocq-adjusted-o0,adjusted,CertiRocq+Clang,-O0,1,1,46.739043,21.40
+2026-08-26T11:11:16+02:00,certirocq-adjusted-o1,adjusted,CertiRocq+Clang,-O1,1,1,11.778976,84.90
+2026-08-26T11:11:16+02:00,certirocq-adjusted-o2,adjusted,CertiRocq+Clang,-O2,1,1,11.912105,83.95
+2026-08-26T11:11:16+02:00,certirocq-adjusted-o3,adjusted,CertiRocq+Clang,-O3,1,1,11.958563,83.62
+2026-08-26T11:11:16+02:00,impl-mynat,mynat,IMPL,not_applicable,1,1,35.197825,28.41
+2026-08-26T11:11:16+02:00,certirocq-mynat-o0,mynat,CertiRocq+Clang,-O0,1,1,47.639697,20.99
+2026-08-26T11:11:16+02:00,certirocq-mynat-o1,mynat,CertiRocq+Clang,-O1,1,1,11.883562,84.15
+2026-08-26T11:11:16+02:00,certirocq-mynat-o2,mynat,CertiRocq+Clang,-O2,1,1,12.207171,81.92
+2026-08-26T11:11:16+02:00,certirocq-mynat-o3,mynat,CertiRocq+Clang,-O3,1,1,11.621469,86.05
+2026-08-26T11:11:16+02:00,certirocq-original-o0,original,CertiRocq+Clang,-O0,1,1,49.104452,20.36
+2026-08-26T11:11:16+02:00,certirocq-original-o1,original,CertiRocq+Clang,-O1,1,1,11.934217,83.79
+2026-08-26T11:11:16+02:00,certirocq-original-o2,original,CertiRocq+Clang,-O2,1,1,12.130787,82.43
+2026-08-26T11:11:16+02:00,certirocq-original-o3,original,CertiRocq+Clang,-O3,1,1,12.593999,79.40

@@ -130,8 +130,6 @@ Inductive eval : FEnv.env -> list FunSyntax.exp -> state -> list Value -> state 
     (TAKE_BRANCH : take_branch test vs s2 = (Res b, s2))
     (EVAL_RES : env |-- ([if b then expt else expf],  s2) ---> ([v],  s3)),
   env |-- ([FunSyntax.If test exps expt expf],  s1) ---> ([v],  s3)
-(* | Eval_Lambda : forall env params body s,
-  env |-- ([FunSyntax.Lambda params body],  s) ---> ([Closure params body env],  s) *)
 | Eval_Call : forall env exps s1 vs s2 fname v s3 new_env body,
   forall
     (EVAL_ARGS : env |-- (exps,  s1) ---> (vs,  s2))

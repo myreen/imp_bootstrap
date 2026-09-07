@@ -182,7 +182,6 @@ Fixpoint eval_exp (e : exp) : SRM Value :=
       mem_load addr offset
   end.
 
-(* TODO: autounfold with _ *)
 Ltac unfold_monadic :=
   unfold cont, crash, stop, point, bind, combine_word, mem_load in *.
 
@@ -369,8 +368,6 @@ Fixpoint eval_cmd (c: cmd) (EVAL_CMD: forall (c:cmd), SRM unit) { struct c }: SR
     assign n v
   | ImpSyntax.Abort => stop Abort
   | PutChar e =>
-    (* Consider: tick on every IO output to have all traces, not just modulo clock increase *)
-    (* let+ _ := inc_steps_done in *)
     let+ v := eval_exp e in
     put_char v
   | GetChar n =>
@@ -465,18 +462,9 @@ Definition output_ok_imp (input: llist ascii) (p: prog) (output: llist ascii): P
     (∃ k, String.get i (imp_output k input p) <> None ∧ String.get i (imp_output k input p) = Llist.nth i output) ∨
     (not (Llist.defined_at i output) ∧ (∀k, String.get i (imp_output k input p) = None)).
 
-(* lprefix *)
-(* Definition is_upper_bound (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
-  ∀k, lprefix (imp_output k input p) output.
-
-Definition is_least_upper_bound (input: llist ascii) (p: prog) (output: llist ascii): Prop :=
-  is_upper_bound input p output ∧
-  ∀other, is_upper_bound input p other -> lprefix output other. *)
-
 Definition prog_diverges (input: llist ascii) (p: prog) (output: llist ascii) :=
   (forall fuel, imp_timesout fuel input p) ∧
   output_ok_imp input p output.
-  (* is_least_upper_bound (fun k => Llist.of_string (imp_output k input p)) output. *)
 
 Definition imp_weak_termination (input: llist ascii) (p: prog) (out: string) :=
   exists fuel outcome s,

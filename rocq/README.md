@@ -13,16 +13,8 @@ resource-constrained machine.
 
 ## Setup
 
-Create or select an opam switch, then pin compatible development versions of
-[`coqutil`](https://github.com/mit-plv/coqutil) and
-[`patat`](https://github.com/kacperFKorban/patat):
-
-```sh
-opam pin add coq-coqutil.dev https://github.com/mit-plv/coqutil.git#2cf510214b6d56a3065b092789b0c8455ae2c263
-opam pin add patat.dev https://github.com/kacperFKorban/patat.git#b792f70fa89bdfd38279461591de021aa42c69b1
-```
-
-Install the remaining dependencies declared by the package:
+Create or select an opam switch, then install the dependencies declared by the
+package. Opam will ask to apply the recorded `coqutil` and Patat pins:
 
 ```sh
 opam install . --deps-only
@@ -33,6 +25,7 @@ opam install . --deps-only
 Start with a clean build so that every theory is checked from source:
 
 ```sh
+ulimit -s 1048576
 opam exec -- dune clean
 opam exec -- dune build -j 1
 opam exec -- dune runtest -j 1

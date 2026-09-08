@@ -35,6 +35,6 @@ pin-depends: [
   ]
   [
     "patat.dev"
-    "git+https://github.com/kacperFKorban/patat.git#b792f70fa89bdfd38279461591de021aa42c69b1"
+    "git+https://github.com/kacperFKorban/patat.git#7c14e71c67e915539b94b7c3248c3e0e7980c712"
   ]
 ]

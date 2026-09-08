@@ -138,8 +138,6 @@ val ty_invs = ref [(“:bool”,“bool”),
                    (“:inst”,“inst”),
                    (“:v”,“deep”)];
 
-fun add_ty_inv ty tm = (ty_invs := (ty,tm)::(!ty_invs));
-
 fun ty2inv ty =
   if can dest_vartype ty then
     mk_var(dest_vartype ty |> explode |> tl |> implode,
@@ -175,7 +173,6 @@ fun update_mem lemma =
      map (fn (pat,th) => (pat,PURE_REWRITE_RULE [lemma] th)) (!finalised_mem));
 
 val name_eq_name_pat = “name _ = name _”;
-val goal_pat = “(b0 ⇒ (env, [x1], s0) ---> ([v1], s1))”
 val app_pat = “app (n:num) _ _ _”
 
 fun hol2deep_list hol2deep [] = trans_nil
@@ -277,9 +274,6 @@ fun inst_app_term hol2deep [] tm = NONE
   val th = hol2deep_list hol2deep (map (subst i) vs)
   in SOME (MATCH_MP trans_Call (CONJ th lemma)) handle HOL_ERR _ =>
      SOME (MATCH_MP trans_Call (CONJ th lemma |> PURE_REWRITE_RULE [GSYM map_def])) end
-
-fun genvar_rule th =
-  INST (map (fn v => v |-> genvar (type_of v)) (free_vars (concl th))) th
 
 fun add_to_mem r (pat, app_th) = (r := (pat,app_th)::(!r));
 

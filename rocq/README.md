@@ -13,13 +13,13 @@ resource-constrained machine.
 
 ## Setup
 
-Create or select an opam switch, then pin the development versions of
+Create or select an opam switch, then pin compatible development versions of
 [`coqutil`](https://github.com/mit-plv/coqutil) and
 [`patat`](https://github.com/kacperFKorban/patat):
 
 ```sh
-opam pin add coq-coqutil.dev https://github.com/mit-plv/coqutil.git
-opam pin add patat.dev https://github.com/kacperFKorban/patat.git
+opam pin add coq-coqutil.dev https://github.com/mit-plv/coqutil.git#2cf510214b6d56a3065b092789b0c8455ae2c263
+opam pin add patat.dev https://github.com/kacperFKorban/patat.git#b792f70fa89bdfd38279461591de021aa42c69b1
 ```
 
 Install the remaining dependencies declared by the package:

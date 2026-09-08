@@ -28,3 +28,13 @@ build: [
   ]
 ]
 x-maintenance-intent: ["(latest)"]
+pin-depends: [
+  [
+    "coq-coqutil.dev"
+    "git+https://github.com/mit-plv/coqutil.git#2cf510214b6d56a3065b092789b0c8455ae2c263"
+  ]
+  [
+    "patat.dev"
+    "git+https://github.com/kacperFKorban/patat.git#b792f70fa89bdfd38279461591de021aa42c69b1"
+  ]
+]

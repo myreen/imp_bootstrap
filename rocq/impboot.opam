@@ -10,7 +10,6 @@ depends: [
   "dune" {>= "3.21"}
   "rocq-prover" {= "9.0.0"}
   "coq-coqutil" {= "dev"}
-  "patat" {= "dev"}
   "odoc" {with-doc}
 ]
 build: [
@@ -32,9 +31,5 @@ pin-depends: [
   [
     "coq-coqutil.dev"
     "git+https://github.com/mit-plv/coqutil.git#2cf510214b6d56a3065b092789b0c8455ae2c263"
-  ]
-  [
-    "patat.dev"
-    "git+https://github.com/kacperFKorban/patat.git#7c14e71c67e915539b94b7c3248c3e0e7980c712"
   ]
 ]

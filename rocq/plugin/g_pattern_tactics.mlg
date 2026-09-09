@@ -1,0 +1,81 @@
+DECLARE PLUGIN "impboot.pattern_tactics"
+
+{
+
+open Ltac_plugin
+
+open Stdarg
+open Tacexpr
+open Constrexpr
+open Names
+
+open Procq.Constr
+
+open Pltac
+
+}
+
+{
+
+let do_pat p nm tac =
+  let hyp = Hyp (nm, p) in
+  (* TODO vvv plug nm for Name.Anonymous *)
+  (* let t_plugged = _ in *)
+  (* let tac_expr = CAst.make (TacArg (TacGeneric t)) in *)
+  let match_ctx_rules = [Pat ([hyp], Term (CAst.make (CHole None)), tac)] in
+  let match_lexpr = CAst.make (TacMatchGoal (Select, false, match_ctx_rules)) in
+  Tacinterp.interp match_lexpr
+
+}
+
+ARGUMENT EXTEND cpat
+  | [ cpattern(pc) ] -> { pc }
+  END
+
+ARGUMENT EXTEND tac
+  | [ tactic(t) ] -> { t }
+  END
+
+(* ARGUMENT EXTEND idref
+  | [ identref(idr) ] -> { idr }
+  END *)
+
+(* pat `forall x: nat, _` (apply pat in H3) *)
+(* for now we have to use exactly pat in the tactic *)
+TACTIC EXTEND pat_tactical_as
+| [ "pat" "`" cpat(p) "`" "as" ident(idr) "at" tac(t) ] ->
+  { let nm = CAst.make (Names.Name.mk_name idr) in
+    let tac: Tacexpr.raw_tactic_expr = t in
+    do_pat (Term p) nm tac
+  }
+END
+
+(* pat `forall x: nat, _` (apply pat in H3) *)
+(* for now we have to use exactly pat in the tactic *)
+TACTIC EXTEND pat_tactical
+| [ "pat" "`" cpat(p) "`" "at" tac(t) ] ->
+  { let nm = CAst.make (Name.Name (Id.of_string "pat")) in
+    let tac: Tacexpr.raw_tactic_expr = t in
+    do_pat (Term p) nm tac
+  }
+END
+
+(* spat `forall x: nat, _` (apply spat in H3) *)
+(* for now we have to use exactly spat in the tactic *)
+TACTIC EXTEND spat_tactical_as
+| [ "spat" "`" cpat(p) "`" "as" ident(idr) "at" tac(t) ] ->
+  { let nm = CAst.make (Names.Name.mk_name idr) in
+    let tac: Tacexpr.raw_tactic_expr = t in
+    do_pat (Subterm (None, p)) nm tac
+  }
+END
+
+(* spat `forall x: nat, _` (apply spat in H3) *)
+(* for now we have to use exactly spat in the tactic *)
+TACTIC EXTEND spat_tactical
+| [ "spat" "`" cpat(p) "`" "at" tac(t) ] ->
+  { let nm = CAst.make (Name.Name (Id.of_string "spat")) in
+    let tac: Tacexpr.raw_tactic_expr = t in
+    do_pat (Subterm (None, p)) nm tac
+  }
+END

@@ -6,7 +6,7 @@ From impboot.imperative Require Import ImpSyntax ImpSemantics ImpProperties.
 From impboot.assembly Require Import ASMSyntax ASMSemantics ASMProperties.
 From coqutil.Word Require Import Interface.
 From Stdlib Require Import Program.Equality.
-From Patat Require Import Patat.
+From impboot.automation Require Import PatternTactics.
 
 (* Definitions of invariants and relations *)
 

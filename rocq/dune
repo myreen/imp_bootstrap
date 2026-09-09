@@ -4,4 +4,5 @@
  (name impboot)
  (package impboot)
  ; (generate_project_file)
- (theories Stdlib Ltac2 Patat coqutil))
+ (theories Stdlib Ltac2 coqutil)
+ (plugins impboot.pattern_tactics))

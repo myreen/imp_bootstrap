@@ -5,7 +5,7 @@ From coqutil.Word Require Import Interface Properties.
 From impboot.fp2imp Require Import FpToImpCodegen.
 From impboot.commons Require Import ProofUtils.
 From Stdlib Require Import Program.Equality.
-From Patat Require Import Patat.
+From impboot.automation Require Import PatternTactics.
 
 Open Scope N.
 

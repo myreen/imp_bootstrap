@@ -6,7 +6,7 @@ From impboot.assembly Require ASMSyntax.
 From impboot.imperative Require ImpSyntax.
 From coqutil Require Import Datatypes.List dlet.
 From coqutil.Word Require Import Interface Properties.
-From Patat Require Import Patat.
+From impboot.automation Require Import PatternTactics.
 
 Create HintDb automation.
 

@@ -17,17 +17,10 @@
   (name coq-coqutil)
   (version dev)))
 
-(pin
- (url "git+https://github.com/kacperFKorban/patat.git#7c14e71c67e915539b94b7c3248c3e0e7980c712")
- (package
-  (name patat)
-  (version dev)))
-
 (package
  (name impboot)
  (synopsis "Minimal verified bootstrapped compiler for an imperative language")
  (depends
   (rocq-prover (= 9.0.0))
   (coq-coqutil (= "dev"))
-  (patat (= "dev"))
  ))

@@ -1,0 +1,12 @@
+(include_subdirs no)
+
+(library
+ (name pattern_tactics)
+ (public_name impboot.pattern_tactics)
+ (flags :standard -w -27)
+ (libraries rocq-runtime.plugins.ltac rocq-runtime.vernac))
+
+(rule
+ (targets g_pattern_tactics.ml)
+ (deps g_pattern_tactics.mlg)
+ (action (run rocq pp-mlg %{deps})))

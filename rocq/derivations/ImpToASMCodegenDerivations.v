@@ -10,7 +10,7 @@ From impboot.fp2imp Require Import FpToImpCodegen.
 From coqutil.Word Require Import Interface.
 From Stdlib Require Import ZArith FunInd derive.Derive Lia.
 From Ltac2 Require Import Ltac2.
-From Patat Require Import Patat.
+From impboot.automation Require Import PatternTactics.
 
 Open Scope app_list_scope.
 

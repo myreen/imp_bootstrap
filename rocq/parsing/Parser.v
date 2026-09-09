@@ -7,7 +7,7 @@ From impboot.commons Require Import CompilerUtils.
 From coqutil.Word Require Import Interface.
 From impboot.automation.ltac2 Require Import UnfoldFix.
 From Ltac2 Require Import Ltac2.
-From Patat Require Import Patat.
+From impboot.automation Require Import PatternTactics.
 
 Open Scope N.
 Open Scope string.

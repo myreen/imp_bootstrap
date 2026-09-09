@@ -4,7 +4,7 @@ From impboot.imperative Require Import ImpSyntax.
 From impboot.functional Require Import FunValues.
 From coqutil.Word Require Import Interface Properties.
 From impboot.commons Require Import CompilerUtils.
-From Patat Require Import Patat.
+From impboot.automation Require Import PatternTactics.
 
 Open Scope N.
 Open Scope string.

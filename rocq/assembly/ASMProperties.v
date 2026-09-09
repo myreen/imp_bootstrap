@@ -4,7 +4,7 @@ From impboot.assembly Require Import ASMSyntax ASMSemantics.
 From coqutil.Word Require Import Interface.
 From impboot.commons Require Import ProofUtils.
 From Stdlib Require Import Relations.Relation_Operators Program.Equality.
-From Patat Require Import Patat.
+From impboot.automation Require Import PatternTactics.
 
 Ltac cleanup :=
   repeat match goal with

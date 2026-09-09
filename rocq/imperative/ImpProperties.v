@@ -4,7 +4,7 @@ From impboot.imperative Require Import ImpSyntax ImpSemantics.
 From coqutil.Word Require Import Interface.
 From impboot.commons Require Import ProofUtils.
 From Stdlib Require Import Program.Equality.
-From Patat Require Import Patat.
+From impboot.automation Require Import PatternTactics.
 
 Theorem eval_exp_not_stop: forall e s res s1 v,
   eval_exp e s = (res, s1) ->

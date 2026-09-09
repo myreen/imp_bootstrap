@@ -35,7 +35,7 @@ dependencies as well. The build checks the bootstrapping proofs and generates
 | Lemma 2.5: preservation of aborts | [`codegen_no_abort`](./imp_to_asm_proofScript.sml#L4316) |
 | Theorem 2.6: correctness of recompilation check | [`compiler_asm_bootstrap`](./bootstrappingScript.sml#L130) |
 | Lemma 2.7: parser validation for compiler in IMPL | [`print_parser_compiler_correct`](./bootstrappingScript.sml#L112) |
-| Theorem 3.6: reifying the compiler | No standalone function-level theorem; component certificates are composed in [`compiler_prog_correct`](./imp_compiler_progScript.sml#L689). |
+| Theorem 3.6: reifying the compiler | component certificates are composed in [`compiler_prog_correct`](./imp_compiler_progScript.sml#L689). |
 | Theorem 3.7: reifying the compiler with I/O | [`compiler_prog_correct`](./imp_compiler_progScript.sml#L689) |
 | Theorem 4.1: correctness of `fp_to_impl` | [`to_imp_thm`](./source_to_impScript.sml#L929) |
 | Theorem 5.2: no-divergence introduction of `impl_to_asm` | [`codegen_diverges`](./imp_to_asm_proofScript.sml#L4384) |

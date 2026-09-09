@@ -12,23 +12,21 @@ From Ltac2 Require Import Ltac2.
 Import ListNotations.
 From impboot.demo Require Import DemoUtils.
 
-Definition f1: nat :=
-  let/d n := 2%nat in
-  (n + 1)%nat.
+Open Scope nat.
 
-Derive f1_prog
-  in ltac2:(relcompile_tpe 'f1_prog 'f1 [])
-  as f1_prog_proof.
+Definition paper_expr: nat :=
+  let/d x := 5 in 10 / x.
+
+Derive paper_expr_prog
+  in ltac2:(relcompile_tpe 'paper_expr_prog 'paper_expr [])
+  as paper_expr_prog_proof.
 Proof.
-  relcompile_setup ().
-  eapply trans_app.
-  3: eauto.
-  2: reflexivity.
-  unfold f1.
-  eapply auto_let with (let_n := "n").
-  1: eapply auto_nat_const.
-  intros; cbv beta.
-  eapply auto_nat_add.
-  1: eapply trans_Var; eauto with fenvDb.
-  eapply auto_nat_const.
+  relcompile_start ().
+  relcompile_step ().
+  - relcompile_step ().
+  - relcompile_step ().
+    + relcompile_step ().
+    + relcompile_step ().
+  Unshelve.
+  ltac1:(lia).
 Qed.

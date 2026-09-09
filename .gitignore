@@ -75,6 +75,7 @@ mcp.json
 
 # generated timing files
 rocq/timings/
+/timings/
 *.timing.diff
 *.v.after-timing
 *.v.before-timing
@@ -95,3 +96,9 @@ time-of-build-pretty.log
 
 # asm
 *.s
+
+# imp
+*.imp
+
+# binaries
+*.exe

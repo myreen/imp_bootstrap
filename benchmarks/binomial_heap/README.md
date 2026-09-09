@@ -17,7 +17,7 @@ Each directly comparable pair compiles the same physical source file:
 - `impl-mynat` and `certirocq-mynat` compile
   `shared/MyNatBinomialHeap.v`.
 
-The `mynat` pair uses the usual unary constructors `MyO` and `MyS`. IMPL's
+The `mynat` pair uses the unary constructors `MyO` and `MyS`. IMPL's
 encoding represents `MyO` as zero and allocates one cell per `MyS`, rather than
 using IMPL's machine-number encoding for Rocq's built-in `nat`.
 

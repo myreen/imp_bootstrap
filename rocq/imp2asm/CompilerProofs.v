@@ -2,7 +2,7 @@ From impboot.utils Require Import Core Llist.
 From impboot.imp2asm Require Import Compiler.
 From impboot.parsing Require Import Parser.
 From impboot.imperative Require Import Printing.
-From impboot.bootstrapping Require Import Bootstrapping.
+From impboot.bootstrapping Require Import BootstrappingDefinitions.
 From impboot.assembly Require Import ASMSemantics.
 From impboot.imperative Require Import ImpSyntax.
 From impboot.derivations Require Import CompilerDerivations.

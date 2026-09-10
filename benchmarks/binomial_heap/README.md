@@ -28,10 +28,32 @@ standard Clang optimization). The optimized variants also use
 
 The CertiCoq-derived sources use the MIT terms in [NOTICE](NOTICE).
 
-## Run
+## Setup
+
+First follow the [Rocq setup instructions](../../rocq/README.md) for the IMPL
+compiler. The benchmarks also require Make, GCC, Clang, Python 3, and Bash on
+x86-64 Linux.
+
+From this directory, create a separate local opam switch and install the
+benchmark dependencies:
+
+```sh
+opam switch create . 4.14.2 --no-install
+opam repository add rocq-released https://rocq-prover.org/opam/released
+opam install . --deps-only
+```
+
+The Makefile uses this switch for CertiRocq and the switch selected in `rocq/`
+for IMPL. It finds the C runtime in the installed CertiRocq package; no separate
+source checkout is needed.
+
+## Check and run
 
 ```sh
 make
 make benchmark
 ```
 
+For a quick check of all variants, use `bash ./run_benchmarks.sh 2 2` after
+`make`. The arguments are iterations per variant and number of batches;
+the defaults are 1000 and 3.

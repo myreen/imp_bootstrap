@@ -1,0 +1,15 @@
+opam-version: "2.0"
+synopsis: "Dependencies for the binomial heap benchmarks"
+maintainer: "IMPL developers"
+license: "MIT"
+depends: [
+  "ocaml" {= "4.14.2"}
+  "rocq-certirocq" {= "0.9.1+9.1"}
+  "coq-coqutil" {= "dev"}
+]
+pin-depends: [
+  [
+    "coq-coqutil.dev"
+    "git+https://github.com/mit-plv/coqutil.git#2cf510214b6d56a3065b092789b0c8455ae2c263"
+  ]
+]

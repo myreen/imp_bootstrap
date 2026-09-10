@@ -2,14 +2,14 @@ ROOT := $(abspath ../..)
 WORKSPACE := $(CURDIR)
 BUILD := $(WORKSPACE)/_build
 
-PROJECT_SWITCH ?= $(ROOT)
-CERTIROCQ_SWITCH ?= /tmp/opencode/certirocq-0.9.1-switch
-CERTIROCQ_SRC ?= /tmp/opencode/certirocq-0.9.1-src
+PROJECT_SWITCH ?= $(shell cd $(ROOT)/rocq && env -u OPAMSWITCH opam switch show)
+CERTIROCQ_SWITCH ?= $(WORKSPACE)
 
-PROJECT_ROCQ = opam exec --switch=$(PROJECT_SWITCH) -- rocq
+PROJECT_ROCQ = opam exec --switch=$(PROJECT_SWITCH) -- \
+	env OCAMLPATH="$(ROOT)/rocq/_build/install/default/lib$${OCAMLPATH:+:$$OCAMLPATH}" rocq
 CERTIROCQ = opam exec --switch=$(CERTIROCQ_SWITCH) -- rocq
 IMPBOOT_BUILD = $(ROOT)/rocq/_build/default
-CERTIROCQ_RUNTIME = $(CERTIROCQ_SRC)/runtime
+CERTIROCQ_RUNTIME = $(shell $(CERTIROCQ) compile -where)/user-contrib/CertiRocq/Plugin/runtime
 
 SHARED_SOURCE = $(WORKSPACE)/shared/AdjustedBinomialHeap.v
 MYNAT_SOURCE = $(WORKSPACE)/shared/MyNatBinomialHeap.v

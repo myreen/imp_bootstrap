@@ -2,8 +2,6 @@
 opam-version: "2.0"
 synopsis: "Minimal verified bootstrapped compiler for an imperative language"
 license: "MIT"
-homepage: "https://github.com/myreen/imp_bootstrap"
-bug-reports: "https://github.com/myreen/imp_bootstrap/issues"
 depends: [
   "dune" {>= "3.21"}
   "rocq-prover" {= "9.0.0"}

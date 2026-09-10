@@ -17,16 +17,12 @@ Libs
      source_to_imp  -- Theory source_to_imp (to_exp .. to_imp)
      IMP code gen   -- Theory imp_to_asm   (c_exp .. codegen)
 
-   Theory compiler_funs_cv does the same job for the functional compiler.  The
-   two are deliberately kept in separate branches of the theory graph: Theory
-   codegen and Theory imp_to_asm share many constant names (c_exp, c_var,
-   c_pops, codegen, ...), as do Theory parsing and Theory imp_parsing (v2exp,
-   v2list, parser, ...), so the generated cv_ constants would shadow one
-   another.  Every reference below is therefore theory-qualified. *)
+   References below are theory-qualified to distinguish the source-language
+   parsing and code-generation definitions from their IMP counterparts. *)
 
 
 (* ------------------------------------------------------------------ *)
-(* Helpers shared with the functional compiler (Theory printing)      *)
+(* Helpers from the source-language printer (Theory printing)         *)
 (* ------------------------------------------------------------------ *)
 
 val pre = cv_trans_pre_rec "num2str_pre" printingTheory.num2str_def

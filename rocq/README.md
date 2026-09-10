@@ -4,7 +4,9 @@ This directory contains the rocq development of a simple verified bootstrapped c
 
 ## Setup
 
-Create (`opam switch create . --no-install`) or select an existing opam switch, then install the dependencies declared by the package:
+Run all commands below from this `rocq` directory. Create
+(`opam switch create . --no-install`) or select an existing opam switch, then
+install the dependencies declared by the package:
 
 ```sh
 opam install . --deps-only

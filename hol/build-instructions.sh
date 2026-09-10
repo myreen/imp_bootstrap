@@ -12,6 +12,7 @@ project_hol_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd
 git clone https://github.com/polyml/polyml
 cd polyml
+git checkout 4557554077078decce4ce5f90da00a713cfc32e4 # Poly/ML 5.9.2
 ./configure --prefix=/usr --enable-intinf-as-int
 ## --enable-intinf-as-int uses GMP for arbitrary-precision integers.
 
@@ -28,7 +29,7 @@ make compiler
 ## Use sudo for this step if the installation directory requires it.
 make install
 
-## Build HOL4: Trindemossen-2, the latest release as of 2026-09-09.
+## Build HOL4: Trindemossen-2.
 ## https://github.com/HOL-Theorem-Prover/HOL/releases/tag/trindemossen-2
 
 cd

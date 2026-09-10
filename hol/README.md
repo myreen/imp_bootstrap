@@ -19,11 +19,6 @@ Holmake -r cleanAll
 Holmake -r
 ```
 
-The `-r` option also builds the dependencies in `functional` and the HOL4
-directories listed in the `Holmakefile`s. The clean command cleans those
-dependencies as well. The build checks the bootstrapping proofs and generates
-`imp_compiler_prog.txt` and `imp_compiler_asm.s`.
-
 ## Paper theorems and lemmas
 
 | Paper result | Source location |
@@ -44,7 +39,7 @@ dependencies as well. The build checks the bootstrapping proofs and generates
 
 | Location | Contents |
 | --- | --- |
-| [`./functional`](./functional) | Functional language and assembly definitions, reification support, and the functional compiler development. |
+| [`./functional`](./functional) | Functional-language and assembly definitions, parser and printer infrastructure, low-level code generation, and shared automation lemmas. |
 | [`imp_source_syntaxScript.sml`](./imp_source_syntaxScript.sml), [`imp_source_semanticsScript.sml`](./imp_source_semanticsScript.sml), [`imp_source_propertiesScript.sml`](./imp_source_propertiesScript.sml) | Imperative language syntax, semantics, and properties. |
 | [`imp_parsingScript.sml`](./imp_parsingScript.sml), [`imp_printingScript.sml`](./imp_printingScript.sml) | Imperative language parser and pretty-printer. |
 | [`source_to_impScript.sml`](./source_to_impScript.sml) | FP-to-IMPL code generator and correctness proof. |

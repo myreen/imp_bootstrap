@@ -1,1 +1,2 @@
 -Q _build/default impboot
+-I _build/install/default/lib

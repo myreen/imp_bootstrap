@@ -17,6 +17,8 @@
  (name impboot)
  (synopsis "Minimal verified bootstrapped compiler for an imperative language")
  (depends
-  (rocq-prover (= 9.0.0))
+  (ocaml (= 4.14.2))
+  (rocq-core (= 9.1.1))
+  (rocq-stdlib (= 9.0.0))
   (coq-coqutil (= "dev"))
  ))

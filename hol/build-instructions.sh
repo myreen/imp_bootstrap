@@ -29,19 +29,21 @@ make compiler
 ## Use sudo for this step if the installation directory requires it.
 make install
 
-## Build HOL4: Trindemossen-2.
-## https://github.com/HOL-Theorem-Prover/HOL/releases/tag/trindemossen-2
+## Build HOL4: Trindemossen-2-v7.
+## https://github.com/HOL-Theorem-Prover/HOL/releases/tag/trindemossen-2-v7
 
 cd
 git clone https://github.com/HOL-Theorem-Prover/HOL
 cd HOL
-git checkout bdc6917eeafd45f1067c08b6061c2243c1b1edb0
+git checkout e395eb6e69054ff6f7cef9d1107fd1a04dd5848f
 poly --script tools/smart-configure.sml
 bin/build
 
-## Optionally set HOLDIR and add the HOL4 tools to PATH:
-# export HOLDIR=$HOME/HOL
-# export PATH=$HOLDIR/bin:$PATH
+## Set HOLDIR and add the HOL4 tools to PATH.
+## If running this file as a script, repeat these exports in your shell
+## before using the README's Holmake commands.
+export HOLDIR="$HOME/HOL"
+export PATH="$HOLDIR/bin:$PATH"
 
 ## Build this development, including its dependencies.
 

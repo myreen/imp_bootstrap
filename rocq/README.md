@@ -2,15 +2,22 @@
 
 This directory contains the rocq development of a simple verified bootstrapped compiler for an imperative language.
 
+## Prerequisites
+
+Opam must be installed and initialized. Git, a C compiler, Make, pkg-config,
+and GMP development headers must also be available.
+
 ## Setup
 
-Run all commands below from this `rocq` directory. Create
-(`opam switch create . --no-install`) or select an existing opam switch, then
-install the dependencies declared by the package:
+Run all commands below from this `rocq` directory. Create a local switch and
+install the dependencies declared by the supplied `impboot.opam`:
 
 ```sh
+opam switch create . 4.14.2 --no-install
 opam install . --deps-only
 ```
+
+The package pins OCaml 4.14.2, Rocq core 9.1.1, and Stdlib 9.0.0.
 
 ## Check the development
 
@@ -19,7 +26,7 @@ Start with a clean build so that every theory is checked from source:
 ```sh
 ulimit -s 1048576
 opam exec -- dune clean
-opam exec -- dune build
+opam exec -- dune build -j 4
 ```
 
 ## Running the bootstrapped compiler

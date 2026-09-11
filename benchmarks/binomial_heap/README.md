@@ -49,7 +49,10 @@ source checkout is needed.
 
 ## Check and run
 
+Raise the stack limit in this shell before building or running the benchmarks:
+
 ```sh
+ulimit -s 1048576
 make
 make benchmark
 ```

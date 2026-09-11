@@ -4,10 +4,13 @@ This directory contains the HOL4 development of a simple verified bootstrapped c
 
 ## Setup
 
+Prerequisites: Git, a C/C++ compiler, Make, and GMP development headers.
+
 Follow [`build-instructions.sh`](build-instructions.sh) to install Poly/ML and
 HOL4 and build this development. The instructions are adapted from the
 [CakeML build instructions](https://github.com/CakeML/cakeml/blob/master/build-instructions.sh)
-and pin HOL4 to the Trindemossen-2 release.
+and pin HOL4 to Trindemossen-2-v7, commit
+`e395eb6e69054ff6f7cef9d1107fd1a04dd5848f`.
 
 ## Check the development
 
@@ -15,6 +18,8 @@ From this repository's `hol` directory, start with a clean build so that every
 theory is checked from source:
 
 ```sh
+export HOLDIR="$HOME/HOL"
+export PATH="$HOLDIR/bin:$PATH"
 Holmake -r cleanAll
 Holmake -r
 ```

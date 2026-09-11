@@ -4316,8 +4316,7 @@ QED
 Theorem codegen_no_abort:
   ∀input prog fuel output outcome s1.
     (input, codegen prog) asm_terminates output ∧
-    eval_from fuel input prog = (outcome, s1) ∧
-    outcome ≠ Stop Crash ⇒
+    eval_from fuel input prog = (outcome, s1) ⇒
     outcome ≠ Stop Abort
 Proof
   Cases_on ‘prog’

@@ -38,7 +38,7 @@ Holmake -r
 | Theorem 3.6: reifying the compiler | component certificates are composed in [`compiler_prog_correct`](./imp_compiler_progScript.sml#L689). |
 | Theorem 3.7: reifying the compiler with I/O | [`compiler_prog_correct`](./imp_compiler_progScript.sml#L689) |
 | Theorem 4.1: correctness of `fp_to_impl` | [`to_imp_thm`](./source_to_impScript.sml#L929) |
-| Theorem 5.2: no-divergence introduction of `impl_to_asm` | [`codegen_diverges`](./imp_to_asm_proofScript.sml#L4384) |
+| Theorem 5.2: no-divergence introduction of `impl_to_asm` | [`codegen_diverges`](./imp_to_asm_proofScript.sml#L4383) |
 
 ## Code structure
 

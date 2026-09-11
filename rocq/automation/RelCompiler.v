@@ -1313,7 +1313,7 @@ Ltac2 crush_side_conditions () :=
   Control.enter (fun () =>
     match! goal with
     | [ |- forall _ _, FEnv.lookup _ _ = _ -> FEnv.lookup _ _ = _ ] =>
-      ltac1:(timeout 5 ltac2:(Control.enter crush_FEnv_impossible))
+      solve [crush_FEnv_impossible ()]
     | [ |- FEnv.lookup _ _ = _ ] => crush_FEnv ()
     | [ |- NoDup _ ] => crush_NoDup ()
     | [ |- (_ < _)%N ] => ltac1:(lia)

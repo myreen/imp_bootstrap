@@ -17,7 +17,7 @@ From impboot.derivations Require Import CompilerUtilsDerivations.
 (* lexing *)
 
 Derive read_nmc_prog
-  in ltac2:(relcompile_tpe 'read_nmc_prog 'read_nmc ['mulN_10])
+  in ltac2:(relcompile_tpe ['read_nmc_prog] ['read_nmc] ['mulN_10])
   as read_nmc_prog_proof.
 Proof.
   time relcompile.
@@ -25,7 +25,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [read_nmc_prog]).
 
 Derive read_alp_prog
-  in ltac2:(relcompile_tpe 'read_alp_prog 'read_alp ['mulN_256])
+  in ltac2:(relcompile_tpe ['read_alp_prog] ['read_alp] ['mulN_256])
   as read_alp_prog_proof.
 Proof.
   time relcompile.
@@ -33,7 +33,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [read_alp_prog]).
 
 Derive end_line_prog
-  in ltac2:(relcompile_tpe 'end_line_prog 'end_line [])
+  in ltac2:(relcompile_tpe ['end_line_prog] ['end_line] [])
   as end_line_prog_proof.
 Proof.
   time relcompile.
@@ -41,7 +41,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [end_line_prog]).
 
 Derive q_of_nat_prog
-  in ltac2:(relcompile_tpe 'q_of_nat_prog 'q_of_nat [])
+  in ltac2:(relcompile_tpe ['q_of_nat_prog] ['q_of_nat] [])
   as q_of_nat_prog_proof.
 Proof.
   time relcompile.
@@ -49,7 +49,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [q_of_nat_prog]).
 
 Derive lex_prog
-  in ltac2:(relcompile_tpe 'lex_prog 'lex ['end_line; 'read_nmc; 'read_alp; 'q_of_nat; '@list_len])
+  in ltac2:(relcompile_tpe ['lex_prog] ['lex] ['end_line; 'read_nmc; 'read_alp; 'q_of_nat; '@list_len])
   as lex_prog_proof.
 Proof.
   time relcompile.
@@ -57,7 +57,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [lex_prog]).
 
 Derive lexer_i_prog
-  in ltac2:(relcompile_tpe 'lexer_i_prog 'lexer_i ['@lex; '@list_len])
+  in ltac2:(relcompile_tpe ['lexer_i_prog] ['lexer_i] ['@lex; '@list_len])
   as lexer_i_prog_proof.
 Proof.
   time relcompile.
@@ -65,7 +65,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [lexer_i_prog]).
 
 Derive lexer_prog
-  in ltac2:(relcompile_tpe 'lexer_prog 'lexer ['lexer_i])
+  in ltac2:(relcompile_tpe ['lexer_prog] ['lexer] ['lexer_i])
   as lexer_prog_proof.
 Proof.
   time relcompile.
@@ -75,7 +75,7 @@ Ltac2 Eval assert_Some constr:(to_funs [lexer_prog]).
 (* FunValues *)
 
 Derive vcons_prog
-  in ltac2:(relcompile_tpe 'vcons_prog 'vcons [])
+  in ltac2:(relcompile_tpe ['vcons_prog] ['vcons] [])
   as vcons_prog_proof.
 Proof.
   time relcompile.
@@ -83,7 +83,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vcons_prog]).
 
 Derive vhead_prog
-  in ltac2:(relcompile_tpe 'vhead_prog 'vhead [])
+  in ltac2:(relcompile_tpe ['vhead_prog] ['vhead] [])
   as vhead_prog_proof.
 Proof.
   time relcompile.
@@ -93,7 +93,7 @@ Ltac2 Eval assert_Some constr:(to_funs [vhead_prog]).
 Theorem vlist_equation: ltac2:(unfold_fix_type '@vlist).
 Proof. unfold_fix_proof '@vlist. Qed.
 Derive vlist_prog
-  in ltac2:(relcompile_tpe 'vlist_prog 'vlist ['vcons])
+  in ltac2:(relcompile_tpe ['vlist_prog] ['vlist] ['vcons])
   as vlist_prog_proof.
 Proof.
   time relcompile.
@@ -103,7 +103,7 @@ Ltac2 Eval assert_Some constr:(to_funs [vlist_prog]).
 Theorem vupper_f_equation: ltac2:(unfold_fix_type '@vupper_f).
 Proof. unfold_fix_proof '@vupper_f. Qed.
 Derive vupper_f_prog
-  in ltac2:(relcompile_tpe 'vupper_f_prog 'vupper_f [])
+  in ltac2:(relcompile_tpe ['vupper_f_prog] ['vupper_f] [])
   as vupper_f_prog_proof.
 Proof.
   time relcompile.
@@ -112,7 +112,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vupper_f_prog]).
 
 Derive vupper_prog
-  in ltac2:(relcompile_tpe 'vupper_prog 'vupper ['vupper_f])
+  in ltac2:(relcompile_tpe ['vupper_prog] ['vupper] ['vupper_f])
   as vupper_prog_proof.
 Proof.
   time relcompile.
@@ -120,7 +120,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vupper_prog]).
 
 Derive vgetNum_prog
-  in ltac2:(relcompile_tpe 'vgetNum_prog 'vgetNum [])
+  in ltac2:(relcompile_tpe ['vgetNum_prog] ['vgetNum] [])
   as vgetNum_prog_proof.
 Proof.
   time relcompile.
@@ -128,7 +128,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vgetNum_prog]).
 
 Derive vel0_prog
-  in ltac2:(relcompile_tpe 'vel0_prog 'vel0 ['vhead])
+  in ltac2:(relcompile_tpe ['vel0_prog] ['vel0] ['vhead])
   as vel0_prog_proof.
 Proof.
   time relcompile.
@@ -136,7 +136,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vel0_prog]).
 
 Derive vel1_prog
-  in ltac2:(relcompile_tpe 'vel1_prog 'vel1 ['vhead; 'vtail])
+  in ltac2:(relcompile_tpe ['vel1_prog] ['vel1] ['vhead; 'vtail])
   as vel1_prog_proof.
 Proof.
   time relcompile.
@@ -144,7 +144,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vel1_prog]).
 
 Derive vel2_prog
-  in ltac2:(relcompile_tpe 'vel2_prog 'vel2 ['vel1; 'vtail])
+  in ltac2:(relcompile_tpe ['vel2_prog] ['vel2] ['vel1; 'vtail])
   as vel2_prog_proof.
 Proof.
   time relcompile.
@@ -152,7 +152,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vel2_prog]).
 
 Derive vel3_prog
-  in ltac2:(relcompile_tpe 'vel3_prog 'vel3 ['vel2; 'vtail])
+  in ltac2:(relcompile_tpe ['vel3_prog] ['vel3] ['vel2; 'vtail])
   as vel3_prog_proof.
 Proof.
   time relcompile.
@@ -160,7 +160,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vel3_prog]).
 
 Derive vtail_prog
-  in ltac2:(relcompile_tpe 'vtail_prog 'vtail [])
+  in ltac2:(relcompile_tpe ['vtail_prog] ['vtail] [])
   as vtail_prog_proof.
 Proof.
   time relcompile.
@@ -168,7 +168,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vtail_prog]).
 
 Derive visNum_prog
-  in ltac2:(relcompile_tpe 'visNum_prog 'visNum [])
+  in ltac2:(relcompile_tpe ['visNum_prog] ['visNum] [])
   as visNum_prog_proof.
 Proof.
   time relcompile.
@@ -176,7 +176,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [visNum_prog]).
 
 Derive visPair_prog
-  in ltac2:(relcompile_tpe 'visPair_prog 'visPair [])
+  in ltac2:(relcompile_tpe ['visPair_prog] ['visPair] [])
   as visPair_prog_proof.
 Proof.
   time relcompile.
@@ -186,7 +186,7 @@ Ltac2 Eval assert_Some constr:(to_funs [visPair_prog]).
 (* parsing *)
 
 Derive quote_prog
-  in ltac2:(relcompile_tpe 'quote_prog 'quote ['vlist])
+  in ltac2:(relcompile_tpe ['quote_prog] ['quote] ['vlist])
   as quote_prog_proof.
 Proof.
   time relcompile.
@@ -194,7 +194,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [quote_prog]).
 
 Derive parse_prog
-  in ltac2:(relcompile_tpe 'parse_prog 'parse ['vhead; 'quote])
+  in ltac2:(relcompile_tpe ['parse_prog] ['parse] ['vhead; 'quote])
   as parse_prog_proof.
 Proof.
   time relcompile.
@@ -204,7 +204,7 @@ Ltac2 Eval assert_Some constr:(to_funs [parse_prog]).
 (* converting from v to prog *)
 
 Derive v2list_prog
-  in ltac2:(relcompile_tpe 'v2list_prog 'v2list [])
+  in ltac2:(relcompile_tpe ['v2list_prog] ['v2list] [])
   as v2list_prog_proof.
 Proof.
   time relcompile.
@@ -212,7 +212,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [v2list_prog]).
 
 Derive num2exp_prog
-  in ltac2:(relcompile_tpe 'num2exp_prog 'num2exp ['vupper])
+  in ltac2:(relcompile_tpe ['num2exp_prog] ['num2exp] ['vupper])
   as num2exp_prog_proof.
 Proof.
   time relcompile.
@@ -221,7 +221,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [num2exp_prog]).
 
 Derive v2exp_prog
-  in ltac2:(relcompile_tpe 'v2exp_prog 'v2exp ['vgetNum; 'vel0; 'num2exp])
+  in ltac2:(relcompile_tpe ['v2exp_prog] ['v2exp] ['vgetNum; 'vel0; 'num2exp])
   as v2exp_prog_proof.
 Proof.
   time relcompile.
@@ -230,7 +230,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [v2exp_prog]).
 
 Derive vs2exps_prog
-  in ltac2:(relcompile_tpe 'vs2exps_prog 'vs2exps ['v2exp])
+  in ltac2:(relcompile_tpe ['vs2exps_prog] ['vs2exps] ['v2exp])
   as vs2exps_prog_proof.
 Proof.
   time relcompile.
@@ -238,7 +238,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vs2exps_prog]).
 
 Derive v2cmp_prog
-  in ltac2:(relcompile_tpe 'v2cmp_prog 'v2cmp ['vgetNum])
+  in ltac2:(relcompile_tpe ['v2cmp_prog] ['v2cmp] ['vgetNum])
   as v2cmp_prog_proof.
 Proof.
   time relcompile.
@@ -246,7 +246,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [v2cmp_prog]).
 
 Derive v2test_prog
-  in ltac2:(relcompile_tpe 'v2test_prog 'v2test ['vgetNum; 'v2cmp; 'v2exp])
+  in ltac2:(relcompile_tpe ['v2test_prog] ['v2test] ['vgetNum; 'v2cmp; 'v2exp])
   as v2test_prog_proof.
 Proof.
   time relcompile.
@@ -254,7 +254,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [v2test_prog]).
 
 Derive v2cmd_prog
-  in ltac2:(relcompile_tpe 'v2cmd_prog 'v2cmd ['vgetNum; 'v2exp; 'v2test; 'v2list; 'vs2exps; 'visNum; 'visPair])
+  in ltac2:(relcompile_tpe ['v2cmd_prog] ['v2cmd] ['vgetNum; 'v2exp; 'v2test; 'v2list; 'vs2exps; 'visNum; 'visPair])
   as v2cmd_prog_proof.
 Proof.
   time relcompile.
@@ -262,7 +262,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [v2cmd_prog]).
 
 Derive vs2args_prog
-  in ltac2:(relcompile_tpe 'vs2args_prog 'vs2args ['vgetNum])
+  in ltac2:(relcompile_tpe ['vs2args_prog] ['vs2args] ['vgetNum])
   as vs2args_prog_proof.
 Proof.
   time relcompile.
@@ -270,7 +270,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [vs2args_prog]).
 
 Derive v2func_prog
-  in ltac2:(relcompile_tpe 'v2func_prog 'v2func ['vel1; 'vel2; 'vel3; 'vgetNum; 'v2list; 'vs2args; 'v2cmd])
+  in ltac2:(relcompile_tpe ['v2func_prog] ['v2func] ['vel1; 'vel2; 'vel3; 'vgetNum; 'v2list; 'vs2args; 'v2cmd])
   as v2func_prog_proof.
 Proof.
   time relcompile.
@@ -278,7 +278,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [v2func_prog]).
 
 Derive v2funcs_prog
-  in ltac2:(relcompile_tpe 'v2funcs_prog 'v2funcs ['v2func])
+  in ltac2:(relcompile_tpe ['v2funcs_prog] ['v2funcs] ['v2func])
   as v2funcs_prog_proof.
 Proof.
   time relcompile.
@@ -286,7 +286,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [v2funcs_prog]).
 
 Derive vs2prog_prog
-  in ltac2:(relcompile_tpe 'vs2prog_prog 'vs2prog ['v2funcs])
+  in ltac2:(relcompile_tpe ['vs2prog_prog] ['vs2prog] ['v2funcs])
   as vs2prog_prog_proof.
 Proof.
   time relcompile.
@@ -296,7 +296,7 @@ Ltac2 Eval assert_Some constr:(to_funs [vs2prog_prog]).
 (* entire parser *)
 
 Derive parser_prog
-  in ltac2:(relcompile_tpe 'parser_prog 'parser ['parse; 'v2list; 'vs2prog])
+  in ltac2:(relcompile_tpe ['parser_prog] ['parser] ['parse; 'v2list; 'vs2prog])
   as parser_prog_proof.
 Proof.
   time relcompile.
@@ -304,7 +304,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [parser_prog]).
 
 Derive str2imp_prog
-  in ltac2:(relcompile_tpe 'str2imp_prog 'str2imp ['lexer; 'parser])
+  in ltac2:(relcompile_tpe ['str2imp_prog] ['str2imp] ['lexer; 'parser])
   as str2imp_prog_proof.
 Proof.
   time relcompile.

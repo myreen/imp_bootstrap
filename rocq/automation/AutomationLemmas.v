@@ -468,7 +468,6 @@ Theorem auto_nat_case: forall {A} `{ra: Refinable A} env s x0 x1 x2 n (v0: nat) 
         | 0%nat => v1
         | S n => v2 n
         end)], s).
-
 Proof.
   intros.
   destruct v0 eqn:?.

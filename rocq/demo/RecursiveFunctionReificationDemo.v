@@ -23,7 +23,7 @@ Proof. unfold_fix_proof '@len. Qed.
 Print len.
 
 Derive len_prog
-  in ltac2:(relcompile_tpe 'len_prog 'len [])
+  in ltac2:(relcompile_tpe ['len_prog] ['len] [])
   as len_prog_proof.
 Proof.
   relcompile_setup ().

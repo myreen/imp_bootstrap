@@ -90,7 +90,7 @@ Ltac2 Set relCompilerDB as olddb :=
   fun r => Control.plus (fun () => olddb r) (fun _ => auto_my_nat_MyO_tac r).
 
 Derive getMyZero_prog
-  in ltac2:(relcompile_tpe 'getMyZero_prog 'getMyZero [])
+  in ltac2:(relcompile_tpe ['getMyZero_prog] ['getMyZero] [])
   as getMyZero_prog_proof.
 Proof.
   time relcompile.
@@ -100,7 +100,7 @@ Ltac2 Set relCompilerDB as olddb :=
   fun r => Control.plus (fun () => olddb r) (fun _ => auto_my_nat_MyS_tac r).
 
 Derive myNatInc_prog
-  in ltac2:(relcompile_tpe 'myNatInc_prog 'myNatInc [])
+  in ltac2:(relcompile_tpe ['myNatInc_prog] ['myNatInc] [])
   as myNatInc_prog_proof.
 Proof.
   time relcompile.
@@ -151,7 +151,7 @@ Ltac2 Set relCompilerDB as olddb :=
   fun r => Control.plus (fun () => olddb r) (fun _ => auto_my_nat_case_tac r).
 
 Derive addMyNat_prog
-  in ltac2:(relcompile_tpe 'addMyNat_prog 'addMyNat [])
+  in ltac2:(relcompile_tpe ['addMyNat_prog] ['addMyNat] [])
   as addMyNat_prog_proof.
 Proof.
   time relcompile.

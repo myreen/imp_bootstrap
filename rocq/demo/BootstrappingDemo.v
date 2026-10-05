@@ -28,7 +28,7 @@ From impboot Require Import parsing.Parser.
 Print c_add.
 
 Derive c_add_fp
-  in ltac2:(relcompile_tpe 'c_add_fp 'c_add []) 
+  in ltac2:(relcompile_tpe ['c_add_fp] ['c_add] [])
   as c_add_prog_proof.
 Proof.
   time relcompile.
@@ -66,7 +66,7 @@ Definition e (y: nat): nat :=
   x + y.
 
 Derive e_prog
-  in ltac2:(relcompile_tpe 'e_prog 'e [])
+  in ltac2:(relcompile_tpe ['e_prog] ['e] [])
   as e_prog_proof.
 Proof.
   time relcompile.

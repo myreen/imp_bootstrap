@@ -17,7 +17,7 @@ Definition f1: nat :=
   (n + 1)%nat.
 
 Derive f1_prog
-  in ltac2:(relcompile_tpe 'f1_prog 'f1 [])
+  in ltac2:(relcompile_tpe ['f1_prog] ['f1] [])
   as f1_prog_proof.
 Proof.
   relcompile_setup ().

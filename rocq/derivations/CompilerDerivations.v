@@ -15,7 +15,7 @@ From Ltac2 Require Import Ltac2.
 From impboot.derivations Require Import AsmToStringDerivations ParserDerivations ImpToASMCodegenDerivations CompilerUtilsDerivations.
 
 Derive compiler_prog
-  in ltac2:(relcompile_tpe 'compiler_prog 'compiler ['str2imp; 'codegen; 'asm2str])
+  in ltac2:(relcompile_tpe ['compiler_prog] ['compiler] ['str2imp; 'codegen; 'asm2str])
   as compiler_prog_proof.
 Proof.
   time relcompile.

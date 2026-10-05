@@ -12,7 +12,7 @@ From impboot.automation.ltac2 Require Import UnfoldFix Stdlib2.
 From coqutil.Word Require Import Interface.
 
 Derive natmod10_prog
-  in ltac2:(relcompile_tpe 'natmod10_prog 'natmod10 ['mulnat10])
+  in ltac2:(relcompile_tpe ['natmod10_prog] ['natmod10] ['mulnat10])
   as natmod10_prog_proof.
 Proof.
   time relcompile.
@@ -21,7 +21,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [natmod10_prog]).
 
 Derive Nmod_10_prog
-  in ltac2:(relcompile_tpe 'Nmod_10_prog 'Nmod_10 ['mulN_10])
+  in ltac2:(relcompile_tpe ['Nmod_10_prog] ['Nmod_10] ['mulN_10])
   as Nmod_10_prog_proof.
 Proof.
   time relcompile.
@@ -30,7 +30,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [Nmod_10_prog]).
 
 Derive Nmod_256_prog
-  in ltac2:(relcompile_tpe 'Nmod_256_prog 'Nmod_256 ['mulN_256])
+  in ltac2:(relcompile_tpe ['Nmod_256_prog] ['Nmod_256] ['mulN_256])
   as Nmod_256_prog_proof.
 Proof.
   time relcompile.
@@ -41,7 +41,7 @@ Ltac2 Eval assert_Some constr:(to_funs [Nmod_256_prog]).
 Theorem str_app_equation: ltac2:(unfold_fix_type '@str_app).
 Proof. unfold_fix_proof '@str_app. Qed.
 Derive str_app_prog
-  in ltac2:(relcompile_tpe 'str_app_prog 'str_app [])
+  in ltac2:(relcompile_tpe ['str_app_prog] ['str_app] [])
   as str_app_prog_proof.
 Proof.
   time relcompile.
@@ -52,7 +52,7 @@ Theorem num2strf_equation: ltac:(with_strategy opaque [nat_mod Nat.add Nat.div] 
 Proof. unfold_fix_proof '@num2strf. Qed.
 
 Derive num2strf_prog
-  in ltac2:(relcompile_tpe 'num2strf_prog 'num2strf ['natmod10])
+  in ltac2:(relcompile_tpe ['num2strf_prog] ['num2strf] ['natmod10])
   as num2strf_prog_proof.
 Proof.
   time relcompile.
@@ -62,7 +62,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [num2strf_prog]).
 
 Derive num2str_prog
-  in ltac2:(relcompile_tpe 'num2str_prog 'num2str ['num2strf])
+  in ltac2:(relcompile_tpe ['num2str_prog] ['num2str] ['num2strf])
   as num2str_prog_proof.
 Proof.
   time relcompile.
@@ -73,7 +73,7 @@ Theorem N2str_f_equation: ltac:(with_strategy opaque [N_mod10 N.add] ltac2:(unfo
 Proof. unfold_fix_proof '@N2str_f. Qed.
 
 Derive N2str_f_prog
-  in ltac2:(relcompile_tpe 'N2str_f_prog 'N2str_f ['Nmod_10])
+  in ltac2:(relcompile_tpe ['N2str_f_prog] ['N2str_f] ['Nmod_10])
   as N2str_f_prog_proof.
 Proof.
   time relcompile.
@@ -84,7 +84,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [N2str_f_prog]).
 
 Derive N2str_prog
-  in ltac2:(relcompile_tpe 'N2str_prog 'N2str ['N2str_f])
+  in ltac2:(relcompile_tpe ['N2str_prog] ['N2str] ['N2str_f])
   as N2str_prog_proof.
 Proof.
   time relcompile.
@@ -95,7 +95,7 @@ Theorem list_len_equation: ltac:(with_strategy opaque [Nat.add] ltac2:(unfold_fi
 Proof. unfold_fix_proof '@list_len. Qed.
 
 Derive list_len_prog
-  in ltac2:(relcompile_tpe 'list_len_prog '@list_len [])
+  in ltac2:(relcompile_tpe ['list_len_prog] ['@list_len] [])
   as list_len_prog_proof.
 Proof.
   time relcompile.
@@ -106,7 +106,7 @@ Theorem list_app_equation: ltac2:(unfold_fix_type '@list_app).
 Proof. unfold_fix_proof '@list_app. Qed.
 
 Derive list_app_prog
-  in ltac2:(relcompile_tpe 'list_app_prog '@list_app [])
+  in ltac2:(relcompile_tpe ['list_app_prog] ['@list_app] [])
   as list_app_prog_proof.
 Proof.
   time relcompile.
@@ -117,7 +117,7 @@ Theorem flatten_equation: ltac2:(unfold_fix_type '@flatten).
 Proof. unfold_fix_proof '@flatten. Qed.
 
 Derive flatten_prog
-  in ltac2:(relcompile_tpe 'flatten_prog '@flatten ['@list_app])
+  in ltac2:(relcompile_tpe ['flatten_prog] ['@flatten] ['@list_app])
   as flatten_prog_proof.
 Proof.
   time relcompile.
@@ -128,7 +128,7 @@ Theorem appl_len_equation: ltac2:(unfold_fix_type '@appl_len).
 Proof. unfold_fix_proof '@appl_len. Qed.
 
 Derive appl_len_prog
-  in ltac2:(relcompile_tpe 'appl_len_prog '@appl_len ['@list_len])
+  in ltac2:(relcompile_tpe ['appl_len_prog] ['@appl_len] ['@list_len])
   as appl_len_prog_proof.
 Proof.
   time relcompile.
@@ -136,7 +136,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [appl_len_prog]).
 
 Derive mulN_10_prog
-  in ltac2:(relcompile_tpe 'mulN_10_prog 'mulN_10 [])
+  in ltac2:(relcompile_tpe ['mulN_10_prog] ['mulN_10] [])
   as mulN_10_prog_proof.
 Proof.
   time relcompile.
@@ -144,7 +144,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [mulN_10_prog]).
 
 Derive mulN_256_prog
-  in ltac2:(relcompile_tpe 'mulN_256_prog 'mulN_256 [])
+  in ltac2:(relcompile_tpe ['mulN_256_prog] ['mulN_256] [])
   as mulN_256_prog_proof.
 Proof.
   time relcompile.
@@ -152,7 +152,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [mulN_256_prog]).
 
 Derive mulnat_8_prog
-  in ltac2:(relcompile_tpe 'mulnat_8_prog 'mulnat_8 [])
+  in ltac2:(relcompile_tpe ['mulnat_8_prog] ['mulnat_8] [])
   as mulnat_8_prog_proof.
 Proof.
   time relcompile.
@@ -160,7 +160,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [mulnat_8_prog]).
 
 Derive mulnat10_prog
-  in ltac2:(relcompile_tpe 'mulnat10_prog 'mulnat10 [])
+  in ltac2:(relcompile_tpe ['mulnat10_prog] ['mulnat10] [])
   as mulnat10_prog_proof.
 Proof.
   time relcompile.
@@ -170,7 +170,7 @@ Ltac2 Eval assert_Some constr:(to_funs [mulnat10_prog]).
 Theorem N2asciif_equation: ltac2:(unfold_fix_type '@N2asciif).
 Proof. unfold_fix_proof '@N2asciif. Qed.
 Derive N2asciif_prog
-  in ltac2:(relcompile_tpe 'N2asciif_prog 'N2asciif ['Nmod_256; 'str_app])
+  in ltac2:(relcompile_tpe ['N2asciif_prog] ['N2asciif] ['Nmod_256; 'str_app])
   as N2asciif_prog_proof.
 Proof.
   time relcompile.
@@ -180,7 +180,7 @@ Qed.
 Ltac2 Eval assert_Some constr:(to_funs [N2asciif_prog]).
 
 Derive N2ascii_prog
-  in ltac2:(relcompile_tpe 'N2ascii_prog 'N2ascii ['N2asciif])
+  in ltac2:(relcompile_tpe ['N2ascii_prog] ['N2ascii] ['N2asciif])
   as N2ascii_prog_proof.
 Proof.
   time relcompile.

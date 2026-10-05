@@ -501,56 +501,27 @@ Proof.
   assumption.
 Qed.
 
-Theorem even_len_spec_str: forall {A} (l: list A),
-  (forall x, even_len (x :: l) = even (List.length (x :: l))) ∧
-  even_len l = even (List.length l).
+Theorem even_odd_len_spec: forall {A} (l: list A),
+  even_len l = even (List.length l) ∧
+  odd_len l = odd (List.length l).
 Proof.
-  induction l.
+  intros A l; induction l as [| x xs [He Ho]].
   - split; reflexivity.
-  - simpl even_len.
-    destruct l; try reflexivity; split.
-    all: cleanup; try reflexivity; intros.
-    all: eapply eq_sym.
-    all: rewrite length_cons.
-    all: rewrite length_cons.
-    all: rewrite Nat.even_succ.
-    all: rewrite Nat.odd_succ.
-    all: eapply eq_sym.
-    1: assumption.
-    eapply H with (x := a).
+  - simpl even_len; simpl odd_len; simpl List.length.
+    rewrite Nat.even_succ, Nat.odd_succ.
+    split; assumption.
 Qed.
 
 Theorem even_len_spec: forall {A} (l: list A),
   even_len l = even (List.length l).
 Proof.
-  intros.
-  eapply even_len_spec_str.
-Qed.
-
-Theorem odd_len_spec_str: forall {A} (l: list A),
-  (forall x, odd_len (x :: l) = odd (List.length (x :: l))) ∧
-  odd_len l = odd (List.length l).
-Proof.
-  induction l.
-  - split; reflexivity.
-  - simpl odd_len.
-    destruct l; try reflexivity; split.
-    all: cleanup; try reflexivity; intros.
-    all: eapply eq_sym.
-    all: rewrite length_cons.
-    all: rewrite length_cons.
-    all: rewrite Nat.odd_succ.
-    all: rewrite Nat.even_succ.
-    all: eapply eq_sym.
-    1: assumption.
-    eapply H with (x := a).
+  intros; exact (proj1 (even_odd_len_spec l)).
 Qed.
 
 Theorem odd_len_spec: forall {A} (l: list A),
   odd_len l = odd (List.length l).
 Proof.
-  intros.
-  eapply odd_len_spec_str.
+  intros; exact (proj2 (even_odd_len_spec l)).
 Qed.
 
 Theorem has_stack_even: forall t xs,
@@ -5871,11 +5842,9 @@ Proof.
     eapply binders_ok_append2.
     pat `vs_bdrs = _` at rewrite pat.
     unfold ImpToASMCodegen.vs_bdrs in *; unfold dlet in *; simpl in *; rewrite ?list_app_spec.
-    destruct (bdrs_vs) eqn:?.
-    all: pat `bdrs_vs _ = _` at rewrite <- pat.
-    2: destruct even_len.
-    2: eapply binders_ok_append.
-    all: eapply binders_ok_bdrs_unq.
+    destruct (odd_len (bdrs_vs (bdrs_unq main_c))).
+    - eapply binders_ok_append; eapply binders_ok_bdrs_unq.
+    - eapply binders_ok_bdrs_unq.
   }
   6: unfold odd, even; reflexivity.
   6: {

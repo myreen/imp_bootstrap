@@ -243,16 +243,19 @@ Ltac2 rec get_cenv_from_fenv_constr (fenv: constr): (constr option * constr) lis
   | _ => []
   end.
 
-Ltac2 get_f_lookup_from_context () : string list :=
-  let hyps := Control.hyps () in
-  let f_lookup := List.flatten (List.map (fun (_iden, _, t) =>
-    match! t with
-    | context [ eval_app (name_enc ?fname1) _ _ _ ] =>
-      [string_of_constr_string fname1]
+Ltac2 rec eval_app_names (t: constr): string list :=
+  match! t with
+  | eval_app (name_enc ?fname) _ _ _ => [string_of_constr_string fname]
+  | ?left /\ ?right => List.append (eval_app_names left) (eval_app_names right)
+  | _ =>
+    match Unsafe.kind t with
+    | Prod _ body => eval_app_names body
     | _ => []
     end
-  ) hyps) in
-  f_lookup.
+  end.
+
+Ltac2 get_f_lookup_from_context () : string list :=
+  List.flatten (List.map (fun (_iden, _, t) => eval_app_names t) (Control.hyps ())).
 
 Ltac2 fname_if_in_f_lookup (f_lookup: string list) (f: constr): string option :=
   let f_name_r: reference option := reference_of_constr_opt f in
@@ -333,6 +336,14 @@ Ltac2 Type exn ::= [
 
 Ltac2 mutable relCompilerDB: ((unit -> unit) -> unit) :=
   fun _r => Control.zero NoMoreExtensionTactics.
+
+Ltac2 solve_eval_app (): unit :=
+  Control.plus
+    (fun () => ltac1:(match goal with
+      | IH : forall _, _ /\ _ |- _ =>
+        first [exact (proj1 (IH _)) | exact (proj2 (IH _))]
+      end))
+    (fun _ => eauto).
 
 (* The priority of lemmas is as follows: *)
 (* 1: variables *)
@@ -1133,7 +1144,7 @@ Ltac2 rec compile () : unit :=
           (* vs *) $args_constr
           (* v *) (encode $e)
           (* eval args *) ltac2:(Control.enter compile)
-          (* eval_app *) ltac2:(eauto)
+          (* eval_app *) ltac2:(solve_eval_app ())
           )
         | _ =>
           try_lemmas ()
@@ -1333,9 +1344,69 @@ Ltac2 relcompile_setup (): unit :=
     instantiate(1 := FunSyntax.Defun nm args _) in H; inversion H; clear H; subst body
   end).
 
+Ltac2 relcompile_mutual_setup (): unit :=
+  intros;
+  let progs := List.flatten (List.map (fun (_, _, t) =>
+    match! t with
+    | ?prog = FunSyntax.Defun _ _ _ => [prog]
+    | _ => []
+    end) (Control.hyps ())) in
+  List.iter (fun prog => let id := var_ident_of_constr prog in subst $id) progs;
+  ltac1:(repeat match goal with
+  | H: ?g = FunSyntax.Defun ?nm ?args ?body |- _ =>
+    instantiate(1 := FunSyntax.Defun nm args _) in H; inversion H; clear H; subst body
+  end).
+
+Ltac2 rec ends_in_conjunction (c: constr): bool :=
+  match Unsafe.kind c with
+  | Prod _ body => ends_in_conjunction body
+  | _ => match! c with | _ /\ _ => true | _ => false end
+  end.
+
+Ltac2 start_mutual_fix (): unit :=
+  intros;
+  lazy_match! goal with
+  | [ |- eval_app _ _ _ (encode ?e, _) /\ _ ] =>
+    match extract_fun e with
+    | Some (f, args) =>
+      let all_ids := List.map var_ident_of_constr args in
+      let value_args := List.filter (fun c => Bool.neg (Constrs.is_sort (Constr.type c))) args in
+      let value_ids := List.map var_ident_of_constr value_args in
+      let struct_id := List.nth all_ids (Constrs.struct_of_fix f) in
+      let struct_idx := Option.get (index_of struct_id value_ids) in
+      Std.revert value_ids;
+      Std.fix_ (Fresh.in_goal (Option.get (Ident.of_string "IH"))) (Int.add struct_idx 1);
+      intros
+    | None => Control.throw (Oopsie (fprintf "Expected a recursive function in %t" e))
+    end
+  | [ |- ?g ] => Control.throw (Oopsie (fprintf "Expected mutual evaluation goals, got %t" g))
+  end.
+
+Ltac2 rec docompile_conjunction (): unit :=
+  lazy_match! goal with
+  | [ |- ?left /\ ?right ] =>
+    refine open_constr:(@conj $left $right
+      ltac2:(Control.enter docompile_conjunction)
+      ltac2:(Control.enter docompile_conjunction))
+  | [ |- eval_app _ _ _ (encode ?e, _) ] =>
+    (match extract_fun e with
+    | Some (f, _) => rewrite_with_equation f
+    | None => ()
+    end);
+    docompile ()
+  | [ |- ?g ] => Control.throw (Oopsie (fprintf "Expected an evaluation goal, got %t" g))
+  end.
+
 Ltac2 relcompile_impl (): unit :=
-  relcompile_setup ();
-  unshelve (docompile ());
+  let mutual := ends_in_conjunction (Control.goal ()) in
+  if mutual then (
+    relcompile_mutual_setup ();
+    start_mutual_fix ();
+    unshelve (docompile_conjunction ())
+  ) else (
+    relcompile_setup ();
+    unshelve (docompile ())
+  );
   crush_NoDup ();
   crush_side_conditions ().
 
@@ -1386,6 +1457,45 @@ Ltac2 gen_eval_app (f: constr) (): constr :=
   let f_constr_name_c := constr_string_of_string f_constr_name in
   open_constr:(ltac2:(Control.refine (gen_eval_app_impl [] f_constr_name_c f))).
 
+Ltac2 rec eval_apps_at (args: constr list) (fs: (constr * constr) list) (): constr :=
+  match fs with
+  | [] => Control.throw (Oopsie (fprintf "Expected at least one function"))
+  | (name, f) :: [] => gen_eval_app_impl args name f ()
+  | (name, f) :: rest =>
+    let head := gen_eval_app_impl args name f in
+    open_constr:(ltac2:(Control.refine head) /\ ltac2:(Control.refine (eval_apps_at args rest)))
+  end.
+
+Ltac2 rec gen_eval_apps_impl (args: constr list) (fs: (constr * constr) list) (): constr :=
+  match fs with
+  | [] => Control.throw (Oopsie (fprintf "Expected at least one function"))
+  | (_, f) :: _ =>
+    match Unsafe.kind (Constr.type f) with
+    | Prod b _ =>
+      let name := Option.default (Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "x"))) (Binder.name b) in
+      lambda_to_prod (Constr.in_context name open_constr:(_) (fun () =>
+        let arg := Control.hyp name in
+        Control.refine (fun () =>
+          let applied := List.map (fun (nm, fn) => (nm, open_constr:($fn $arg))) fs in
+          if Constrs.is_sort (Binder.type b) then
+            let nameR := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "Refinable_inst")) in
+            lambda_to_prod (Constr.in_context nameR open_constr:(Refinable $arg) (fun () =>
+              Control.refine (gen_eval_apps_impl args applied)))
+          else if Constr.equal constr:(Prop) (Constr.type (Binder.type b)) then
+            gen_eval_apps_impl args applied ()
+          else gen_eval_apps_impl (List.append args [arg]) applied ()
+        )
+      ))
+    | _ => eval_apps_at args fs ()
+    end
+  end.
+
+Ltac2 gen_eval_apps (fs: constr list) (): constr :=
+  let named := List.map (fun f =>
+    let name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
+    (constr_string_of_string name, f)) fs in
+  open_constr:(ltac2:(Control.refine (gen_eval_apps_impl [] named))).
+
 Ltac2 rec mk_refine_impls (args: (unit -> constr) list) (res: unit -> constr) (): constr :=
   match args with
   | a :: args =>
@@ -1394,25 +1504,53 @@ Ltac2 rec mk_refine_impls (args: (unit -> constr) list) (res: unit -> constr) ()
     res ()
   end.
 
-Ltac2 relcompile_tpe (prog: constr) (f: constr) (deps: constr list): unit :=
-  let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
-  let f_constr_name_c := constr_string_of_string f_constr_name in
-  let encoded_b_names := collect_non_prop_tpe_prod_names f in
-  let eval_app_cont := gen_eval_app f in
-  let deps_eval_app_conts := List.map gen_eval_app deps in
-  Control.refine (fun () =>
-    open_constr:(
-      forall body, $prog = FunSyntax.Defun (name_enc $f_constr_name_c) $encoded_b_names body ->
-      forall (s: state),
-      ltac2:(Control.refine (
-        mk_refine_impls
-          deps_eval_app_conts
-          (fun () => open_constr:(
-            lookup_fun (name_enc $f_constr_name_c) &s.(funs) = Some ($encoded_b_names, &body) ->
-            ltac2:(Control.refine eval_app_cont)
-          ))
-      ))
+Ltac2 rec relcompile_group_premises (progs: constr list) (fs: constr list)
+    (all_fs: constr list) (known: (constr * constr * constr) list) (deps: constr list) (): constr :=
+  match progs, fs with
+  | [], [] =>
+    let lookups := List.map (fun (name, args, body) () =>
+      open_constr:(lookup_fun (name_enc $name) &s.(funs) = Some ($args, $body))) known in
+    let deps := List.map gen_eval_app deps in
+    open_constr:(forall (s: state),
+      ltac2:(Control.refine (mk_refine_impls deps (fun () =>
+        mk_refine_impls lookups (gen_eval_apps all_fs) ()))))
+  | prog :: progs, f :: fs =>
+    let name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
+    let name := constr_string_of_string name in
+    let args := collect_non_prop_tpe_prod_names f in
+    let body_name := Fresh.fresh (Free.of_goal ()) (Option.get (Ident.of_string "body")) in
+    lambda_to_prod (Constr.in_context body_name open_constr:(FunSyntax.exp) (fun () =>
+      let body := Control.hyp body_name in
+      Control.refine (fun () => open_constr:($prog = FunSyntax.Defun (name_enc $name) $args $body ->
+        ltac2:(Control.refine (relcompile_group_premises progs fs all_fs
+          (List.append known [(name, args, body)]) deps))))
+    ))
+  | _, _ => Control.throw (Oopsie (fprintf "Program and function lists must have the same length"))
+  end.
+
+Ltac2 relcompile_tpe (progs: constr list) (fs: constr list) (deps: constr list): unit :=
+  match progs, fs with
+  | [prog], [f] =>
+    let f_constr_name := Option.get (Option.bind (reference_of_constr_opt f) reference_to_string) in
+    let f_constr_name_c := constr_string_of_string f_constr_name in
+    let encoded_b_names := collect_non_prop_tpe_prod_names f in
+    let eval_app_cont := gen_eval_app f in
+    let deps_eval_app_conts := List.map gen_eval_app deps in
+    Control.refine (fun () =>
+      open_constr:(
+        forall body, $prog = FunSyntax.Defun (name_enc $f_constr_name_c) $encoded_b_names body ->
+        forall (s: state),
+        ltac2:(Control.refine (
+          mk_refine_impls
+            deps_eval_app_conts
+            (fun () => open_constr:(
+              lookup_fun (name_enc $f_constr_name_c) &s.(funs) = Some ($encoded_b_names, &body) ->
+              ltac2:(Control.refine eval_app_cont)
+            ))
+        ))
+      )
     )
-  ).
+  | _, _ => Control.refine (relcompile_group_premises progs fs fs [] deps)
+  end.
 
 Opaque encode.

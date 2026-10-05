@@ -18,7 +18,7 @@ Definition paper_expr: nat :=
   let/d x := 5 in 10 / x.
 
 Derive paper_expr_prog
-  in ltac2:(relcompile_tpe 'paper_expr_prog 'paper_expr [])
+  in ltac2:(relcompile_tpe ['paper_expr_prog] ['paper_expr] [])
   as paper_expr_prog_proof.
 Proof.
   relcompile_start ().

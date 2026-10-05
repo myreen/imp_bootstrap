@@ -43,7 +43,7 @@ Function gcd (a b: nat) (ACC: Acc lt b) {struct ACC}: nat :=
   end.
 
 Derive gcd_prog
-  in ltac2:(relcompile_tpe 'gcd_prog 'gcd ['nat_modulo1])
+  in ltac2:(relcompile_tpe ['gcd_prog] ['gcd] ['nat_modulo1])
   as gcd_prog_proof.
 Proof.
   time relcompile.

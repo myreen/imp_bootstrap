@@ -21,140 +21,133 @@ From impboot Require Import derivations.CompilerUtilsDerivations.
 (* *********************************************** *)
 
 Derive init_prog
-  in ltac2:(relcompile_tpe 'init_prog 'init ['@list_app; 'str_app])
+  in ltac2:(relcompile_tpe ['init_prog] ['init] ['@list_app; 'str_app])
   as init_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_assign_prog 
-  in ltac2:(relcompile_tpe 'c_assign_prog 'c_assign ['index_of]) 
+  in ltac2:(relcompile_tpe ['c_assign_prog] ['c_assign] ['index_of])
   as c_assign_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive give_up_prog 
-  in ltac2:(relcompile_tpe 'give_up_prog 'give_up []) 
+  in ltac2:(relcompile_tpe ['give_up_prog] ['give_up] [])
   as give_up_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive abortLoc_prog
-  in ltac2:(relcompile_tpe 'abortLoc_prog 'abortLoc []) 
+  in ltac2:(relcompile_tpe ['abortLoc_prog] ['abortLoc] [])
   as abortLoc_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_const_prog
-  in ltac2:(relcompile_tpe 'c_const_prog 'c_const []) 
+  in ltac2:(relcompile_tpe ['c_const_prog] ['c_const] [])
   as c_const_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
-Derive even_len_prog 
-  in ltac2:(relcompile_tpe 'even_len_prog '@even_len []) 
-  as even_len_prog_proof.
-Proof.
-  time relcompile.
-Qed.
-
-Derive odd_len_prog 
-  in ltac2:(relcompile_tpe 'odd_len_prog '@odd_len [])
-  as odd_len_prog_proof.
+Derive even_len_prog odd_len_prog
+  in ltac2:(relcompile_tpe ['even_len_prog; 'odd_len_prog] ['@even_len; '@odd_len] [])
+  as even_odd_len_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive index_of_prog 
-  in ltac2:(relcompile_tpe 'index_of_prog 'index_of []) 
+  in ltac2:(relcompile_tpe ['index_of_prog] ['index_of] [])
   as index_of_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_var_prog 
-  in ltac2:(relcompile_tpe 'c_var_prog 'c_var ['index_of]) 
+  in ltac2:(relcompile_tpe ['c_var_prog] ['c_var] ['index_of])
   as c_var_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive all_bdrs_prog 
-  in ltac2:(relcompile_tpe 'all_bdrs_prog 'all_bdrs ['@list_app]) 
+  in ltac2:(relcompile_tpe ['all_bdrs_prog] ['all_bdrs] ['@list_app])
   as all_bdrs_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive names_in_prog 
-  in ltac2:(relcompile_tpe 'names_in_prog 'names_in []) 
+  in ltac2:(relcompile_tpe ['names_in_prog] ['names_in] [])
   as names_in_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive nms_uniq_prog 
-  in ltac2:(relcompile_tpe 'nms_uniq_prog 'nms_uniq ['names_in]) 
+  in ltac2:(relcompile_tpe ['nms_uniq_prog] ['nms_uniq] ['names_in])
   as nms_uniq_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive bdrs_unq_prog 
-  in ltac2:(relcompile_tpe 'bdrs_unq_prog 'bdrs_unq ['all_bdrs; 'nms_uniq]) 
+  in ltac2:(relcompile_tpe ['bdrs_unq_prog] ['bdrs_unq] ['all_bdrs; 'nms_uniq])
   as bdrs_unq_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive bdrs_vs_prog 
-  in ltac2:(relcompile_tpe 'bdrs_vs_prog 'bdrs_vs []) 
+  in ltac2:(relcompile_tpe ['bdrs_vs_prog] ['bdrs_vs] [])
   as bdrs_vs_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive fltr_nms_prog 
-  in ltac2:(relcompile_tpe 'fltr_nms_prog 'fltr_nms []) 
+  in ltac2:(relcompile_tpe ['fltr_nms_prog] ['fltr_nms] [])
   as fltr_nms_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive rm_nms_prog 
-  in ltac2:(relcompile_tpe 'rm_nms_prog 'rm_nms ['fltr_nms]) 
+  in ltac2:(relcompile_tpe ['rm_nms_prog] ['rm_nms] ['fltr_nms])
   as rm_nms_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive call_vs_prog 
-  in ltac2:(relcompile_tpe 'call_vs_prog 'call_vs []) 
+  in ltac2:(relcompile_tpe ['call_vs_prog] ['call_vs] [])
   as call_vs_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive push_vs_prog 
-  in ltac2:(relcompile_tpe 'push_vs_prog 'push_vs ['@list_len; 'call_vs]) 
+  in ltac2:(relcompile_tpe ['push_vs_prog] ['push_vs] ['@list_len; 'call_vs])
   as push_vs_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive vs_bdrs_prog
-  in ltac2:(relcompile_tpe 'vs_bdrs_prog 'vs_bdrs ['@even_len; '@list_app])
+  in ltac2:(relcompile_tpe ['vs_bdrs_prog] ['vs_bdrs] ['@even_len; '@list_app])
   as vs_bdrs_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_bdrs_prog 
-  in ltac2:(relcompile_tpe 'c_bdrs_prog 'c_bdrs
+  in ltac2:(relcompile_tpe ['c_bdrs_prog] ['c_bdrs]
     ['bdrs_unq; 'rm_nms; 'bdrs_vs; '@list_app; 'push_vs; '@even_len; '@list_len; 'vs_bdrs]) 
   as c_bdrs_prog_proof.
 Proof.
@@ -162,126 +155,126 @@ Proof.
 Qed.
 
 Derive c_add_prog 
-  in ltac2:(relcompile_tpe 'c_add_prog 'c_add []) 
+  in ltac2:(relcompile_tpe ['c_add_prog] ['c_add] [])
   as c_add_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_sub_prog 
-  in ltac2:(relcompile_tpe 'c_sub_prog 'c_sub []) 
+  in ltac2:(relcompile_tpe ['c_sub_prog] ['c_sub] [])
   as c_sub_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_div_prog 
-  in ltac2:(relcompile_tpe 'c_div_prog 'c_div []) 
+  in ltac2:(relcompile_tpe ['c_div_prog] ['c_div] [])
   as c_div_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_alloc_prog
-  in ltac2:(relcompile_tpe 'c_alloc_prog 'c_alloc ['@even_len]) 
+  in ltac2:(relcompile_tpe ['c_alloc_prog] ['c_alloc] ['@even_len])
   as c_alloc_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_read_prog
-  in ltac2:(relcompile_tpe 'c_read_prog 'c_read ['@even_len; '@appl_len]) 
+  in ltac2:(relcompile_tpe ['c_read_prog] ['c_read] ['@even_len; '@appl_len])
   as c_read_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_write_prog 
-  in ltac2:(relcompile_tpe 'c_write_prog 'c_write ['@even_len; '@appl_len]) 
+  in ltac2:(relcompile_tpe ['c_write_prog] ['c_write] ['@even_len; '@appl_len])
   as c_write_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_load_prog 
-  in ltac2:(relcompile_tpe 'c_load_prog 'c_load []) 
+  in ltac2:(relcompile_tpe ['c_load_prog] ['c_load] [])
   as c_load_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_store_prog 
-  in ltac2:(relcompile_tpe 'c_store_prog 'c_store ['@list_app])
+  in ltac2:(relcompile_tpe ['c_store_prog] ['c_store] ['@list_app])
   as c_store_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_exp_prog 
-  in ltac2:(relcompile_tpe 'c_exp_prog 'c_exp ['c_var; 'c_const; 'c_add; 'c_sub; 'c_div; 'c_load; '@appl_len]) 
+  in ltac2:(relcompile_tpe ['c_exp_prog] ['c_exp] ['c_var; 'c_const; 'c_add; 'c_sub; 'c_div; 'c_load; '@appl_len])
   as c_exp_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_exps_prog 
-  in ltac2:(relcompile_tpe 'c_exps_prog 'c_exps ['c_exp]) 
+  in ltac2:(relcompile_tpe ['c_exps_prog] ['c_exps] ['c_exp])
   as c_exps_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_cmp_prog 
-  in ltac2:(relcompile_tpe 'c_cmp_prog 'c_cmp []) 
+  in ltac2:(relcompile_tpe ['c_cmp_prog] ['c_cmp] [])
   as c_cmp_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_test_prog 
-  in ltac2:(relcompile_tpe 'c_test_prog 'c_test ['c_exp; 'c_cmp; '@appl_len; '@list_app]) 
+  in ltac2:(relcompile_tpe ['c_test_prog] ['c_test] ['c_exp; 'c_cmp; '@appl_len; '@list_app])
   as c_test_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive lookup_prog 
-  in ltac2:(relcompile_tpe 'lookup_prog 'lookup []) 
+  in ltac2:(relcompile_tpe ['lookup_prog] ['lookup] [])
   as lookup_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive make_ret_prog 
-  in ltac2:(relcompile_tpe 'make_ret_prog 'make_ret ['@list_len]) 
+  in ltac2:(relcompile_tpe ['make_ret_prog] ['make_ret] ['@list_len])
   as make_ret_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_pops_prog 
-  in ltac2:(relcompile_tpe 'c_pops_prog 'c_pops ['give_up; '@even_len; '@list_len]) 
+  in ltac2:(relcompile_tpe ['c_pops_prog] ['c_pops] ['give_up; '@even_len; '@list_len])
   as c_pops_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_pushes_prog 
-  in ltac2:(relcompile_tpe 'c_pushes_prog 'c_pushes ['call_vs; '@list_len; 'push_vs]) 
+  in ltac2:(relcompile_tpe ['c_pushes_prog] ['c_pushes] ['call_vs; '@list_len; 'push_vs])
   as c_pushes_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_call_prog 
-  in ltac2:(relcompile_tpe 'c_call_prog 'c_call ['c_pops; '@even_len; '@appl_len]) 
+  in ltac2:(relcompile_tpe ['c_call_prog] ['c_call] ['c_pops; '@even_len; '@appl_len])
   as c_call_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_cmd_prog 
-  in ltac2:(relcompile_tpe 'c_cmd_prog 'c_cmd 
+  in ltac2:(relcompile_tpe ['c_cmd_prog] ['c_cmd]
     ['c_exp; 'c_assign; 'c_store; 'c_test; 'c_exps; 'c_call; 
      'c_var; 'make_ret; 'c_alloc; 'c_read; 'c_write; 'abortLoc; 'lookup;
      '@odd_len; '@appl_len])
@@ -291,7 +284,7 @@ Proof.
 Qed.
 
 Derive c_fundef_prog 
-  in ltac2:(relcompile_tpe 'c_fundef_prog 'c_fundef 
+  in ltac2:(relcompile_tpe ['c_fundef_prog] ['c_fundef]
     ['c_pushes; 'bdrs_unq; 'bdrs_vs; 'c_cmd; '@list_len; '@list_app; '@even_len; 'c_bdrs; '@appl_len]) 
   as c_fundef_prog_proof.
 Proof.
@@ -299,28 +292,28 @@ Proof.
 Qed.
 
 Derive get_funs_prog 
-  in ltac2:(relcompile_tpe 'get_funs_prog 'get_funs []) 
+  in ltac2:(relcompile_tpe ['get_funs_prog] ['get_funs] [])
   as get_funs_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive func_nm_prog 
-  in ltac2:(relcompile_tpe 'func_nm_prog 'func_nm []) 
+  in ltac2:(relcompile_tpe ['func_nm_prog] ['func_nm] [])
   as func_nm_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive c_fndefs_prog 
-  in ltac2:(relcompile_tpe 'c_fndefs_prog 'c_fndefs ['c_fundef; 'func_nm; 'N2ascii])
+  in ltac2:(relcompile_tpe ['c_fndefs_prog] ['c_fndefs] ['c_fundef; 'func_nm; 'N2ascii])
   as c_fndefs_prog_proof.
 Proof.
   time relcompile.
 Qed.
 
 Derive codegen_prog 
-  in ltac2:(relcompile_tpe 'codegen_prog 'codegen ['c_fndefs; 'lookup; 'init; 'get_funs; '@appl_len; '@flatten]) 
+  in ltac2:(relcompile_tpe ['codegen_prog] ['codegen] ['c_fndefs; 'lookup; 'init; 'get_funs; '@appl_len; '@flatten])
   as codegen_prog_proof.
 Proof.
   time relcompile.
@@ -385,6 +378,11 @@ Ltac2 assert_eval_app (fname: constr) :=
   let tpe := gen_eval_app fname () in
   assert ($tpe).
 
+Ltac2 assert_eval_apps (fs: constr list) :=
+  let tpe := gen_eval_apps fs () in
+  let h := Fresh.in_goal (Option.get (Ident.of_string "Hmutual")) in
+  assert ($tpe) as $h.
+
 Ltac2 assert_eval_app_proof (prf: constr) (list_constr: constr) (n: int) :=
   eapply $prf; eauto; try (reflexivity);
   try (eapply $list_constr; do n (eapply in_cons); eapply in_eq).
@@ -446,8 +444,15 @@ Proof.
   assert_eval_app_by 'give_up 'give_up_prog_proof 'Hlookup_fun 0.
   assert_eval_app_by 'abortLoc 'abortLoc_prog_proof 'Hlookup_fun 1.
   assert_eval_app_by 'c_const 'c_const_prog_proof 'Hlookup_fun 2.
-  assert_eval_app_by '@even_len 'even_len_prog_proof 'Hlookup_fun 3.
-  assert_eval_app_by '@odd_len 'odd_len_prog_proof 'Hlookup_fun 4.
+  assert_eval_apps ['@even_len; '@odd_len].
+  { ltac1:(eapply even_odd_len_prog_proof; eauto; try reflexivity;
+      eapply Hlookup_fun;
+      first [do 3 eapply in_cons; eapply in_eq
+            | do 4 eapply in_cons; eapply in_eq]). }
+  assert_eval_app '@even_len.
+  { intros; exact (proj1 (Hmutual _ _ _)). }
+  assert_eval_app '@odd_len.
+  { intros; exact (proj2 (Hmutual _ _ _)). }
   assert_eval_app_by 'index_of 'index_of_prog_proof 'Hlookup_fun 5.
   assert_eval_app_by 'c_var 'c_var_prog_proof 'Hlookup_fun 6.
   assert_eval_app_by 'c_assign 'c_assign_prog_proof 'Hlookup_fun 7.

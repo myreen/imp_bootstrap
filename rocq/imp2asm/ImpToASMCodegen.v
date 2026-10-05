@@ -54,23 +54,18 @@ Fixpoint even_len {A: Type} (xs: list A): bool :=
   match xs with
   | nil => true
   | _ :: ys =>
-    match ys with
-    | nil => false
-    | _ :: zs => even_len zs
-    end
-  end.
-Theorem even_len_equation: ltac2:(unfold_fix_type '@even_len).
-Proof. unfold_fix_proof '@even_len. Qed.
-
-Fixpoint odd_len {A: Type} (xs: list A) : bool :=
+    odd_len ys
+  end
+with odd_len {A: Type} (xs: list A) : bool :=
   match xs with
   | nil => false
   | _ :: ys =>
-    match ys with
-    | nil => true
-    | _ :: zs => odd_len zs
-    end
+    even_len ys
   end.
+
+Theorem even_len_equation: ltac2:(unfold_fix_type '@even_len).
+Proof. unfold_fix_proof '@even_len. Qed.
+
 Theorem odd_len_equation: ltac2:(unfold_fix_type '@odd_len).
 Proof. unfold_fix_proof '@odd_len. Qed.
 

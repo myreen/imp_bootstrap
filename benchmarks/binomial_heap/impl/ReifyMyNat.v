@@ -312,99 +312,99 @@ Theorem my_mul_equation : ltac2:(unfold_fix_type '@my_mul).
 Proof. unfold_fix_proof '@my_mul. Qed.
 
 Derive my_ltb_prog
-  in ltac2:(relcompile_tpe 'my_ltb_prog 'my_ltb [])
+  in ltac2:(relcompile_tpe ['my_ltb_prog] ['my_ltb] [])
   as my_ltb_prog_correct.
 Proof. relcompile. Qed.
 
 Derive smash_prog
-  in ltac2:(relcompile_tpe 'smash_prog 'smash ['my_ltb])
+  in ltac2:(relcompile_tpe ['smash_prog] ['smash] ['my_ltb])
   as smash_prog_correct.
 Proof. relcompile. Qed.
 
 Derive carry_prog
-  in ltac2:(relcompile_tpe 'carry_prog 'carry ['smash])
+  in ltac2:(relcompile_tpe ['carry_prog] ['carry] ['smash])
   as carry_prog_correct.
 Proof. relcompile. Qed.
 
 Derive insert_prog
-  in ltac2:(relcompile_tpe 'insert_prog 'insert ['carry])
+  in ltac2:(relcompile_tpe ['insert_prog] ['insert] ['carry])
   as insert_prog_correct.
 Proof. relcompile. Qed.
 
 Derive join_prog
-  in ltac2:(relcompile_tpe 'join_prog 'join ['carry; 'smash])
+  in ltac2:(relcompile_tpe ['join_prog] ['join] ['carry; 'smash])
   as join_prog_correct.
 Proof. relcompile. Qed.
 
 Derive merge_prog
-  in ltac2:(relcompile_tpe 'merge_prog 'merge ['join])
+  in ltac2:(relcompile_tpe ['merge_prog] ['merge] ['join])
   as merge_prog_correct.
 Proof. relcompile. Qed.
 
 Derive unzip_acc_prog
-  in ltac2:(relcompile_tpe 'unzip_acc_prog 'unzip_acc [])
+  in ltac2:(relcompile_tpe ['unzip_acc_prog] ['unzip_acc] [])
   as unzip_acc_prog_correct.
 Proof. relcompile. Qed.
 
 Derive unzip_prog
-  in ltac2:(relcompile_tpe 'unzip_prog 'unzip ['unzip_acc])
+  in ltac2:(relcompile_tpe ['unzip_prog] ['unzip] ['unzip_acc])
   as unzip_prog_correct.
 Proof. relcompile. Qed.
 
 Derive heap_delete_max_prog
-  in ltac2:(relcompile_tpe 'heap_delete_max_prog 'heap_delete_max ['unzip])
+  in ltac2:(relcompile_tpe ['heap_delete_max_prog] ['heap_delete_max] ['unzip])
   as heap_delete_max_prog_correct.
 Proof. relcompile. Qed.
 
 Derive find_max'_prog
-  in ltac2:(relcompile_tpe 'find_max'_prog 'find_max' ['my_ltb])
+  in ltac2:(relcompile_tpe ['find_max'_prog] ['find_max'] ['my_ltb])
   as find_max'_prog_correct.
 Proof. relcompile. Qed.
 
 Derive find_max_prog
-  in ltac2:(relcompile_tpe 'find_max_prog 'find_max ['find_max'])
+  in ltac2:(relcompile_tpe ['find_max_prog] ['find_max] ['find_max'])
   as find_max_prog_correct.
 Proof. relcompile. Qed.
 
 Derive delete_max_aux_prog
-  in ltac2:(relcompile_tpe 'delete_max_aux_prog 'delete_max_aux
+  in ltac2:(relcompile_tpe ['delete_max_aux_prog] ['delete_max_aux]
     ['heap_delete_max; 'my_ltb])
   as delete_max_aux_prog_correct.
 Proof. relcompile. Qed.
 
 Derive delete_max_prog
-  in ltac2:(relcompile_tpe 'delete_max_prog 'delete_max
+  in ltac2:(relcompile_tpe ['delete_max_prog] ['delete_max]
     ['find_max; 'delete_max_aux; 'join])
   as delete_max_prog_correct.
 Proof. relcompile. Qed.
 
 Derive insert_list_prog
-  in ltac2:(relcompile_tpe 'insert_list_prog 'insert_list ['insert])
+  in ltac2:(relcompile_tpe ['insert_list_prog] ['insert_list] ['insert])
   as insert_list_prog_correct.
 Proof. relcompile. Qed.
 
 Derive make_list_prog
-  in ltac2:(relcompile_tpe 'make_list_prog 'make_list [])
+  in ltac2:(relcompile_tpe ['make_list_prog] ['make_list] [])
   as make_list_prog_correct.
 Proof. relcompile. Qed.
 
 Derive my_add_prog
-  in ltac2:(relcompile_tpe 'my_add_prog 'my_add [])
+  in ltac2:(relcompile_tpe ['my_add_prog] ['my_add] [])
   as my_add_prog_correct.
 Proof. relcompile. Qed.
 
 Derive my_mul_prog
-  in ltac2:(relcompile_tpe 'my_mul_prog 'my_mul ['my_add])
+  in ltac2:(relcompile_tpe ['my_mul_prog] ['my_mul] ['my_add])
   as my_mul_prog_correct.
 Proof. relcompile. Qed.
 
 Derive make_my10_prog
-  in ltac2:(relcompile_tpe 'make_my10_prog 'make_my10 [])
+  in ltac2:(relcompile_tpe ['make_my10_prog] ['make_my10] [])
   as make_my10_prog_correct.
 Proof. relcompile. Qed.
 
 Derive benchmark_main_prog
-  in ltac2:(relcompile_tpe 'benchmark_main_prog 'benchmark_main
+  in ltac2:(relcompile_tpe ['benchmark_main_prog] ['benchmark_main]
     ['make_my10; 'my_add; 'my_mul; 'make_list; 'insert_list; 'merge;
       'delete_max])
   as benchmark_main_prog_correct.
